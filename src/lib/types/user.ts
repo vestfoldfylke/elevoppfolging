@@ -1,4 +1,4 @@
-export type User = {
+export type EntraUser = {
 	_id: string
 	feidenavn?: string
 	entra: {
