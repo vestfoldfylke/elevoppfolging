@@ -10,7 +10,7 @@ type LayoutLoadData = {
 const layoutLoad: ServerLoadNextFunction<LayoutLoadData> = async ({ principal }) => {
 	return {
 		data: {
-			authenticatedPrincipal: principal,
+			authenticatedPrincipal: principal
 		},
 		isAuthorized: true
 	}
