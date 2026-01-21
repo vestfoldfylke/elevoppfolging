@@ -2,6 +2,11 @@
 
 Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
 
+## SEtup
+MOCK_AUTH="true"
+MOCK_AUTH_ROLES="Hva som helst"
+
+
 ## Creating a project
 
 If you're seeing this, you've probably already done this step. Congrats!
@@ -36,3 +41,5 @@ npm run build
 You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+
+
