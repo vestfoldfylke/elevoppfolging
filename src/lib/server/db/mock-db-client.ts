@@ -1,4 +1,4 @@
-import type { AppUser, IDbClient} from "$lib/types/db/db-client";
+import type { Access, AppUser, IDbClient} from "$lib/types/db/db-client";
 import type {AppStudent} from "$lib/types/student";
 
 type MockDb = {
@@ -8,7 +8,7 @@ type MockDb = {
 }
 
 const mockDb: MockDb = {
-  access: []
+  access: [],
   students: [],
   users: []
 }
@@ -24,5 +24,13 @@ export class MockDbClient implements IDbClient {
 
   async replaceUsers(users: AppUser[]): Promise<void> {
     mockDb.users = users;
+  }
+
+  async getAccess(): Promise<Access[]> {
+    return mockDb.access;
+  }
+
+  async replaceAccess(accesses: Access[]): Promise<void> {
+    mockDb.access = accesses;
   }
 }

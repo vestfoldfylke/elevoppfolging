@@ -1,59 +1,85 @@
+/** Undervisningsforhold & Skoleressurs */
 export type Teacher = {
-	_id: string
-	feidenavn: string
-	navn: string
+	/** _id knyttet til en bruker i Users-collection hvis læreren finnes der */
+	_id: string | null
+	systemId: string
+	feidename: string
+	name: string
 }
 
-/** Undervisningsforhold */
-export type TeachingRelation = {
-	larer: Teacher
+export type Group = {
 	systemId: string
+	description: string
+	name: string
 }
 
-/** Basisgruppe */
-export type Class = {
-	beskrivelse: string
-	navn: string
-	periode: Period
+export type GroupMembership = {
 	systemId: string
-	undervisningsforhold: TeachingRelation[]
+	period: Period
+}
+
+/** Klasse */
+export type Class = Group & {
+	teachers: Teacher[]
+}
+
+/** Klassemedlemskap */
+export type ClassMembership = GroupMembership & {
+	class: Class
 }
 
 /** Undervisningsgruppe */
-export type TeachingGroup = {
-	beskrivelse: string
-	navn: string
-	periode: Period
-	systemId: string
-	undervisningsforhold: TeachingRelation[]
+export type TeachingGroup = Group & {
+	teachers: Teacher[]
+}
+
+/** Undervisningsgruppemedlemskap */
+export type TeachingGroupMembership = GroupMembership & {
+	teachingGroup: TeachingGroup
+}
+
+/** Kontaktlærergruppe */
+export type ContactTeacherGroup = Group & {
+	teachers: Teacher[]
+}
+
+/** Kontaktlærergruppemedlemskap */
+export type ContactTeacherGroupMembership = GroupMembership & {
+	contactTeacherGroup: ContactTeacherGroup
 }
 
 export type School = {
 	_id: string
-	hovedskole?: boolean
-	navn: string
-	skolenummer: string
+	systemId: string
+	name: string
+	schoolNumber: string
 }
 
 export type Period = {
-	start: string | null,
-	slutt: string | null,
-	aktiv: boolean
+	start: string | null
+	end: string | null
+	active: boolean
 }
 
-export type StudentRelation = {
+/** Elevforhold */
+export type StudentEnrollment = {
 	_id: string
-	klasser: Class[]
-	kontaktlarere: Teacher[]
-	periode: Period
-	skole: School
-	undervisningsgrupper: TeachingGroup[]
+	classMemberships: ClassMembership[]
+	teachingGroupMemberships: TeachingGroupMembership[]
+	contactTeacherGroupMemberships: ContactTeacherGroupMembership[]
+	period: Period
+	school: School
+	mainSchool: boolean
 }
 
+/** En elev i db for denne appen */
 export type AppStudent = {
 	_id: string
-	elevforhold: StudentRelation[]
-	elevnummer: string
-	fodselsnummer: string
-	navn: string
+  /** FINT system-id for eleven */
+  systemId: string
+	studentNumber: string
+	ssn: string
+	name: string
+	feidename: string
+	studentEnrollments: StudentEnrollment[]
 }
