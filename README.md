@@ -5,6 +5,7 @@ Everything you need to build a Svelte project, powered by [`sv`](https://github.
 ## SEtup
 MOCK_AUTH="true"
 MOCK_AUTH_ROLES="Hva som helst"
+MOCK_DB="true"
 
 
 ## Creating a project

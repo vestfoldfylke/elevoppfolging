@@ -2,7 +2,7 @@
 
 import { logger } from "@vestfoldfylke/loglady"
 import type { AuthenticatedPrincipal, MSPrincipalClaims } from "$lib/types/authentication"
-import { MS_AUTH_PRINCIPAL_CLAIMS_HEADER, MS_PRINCIPAL_CLAIM_TYPS } from "./auth-constants"
+import { MS_AUTH_PRINCIPAL_CLAIMS_HEADER, MS_PRINCIPAL_CLAIM_TYPES } from "./auth-constants"
 import { injectMockAuthenticatedUserHeaders, MOCK_AUTH } from "./mock-authenticated-principal"
 
 export const getPrincipalClaims = (base64EncodedHeaderValue: string): MSPrincipalClaims => {
@@ -29,7 +29,7 @@ export const getPrincipalClaims = (base64EncodedHeaderValue: string): MSPrincipa
 		throw new Error("Principal claims 'claims' property is not an array")
 	}
 	for (const claim of principalClaims.claims) {
-		if (!MS_PRINCIPAL_CLAIM_TYPS.includes(claim.typ)) {
+		if (!MS_PRINCIPAL_CLAIM_TYPES.includes(claim.typ)) {
 			logger.warn("Unknown claim type found in principal claims: {claimType}", claim.typ)
 		}
 	}

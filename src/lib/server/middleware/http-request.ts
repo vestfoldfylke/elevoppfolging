@@ -11,7 +11,7 @@ import { HTTPError } from "./http-error"
  * Make sure to handle authorization (access to resources) inside the `next` function and either throw a HTTPError or return `isAuthorized: false` if the caller is not authorized to access the requested resource.
  *
  * @param {RequestEvent} requestEvent The incoming request event from SvelteKit server route
- * @param {MiddlewareNextFunction} next The middleware next function to call if authentication is successful, passing in the request event and authenticated user
+ * @param {ApiNextFunction} next The middleware next function to call if authentication is successful, passing in the request event and authenticated user
  * @returns {Promise<Response>} The final response to return to the client
  */
 export const apiRequestMiddleware = async (requestEvent: RequestEvent, next: ApiNextFunction): Promise<Response> => {

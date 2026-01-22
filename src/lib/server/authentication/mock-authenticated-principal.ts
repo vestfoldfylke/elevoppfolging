@@ -52,7 +52,7 @@ const mockClaims: MSPrincipalClaims = {
 		},
 		{
 			typ: "groups",
-			val: "a23d4ddd-8e3a-40ca-b4ce-a32e87508094" // Group Object ID if groups are included in the token (in this case, only one group, random UUID genereated for mock)
+			val: "a23d4ddd-8e3a-40ca-b4ce-a32e87508094" // Group Object ID if groups are included in the token (in this case, only one group, random UUID generated for mock)
 		},
 		{
 			typ: "name",
@@ -64,7 +64,7 @@ const mockClaims: MSPrincipalClaims = {
 		},
 		{
 			typ: "http://schemas.microsoft.com/identity/claims/objectidentifier",
-			val: "c0585101-3bd0-484b-9dad-a82dcbc6bd56" // The immutable identifier for an object, in this case, a random UUID genereated for mocking a user. This ID uniquely identifies the user across applications.
+			val: "c0585101-3bd0-484b-9dad-a82dcbc6bd56" // The immutable identifier for an object, in this case, a random UUID generated for mocking a user. This ID uniquely identifies the user across applications.
 		},
 		{
 			typ: "preferred_username",
@@ -109,7 +109,7 @@ export const injectMockAuthenticatedUserHeaders = (headers: Headers): Headers =>
 		throw new Error("MOCK_AUTH is not enabled, you should not be calling this function!")
 	}
 	if (headers.has(MS_AUTH_PRINCIPAL_CLAIMS_HEADER)) {
-		logger.warn(`Headers already have ${MS_AUTH_PRINCIPAL_CLAIMS_HEADER}, probs already injected!`)
+		logger.warn(`Headers already have ${MS_AUTH_PRINCIPAL_CLAIMS_HEADER}, probably already injected!`)
 		return headers
 	}
 	headers.set(MS_AUTH_PRINCIPAL_CLAIMS_HEADER, base64MockClaims)

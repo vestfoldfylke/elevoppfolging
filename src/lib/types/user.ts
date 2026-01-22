@@ -1,15 +1,3 @@
-export type EntraUser = {
-	_id: string
-	feidenavn?: string
-	entra: {
-		id: string
-		userPrincipalName: string
-		displayName: string
-		companyName: string
-		department: string
-	}
-}
-
 export type UserAccess = {
 	_id: string
 	userId: string

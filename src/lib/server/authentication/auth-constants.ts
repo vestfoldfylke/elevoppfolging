@@ -5,7 +5,7 @@ export const MS_AUTH_PRINCIPAL_NAME_HEADER = "x-ms-client-principal-name"
 export const MS_AUTH_PRINCIPAL_ID_HEADER = "x-ms-client-principal-id"
 export const MS_AUTH_PRINCIPAL_IDP_HEADER = "x-ms-client-principal-idp"
 
-export const MS_PRINCIPAL_CLAIM_TYPS: MSPrincipalClaimTyp[] = [
+export const MS_PRINCIPAL_CLAIM_TYPES: MSPrincipalClaimTyp[] = [
 	"aud",
 	"iss",
 	"iat",

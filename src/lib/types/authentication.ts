@@ -44,7 +44,7 @@ export const AuthenticatedPrincipalSchema = z.object({
 	/** ObjectId in EntraID */
 	id: z.string(),
 	displayName: z.string(),
-	/** Whateverxy on this for unique identification */
+	/** Whatever on this for unique identification */
 	preferredUserName: z.string(),
 	/** Email address */
 	email: z.email().optional(),

@@ -1,3 +1,6 @@
+<script>
+</script>
+
 <h1>Elevoppfølging</h1>
 <p>Velkommen til Elevoppfølging-applikasjonen.</p>
 <p>Siste aktivitet</p>
@@ -12,3 +15,5 @@
 <br />
 <a href="/classes">Gå til klasser</a>
 <a href="/classes/1">Gå til klasse med systemId 1</a>
+<br />
+<a href="/admin">Gå til admin</a>

@@ -1,49 +1,59 @@
-export type Larer = {
+export type Teacher = {
 	_id: string
 	feidenavn: string
 	navn: string
 }
 
-export type Undervisningsforhold = {
+/** Undervisningsforhold */
+export type TeachingRelation = {
+	larer: Teacher
 	systemId: string
-	larer: Larer
 }
 
-export type Klasse = {
-	systemId: string
-	navn: string
+/** Basisgruppe */
+export type Class = {
 	beskrivelse: string
-	undervisningsforhold: Undervisningsforhold[]
-}
-
-export type Undervisningsgruppe = {
+	navn: string
+	periode: Period
 	systemId: string
-	navn: string
+	undervisningsforhold: TeachingRelation[]
+}
+
+/** Undervisningsgruppe */
+export type TeachingGroup = {
 	beskrivelse: string
-	undervisningsforhold: Undervisningsforhold[]
-}
-
-export type Skole = {
-	_id: string
-	skolenummer: string
 	navn: string
+	periode: Period
+	systemId: string
+	undervisningsforhold: TeachingRelation[]
 }
 
-export type Elevforhold = {
+export type School = {
 	_id: string
-	skole: Skole & {
-		hovedskole: boolean
-	}
-	skolenummer: string
-	undervisningsgrupper: Undervisningsgruppe[]
-	klasser: Klasse[]
-	kontaktlarere: Larer[]
-}
-
-export type Elev = {
-	_id: string
+	hovedskole?: boolean
 	navn: string
+	skolenummer: string
+}
+
+export type Period = {
+	start: string | null,
+	slutt: string | null,
+	aktiv: boolean
+}
+
+export type StudentRelation = {
+	_id: string
+	klasser: Class[]
+	kontaktlarere: Teacher[]
+	periode: Period
+	skole: School
+	undervisningsgrupper: TeachingGroup[]
+}
+
+export type AppStudent = {
+	_id: string
+	elevforhold: StudentRelation[]
 	elevnummer: string
 	fodselsnummer: string
-	elevforhold: Elevforhold[]
+	navn: string
 }
