@@ -11,4 +11,4 @@ setInterval(async () => {
 
 const appUsers: AppUser[] = await syncUsers()
 const syncStudentsClient = new SyncStudents(appUsers)
-await syncStudentsClient.syncStudents()
+await syncStudentsClient.syncStudentsAndAccess()

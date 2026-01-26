@@ -3,7 +3,7 @@ export type Teacher = {
 	/** _id knyttet til en bruker i Users-collection hvis læreren finnes der */
 	_id: string | null
 	systemId: string
-	feidename: string
+	feideName: string
 	name: string
 }
 
@@ -19,13 +19,13 @@ export type GroupMembership = {
 }
 
 /** Klasse */
-export type Class = Group & {
+export type ClassGroup = Group & {
 	teachers: Teacher[]
 }
 
 /** Klassemedlemskap */
 export type ClassMembership = GroupMembership & {
-	class: Class
+	classGroup: ClassGroup
 }
 
 /** Undervisningsgruppe */
@@ -80,6 +80,6 @@ export type AppStudent = {
 	studentNumber: string
 	ssn: string
 	name: string
-	feidename: string
+	feideName: string
 	studentEnrollments: StudentEnrollment[]
 }

@@ -32,7 +32,6 @@ import type {
 	Undervisningsgruppemedlemskap
 } from "$lib/types/fint-types"
 import type { AppStudent, ClassMembership, ContactTeacherGroupMembership, Period, School, StudentEnrollment, Teacher, TeachingGroupMembership } from "$lib/types/student"
-import { log } from "node:console"
 
 export class SyncStudents {
 	private readonly appUsers: AppUser[]
@@ -41,8 +40,8 @@ export class SyncStudents {
 		this.appUsers = appUsers
 	}
 
-	private findUserByFeidename = (feidename: string): AppUser | null => {
-		const user: AppUser | undefined = this.appUsers.find((appUser: AppUser) => appUser.feidenavn?.toLowerCase() === feidename.toLowerCase())
+	private findUserByFeideName = (feideName: string): AppUser | null => {
+		const user: AppUser | undefined = this.appUsers.find((appUser: AppUser) => appUser.feidenavn?.toLowerCase() === feideName.toLowerCase())
 		return user || null
 	}
 
@@ -94,7 +93,7 @@ export class SyncStudents {
 			return {
 				systemId: klassemedlemskap.systemId.identifikatorverdi,
 				period: this.repackPeriode(klassemedlemskap.gyldighetsperiode),
-				class: {
+				classGroup: {
 					systemId: klassemedlemskap.systemId.identifikatorverdi,
 					name: klassemedlemskap.klasse.navn,
 					description: klassemedlemskap.klasse.beskrivelse,
@@ -167,13 +166,13 @@ export class SyncStudents {
 		})
 
 		return undervisningsforholdWithTeacher.map((undervisningsforhold: Undervisningsforhold) => {
-			const feidename: string = (undervisningsforhold.skoleressurs.feidenavn as Identifikator).identifikatorverdi // Den er vel sjekka rett over vel
+			const feideName: string = (undervisningsforhold.skoleressurs.feidenavn as Identifikator).identifikatorverdi // Den er vel sjekka rett over vel
 			const firstName: string = undervisningsforhold.skoleressurs.person?.navn.fornavn || "Ukjent fornavn"
 			const lastName: string = undervisningsforhold.skoleressurs.person?.navn.etternavn || "Ukjent etternavn"
-			const appUserId: string | null = this.findUserByFeidename(feidename)?.feidenavn || null
+			const appUserId: string | null = this.findUserByFeideName(feideName)?.feidenavn || null
 			return {
 				_id: appUserId,
-				feidename,
+				feideName: feideName,
 				name: `${firstName} ${lastName}`,
 				systemId: undervisningsforhold.skoleressurs.systemId.identifikatorverdi
 			}
@@ -270,9 +269,9 @@ export class SyncStudents {
 
         // Går gjennom klassemedlemskap for å oppdatere lærer-tilganger - deretter undervisningsgruppemedlemskap
         for (const classMembership of classMemberships) {
-          for (const teacher of classMembership.class.teachers) {
+          for (const teacher of classMembership.classGroup.teachers) {
             const accessEntry: ClassAutoAccessEntry = {
-              systemId: classMembership.class.systemId,
+              systemId: classMembership.classGroup.systemId,
               schoolNumber: school.schoolNumber,
               type: "AUTOMATISK-KLASSE-TILGANG",
               granted: {
@@ -319,7 +318,7 @@ export class SyncStudents {
 				_id: "",
         systemId: student.systemId.identifikatorverdi,
 				studentNumber: student.elevnummer.identifikatorverdi,
-				feidename: student.feidenavn.identifikatorverdi,
+				feideName: student.feidenavn.identifikatorverdi,
 				ssn: student.person.fodselsnummer.identifikatorverdi,
 				name: `${student.person.navn.fornavn} ${student.person.navn.mellomnavn ? `${student.person.navn.mellomnavn} ` : ""}${student.person.navn.etternavn}`,
 				studentEnrollments: elevforholder
