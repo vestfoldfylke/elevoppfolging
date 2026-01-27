@@ -1,0 +1,161 @@
+fragment FintElev on Elev {
+	systemId {
+		identifikatorverdi
+	}
+	feidenavn {
+		identifikatorverdi
+	}
+	elevnummer {
+		identifikatorverdi
+	}
+	person {
+		fodselsnummer {
+			identifikatorverdi
+		}
+		navn {
+			fornavn
+			mellomnavn
+			etternavn
+		}
+	}
+}
+
+fragment FintGyldighetsPeriode on Periode {
+	start
+	slutt
+}
+
+fragment FintProgramomrademedlemskap on Programomrademedlemskap {
+	gyldighetsperiode {
+		...FintGyldighetsPeriode
+	}
+	programomrade {
+		navn
+		systemId {
+			identifikatorverdi
+		}
+		grepreferanse
+		utdanningsprogram {
+			systemId {
+				identifikatorverdi
+			}
+			navn
+			grepreferanse
+		}
+	}
+}
+
+fragment FintUndervisningsforhold on Undervisningsforhold {
+	skoleressurs {
+		systemId {
+			identifikatorverdi
+		}
+		feidenavn {
+			identifikatorverdi
+		}
+		person {
+			navn {
+				fornavn
+				mellomnavn
+				etternavn
+			}
+		}
+	}
+}
+
+fragment FintKlassemedlemskap on Klassemedlemskap {
+	gyldighetsperiode {
+		...FintGyldighetsPeriode
+	}
+	klasse {
+		navn
+		systemId {
+			identifikatorverdi
+		}
+		trinn {
+			navn
+			grepreferanse
+		}
+		undervisningsforhold {
+			...FintUndervisningsforhold
+		}
+	}
+}
+
+fragment FintUndervisningsgruppemedlemskap on Undervisningsgruppemedlemskap {
+	systemId {
+		identifikatorverdi
+	}
+	gyldighetsperiode {
+		...FintGyldighetsPeriode
+	}
+	undervisningsgruppe {
+		navn
+		systemId {
+			identifikatorverdi
+		}
+		undervisningsforhold {
+			...FintUndervisningsforhold
+		}
+	}
+}
+
+fragment FintKontaktlarergruppemedlemskap on Kontaktlarergruppemedlemskap {
+	systemId {
+		identifikatorverdi
+	}
+	gyldighetsperiode {
+		...FintGyldighetsPeriode
+	}
+	kontaktlarergruppe {
+		navn
+		systemId {
+			identifikatorverdi
+		}
+		undervisningsforhold {
+			...FintUndervisningsforhold
+		}
+	}
+}
+
+fragment FintElevforhold on Elevforhold {
+	systemId {
+		identifikatorverdi
+	}
+	gyldighetsperiode {
+		start
+		slutt
+	}
+	elev {
+		...FintElev
+	}
+	hovedskole
+	programomrademedlemskap {
+		...FintProgramomrademedlemskap
+	}
+	klassemedlemskap {
+		...FintKlassemedlemskap
+	}
+	undervisningsgruppemedlemskap {
+		...FintUndervisningsgruppemedlemskap
+	}
+	kontaktlarergruppemedlemskap {
+		...FintKontaktlarergruppemedlemskap
+	}
+}
+
+fragment FintSkole on Skole {
+	skolenummer {
+		identifikatorverdi
+	}
+	navn
+	elevforhold {
+		...FintElevforhold
+	}
+}
+
+query FintSchoolWithStudents($schoolNumber: String!) {
+	skole(skolenummer: $schoolNumber) {
+		...FintSkole
+	}
+}
