@@ -18,19 +18,6 @@ import { getDbClient } from "$lib/server/db/get-db-client"
 import { getFintClient } from "$lib/server/fint/get-fint-client"
 import type { Access, AppUser, ClassAutoAccessEntry, IDbClient, TeachingGroupAutoAccessEntry } from "$lib/types/db/db-client"
 import type { IFintClient } from "$lib/types/fint/fint-client"
-import type {
-	Elev,
-	Elevforhold,
-	Identifikator,
-	Klassemedlemskap,
-	Kontaktlarergruppemedlemskap,
-	Maybe,
-	Periode,
-	Person,
-	Skole,
-	Undervisningsforhold,
-	Undervisningsgruppemedlemskap
-} from "$lib/types/fint-types"
 import type { AppStudent, ClassMembership, ContactTeacherGroupMembership, Period, School, StudentEnrollment, Teacher, TeachingGroupMembership } from "$lib/types/student"
 
 export class SyncStudents {
@@ -183,14 +170,14 @@ export class SyncStudents {
 		const fintClient: IFintClient = getFintClient()
 		const students: Elev[] = await fintClient.getStudents()
 		const appStudents: AppStudent[] = []
-    const dbClient: IDbClient = getDbClient()
-    const existingAccess: Access[] = await dbClient.getAccess()
-    logger.info("Hentet eksisterende tilgangsdata ({Count} dokumenter) fra database - wiper all automatisk tilgang her in-memory, før vi fyller det opp igjen", existingAccess.length)
+		const dbClient: IDbClient = getDbClient()
+		const existingAccess: Access[] = await dbClient.getAccess()
+		logger.info("Hentet eksisterende tilgangsdata ({Count} dokumenter) fra database - wiper all automatisk tilgang her in-memory, før vi fyller det opp igjen", existingAccess.length)
 
-    existingAccess.forEach((access: Access) => {
-      access.classes = access.classes.filter((entry) => entry.type !== "AUTOMATISK-KLASSE-TILGANG")
-      access.teachingGroups = access.teachingGroups.filter((entry) => entry.type !== "AUTOMATISK-UNDERVISNINGSGRUPPE-TILGANG")
-    })
+		existingAccess.forEach((access: Access) => {
+			access.classes = access.classes.filter((entry) => entry.type !== "AUTOMATISK-KLASSE-TILGANG")
+			access.teachingGroups = access.teachingGroups.filter((entry) => entry.type !== "AUTOMATISK-UNDERVISNINGSGRUPPE-TILGANG")
+		})
 
 		for (const student of students) {
 			if (!student.elevforhold || student.elevforhold.length === 0) {
@@ -198,7 +185,7 @@ export class SyncStudents {
 				continue
 			}
 
-      if (!student.systemId || !student.systemId.identifikatorverdi) {
+			if (!student.systemId || !student.systemId.identifikatorverdi) {
 				logger.error("Elev {DisplayName} har ingen systemId, hopper over", student.person.navn.fornavn)
 				continue
 			}
@@ -229,79 +216,79 @@ export class SyncStudents {
 				const school: School = this.repackSchool(elevforhold.skole)
 				const mainSchool: boolean = Boolean(elevforhold.hovedskole)
 
-        logger.info("Oppdaterer lærer-tilganger for elev {StudentName}", student.person.navn.fornavn)
-        const upsertTeacherAccess = (teacher: Teacher, accessEntry: ClassAutoAccessEntry | TeachingGroupAutoAccessEntry): void => {
-          if (!teacher._id) {
-            logger.warn("Kan ikke oppdatere tilgang for lærer {TeacherName} uten app-bruker-id", teacher.name)
-            return
-          }
-          let teacherAccess: Access | undefined = existingAccess.find((access: Access) => access.userId === teacher._id)
-          if (!teacherAccess) {
-            teacherAccess = {
-              _id: "",
-              userId: teacher._id,
-              name: teacher.name,
-              schools: [],
-              programAreas: [],
-              classes: [],
-              teachingGroups: [],
-              students: []
-            }
-            existingAccess.push(teacherAccess)
-          }
-          if (accessEntry.type === "AUTOMATISK-KLASSE-TILGANG") {
-            const alreadyHasClassAccess = teacherAccess.classes.some((entry) => entry.systemId === accessEntry.systemId)
-            if (!alreadyHasClassAccess) {
-              teacherAccess.classes.push(accessEntry)
-              logger.info("La til automatisk klasse-tilgang for lærer {TeacherName} til klasse {ClassId}", teacher.name, accessEntry.systemId)
-            }
-            return
-          }
-          if (accessEntry.type === "AUTOMATISK-UNDERVISNINGSGRUPPE-TILGANG") {
-            const alreadyHasTeachingGroupAccess = teacherAccess.teachingGroups.some((entry) => entry.systemId === accessEntry.systemId)
-            if (!alreadyHasTeachingGroupAccess) {
-              teacherAccess.teachingGroups.push(accessEntry)
-              logger.info("La til automatisk undervisningsgruppe-tilgang for lærer {TeacherName} til undervisningsgruppe {TeachingGroupId}", teacher.name, accessEntry.systemId)
-            }
-            return
-          }
-        }
+				logger.info("Oppdaterer lærer-tilganger for elev {StudentName}", student.person.navn.fornavn)
+				const upsertTeacherAccess = (teacher: Teacher, accessEntry: ClassAutoAccessEntry | TeachingGroupAutoAccessEntry): void => {
+					if (!teacher._id) {
+						logger.warn("Kan ikke oppdatere tilgang for lærer {TeacherName} uten app-bruker-id", teacher.name)
+						return
+					}
+					let teacherAccess: Access | undefined = existingAccess.find((access: Access) => access.userId === teacher._id)
+					if (!teacherAccess) {
+						teacherAccess = {
+							_id: "",
+							userId: teacher._id,
+							name: teacher.name,
+							schools: [],
+							programAreas: [],
+							classes: [],
+							teachingGroups: [],
+							students: []
+						}
+						existingAccess.push(teacherAccess)
+					}
+					if (accessEntry.type === "AUTOMATISK-KLASSE-TILGANG") {
+						const alreadyHasClassAccess = teacherAccess.classes.some((entry) => entry.systemId === accessEntry.systemId)
+						if (!alreadyHasClassAccess) {
+							teacherAccess.classes.push(accessEntry)
+							logger.info("La til automatisk klasse-tilgang for lærer {TeacherName} til klasse {ClassId}", teacher.name, accessEntry.systemId)
+						}
+						return
+					}
+					if (accessEntry.type === "AUTOMATISK-UNDERVISNINGSGRUPPE-TILGANG") {
+						const alreadyHasTeachingGroupAccess = teacherAccess.teachingGroups.some((entry) => entry.systemId === accessEntry.systemId)
+						if (!alreadyHasTeachingGroupAccess) {
+							teacherAccess.teachingGroups.push(accessEntry)
+							logger.info("La til automatisk undervisningsgruppe-tilgang for lærer {TeacherName} til undervisningsgruppe {TeachingGroupId}", teacher.name, accessEntry.systemId)
+						}
+						return
+					}
+				}
 
-        // Går gjennom klassemedlemskap for å oppdatere lærer-tilganger - deretter undervisningsgruppemedlemskap
-        for (const classMembership of classMemberships) {
-          for (const teacher of classMembership.classGroup.teachers) {
-            const accessEntry: ClassAutoAccessEntry = {
-              systemId: classMembership.classGroup.systemId,
-              schoolNumber: school.schoolNumber,
-              type: "AUTOMATISK-KLASSE-TILGANG",
-              granted: {
-                by: {
-                  _id: "SYSTEM",
-                  name: "SYNC JOB"
-                },
-                at: new Date().toISOString()
-              }
-            }
-            upsertTeacherAccess(teacher, accessEntry)
-          }
-        }
-        for (const teachingGroupMembership of teachingGroupMemberships) {
-          for (const teacher of teachingGroupMembership.teachingGroup.teachers) {
-            const accessEntry: TeachingGroupAutoAccessEntry = {
-              systemId: teachingGroupMembership.teachingGroup.systemId,
-              schoolNumber: school.schoolNumber,
-              type: "AUTOMATISK-UNDERVISNINGSGRUPPE-TILGANG",
-              granted: {
-                by: {
-                  _id: "SYSTEM",
-                  name: "SYNC JOB"
-                },
-                at: new Date().toISOString()
-              }
-            }
-            upsertTeacherAccess(teacher, accessEntry)
-          }
-        }
+				// Går gjennom klassemedlemskap for å oppdatere lærer-tilganger - deretter undervisningsgruppemedlemskap
+				for (const classMembership of classMemberships) {
+					for (const teacher of classMembership.classGroup.teachers) {
+						const accessEntry: ClassAutoAccessEntry = {
+							systemId: classMembership.classGroup.systemId,
+							schoolNumber: school.schoolNumber,
+							type: "AUTOMATISK-KLASSE-TILGANG",
+							granted: {
+								by: {
+									_id: "SYSTEM",
+									name: "SYNC JOB"
+								},
+								at: new Date().toISOString()
+							}
+						}
+						upsertTeacherAccess(teacher, accessEntry)
+					}
+				}
+				for (const teachingGroupMembership of teachingGroupMemberships) {
+					for (const teacher of teachingGroupMembership.teachingGroup.teachers) {
+						const accessEntry: TeachingGroupAutoAccessEntry = {
+							systemId: teachingGroupMembership.teachingGroup.systemId,
+							schoolNumber: school.schoolNumber,
+							type: "AUTOMATISK-UNDERVISNINGSGRUPPE-TILGANG",
+							granted: {
+								by: {
+									_id: "SYSTEM",
+									name: "SYNC JOB"
+								},
+								at: new Date().toISOString()
+							}
+						}
+						upsertTeacherAccess(teacher, accessEntry)
+					}
+				}
 
 				return {
 					_id: "",
@@ -316,7 +303,7 @@ export class SyncStudents {
 
 			appStudents.push({
 				_id: "",
-        systemId: student.systemId.identifikatorverdi,
+				systemId: student.systemId.identifikatorverdi,
 				studentNumber: student.elevnummer.identifikatorverdi,
 				feideName: student.feidenavn.identifikatorverdi,
 				ssn: student.person.fodselsnummer.identifikatorverdi,
@@ -326,6 +313,6 @@ export class SyncStudents {
 		}
 
 		await dbClient.replaceStudents(appStudents)
-    await dbClient.replaceAccess(existingAccess)
+		await dbClient.replaceAccess(existingAccess)
 	}
 }
