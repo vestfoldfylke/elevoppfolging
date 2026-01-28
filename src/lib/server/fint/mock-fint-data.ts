@@ -70,6 +70,9 @@ skole
 const generateUndervisningsforhold = (): FintUndervisningsforhold => {
   const uniqueName: UniqueName = generateUniqueName()
   return {
+    systemId: {
+      identifikatorverdi: norwegianFaker.string.uuid(),
+    },
     skoleressurs: {
       systemId: {
         identifikatorverdi: norwegianFaker.string.uuid(),

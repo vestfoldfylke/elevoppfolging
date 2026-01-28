@@ -26,6 +26,9 @@ fragment FintGyldighetsPeriode on Periode {
 }
 
 fragment FintUndervisningsforhold on Undervisningsforhold {
+	systemId {
+		identifikatorverdi
+	}
 	skoleressurs {
 		systemId {
 			identifikatorverdi

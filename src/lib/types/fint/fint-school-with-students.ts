@@ -44,6 +44,9 @@ export type FintGyldighetsPeriode = {
 };
 
 export type FintUndervisningsforhold = {
+  systemId: {
+    identifikatorverdi: string
+  },
   skoleressurs: {
     systemId: {
       identifikatorverdi: string
