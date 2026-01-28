@@ -43,24 +43,6 @@ export type FintGyldighetsPeriode = {
   slutt?: string | null
 };
 
-export type FintProgramomrademedlemskap = {
-  gyldighetsperiode?: FintGyldighetsPeriode | null,
-  programomrade: {
-    navn: string,
-    grepreferanse?: Array<string | null> | null,
-    systemId: {
-      identifikatorverdi: string
-    },
-    utdanningsprogram: Array<{
-      navn: string,
-      grepreferanse?: Array<string | null> | null,
-      systemId: {
-        identifikatorverdi: string
-      }
-    } | null>
-  }
-};
-
 export type FintUndervisningsforhold = {
   skoleressurs: {
     systemId: {
@@ -79,19 +61,32 @@ export type FintUndervisningsforhold = {
   }
 };
 
-export type FintKlassemedlemskap = {
-  gyldighetsperiode?: FintGyldighetsPeriode | null,
-  klasse: {
+export type FintKlasse = {
+  navn: string,
+  systemId: {
+    identifikatorverdi: string
+  },
+  trinn: {
     navn: string,
-    systemId: {
-      identifikatorverdi: string
-    },
-    trinn: {
-      navn: string,
-      grepreferanse?: Array<string | null> | null
-    },
-    undervisningsforhold?: Array<FintUndervisningsforhold | null> | null
-  }
+    grepreferanse?: Array<string | null> | null
+  },
+  undervisningsforhold?: Array<FintUndervisningsforhold | null> | null
+};
+
+export type FintKlassemedlemskap = {
+  systemId: {
+    identifikatorverdi: string
+  },
+  gyldighetsperiode?: FintGyldighetsPeriode | null,
+  klasse: FintKlasse
+};
+
+export type FintUndervisningsgruppe = {
+  navn: string,
+  systemId: {
+    identifikatorverdi: string
+  },
+  undervisningsforhold?: Array<FintUndervisningsforhold | null> | null
 };
 
 export type FintUndervisningsgruppemedlemskap = {
@@ -99,13 +94,15 @@ export type FintUndervisningsgruppemedlemskap = {
     identifikatorverdi: string
   },
   gyldighetsperiode?: FintGyldighetsPeriode | null,
-  undervisningsgruppe: {
-    navn: string,
-    systemId: {
-      identifikatorverdi: string
-    },
-    undervisningsforhold?: Array<FintUndervisningsforhold | null> | null
-  }
+  undervisningsgruppe: FintUndervisningsgruppe
+};
+
+export type FintKontaktlarergruppe = {
+  navn: string,
+  systemId: {
+    identifikatorverdi: string
+  },
+  undervisningsforhold?: Array<FintUndervisningsforhold | null> | null
 };
 
 export type FintKontaktlarergruppemedlemskap = {
@@ -113,13 +110,7 @@ export type FintKontaktlarergruppemedlemskap = {
     identifikatorverdi: string
   },
   gyldighetsperiode?: FintGyldighetsPeriode | null,
-  kontaktlarergruppe: {
-    navn: string,
-    systemId: {
-      identifikatorverdi: string
-    },
-    undervisningsforhold?: Array<FintUndervisningsforhold | null> | null
-  }
+  kontaktlarergruppe: FintKontaktlarergruppe
 };
 
 export type FintElevforhold = {
@@ -132,7 +123,6 @@ export type FintElevforhold = {
     slutt?: string | null
   } | null,
   elev: FintElev,
-  programomrademedlemskap?: Array<FintProgramomrademedlemskap | null> | null,
   klassemedlemskap?: Array<FintKlassemedlemskap | null> | null,
   undervisningsgruppemedlemskap?: Array<FintUndervisningsgruppemedlemskap | null> | null,
   kontaktlarergruppemedlemskap?: Array<FintKontaktlarergruppemedlemskap | null> | null

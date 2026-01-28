@@ -1,6 +1,9 @@
-import type { Elev } from "$lib/types/fint-types"
+import type { FintSchool } from "./fint-school"
+import type { FintSchoolWithStudents } from "./fint-school-with-students"
+
 
 export interface IFintClient {
 	/** Henter alle elever fra FINT APIet */
-	getStudents: () => Promise<Elev[]>
+	getSchools: () => Promise<FintSchool[]>
+	getSchoolWithStudents: (schoolNumber: string) => Promise<FintSchoolWithStudents>
 }

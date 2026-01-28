@@ -25,26 +25,6 @@ fragment FintGyldighetsPeriode on Periode {
 	slutt
 }
 
-fragment FintProgramomrademedlemskap on Programomrademedlemskap {
-	gyldighetsperiode {
-		...FintGyldighetsPeriode
-	}
-	programomrade {
-		navn
-		systemId {
-			identifikatorverdi
-		}
-		grepreferanse
-		utdanningsprogram {
-			systemId {
-				identifikatorverdi
-			}
-			navn
-			grepreferanse
-		}
-	}
-}
-
 fragment FintUndervisningsforhold on Undervisningsforhold {
 	skoleressurs {
 		systemId {
@@ -63,22 +43,39 @@ fragment FintUndervisningsforhold on Undervisningsforhold {
 	}
 }
 
+fragment FintKlasse on Klasse {
+	navn
+	systemId {
+		identifikatorverdi
+	}
+	trinn {
+		navn
+		grepreferanse
+	}
+	undervisningsforhold {
+		...FintUndervisningsforhold
+	}
+}
+
 fragment FintKlassemedlemskap on Klassemedlemskap {
+	systemId {
+		identifikatorverdi
+	}
 	gyldighetsperiode {
 		...FintGyldighetsPeriode
 	}
 	klasse {
-		navn
-		systemId {
-			identifikatorverdi
-		}
-		trinn {
-			navn
-			grepreferanse
-		}
-		undervisningsforhold {
-			...FintUndervisningsforhold
-		}
+		...FintKlasse
+	}
+}
+
+fragment FintUndervisningsgruppe on Undervisningsgruppe {
+	navn
+	systemId {
+		identifikatorverdi
+	}
+	undervisningsforhold {
+		...FintUndervisningsforhold
 	}
 }
 
@@ -90,13 +87,17 @@ fragment FintUndervisningsgruppemedlemskap on Undervisningsgruppemedlemskap {
 		...FintGyldighetsPeriode
 	}
 	undervisningsgruppe {
-		navn
-		systemId {
-			identifikatorverdi
-		}
-		undervisningsforhold {
-			...FintUndervisningsforhold
-		}
+		...FintUndervisningsgruppe
+	}
+}
+
+fragment FintKontaktlarergruppe on Kontaktlarergruppe {
+	navn
+	systemId {
+		identifikatorverdi
+	}
+	undervisningsforhold {
+		...FintUndervisningsforhold
 	}
 }
 
@@ -108,13 +109,7 @@ fragment FintKontaktlarergruppemedlemskap on Kontaktlarergruppemedlemskap {
 		...FintGyldighetsPeriode
 	}
 	kontaktlarergruppe {
-		navn
-		systemId {
-			identifikatorverdi
-		}
-		undervisningsforhold {
-			...FintUndervisningsforhold
-		}
+		...FintKontaktlarergruppe
 	}
 }
 
@@ -130,9 +125,6 @@ fragment FintElevforhold on Elevforhold {
 		...FintElev
 	}
 	hovedskole
-	programomrademedlemskap {
-		...FintProgramomrademedlemskap
-	}
 	klassemedlemskap {
 		...FintKlassemedlemskap
 	}
