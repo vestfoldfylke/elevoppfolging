@@ -1,77 +1,77 @@
 import type { AppStudent } from "$lib/types/student"
 
 export type ManualAccessEntryBase = {
-  /** Hvilken skole gjelder tilgangen for */
-  schoolNumber: string
-  /** Hvem har gitt tilgangen */
-  granted: {
-    by: {
-      _id: string
-      name: string
-    }
-    at: string
-  }
+	/** Hvilken skole gjelder tilgangen for */
+	schoolNumber: string
+	/** Hvem har gitt tilgangen */
+	granted: {
+		by: {
+			_id: string
+			name: string
+		}
+		at: string
+	}
 }
 
 export type AutoAccessEntryBase = {
-  /** Hvilken skole gjelder tilgangen for */
-  schoolNumber: string
-  /** Når ble tilgangen automatisk gitt (ved synk mot FINT) */
-  granted: {
-    by: {
-      _id: "SYSTEM",
-      name: "SYNC JOB"
-    }
-    at: string
-  }
+	/** Hvilken skole gjelder tilgangen for */
+	schoolNumber: string
+	/** Når ble tilgangen automatisk gitt (ved synk mot FINT) */
+	granted: {
+		by: {
+			_id: "SYSTEM"
+			name: "SYNC JOB"
+		}
+		at: string
+	}
 }
 
-export type SchoolManualAccessEntry =  ManualAccessEntryBase & {
-  type: "MANUELL-SKOLELEDER-TILGANG"
+export type SchoolManualAccessEntry = ManualAccessEntryBase & {
+	type: "MANUELL-SKOLELEDER-TILGANG"
 }
 
 export type ProgramAreaManualAccessEntry = ManualAccessEntryBase & {
-  /** Entydig identifikator (db _id) for hvilket undervisningsområde det er gitt tilgang til */
-  _id: string
-  type: "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG"
+	/** Entydig identifikator (db _id) for hvilket undervisningsområde det er gitt tilgang til */
+	_id: string
+	type: "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG"
 }
 
 export type ClassManualAccessEntry = ManualAccessEntryBase & {
-  /** FINT system-id for klassen det er gitt tilgang til */
-  systemId: string
-  type: "MANUELL-KLASSE-TILGANG"
+	/** FINT system-id for klassen det er gitt tilgang til */
+	systemId: string
+	type: "MANUELL-KLASSE-TILGANG"
 }
 
 export type TeachingGroupManualAccessEntry = ManualAccessEntryBase & {
-  /** FINT system-id for undervisningsgruppen det er gitt tilgang til */
-  systemId: string
-  type: "MANUELL-UNDERVISNINGSGRUPPE-TILGANG"
+	/** FINT system-id for undervisningsgruppen det er gitt tilgang til */
+	systemId: string
+	type: "MANUELL-UNDERVISNINGSGRUPPE-TILGANG"
 }
 
 export type StudentManualAccessEntry = ManualAccessEntryBase & {
-  /** FINT system-id for eleven det er gitt tilgang til */
-  systemId: string
-  type: "MANUELL-ELEV-TILGANG"
+	/** FINT system-id for eleven det er gitt tilgang til */
+	systemId: string
+	type: "MANUELL-ELEV-TILGANG"
 }
 
 export type ClassAutoAccessEntry = AutoAccessEntryBase & {
-  /** FINT system-id for klassen det er gitt tilgang til */
-  systemId: string
-  type: "AUTOMATISK-KLASSE-TILGANG"
+	/** FINT system-id for klassen det er gitt tilgang til */
+	systemId: string
+	type: "AUTOMATISK-KLASSE-TILGANG"
 }
 
 export type TeachingGroupAutoAccessEntry = AutoAccessEntryBase & {
-  /** FINT system-id for undervisningsgruppen det er gitt tilgang til */
-  systemId: string
-  type: "AUTOMATISK-UNDERVISNINGSGRUPPE-TILGANG"
+	/** FINT system-id for undervisningsgruppen det er gitt tilgang til */
+	systemId: string
+	type: "AUTOMATISK-UNDERVISNINGSGRUPPE-TILGANG"
 }
 
 export type Access = {
 	_id: string
 	userId: string
 	name: string
-  schools: SchoolManualAccessEntry[]
-  programAreas: ProgramAreaManualAccessEntry[]
+	schools: SchoolManualAccessEntry[]
+	programAreas: ProgramAreaManualAccessEntry[]
 	classes: (ClassManualAccessEntry | ClassAutoAccessEntry)[]
 	teachingGroups: (TeachingGroupManualAccessEntry | TeachingGroupAutoAccessEntry)[]
 	students: StudentManualAccessEntry[]
@@ -93,8 +93,8 @@ export interface IDbClient {
 	getStudents: () => Promise<AppStudent[]>
 	replaceStudents: (students: AppStudent[]) => Promise<void>
 	replaceUsers: (users: AppUser[]) => Promise<void>
-  getAccess: () => Promise<Access[]>
-  replaceAccess: (accesses: Access[]) => Promise<void>
+	getAccess: () => Promise<Access[]>
+	replaceAccess: (accesses: Access[]) => Promise<void>
 }
 
 /*

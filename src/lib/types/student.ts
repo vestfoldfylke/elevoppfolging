@@ -75,8 +75,8 @@ export type StudentEnrollment = {
 /** En elev i db for denne appen */
 export type AppStudent = {
 	_id: string
-  /** FINT system-id for eleven */
-  systemId: string
+	/** FINT system-id for eleven */
+	systemId: string
 	studentNumber: string
 	ssn: string
 	name: string
