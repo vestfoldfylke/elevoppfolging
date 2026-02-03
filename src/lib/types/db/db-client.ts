@@ -1,5 +1,5 @@
-import type { AuthenticatedPrincipal } from "../authentication.js"
 import type { Access, AppStudent, ProgramArea, SimpleAppStudent } from "../app-types.js"
+import type { AuthenticatedPrincipal } from "../authentication.js"
 
 export interface IDbClient {
 	getAccess(principal: AuthenticatedPrincipal): Promise<Access | null>

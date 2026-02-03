@@ -1,3 +1,3 @@
 export type KeysToNumber<T> = {
-  [K in keyof T]: number;
-};
+	[K in keyof T]: number
+}

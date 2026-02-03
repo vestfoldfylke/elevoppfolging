@@ -1,8 +1,8 @@
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
+import type { SimpleAppStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
-import type { SimpleAppStudent } from "$lib/types/app-types"
 import type { PageServerLoad } from "./$types"
 
 type StudentsPageData = {
@@ -17,7 +17,7 @@ const getStudents: ServerLoadNextFunction<StudentsPageData> = async ({ principal
 	- Returns list of students with some (but not too much) data - klasser navn, kontaktlærer etc
 	*/
 	const access = await dbClient.getAccess(principal)
-	
+
 	if (!access) {
 		return {
 			data: {

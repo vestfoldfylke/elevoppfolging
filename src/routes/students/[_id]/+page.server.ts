@@ -8,7 +8,7 @@ import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
 import type { PageServerLoad } from "./$types"
 
 type StudentPageData = {
-	student: AppStudent,
+	student: AppStudent
 	accessType: AccessType
 }
 
@@ -19,13 +19,12 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 	}
 
 	const dbClient: IDbClient = getDbClient()
-	
+
 	/*
 	- Først henter vi tilgangene til brukeren
 	- Så henter vi eleven basert på ID
 	- Så har vi en støgg funksjon som sjekker at brukeren har tilgang til denne eleven - og hva slags tilgang, for da kan vi lage litt tester på funksjonen, i stedet for en psyjo query monster
 	*/
-
 
 	const access: Access | null = await dbClient.getAccess(principal)
 	if (!access) {
