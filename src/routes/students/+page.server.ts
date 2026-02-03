@@ -2,16 +2,32 @@ import { getDbClient } from "$lib/server/db/get-db-client"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
-import type { AppStudent } from "$lib/types/student"
+import type { SimpleAppStudent } from "$lib/types/app-types"
 import type { PageServerLoad } from "./$types"
 
 type StudentsPageData = {
-	students: AppStudent[]
+	students: SimpleAppStudent[]
 }
 
-const getStudents: ServerLoadNextFunction<StudentsPageData> = async () => {
+const getStudents: ServerLoadNextFunction<StudentsPageData> = async ({ principal }) => {
 	const dbClient: IDbClient = getDbClient()
-	const students: AppStudent[] = await dbClient.getStudents()
+	/*
+	- Get access for current principal
+	- Pass access to dbClient.getStudents to filter students based on access
+	- Returns list of students with some (but not too much) data - klasser navn, kontaktlærer etc
+	*/
+	const access = await dbClient.getAccess(principal)
+	
+	if (!access) {
+		return {
+			data: {
+				students: []
+			},
+			isAuthorized: false
+		}
+	}
+
+	const students: SimpleAppStudent[] = await dbClient.getStudents(access)
 
 	return {
 		data: {

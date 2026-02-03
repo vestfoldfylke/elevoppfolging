@@ -1,13 +1,13 @@
 import { env } from "$env/dynamic/private"
-import { MockDbClient } from "$lib/server/db/mock-db-client"
 import type { IDbClient } from "$lib/types/db/db-client"
+import { MongoDbClient } from "./mongodb-client"
 
 let dbClient: IDbClient
 
 if (env.MOCK_DB === "true") {
-	dbClient = new MockDbClient()
+	throw new Error("Mock DB client is not implemented yet")
 } else {
-	throw new Error("No real database client implemented yet.")
+	dbClient = new MongoDbClient()
 }
 
 export const getDbClient = (): IDbClient => dbClient
