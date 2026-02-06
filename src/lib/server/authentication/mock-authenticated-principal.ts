@@ -64,7 +64,7 @@ const mockClaims: MSPrincipalClaims = {
 		},
 		{
 			typ: "http://schemas.microsoft.com/identity/claims/objectidentifier",
-			val: "mock-karoline.finstad.berntsen@fylke.no" // The immutable identifier for an object, in this case, a random UUID generated for mocking a user. This ID uniquely identifies the user across applications.
+			val: "mock-sondre.skoglund@fylke.no" // The immutable identifier for an object, in this case, a random UUID generated for mocking a user. This ID uniquely identifies the user across applications.
 		},
 		{
 			typ: "preferred_username",

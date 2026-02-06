@@ -2,13 +2,15 @@
 	import { slide } from "svelte/transition"
 	import { enhance } from "$app/forms"
 	import type { StudentDocument } from "$lib/types/db/shared-types"
+	import type { ActionData } from "../../../routes/students/[_id]/$types"
 	import Message from "./Message.svelte"
 
 	type PageProps = {
 		document: StudentDocument
+		form: ActionData
 	}
 
-	let { document }: PageProps = $props()
+	let { document, form }: PageProps = $props()
 
 	let documentOpen = $state(false)
 	let messageType: "UPDATE" | "COMMENT" | null = $state(null)
@@ -66,6 +68,7 @@
             <button onclick={() => messageType = null}>Avbryt</button>
           </form>
         {/if}
+        {#if form?.createMessageFailedData?.[document._id]?.errorMessage}<p class="error">{form?.createMessageFailedData?.[document._id]?.errorMessage}</p>{/if}
       </div>
     </div>
   {/if}
