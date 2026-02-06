@@ -1,33 +1,26 @@
 import type { AccessType } from "$lib/types/app-types"
-import type { Access, AppStudent } from "$lib/types/db/shared-types"
+import type { Access, AppStudent, StudentEnrollment } from "$lib/types/db/shared-types"
 import { getDbClient } from "../db/get-db-client"
 
-export const studentHasSchool = (student: AppStudent, schoolNumber: string): boolean => {
-	if (schoolNumber.trim() === "") {
-		return false
-	}
-	return student.studentEnrollments.some((enrollment) => enrollment.school.schoolNumber === schoolNumber)
+const getSchoolAccess = (studentEnrollment: StudentEnrollment, access: Access): AccessType | undefined => {
+	return access.schools.find((entry) => studentEnrollment.school.schoolNumber === entry.schoolNumber)
 }
 
-export const getSchoolAccess = (student: AppStudent, access: Access): AccessType | undefined => {
-	return access.schools.find((entry) => studentHasSchool(student, entry.schoolNumber))
+const getExplicitStudentAccess = (studentEnrollment: StudentEnrollment, access: Access): AccessType | undefined => {
+	return access.students.find((entry) => entry.systemId === studentEnrollment.systemId && studentEnrollment.school.schoolNumber === entry.schoolNumber)
 }
 
-export const getExplicitStudentAccess = (student: AppStudent, access: Access): AccessType | undefined => {
-	return access.students.find((entry) => entry.systemId === student.systemId && studentHasSchool(student, entry.schoolNumber))
-}
-
-export const getProgramAreaAccess = async (student: AppStudent, access: Access): Promise<AccessType | undefined> => {
+const getProgramAreaAccess = async (studentEnrollment: StudentEnrollment, access: Access): Promise<AccessType | undefined> => {
 	if (access.programAreas.length === 0) {
 		return undefined
 	}
 
-	if (!access.programAreas.some((entry) => studentHasSchool(student, entry.schoolNumber))) {
+	if (!access.programAreas.some((entry) => entry.schoolNumber === studentEnrollment.school.schoolNumber)) {
 		return undefined
 	}
 
 	const dbClient = getDbClient()
-	for (const programAreaAccess of access.programAreas) {
+	for (const programAreaAccess of access.programAreas.filter((entry) => entry.schoolNumber === studentEnrollment.school.schoolNumber)) {
 		const programArea = await dbClient.getProgramArea(programAreaAccess._id)
 		if (!programArea) {
 			continue
@@ -35,15 +28,11 @@ export const getProgramAreaAccess = async (student: AppStudent, access: Access):
 		/*
       Må sjekke om eleven er med i en av klassene som hører til dette undervisningsområdet - så fall er det avdelingsleder tilgang
     */
-		const isInProgramArea = student.studentEnrollments.some((enrollment) => {
-			if (enrollment.school.schoolNumber !== programAreaAccess.schoolNumber) {
-				return false
-			}
-			return enrollment.classMemberships.some((classMembership) => {
-				return programArea.classes.some((programAreaClass) => programAreaClass.systemId === classMembership.classGroup.systemId)
-			})
+
+		const hasProgramAreaAccess = studentEnrollment.classMemberships.some((classMembership) => {
+			return programArea.classes.some((programAreaClass) => programAreaClass.systemId === classMembership.classGroup.systemId)
 		})
-		if (isInProgramArea) {
+		if (hasProgramAreaAccess) {
 			return programAreaAccess
 		}
 	}
@@ -51,46 +40,37 @@ export const getProgramAreaAccess = async (student: AppStudent, access: Access):
 	return undefined
 }
 
-export const getContactTeacherGroupAccess = (student: AppStudent, access: Access): AccessType | undefined => {
+const getContactTeacherGroupAccess = (studentEnrollment: StudentEnrollment, access: Access): AccessType | undefined => {
 	// Da sjekker vi om noen av kontaktlærergruppene til eleven matcher noen av tilgangene
-	const isContactTeacherForStudent = access.contactTeacherGroups.find((entry) => {
-		return student.studentEnrollments.some((enrollment) => {
-			if (enrollment.school.schoolNumber !== entry.schoolNumber) {
-				return false
-			}
-			return enrollment.contactTeacherGroupMemberships.some((membership) => membership.contactTeacherGroup.systemId === entry.systemId)
-		})
+	return access.contactTeacherGroups.find((entry) => {
+		if (studentEnrollment.school.schoolNumber !== entry.schoolNumber) {
+			return false
+		}
+		return studentEnrollment.contactTeacherGroupMemberships.some((membership) => membership.contactTeacherGroup.systemId === entry.systemId)
 	})
-	return isContactTeacherForStudent
 }
 
-export const getClassAccess = (student: AppStudent, access: Access): AccessType | undefined => {
+const getClassAccess = (studentEnrollment: StudentEnrollment, access: Access): AccessType | undefined => {
 	// Da sjekker vi om noen av klassene til eleven matcher noen av tilgangene
-	const isClassTeacherForStudent = access.classes.find((entry) => {
-		return student.studentEnrollments.some((enrollment) => {
-			if (enrollment.school.schoolNumber !== entry.schoolNumber) {
-				return false
-			}
-			return enrollment.classMemberships.some((membership) => membership.classGroup.systemId === entry.systemId)
-		})
+	return access.classes.find((entry) => {
+		if (studentEnrollment.school.schoolNumber !== entry.schoolNumber) {
+			return false
+		}
+		return studentEnrollment.classMemberships.some((membership) => membership.classGroup.systemId === entry.systemId)
 	})
-	return isClassTeacherForStudent
 }
 
-export const getTeachingGroupAccess = (student: AppStudent, access: Access): AccessType | undefined => {
+const getTeachingGroupAccess = (studentEnrollment: StudentEnrollment, access: Access): AccessType | undefined => {
 	// Da sjekker vi om noen av undervisningsgruppene til eleven matcher noen av tilgangene
-	const isTeachingGroupTeacherForStudent = access.teachingGroups.find((entry) => {
-		return student.studentEnrollments.some((enrollment) => {
-			if (enrollment.school.schoolNumber !== entry.schoolNumber) {
-				return false
-			}
-			return enrollment.teachingGroupMemberships.some((membership) => membership.teachingGroup.systemId === entry.systemId)
-		})
+	return access.teachingGroups.find((entry) => {
+		if (studentEnrollment.school.schoolNumber !== entry.schoolNumber) {
+			return false
+		}
+		return studentEnrollment.teachingGroupMemberships.some((membership) => membership.teachingGroup.systemId === entry.systemId)
 	})
-	return isTeachingGroupTeacherForStudent
 }
 
-export const getAccessType = async (student: AppStudent, access: Access): Promise<AccessType | null> => {
+const getAccessTypeForEnrollment = async (studentEnrollment: StudentEnrollment, access: Access): Promise<AccessType | null> => {
 	/* Strongest access wins
   1. skoleleder
   2. enkeltelev
@@ -98,35 +78,47 @@ export const getAccessType = async (student: AppStudent, access: Access): Promis
   4. kontaktlærer (automatisk fra kontaktlærergruppe)
   5. faglærere (automatisk undervisningsgruppe og automatisk klasse)
   */
-	const schoolAccess = getSchoolAccess(student, access)
+	const schoolAccess = getSchoolAccess(studentEnrollment, access)
 	if (schoolAccess) {
 		return schoolAccess
 	}
 
-	const studentAccess = getExplicitStudentAccess(student, access)
+	const studentAccess = getExplicitStudentAccess(studentEnrollment, access)
 	if (studentAccess) {
 		return studentAccess
 	}
 
-	const programAreaAccess = await getProgramAreaAccess(student, access)
+	const programAreaAccess = await getProgramAreaAccess(studentEnrollment, access)
 	if (programAreaAccess) {
 		return programAreaAccess
 	}
 
-	const contactTeacherAccess = getContactTeacherGroupAccess(student, access)
+	const contactTeacherAccess = getContactTeacherGroupAccess(studentEnrollment, access)
 	if (contactTeacherAccess) {
 		return contactTeacherAccess
 	}
 
-	const classAccess = getClassAccess(student, access)
+	const classAccess = getClassAccess(studentEnrollment, access)
 	if (classAccess) {
 		return classAccess
 	}
 
-	const teachingGroupAccess = getTeachingGroupAccess(student, access)
+	const teachingGroupAccess = getTeachingGroupAccess(studentEnrollment, access)
 	if (teachingGroupAccess) {
 		return teachingGroupAccess
 	}
 
 	return null
+}
+
+export const getAccessTypesForStudent = async (student: AppStudent, access: Access): Promise<AccessType[]> => {
+	const accessTypes: AccessType[] = []
+	for (const enrollment of student.studentEnrollments) {
+		const accessType = await getAccessTypeForEnrollment(enrollment, access)
+		if (accessType && !accessTypes.some((existingAccessType) => existingAccessType.type === accessType.type && existingAccessType.schoolNumber === accessType.schoolNumber)) {
+			accessTypes.push(accessType)
+		}
+	}
+
+	return accessTypes
 }

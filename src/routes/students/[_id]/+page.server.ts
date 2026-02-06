@@ -1,4 +1,4 @@
-import { getAccessType } from "$lib/server/authorization/access-type"
+import { getAccessTypesForStudent } from "$lib/server/authorization/access-type"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { FormActionError } from "$lib/server/middleware/form-action-error"
 import { HTTPError } from "$lib/server/middleware/http-error"
@@ -12,7 +12,7 @@ import type { Actions, PageServerLoad } from "./$types"
 
 type StudentPageData = {
 	student: AppStudent
-	accessType: AccessType
+	accessTypes: AccessType[]
 	documents: StudentDocument[]
 }
 
@@ -40,9 +40,9 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 		throw new HTTPError(404, "Student not found")
 	}
 
-	const accessType: AccessType | null = await getAccessType(student, access)
+	const accessTypes: AccessType[] = await getAccessTypesForStudent(student, access)
 
-	if (!accessType) {
+	if (accessTypes.length === 0) {
 		throw new HTTPError(403, "No access to this student")
 	}
 
@@ -52,7 +52,7 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 	return {
 		data: {
 			student,
-			accessType,
+			accessTypes,
 			documents
 		},
 		isAuthorized: true
@@ -198,7 +198,7 @@ type CreateMessageFailedValues = {
 	type: DocumentMessageType | null
 	title: string | null
 	comment: string | null
-	update: string | null,
+	update: string | null
 	errorMessage: string
 }
 
@@ -207,13 +207,14 @@ type CreateMessageFailedData = {
 }
 
 type NewMessageData = {
+	documentId: string
 	type: DocumentMessageType
 	title: string | null
 	comment: string | null
 	update: string | null
 }
 
-const createDocumentMessage = (messageData: NewMessageData, principal: AuthenticatedPrincipal): NewDocumentMessage => {
+const createDocumentMessage = (messageData: NewMessageData, principal: AuthenticatedPrincipal, returnOnFail: CreateMessageFailedData): NewDocumentMessage => {
 	const { type, title, comment, update } = messageData
 
 	const newMessageBase: DocumentMessageBase = {
@@ -229,7 +230,8 @@ const createDocumentMessage = (messageData: NewMessageData, principal: Authentic
 	switch (type) {
 		case "COMMENT": {
 			if (!comment || typeof comment !== "string") {
-				throw new FormActionError(400, "Comment text is required and must be a string.", { comment })
+				returnOnFail.createMessageFailedData[messageData.documentId].errorMessage = "Comment text is required and must be a string."
+				throw new FormActionError(400, "Comment text is required and must be a string.", returnOnFail)
 			}
 			const newMessage: NewDocumentMessage = {
 				...newMessageBase,
@@ -243,10 +245,13 @@ const createDocumentMessage = (messageData: NewMessageData, principal: Authentic
 		}
 		case "UPDATE": {
 			if (!update || typeof update !== "string") {
-				throw new FormActionError(400, "Update text is required and must be a string.", { update })
+				returnOnFail.createMessageFailedData[messageData.documentId].errorMessage = "Update text is required and must be a string."
+				throw new FormActionError(400, "Update text is required and must be a string.", returnOnFail)
 			}
 			if (!title || typeof title !== "string") {
-				throw new FormActionError(400, "Title is required and must be a string.", { title })
+				returnOnFail.createMessageFailedData[messageData.documentId].update = update
+				returnOnFail.createMessageFailedData[messageData.documentId].errorMessage = "Title is required and must be a string."
+				throw new FormActionError(400, "Title is required and must be a string.", returnOnFail)
 			}
 			const newMessage: NewDocumentMessage = {
 				...newMessageBase,
@@ -300,20 +305,20 @@ const newMessage: ServerActionNextFunction<CreatedMessage> = async ({ requestEve
 		}
 	}
 
-
 	if (!type || typeof type !== "string") {
 		returnOnFail.createMessageFailedData[documentId].errorMessage = "Message type is required and must be a string."
 		throw new FormActionError(400, "Message-type is required and must be a string.", returnOnFail)
 	}
 
 	const newMessageData: NewMessageData = {
+		documentId,
 		type,
 		title,
 		comment,
 		update
 	}
 
-	const newDocument: NewDocumentMessage = createDocumentMessage(newMessageData, principal)
+	const newDocument: NewDocumentMessage = createDocumentMessage(newMessageData, principal, returnOnFail)
 
 	const dbClient: IDbClient = getDbClient()
 	try {
