@@ -26,4 +26,3 @@ type ServerLoadNextParams = {
 export type ServerLoadNextFunction<T> = (params: ServerLoadNextParams) => Promise<ServerLoadNextResponse<T>>
 
 export type ServerActionNextFunction<TSuccess extends object> = (params: ServerLoadNextParams) => Promise<ServerLoadNextResponse<TSuccess>>
-

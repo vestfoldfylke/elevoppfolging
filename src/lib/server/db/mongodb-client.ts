@@ -3,9 +3,9 @@ import { type Db, type Filter, MongoClient, ObjectId, type WithId } from "mongod
 import { env } from "$env/dynamic/private"
 import type { SimpleAppStudent } from "$lib/types/app-types"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
-import type { Access, AppStudent, DbAccess, DbAppStudent, DbStudentDocument, DocumentMessage, NewDocumentMessage, NewStudentDocument, ProgramArea, StudentDocument } from "$lib/types/db/shared-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { KeysToNumber } from "$lib/types/db/db-helpers"
+import type { Access, AppStudent, DbAccess, DbAppStudent, DbStudentDocument, DocumentMessage, NewDocumentMessage, NewStudentDocument, ProgramArea, StudentDocument } from "$lib/types/db/shared-types"
 import type { DbProgramArea } from "$lib/types/program-area"
 
 export class MongoDbClient implements IDbClient {
@@ -174,47 +174,51 @@ export class MongoDbClient implements IDbClient {
 			}[]
 		}
 
-		const documents = await documentsCollection.aggregate<DocumentWithCreator>([
-			{
-				$match: {
-					"student._id": studentDbId
-				}
-			},
-			{
-				$lookup: {
-					from: this.usersCollectionName,
-					localField: "created.by.entraUserId",
-					foreignField: "entra.id",
-					as: "tyler_the_creator",
-					pipeline: [
-						{
-							$project: {
-								"entra.displayName": 1
+		const documents = await documentsCollection
+			.aggregate<DocumentWithCreator>([
+				{
+					$match: {
+						"student._id": studentDbId
+					}
+				},
+				{
+					$lookup: {
+						from: this.usersCollectionName,
+						localField: "created.by.entraUserId",
+						foreignField: "entra.id",
+						as: "tyler_the_creator",
+						pipeline: [
+							{
+								$project: {
+									"entra.displayName": 1
+								}
 							}
-						}
-					]
+						]
+					}
 				}
-			}
-		]).toArray()
+			])
+			.toArray()
 
 		// Todo: Add projection to only include necessary fields - And authorization
 
 		// Sleep 5 seconds to simulate long-running operation and test streaming
 		// await new Promise((resolve) => setTimeout(resolve, 2500))
 
-		return documents.map((document: DocumentWithCreator): StudentDocument => {
-			const createdByDisplayName = document.tyler_the_creator && document.tyler_the_creator.length > 0 ? document.tyler_the_creator[0].entra.displayName : undefined
-			delete document.tyler_the_creator
+		return documents
+			.map((document: DocumentWithCreator): StudentDocument => {
+				const createdByDisplayName = document.tyler_the_creator && document.tyler_the_creator.length > 0 ? document.tyler_the_creator[0].entra.displayName : undefined
+				delete document.tyler_the_creator
 
-			const studentDocument: StudentDocument = {
-				...document,
-				_id: document._id.toString()
-			}
-			if (createdByDisplayName) {
-				studentDocument.created.by.displayName = createdByDisplayName
-			}
-			return studentDocument
-		}).sort((a, b) => new Date(b.created.at).getTime() - new Date(a.created.at).getTime()) // Sort by created date descending
+				const studentDocument: StudentDocument = {
+					...document,
+					_id: document._id.toString()
+				}
+				if (createdByDisplayName) {
+					studentDocument.created.by.displayName = createdByDisplayName
+				}
+				return studentDocument
+			})
+			.sort((a, b) => new Date(b.created.at).getTime() - new Date(a.created.at).getTime()) // Sort by created date descending
 	}
 
 	async createStudentDocument(document: NewStudentDocument): Promise<string> {
@@ -234,10 +238,7 @@ export class MongoDbClient implements IDbClient {
 			messageId: new ObjectId().toString()
 		}
 
-		const result = await documentsCollection.updateOne(
-			{ _id: new ObjectId(documentId) },
-			{ $push: { messages: messageWithId } }
-		)
+		const result = await documentsCollection.updateOne({ _id: new ObjectId(documentId) }, { $push: { messages: messageWithId } })
 
 		if (result.modifiedCount === 0) {
 			throw new Error("Failed to add message to document")

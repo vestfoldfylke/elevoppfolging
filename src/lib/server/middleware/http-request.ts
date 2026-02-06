@@ -3,8 +3,8 @@ import { logger } from "@vestfoldfylke/loglady"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
 import type { ApiNextFunction, ServerActionNextFunction, ServerLoadNextFunction } from "$lib/types/middleware/http-request"
 import { getAuthenticatedPrincipal } from "../authentication/get-authenticated-principal"
-import { HTTPError } from "./http-error"
 import { FormActionError } from "./form-action-error"
+import { HTTPError } from "./http-error"
 
 /**
  * Wrap functionality in a server route with this middleware to handle authentication, some simple logging and error handling.
@@ -108,7 +108,10 @@ export const serverLoadRequestMiddleware = async <T>(requestEvent: RequestEvent,
  * @param {ServerActionNextFunction} next The middleware next function to call if authentication is successful, passing in the request event and authenticated user
  * @returns {Promise<Response>} The final response to return to the client
  */
-export const serverActionRequestMiddleware = async <TSuccess extends object, TFailure extends object>(requestEvent: RequestEvent, next: ServerActionNextFunction<TSuccess>): Promise<TSuccess | ActionFailure<TFailure & { message: string }>> => {
+export const serverActionRequestMiddleware = async <TSuccess extends object, TFailure extends object>(
+	requestEvent: RequestEvent,
+	next: ServerActionNextFunction<TSuccess>
+): Promise<TSuccess | ActionFailure<TFailure & { message: string }>> => {
 	const request = requestEvent.request
 	let loggerPrefix = `[Server action Request Middleware] - ${request.method} ${request.url}`
 
@@ -132,7 +135,7 @@ export const serverActionRequestMiddleware = async <TSuccess extends object, TFa
 	} catch (error) {
 		if (error instanceof FormActionError) {
 			logger.errorException(error.originalError || error, `${loggerPrefix} - Form Action Error {status}`, error.status)
-			return fail(error.status, { message: error.message, ...(error.values) as TFailure })
+			return fail(error.status, { message: error.message, ...(error.values as TFailure) })
 		}
 
 		if (error instanceof HTTPError) {

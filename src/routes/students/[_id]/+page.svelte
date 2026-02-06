@@ -1,10 +1,9 @@
 <script lang="ts">
+	import { enhance } from "$app/forms"
+	import DocumentComponent from "$lib/components/Document/Document.svelte"
 	import type { PageProps } from "./$types"
-	import DocumentComponent from "$lib/components/Document/Document.svelte";
-    import { enhance } from "$app/forms";
 
 	let { data, form }: PageProps = $props()
-
 </script>
 
 <h1>{data.student.name}</h1>

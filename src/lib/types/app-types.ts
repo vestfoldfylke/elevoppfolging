@@ -2,12 +2,12 @@ import type {
 	AppStudent,
 	ClassAutoAccessEntry,
 	ContactTeacherGroupAutoAccessEntry,
+	DocumentMessage,
 	ProgramAreaManualAccessEntry,
 	SchoolManualAccessEntry,
-	StudentManualAccessEntry,
-	TeachingGroupAutoAccessEntry,
 	StudentDocument,
-	DocumentMessage
+	StudentManualAccessEntry,
+	TeachingGroupAutoAccessEntry
 } from "./db/shared-types"
 
 export type SimpleAppStudent = Omit<AppStudent, "studentEnrollments" | "lastSynced" | "ssn">

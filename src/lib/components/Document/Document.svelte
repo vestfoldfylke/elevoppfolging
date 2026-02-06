@@ -1,18 +1,17 @@
 <script lang="ts">
-  import { slide } from "svelte/transition";
-    import Message from "./Message.svelte";
-    import type { DocumentMessage, StudentDocument } from "$lib/types/db/shared-types";
-    import { enhance } from "$app/forms";
+	import { slide } from "svelte/transition"
+	import { enhance } from "$app/forms"
+	import type { StudentDocument } from "$lib/types/db/shared-types"
+	import Message from "./Message.svelte"
 
-  type PageProps = {
-    document: StudentDocument,
-  }
+	type PageProps = {
+		document: StudentDocument
+	}
 
-  let { document }: PageProps = $props()
+	let { document }: PageProps = $props()
 
-  let documentOpen = $state(false)
-  let messageType: "UPDATE" | "COMMENT" | null = $state(null)
-
+	let documentOpen = $state(false)
+	let messageType: "UPDATE" | "COMMENT" | null = $state(null)
 </script>
 
 <div class="document">

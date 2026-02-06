@@ -1,15 +1,14 @@
 import { getAccessType } from "$lib/server/authorization/access-type"
 import { getDbClient } from "$lib/server/db/get-db-client"
+import { FormActionError } from "$lib/server/middleware/form-action-error"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverActionRequestMiddleware, serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
 import type { AccessType, DocumentMessageType, StudentDocumentType } from "$lib/types/app-types"
-import type { IDbClient } from "$lib/types/db/db-client"
-import type { ServerActionNextFunction, ServerLoadNextFunction } from "$lib/types/middleware/http-request"
-import type { PageServerLoad } from "./$types"
-import type { Actions } from './$types';
-import type { Access, AppStudent, DocumentBase, DocumentMessage, DocumentMessageBase, NewDocumentMessage, NewStudentDocument, StudentDocument } from "$lib/types/db/shared-types"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
-import { FormActionError } from "$lib/server/middleware/form-action-error"
+import type { IDbClient } from "$lib/types/db/db-client"
+import type { Access, AppStudent, DocumentBase, DocumentMessage, DocumentMessageBase, NewDocumentMessage, NewStudentDocument, StudentDocument } from "$lib/types/db/shared-types"
+import type { ServerActionNextFunction, ServerLoadNextFunction } from "$lib/types/middleware/http-request"
+import type { Actions, PageServerLoad } from "./$types"
 
 type StudentPageData = {
 	student: AppStudent
@@ -48,7 +47,7 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 	}
 
 	// Get student documents (streaming)
-	const documents: StudentDocument[] = await dbClient.getStudentDocuments(studentDbId);
+	const documents: StudentDocument[] = await dbClient.getStudentDocuments(studentDbId)
 
 	return {
 		data: {
@@ -68,26 +67,26 @@ export const load: PageServerLoad = async (requestEvent): Promise<StudentPageDat
 }
 
 type NewDocumentData = {
-	documentId?: string;
-	type: StudentDocumentType,
-	schoolNumber: string,
-	studentId: string,
-	title: string,
+	documentId?: string
+	type: StudentDocumentType
+	schoolNumber: string
+	studentId: string
+	title: string
 	note: string | null
-};
+}
 
 type CreatedDocument = {
 	documentId: string
 }
 
 type CreateDocumentFailedData = {
-	type: StudentDocumentType | null,
-	schoolNumber: string | null,
-	title: string | null,
+	type: StudentDocumentType | null
+	schoolNumber: string | null
+	title: string | null
 	note: string | null
 }
 
-const createStudentDocument = (documentData: NewDocumentData, principal: AuthenticatedPrincipal): NewStudentDocument  => {
+const createStudentDocument = (documentData: NewDocumentData, principal: AuthenticatedPrincipal): NewStudentDocument => {
 	const { type, schoolNumber, title, note, studentId } = documentData
 
 	const newDocumentBase: DocumentBase = {
@@ -137,13 +136,13 @@ const newDocument: ServerActionNextFunction<CreatedDocument> = async ({ requestE
 	if (!studentId || typeof studentId !== "string") {
 		throw new HTTPError(400, "Student ID is missing in request parameters")
 	}
-	
+
 	// get form data fields and validate
 	const formData = await requestEvent.request.formData()
-	const type: StudentDocumentType | null = formData.get("type") as (StudentDocumentType | null);
-	const schoolNumber = formData.get("schoolNumber") as (string | null);
-	const title = formData.get("title") as (string | null);
-	const note = formData.get("note") as (string | null);
+	const type: StudentDocumentType | null = formData.get("type") as StudentDocumentType | null
+	const schoolNumber = formData.get("schoolNumber") as string | null
+	const title = formData.get("title") as string | null
+	const note = formData.get("note") as string | null
 
 	const returnOnFail: CreateDocumentFailedData = {
 		type,
@@ -170,22 +169,21 @@ const newDocument: ServerActionNextFunction<CreatedDocument> = async ({ requestE
 		studentId
 	}
 
-	const newDocument: NewStudentDocument = createStudentDocument(newDocumentData, principal);
+	const newDocument: NewStudentDocument = createStudentDocument(newDocumentData, principal)
 
-	const dbClient: IDbClient = getDbClient();
+	const dbClient: IDbClient = getDbClient()
 	try {
-		const documentId = await dbClient.createStudentDocument(newDocument);
+		const documentId = await dbClient.createStudentDocument(newDocument)
 		return {
 			data: {
 				documentId
 			},
 			isAuthorized: true
-		};
+		}
 	} catch (error) {
-		throw new FormActionError(500, "Error creating student document, try again", returnOnFail, error);
+		throw new FormActionError(500, "Error creating student document, try again", returnOnFail, error)
 	}
 }
-
 
 type CreateMessageFailedData = {
 	type: DocumentMessageType | null
@@ -195,10 +193,10 @@ type CreateMessageFailedData = {
 }
 
 type NewMessageData = {
-	type: DocumentMessageType,
-	title: string | null,
-	comment: string | null,
-	update: string | null,
+	type: DocumentMessageType
+	title: string | null
+	comment: string | null
+	update: string | null
 }
 
 const createDocumentMessage = (messageData: NewMessageData, principal: AuthenticatedPrincipal): NewDocumentMessage => {
@@ -226,7 +224,7 @@ const createDocumentMessage = (messageData: NewMessageData, principal: Authentic
 					text: comment
 				}
 			}
-			
+
 			return newMessage
 		}
 		case "UPDATE": {
@@ -259,14 +257,14 @@ const newMessage: ServerActionNextFunction<DocumentMessage> = async ({ requestEv
 	if (!studentId || typeof studentId !== "string") {
 		throw new HTTPError(400, "Student ID is missing in request parameters")
 	}
-	
+
 	// get form data fields and validate
 	const formData = await requestEvent.request.formData()
-	const documentId = formData.get("documentId") as (string | null);
-	const type: DocumentMessageType | null = formData.get("type") as (DocumentMessageType | null);
-	const title = formData.get("title") as (string | null);
-	const comment = formData.get("comment") as (string | null);
-	const update = formData.get("update") as (string | null);
+	const documentId = formData.get("documentId") as string | null
+	const type: DocumentMessageType | null = formData.get("type") as DocumentMessageType | null
+	const title = formData.get("title") as string | null
+	const comment = formData.get("comment") as string | null
+	const update = formData.get("update") as string | null
 
 	const returnOnFail: CreateMessageFailedData = {
 		type,
@@ -290,17 +288,17 @@ const newMessage: ServerActionNextFunction<DocumentMessage> = async ({ requestEv
 		update
 	}
 
-	const newDocument: NewDocumentMessage = createDocumentMessage(newMessageData, principal);
+	const newDocument: NewDocumentMessage = createDocumentMessage(newMessageData, principal)
 
-	const dbClient: IDbClient = getDbClient();
+	const dbClient: IDbClient = getDbClient()
 	try {
-		const message = await dbClient.addDocumentMessage(documentId, newDocument);
+		const message = await dbClient.addDocumentMessage(documentId, newDocument)
 		return {
 			data: message,
 			isAuthorized: true
-		};
+		}
 	} catch (error) {
-		throw new FormActionError(500, "Error creating student document, try again", returnOnFail, error);
+		throw new FormActionError(500, "Error creating student document, try again", returnOnFail, error)
 	}
 }
 
@@ -311,4 +309,4 @@ export const actions = {
 	newMessageAction: async (event) => {
 		return serverActionRequestMiddleware<DocumentMessage, CreateMessageFailedData>(event, newMessage)
 	}
-} satisfies Actions;
+} satisfies Actions
