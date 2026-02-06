@@ -50,7 +50,6 @@ export type ContactTeacherGroupMembership = GroupMembership & {
 }
 
 export type School = {
-	_id: string
 	name: string
 	schoolNumber: string
 }
@@ -73,8 +72,7 @@ export type StudentEnrollment = {
 }
 
 /** En elev i db for denne appen */
-export type DbAppStudent = {
-	_id: ObjectId
+export type NewAppStudent = {
 	/** FINT system-id for eleven */
 	systemId: string
 	/** Om eleven har et aktivt elevforhold */
@@ -87,7 +85,13 @@ export type DbAppStudent = {
 	lastSynced: string
 }
 
-export type NewDbAppStudent = Omit<DbAppStudent, "_id">
+export type AppStudent = NewAppStudent & {
+	_id: string
+}
+
+export type DbAppStudent = NewAppStudent & {
+	_id: ObjectId
+}
 
 export type AccessEntryBase = {
 	/** Hvilken skole gjelder tilgangen for */
@@ -136,8 +140,7 @@ export type TeachingGroupAutoAccessEntry = AccessEntryBase & {
 	type: "AUTOMATISK-UNDERVISNINGSGRUPPE-TILGANG"
 }
 
-export type DbAccess = {
-	_id: ObjectId
+export type NewAccess = {
 	entraUserId: string
 	name: string
 	schools: SchoolManualAccessEntry[]
@@ -148,10 +151,15 @@ export type DbAccess = {
 	students: StudentManualAccessEntry[]
 }
 
-export type NewDbAccess = Omit<DbAccess, "_id">
+export type Access = NewAccess & {
+	_id: string
+}
 
-export type DbAppUser = {
+export type DbAccess = NewAccess & {
 	_id: ObjectId
+}
+
+export type NewAppUser = {
 	feideName: string
 	entra: {
 		id: string
@@ -162,4 +170,105 @@ export type DbAppUser = {
 	}
 }
 
-export type NewDbAppUser = Omit<DbAppUser, "_id">
+export type AppUser = NewAppUser & {
+	_id: string
+}
+
+export type DbAppUser = NewAppUser & {
+	_id: ObjectId
+}
+
+// PROGRAM AREA
+export type NewProgramArea = {
+	name: string
+	classes: {
+		systemId: string
+		name: string
+	}[]
+}
+
+export type ProgramArea = NewProgramArea & {
+	_id: string
+}
+
+export type DbProgramArea = NewProgramArea & {
+	_id: ObjectId
+}
+
+// DOCUMENTS
+
+export type EditorData = {
+	by: {
+		entraUserId: string
+		fallbackName: string
+		displayName?: string
+	}
+	at: string
+}
+
+export type DocumentBase = {
+	schoolNumber: string
+	title: string
+	created: EditorData
+}
+
+export type DocumentMessageBase = {
+	created: EditorData
+}
+
+export type DocumentComment = DocumentMessageBase & {
+	type: "COMMENT"
+	content: {
+		text: string
+	}
+}
+
+export type DocumentUpdate = DocumentMessageBase & {
+	type: "UPDATE"
+	title: string
+	content: {
+		text: string
+	}
+}
+
+export type NewDocumentMessage = DocumentComment | DocumentUpdate
+
+export type DocumentMessage = NewDocumentMessage & {
+	messageId: string
+}
+
+export type DocumentNote = DocumentBase & {
+	type: "NOTE"
+	content: {
+		text: string
+	}
+	messages: DocumentMessage[]
+}
+
+export type DocumentFollowUp = DocumentBase & {
+	type: "FOLLOW_UP"
+	content: {
+		responsiblePerson: {
+			entraUserId: string
+			name: string
+		}
+		text: string
+	}
+	messages: DocumentMessage[]
+}
+
+type DocumentHelper = DocumentNote | DocumentFollowUp
+
+export type NewStudentDocument = DocumentHelper & {
+	student: {
+		_id: string
+	}
+}
+
+export type StudentDocument = NewStudentDocument & {
+	_id: string
+}
+
+export type DbStudentDocument = NewStudentDocument & {
+	_id: ObjectId
+}

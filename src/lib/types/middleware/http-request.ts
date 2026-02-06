@@ -1,4 +1,4 @@
-import type { RequestEvent } from "@sveltejs/kit"
+import type { ActionFailure, RequestEvent } from "@sveltejs/kit"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
 
 type ApiNextResponse = {
@@ -24,3 +24,6 @@ type ServerLoadNextParams = {
 }
 
 export type ServerLoadNextFunction<T> = (params: ServerLoadNextParams) => Promise<ServerLoadNextResponse<T>>
+
+export type ServerActionNextFunction<TSuccess extends object> = (params: ServerLoadNextParams) => Promise<ServerLoadNextResponse<TSuccess>>
+
