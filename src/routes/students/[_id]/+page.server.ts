@@ -80,10 +80,13 @@ type CreatedDocument = {
 }
 
 type CreateDocumentFailedData = {
-	type: StudentDocumentType | null
-	schoolNumber: string | null
-	title: string | null
-	note: string | null
+	createDocumentFailedData: {
+		type: StudentDocumentType | null
+		schoolNumber: string | null
+		title: string | null
+		note: string | null
+		errorMessage: string
+	}
 }
 
 const createStudentDocument = (documentData: NewDocumentData, principal: AuthenticatedPrincipal): NewStudentDocument => {
@@ -145,19 +148,25 @@ const newDocument: ServerActionNextFunction<CreatedDocument> = async ({ requestE
 	const note = formData.get("note") as string | null
 
 	const returnOnFail: CreateDocumentFailedData = {
-		type,
-		schoolNumber,
-		title,
-		note
+		createDocumentFailedData: {
+			type,
+			schoolNumber,
+			title,
+			note,
+			errorMessage: "Failed to create document, check the values and try again."
+		}
 	}
 
 	if (!type || typeof type !== "string") {
+		returnOnFail.createDocumentFailedData.errorMessage = "Document type is required and must be a string."
 		throw new FormActionError(400, "Document type is required and must be a string.", returnOnFail)
 	}
 	if (!schoolNumber || typeof schoolNumber !== "string") {
+		returnOnFail.createDocumentFailedData.errorMessage = "School number is required and must be a string."
 		throw new FormActionError(400, "School number is required and must be a string.", returnOnFail)
 	}
 	if (!title || typeof title !== "string") {
+		returnOnFail.createDocumentFailedData.errorMessage = "Title is required and must be a string."
 		throw new FormActionError(400, "Title is required and must be a string.", returnOnFail)
 	}
 
@@ -185,11 +194,16 @@ const newDocument: ServerActionNextFunction<CreatedDocument> = async ({ requestE
 	}
 }
 
-type CreateMessageFailedData = {
+type CreateMessageFailedValues = {
 	type: DocumentMessageType | null
 	title: string | null
 	comment: string | null
-	update: string | null
+	update: string | null,
+	errorMessage: string
+}
+
+type CreateMessageFailedData = {
+	createMessageFailedData: Record<string, CreateMessageFailedValues>
 }
 
 type NewMessageData = {
@@ -252,7 +266,11 @@ const createDocumentMessage = (messageData: NewMessageData, principal: Authentic
 	}
 }
 
-const newMessage: ServerActionNextFunction<DocumentMessage> = async ({ requestEvent, principal }) => {
+type CreatedMessage = {
+	createdMessage: DocumentMessage
+}
+
+const newMessage: ServerActionNextFunction<CreatedMessage> = async ({ requestEvent, principal }) => {
 	const studentId = requestEvent.params._id
 	if (!studentId || typeof studentId !== "string") {
 		throw new HTTPError(400, "Student ID is missing in request parameters")
@@ -266,18 +284,25 @@ const newMessage: ServerActionNextFunction<DocumentMessage> = async ({ requestEv
 	const comment = formData.get("comment") as string | null
 	const update = formData.get("update") as string | null
 
-	const returnOnFail: CreateMessageFailedData = {
-		type,
-		title,
-		comment,
-		update
+	if (!documentId || typeof documentId !== "string") {
+		throw new FormActionError(400, "Document ID is required and must be a string.", {})
 	}
 
-	if (!documentId || typeof documentId !== "string") {
-		throw new FormActionError(400, "Document ID is required and must be a string.", returnOnFail)
+	const returnOnFail: CreateMessageFailedData = {
+		createMessageFailedData: {
+			[documentId]: {
+				type,
+				title,
+				comment,
+				update,
+				errorMessage: "Failed to create message, check the values and try again."
+			}
+		}
 	}
+
 
 	if (!type || typeof type !== "string") {
+		returnOnFail.createMessageFailedData[documentId].errorMessage = "Message type is required and must be a string."
 		throw new FormActionError(400, "Message-type is required and must be a string.", returnOnFail)
 	}
 
@@ -294,7 +319,9 @@ const newMessage: ServerActionNextFunction<DocumentMessage> = async ({ requestEv
 	try {
 		const message = await dbClient.addDocumentMessage(documentId, newDocument)
 		return {
-			data: message,
+			data: {
+				createdMessage: message
+			},
 			isAuthorized: true
 		}
 	} catch (error) {
@@ -307,6 +334,6 @@ export const actions = {
 		return serverActionRequestMiddleware<CreatedDocument, CreateDocumentFailedData>(event, newDocument)
 	},
 	newMessageAction: async (event) => {
-		return serverActionRequestMiddleware<DocumentMessage, CreateMessageFailedData>(event, newMessage)
+		return serverActionRequestMiddleware<CreatedMessage, CreateMessageFailedData>(event, newMessage)
 	}
 } satisfies Actions
