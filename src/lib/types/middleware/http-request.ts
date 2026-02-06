@@ -1,4 +1,4 @@
-import type { ActionFailure, RequestEvent } from "@sveltejs/kit"
+import type { RequestEvent } from "@sveltejs/kit"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
 
 type ApiNextResponse = {

@@ -1,4 +1,5 @@
-import type { Access, AccessType, AppStudent } from "$lib/types/app-types"
+import type { AccessType } from "$lib/types/app-types"
+import type { Access, AppStudent } from "$lib/types/db/shared-types"
 import { getDbClient } from "../db/get-db-client"
 
 export const studentHasSchool = (student: AppStudent, schoolNumber: string): boolean => {
