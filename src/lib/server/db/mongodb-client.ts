@@ -30,7 +30,7 @@ export class MongoDbClient implements IDbClient {
 		}
 		try {
 			await this.mongoClient.connect()
-			this.db = this.mongoClient.db(env.MONGODB_DB_NAME)
+			this.db = this.mongoClient.db(env.MONGODB_DATABASE_NAME)
 			return this.db
 		} catch (error) {
 			logger.errorException(error, "Error when connecting to MongoDB")
