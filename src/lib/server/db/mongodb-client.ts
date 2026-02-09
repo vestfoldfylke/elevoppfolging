@@ -1,11 +1,11 @@
 import { logger } from "@vestfoldfylke/loglady"
-import { type Db, type Filter, MongoClient, ObjectId } from "mongodb"
+import { type Db, type Filter, MongoClient, ObjectId, type WithId } from "mongodb"
 import { env } from "$env/dynamic/private"
-import type { Access, AppStudent, ProgramArea, SimpleAppStudent } from "$lib/types/app-types"
+import type { SimpleAppStudent } from "$lib/types/app-types"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
-import type { DbAccess, DbAppStudent } from "$lib/types/db/db"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { KeysToNumber } from "$lib/types/db/db-helpers"
+import type { Access, AppStudent, DbAccess, DbAppStudent, DbStudentDocument, DocumentMessage, NewDocumentMessage, NewStudentDocument, ProgramArea, StudentDocument } from "$lib/types/db/shared-types"
 import type { DbProgramArea } from "$lib/types/program-area"
 
 export class MongoDbClient implements IDbClient {
@@ -13,9 +13,9 @@ export class MongoDbClient implements IDbClient {
 	private db: Db | null = null
 	private readonly accessCollectionName = "access"
 	private readonly studentsCollectionName = "students"
-	// private readonly usersCollectionName = "users"
+	private readonly usersCollectionName = "users"
 	private readonly programAreasCollectionName = "program-areas"
-	// private readonly documentsCollectionName = "documents"
+	private readonly documentsCollectionName = "documents"
 
 	constructor() {
 		if (!env.MONGODB_CONNECTION_STRING) {
@@ -119,7 +119,7 @@ export class MongoDbClient implements IDbClient {
 
 		const allStudents = await studentsCollection.find(query)
 
-		const projection: KeysToNumber<SimpleAppStudent> = {
+		const projection: KeysToNumber<WithId<SimpleAppStudent>> = {
 			_id: 1,
 			active: 1,
 			feideName: 1,
@@ -156,7 +156,94 @@ export class MongoDbClient implements IDbClient {
 			name: student.name,
 			studentEnrollments: student.studentEnrollments,
 			studentNumber: student.studentNumber,
-			systemId: student.systemId
+			systemId: student.systemId,
+			ssn: "nei",
+			lastSynced: "nei"
 		}
+	}
+
+	async getStudentDocuments(studentDbId: string): Promise<StudentDocument[]> {
+		const db = await this.getDb()
+		const documentsCollection = db.collection<DbStudentDocument>(this.documentsCollectionName)
+
+		type DocumentWithCreator = DbStudentDocument & {
+			tyler_the_creator?: {
+				entra: {
+					displayName: string
+				}
+			}[]
+		}
+
+		const documents = await documentsCollection
+			.aggregate<DocumentWithCreator>([
+				{
+					$match: {
+						"student._id": studentDbId
+					}
+				},
+				{
+					$lookup: {
+						from: this.usersCollectionName,
+						localField: "created.by.entraUserId",
+						foreignField: "entra.id",
+						as: "tyler_the_creator",
+						pipeline: [
+							{
+								$project: {
+									"entra.displayName": 1
+								}
+							}
+						]
+					}
+				}
+			])
+			.toArray()
+
+		// Todo: Add projection to only include necessary fields - And authorization
+
+		// Sleep 5 seconds to simulate long-running operation and test streaming
+		// await new Promise((resolve) => setTimeout(resolve, 2500))
+
+		return documents
+			.map((document: DocumentWithCreator): StudentDocument => {
+				const createdByDisplayName = document.tyler_the_creator && document.tyler_the_creator.length > 0 ? document.tyler_the_creator[0].entra.displayName : undefined
+				delete document.tyler_the_creator
+
+				const studentDocument: StudentDocument = {
+					...document,
+					_id: document._id.toString()
+				}
+				if (createdByDisplayName) {
+					studentDocument.created.by.displayName = createdByDisplayName
+				}
+				return studentDocument
+			})
+			.sort((a, b) => new Date(b.created.at).getTime() - new Date(a.created.at).getTime()) // Sort by created date descending
+	}
+
+	async createStudentDocument(document: NewStudentDocument): Promise<string> {
+		const db = await this.getDb()
+		const documentsCollection = db.collection<NewStudentDocument>(this.documentsCollectionName)
+
+		const result = await documentsCollection.insertOne(document)
+		return result.insertedId.toString()
+	}
+
+	async addDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<DocumentMessage> {
+		const db = await this.getDb()
+		const documentsCollection = db.collection<DbStudentDocument>(this.documentsCollectionName)
+
+		const messageWithId = {
+			...message,
+			messageId: new ObjectId().toString()
+		}
+
+		const result = await documentsCollection.updateOne({ _id: new ObjectId(documentId) }, { $push: { messages: messageWithId } })
+
+		if (result.modifiedCount === 0) {
+			throw new Error("Failed to add message to document")
+		}
+
+		return messageWithId
 	}
 }
