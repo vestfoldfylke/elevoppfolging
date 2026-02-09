@@ -4,6 +4,7 @@
 	import type { StudentDocument } from "$lib/types/db/shared-types"
 	import type { ActionData } from "../../../routes/students/[_id]/$types"
 	import Message from "./Message.svelte"
+    import { getInitialsFromName } from "$lib/utils/name-stuff";
 
 	type PageProps = {
 		document: StudentDocument
@@ -38,7 +39,7 @@
       <div class="document-actions">
         {#if messageType === null}
           <div class="person-badge">
-            PP
+            {getInitialsFromName("Per Person")}
           </div>
           <button onclick={() => messageType = "UPDATE"}>Oppdatering</button>
           <button onclick={() => messageType = "COMMENT"}>Kommentar</button>
