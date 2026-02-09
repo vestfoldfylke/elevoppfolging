@@ -15,7 +15,6 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.11",
-		"@sveltejs/adapter-auto": "^7.0.0",
 		"@sveltejs/kit": "^2.49.1",
 		"@sveltejs/vite-plugin-svelte": "^6.2.1",
 		"@types/node": "^25.0.9",
@@ -25,6 +24,7 @@
 		"vite": "^7.2.6"
 	},
 	"dependencies": {
+		"@sveltejs/adapter-node": "^5.5.2",
 		"@vestfoldfylke/loglady": "^1.5.0",
 		"mongodb": "^7.0.0"
 	}
