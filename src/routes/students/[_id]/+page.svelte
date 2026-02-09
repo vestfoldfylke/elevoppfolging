@@ -1,25 +1,25 @@
 <script lang="ts">
 	import DocumentComponent from "$lib/components/Document/Document.svelte"
 	import DocumentCreator from "$lib/components/DocumentCreator.svelte"
-    import { getInitialsFromName } from "$lib/utils/name-stuff";
+	import { getInitialsFromName } from "$lib/utils/name-stuff"
 	import type { PageProps } from "./$types"
 
 	let { data, form }: PageProps = $props()
 
-  let showAllStudentContacts = $state(false)
+	let showAllStudentContacts = $state(false)
 
 	let studentInfo = $derived.by(() => {
 		const mainEnrollment = data.student.studentEnrollments.find((enrollment) => enrollment.mainSchool) || data.student.studentEnrollments[0] || null
 		const mainSchool = mainEnrollment?.school
-    const otherSchools = data.student.studentEnrollments.map((enrollment) => enrollment.school).filter((school) => school.schoolNumber !== mainSchool?.schoolNumber)
+		const otherSchools = data.student.studentEnrollments.map((enrollment) => enrollment.school).filter((school) => school.schoolNumber !== mainSchool?.schoolNumber)
 		const mainClass = mainEnrollment?.classMemberships.find((membership) => membership.period.active)?.classGroup.name
 		const contactTeachers = mainEnrollment?.contactTeacherGroupMemberships.flatMap((membership) => membership.contactTeacherGroup.teachers)
 
 		return {
 			mainSchool,
-      otherSchools,
+			otherSchools,
 			mainClass,
-			contactTeachers,
+			contactTeachers
 		}
 	})
 
@@ -28,50 +28,50 @@
 		type: "Kontaktlærer" | "Klasselærer" | "Faglærer" | "Noe"
 	}
 
-  type SchoolContacts = {
-    [schoolNumber: string]: {
-      mainSchool: boolean
-      schoolNumber: string
-      name: string
-      contactPersons: StudentContactPerson[]
-    }
-  }
-  let schoolContacts = $derived.by(() => {
-    const schoolContacts: SchoolContacts = {}
+	type SchoolContacts = {
+		[schoolNumber: string]: {
+			mainSchool: boolean
+			schoolNumber: string
+			name: string
+			contactPersons: StudentContactPerson[]
+		}
+	}
+	let schoolContacts = $derived.by(() => {
+		const schoolContacts: SchoolContacts = {}
 
-    data.student.studentEnrollments.forEach((enrollment) => {
-      const schoolNumber = enrollment.school.schoolNumber
-      if (!schoolContacts[schoolNumber]) {
-        schoolContacts[schoolNumber] = { mainSchool: enrollment.mainSchool, schoolNumber, name: enrollment.school.name, contactPersons: [] }
-      }
+		data.student.studentEnrollments.forEach((enrollment) => {
+			const schoolNumber = enrollment.school.schoolNumber
+			if (!schoolContacts[schoolNumber]) {
+				schoolContacts[schoolNumber] = { mainSchool: enrollment.mainSchool, schoolNumber, name: enrollment.school.name, contactPersons: [] }
+			}
 
-      enrollment.contactTeacherGroupMemberships.forEach((membership) => {
-        membership.contactTeacherGroup.teachers.forEach((teacher) => {
-          if (!schoolContacts[schoolNumber].contactPersons.some((contact) => contact.name === teacher.name)) {
-            schoolContacts[schoolNumber].contactPersons.push({ name: teacher.name, type: "Kontaktlærer" })
-          }
-        })
-      })
+			enrollment.contactTeacherGroupMemberships.forEach((membership) => {
+				membership.contactTeacherGroup.teachers.forEach((teacher) => {
+					if (!schoolContacts[schoolNumber].contactPersons.some((contact) => contact.name === teacher.name)) {
+						schoolContacts[schoolNumber].contactPersons.push({ name: teacher.name, type: "Kontaktlærer" })
+					}
+				})
+			})
 
-      enrollment.classMemberships.forEach((membership) => {
-        membership.classGroup.teachers.forEach((teacher) => {
-          if (!schoolContacts[schoolNumber].contactPersons.some((contact) => contact.name === teacher.name)) {
-            schoolContacts[schoolNumber].contactPersons.push({ name: teacher.name, type: "Klasselærer" })
-          }
-        })
-      })
+			enrollment.classMemberships.forEach((membership) => {
+				membership.classGroup.teachers.forEach((teacher) => {
+					if (!schoolContacts[schoolNumber].contactPersons.some((contact) => contact.name === teacher.name)) {
+						schoolContacts[schoolNumber].contactPersons.push({ name: teacher.name, type: "Klasselærer" })
+					}
+				})
+			})
 
-      enrollment.teachingGroupMemberships.forEach((membership) => {
-        membership.teachingGroup.teachers.forEach((teacher) => {
-          if (!schoolContacts[schoolNumber].contactPersons.some((contact) => contact.name === teacher.name)) {
-            schoolContacts[schoolNumber].contactPersons.push({ name: teacher.name, type: "Faglærer" })
-          }
-        })
-      })
-    })
+			enrollment.teachingGroupMemberships.forEach((membership) => {
+				membership.teachingGroup.teachers.forEach((teacher) => {
+					if (!schoolContacts[schoolNumber].contactPersons.some((contact) => contact.name === teacher.name)) {
+						schoolContacts[schoolNumber].contactPersons.push({ name: teacher.name, type: "Faglærer" })
+					}
+				})
+			})
+		})
 
-    return Object.values(schoolContacts).sort((a, b) => (Number(b.mainSchool) - Number(a.mainSchool)))
-  })
+		return Object.values(schoolContacts).sort((a, b) => Number(b.mainSchool) - Number(a.mainSchool))
+	})
 </script>
 
 <div class="student-page">
