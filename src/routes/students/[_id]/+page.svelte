@@ -93,6 +93,8 @@
     </div>
   </div>
 
+  <!--<pre>{JSON.stringify(data.student, null, 2)}</pre>-->
+
   <div class="student-section">
     <div class="student-section-header">
       <div>&nbsp;</div>
