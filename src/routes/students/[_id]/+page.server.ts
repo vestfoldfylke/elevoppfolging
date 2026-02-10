@@ -6,7 +6,7 @@ import { serverActionRequestMiddleware, serverLoadRequestMiddleware } from "$lib
 import type { AccessType, DocumentMessageType, StudentDocumentType } from "$lib/types/app-types"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { Access, AppStudent, DocumentBase, DocumentMessage, DocumentMessageBase, NewDocumentMessage, NewStudentDocument, StudentDocument } from "$lib/types/db/shared-types"
+import type { Access, AppStudent, DocumentBase, DocumentMessage, DocumentMessageBase, EditorData, NewDocumentMessage, NewStudentDocument, StudentDocument } from "$lib/types/db/shared-types"
 import type { ServerActionNextFunction, ServerLoadNextFunction } from "$lib/types/middleware/http-request"
 import type { Actions, PageServerLoad } from "./$types"
 
@@ -92,16 +92,18 @@ type CreateDocumentFailedData = {
 const createStudentDocument = (documentData: NewDocumentData, principal: AuthenticatedPrincipal): NewStudentDocument => {
 	const { type, schoolNumber, title, note, studentId } = documentData
 
+	const editorData: EditorData = {
+		by: {
+			entraUserId: principal.id,
+			fallbackName: principal.displayName
+		},
+		at: new Date().toISOString()
+	}
 	const newDocumentBase: DocumentBase = {
 		schoolNumber,
 		title,
-		created: {
-			by: {
-				entraUserId: principal.id,
-				fallbackName: principal.displayName
-			},
-			at: new Date().toISOString()
-		}
+		created: editorData,
+		modified: editorData
 	}
 
 	switch (type) {

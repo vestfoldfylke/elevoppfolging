@@ -31,9 +31,9 @@
 			}
 
 			enrollment.contactTeacherGroupMemberships.forEach((membership) => {
-        if (!membership.period.active) {
-          return
-        }
+				if (!membership.period.active) {
+					return
+				}
 				membership.contactTeacherGroup.teachers.forEach((teacher) => {
 					if (!schoolContacts[schoolNumber].contactPersons.some((contact) => contact.name === teacher.name)) {
 						schoolContacts[schoolNumber].contactPersons.push({ name: teacher.name, type: "Kontaktlærer" })
@@ -42,9 +42,9 @@
 			})
 
 			enrollment.classMemberships.forEach((membership) => {
-        if (!membership.period.active) {
-          return
-        }
+				if (!membership.period.active) {
+					return
+				}
 				membership.classGroup.teachers.forEach((teacher) => {
 					if (!schoolContacts[schoolNumber].contactPersons.some((contact) => contact.name === teacher.name)) {
 						schoolContacts[schoolNumber].contactPersons.push({ name: teacher.name, type: "Klasselærer" })
@@ -53,9 +53,9 @@
 			})
 
 			enrollment.teachingGroupMemberships.forEach((membership) => {
-        if (!membership.period.active) {
-          return
-        }
+				if (!membership.period.active) {
+					return
+				}
 				membership.teachingGroup.teachers.forEach((teacher) => {
 					if (!schoolContacts[schoolNumber].contactPersons.some((contact) => contact.name === teacher.name)) {
 						schoolContacts[schoolNumber].contactPersons.push({ name: teacher.name, type: "Faglærer" })

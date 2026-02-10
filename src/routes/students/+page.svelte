@@ -28,35 +28,37 @@
 	}
 
 	let filteredStudents = $derived.by(() => {
-		return data.students.filter((student) => {
-			const searchFilters = {
-				matchesImportantInfo: !filters.importantInfo || student.importantStuff?.importantInfo,
-				matchesFollowUp: !filters.followUp || student.importantStuff?.followUp && student.importantStuff.followUp.length > 0,
-				matchesFacilitation: !filters.facilitation || student.importantStuff?.facilitation && student.importantStuff.facilitation.length > 0
-			}
-
-			const matchesName = !searchTerms.name || student.name.toLowerCase().includes(searchTerms.name.toLowerCase())
-			const matchesClass = !searchTerms.class || student.mainClass?.name.toLowerCase().includes(searchTerms.class.toLowerCase()) || false
-			const matchesTeacher = !searchTerms.teacher || student.mainContactTeacherGroup?.teachers.some((teacher) => teacher.name.toLowerCase().includes(searchTerms.teacher.toLowerCase())) || false
-
-			return matchesName && matchesClass && matchesTeacher && Object.values(searchFilters).every((filter) => filter)
-		}).sort((a, b) => {
-			switch (sortBy) {
-				case "name":
-					return sortDirection === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
-				case "school":
-					return sortDirection === "asc" ? (a.mainSchool?.name || "").localeCompare(b.mainSchool?.name || "") : (b.mainSchool?.name || "").localeCompare(a.mainSchool?.name || "")
-				case "class":
-					return sortDirection === "asc" ? (a.mainClass?.name || "").localeCompare(b.mainClass?.name || "") : (b.mainClass?.name || "").localeCompare(a.mainClass?.name || "")
-				case "teacher": {
-					const aTeachers = a.mainContactTeacherGroup?.teachers.map((t) => t.name).join(", ") || ""
-					const bTeachers = b.mainContactTeacherGroup?.teachers.map((t) => t.name).join(", ") || ""
-					return sortDirection === "asc" ? aTeachers.localeCompare(bTeachers) : bTeachers.localeCompare(aTeachers)
+		return data.students
+			.filter((student) => {
+				const searchFilters = {
+					matchesImportantInfo: !filters.importantInfo || student.importantStuff?.importantInfo,
+					matchesFollowUp: !filters.followUp || (student.importantStuff?.followUp && student.importantStuff.followUp.length > 0),
+					matchesFacilitation: !filters.facilitation || (student.importantStuff?.facilitation && student.importantStuff.facilitation.length > 0)
 				}
-				default:
-					return 0
-			}
-		})
+
+				const matchesName = !searchTerms.name || student.name.toLowerCase().includes(searchTerms.name.toLowerCase())
+				const matchesClass = !searchTerms.class || student.mainClass?.name.toLowerCase().includes(searchTerms.class.toLowerCase()) || false
+				const matchesTeacher = !searchTerms.teacher || student.mainContactTeacherGroup?.teachers.some((teacher) => teacher.name.toLowerCase().includes(searchTerms.teacher.toLowerCase())) || false
+
+				return matchesName && matchesClass && matchesTeacher && Object.values(searchFilters).every((filter) => filter)
+			})
+			.sort((a, b) => {
+				switch (sortBy) {
+					case "name":
+						return sortDirection === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
+					case "school":
+						return sortDirection === "asc" ? (a.mainSchool?.name || "").localeCompare(b.mainSchool?.name || "") : (b.mainSchool?.name || "").localeCompare(a.mainSchool?.name || "")
+					case "class":
+						return sortDirection === "asc" ? (a.mainClass?.name || "").localeCompare(b.mainClass?.name || "") : (b.mainClass?.name || "").localeCompare(a.mainClass?.name || "")
+					case "teacher": {
+						const aTeachers = a.mainContactTeacherGroup?.teachers.map((t) => t.name).join(", ") || ""
+						const bTeachers = b.mainContactTeacherGroup?.teachers.map((t) => t.name).join(", ") || ""
+						return sortDirection === "asc" ? aTeachers.localeCompare(bTeachers) : bTeachers.localeCompare(aTeachers)
+					}
+					default:
+						return 0
+				}
+			})
 	})
 </script>
 
