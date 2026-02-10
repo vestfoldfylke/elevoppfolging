@@ -1,11 +1,11 @@
 import { logger } from "@vestfoldfylke/loglady"
 import { type Db, type Filter, MongoClient, ObjectId, type WithId } from "mongodb"
 import { env } from "$env/dynamic/private"
-import type { SimpleAppStudent } from "$lib/types/app-types"
+import type { FrontendOverviewStudent } from "$lib/types/app-types"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { KeysToNumber } from "$lib/types/db/db-helpers"
-import type { Access, AppStudent, DbAccess, DbAppStudent, DbStudentDocument, DocumentMessage, NewDocumentMessage, NewStudentDocument, ProgramArea, StudentDocument } from "$lib/types/db/shared-types"
+import type { Access, AppStudent, DbAccess, DbAppStudent, DbStudentDocument, DbStudentImportantStuff, DocumentMessage, EditorData, ImportantStuffBase, NewDbStudentImportantStuff, NewDocumentMessage, NewStudentDocument, NewStudentImportantStuff, ProgramArea, StudentDocument, StudentImportantStuff } from "$lib/types/db/shared-types"
 import type { DbProgramArea } from "$lib/types/program-area"
 
 export class MongoDbClient implements IDbClient {
@@ -14,6 +14,7 @@ export class MongoDbClient implements IDbClient {
 	private readonly accessCollectionName = "access"
 	private readonly studentsCollectionName = "students"
 	private readonly usersCollectionName = "users"
+	private readonly importantStuffCollectionName = "important-stuff"
 	private readonly programAreasCollectionName = "program-areas"
 	private readonly documentsCollectionName = "documents"
 
@@ -67,7 +68,7 @@ export class MongoDbClient implements IDbClient {
 		}
 	}
 
-	async getStudents(access: Access): Promise<SimpleAppStudent[]> {
+	async getStudents(access: Access): Promise<FrontendOverviewStudent[]> {
 		const db = await this.getDb()
 		const studentsCollection = db.collection<DbAppStudent>(this.studentsCollectionName)
 
@@ -117,23 +118,46 @@ export class MongoDbClient implements IDbClient {
 			]
 		}
 
-		const allStudents = await studentsCollection.find(query)
+		type StudentWithImportantStuff = DbAppStudent & {
+			importantStuff?: StudentImportantStuff[]
+		}
 
-		const projection: KeysToNumber<WithId<SimpleAppStudent>> = {
+		const projection: KeysToNumber<WithId<FrontendOverviewStudent>> = {
 			_id: 1,
 			active: 1,
 			feideName: 1,
 			name: 1,
 			studentNumber: 1,
-			systemId: 1
+			systemId: 1,
+			mainSchool: 1,
+			mainClass: 1,
+			mainContactTeacherGroup: 1,
+			importantStuff: 1
 		}
+		
+		const superAllStudent = await studentsCollection.aggregate<StudentWithImportantStuff>([
+				{
+					$match: query
+				},
+				{
+					$lookup: {
+						from: this.importantStuffCollectionName,
+						localField: "_id",
+						foreignField: "student._id",
+						as: "importantStuff"
+					}
+				}
+			]).project<FrontendOverviewStudent & { importantStuff: StudentImportantStuff[] }>(projection).toArray()
 
-		const projectedStudents = await allStudents.project<SimpleAppStudent>(projection).toArray()
-
-		return projectedStudents.map((student) => {
+		return superAllStudent.map((student) => {
+			const importantStuffForStudent: StudentImportantStuff | null = student.importantStuff && student.importantStuff.length > 0 ? student.importantStuff[0] : null
+			if (importantStuffForStudent) {
+				importantStuffForStudent._id = importantStuffForStudent._id.toString()
+			}
 			return {
 				...student,
-				_id: student._id.toString()
+				_id: student._id.toString(),
+				importantStuff: importantStuffForStudent
 			}
 		})
 	}
@@ -158,7 +182,10 @@ export class MongoDbClient implements IDbClient {
 			studentNumber: student.studentNumber,
 			systemId: student.systemId,
 			ssn: "nei",
-			lastSynced: "nei"
+			lastSynced: "nei",
+			mainClass: student.mainClass,
+			mainContactTeacherGroup: student.mainContactTeacherGroup,
+			mainSchool: student.mainSchool
 		}
 	}
 
@@ -245,5 +272,66 @@ export class MongoDbClient implements IDbClient {
 		}
 
 		return messageWithId
+	}
+
+	async upsertStudentImportantStuff(studentId: string, importantStuff: NewStudentImportantStuff): Promise<void> {
+		const db = await this.getDb()
+		const importantStuffCollection = db.collection<DbStudentImportantStuff>(this.importantStuffCollectionName)
+
+		await importantStuffCollection.updateOne(
+			{ "student._id": new ObjectId(studentId) },
+			{
+				$set: {
+					...importantStuff,
+					student: {
+						_id: new ObjectId(studentId)
+					}
+				}
+			},
+			{ upsert: true }
+		)
+	}
+
+	async updateStudentLatestActivityTimestamp(studentId: string): Promise<void> {
+		const db = await this.getDb()
+		const importantStuffCollection = db.collection<ImportantStuffBase>(this.importantStuffCollectionName)
+
+		const existingImportantStuff = await importantStuffCollection.findOne({ "student._id": new ObjectId(studentId) })
+
+		if (!existingImportantStuff) {
+			const editor: EditorData = {
+				at: new Date().toISOString(),
+				by: {
+					entraUserId: "SYSTEM",
+					fallbackName: "SYSTEM"
+				}
+			}
+			const newImportantStuff: NewStudentImportantStuff = {
+				type: "STUDENT",
+				created: editor,
+				modified: editor,
+				facilitation: [],
+				followUp: [],
+				importantInfo: "",
+				lastActivityTimestamp: new Date().toISOString()	
+			}
+
+			await importantStuffCollection.insertOne({
+				...newImportantStuff,
+				student: {
+					_id: new ObjectId(studentId)
+				}
+			} as NewDbStudentImportantStuff)
+			return
+		}
+
+		await importantStuffCollection.updateOne(
+			{ "student._id": new ObjectId(studentId) },
+			{
+				$set: {
+					"lastActivityTimestamp": new Date().toISOString()
+				}
+			}
+		)
 	}
 }
