@@ -5,7 +5,24 @@ import type { FrontendOverviewStudent } from "$lib/types/app-types"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { KeysToNumber } from "$lib/types/db/db-helpers"
-import type { Access, AppStudent, DbAccess, DbAppStudent, DbStudentDocument, DbStudentImportantStuff, DocumentMessage, EditorData, ImportantStuffBase, NewDbStudentImportantStuff, NewDocumentMessage, NewStudentDocument, NewStudentImportantStuff, ProgramArea, StudentDocument, StudentImportantStuff } from "$lib/types/db/shared-types"
+import type {
+	Access,
+	AppStudent,
+	DbAccess,
+	DbAppStudent,
+	DbStudentDocument,
+	DbStudentImportantStuff,
+	DocumentMessage,
+	EditorData,
+	ImportantStuffBase,
+	NewDbStudentImportantStuff,
+	NewDocumentMessage,
+	NewStudentDocument,
+	NewStudentImportantStuff,
+	ProgramArea,
+	StudentDocument,
+	StudentImportantStuff
+} from "$lib/types/db/shared-types"
 import type { DbProgramArea } from "$lib/types/program-area"
 
 export class MongoDbClient implements IDbClient {
@@ -134,8 +151,9 @@ export class MongoDbClient implements IDbClient {
 			mainContactTeacherGroup: 1,
 			importantStuff: 1
 		}
-		
-		const superAllStudent = await studentsCollection.aggregate<StudentWithImportantStuff>([
+
+		const superAllStudent = await studentsCollection
+			.aggregate<StudentWithImportantStuff>([
 				{
 					$match: query
 				},
@@ -147,7 +165,9 @@ export class MongoDbClient implements IDbClient {
 						as: "importantStuff"
 					}
 				}
-			]).project<FrontendOverviewStudent & { importantStuff: StudentImportantStuff[] }>(projection).toArray()
+			])
+			.project<FrontendOverviewStudent & { importantStuff: StudentImportantStuff[] }>(projection)
+			.toArray()
 
 		return superAllStudent.map((student) => {
 			const importantStuffForStudent: StudentImportantStuff | null = student.importantStuff && student.importantStuff.length > 0 ? student.importantStuff[0] : null
@@ -313,7 +333,7 @@ export class MongoDbClient implements IDbClient {
 				facilitation: [],
 				followUp: [],
 				importantInfo: "",
-				lastActivityTimestamp: new Date().toISOString()	
+				lastActivityTimestamp: new Date().toISOString()
 			}
 
 			await importantStuffCollection.insertOne({
@@ -329,7 +349,7 @@ export class MongoDbClient implements IDbClient {
 			{ "student._id": new ObjectId(studentId) },
 			{
 				$set: {
-					"lastActivityTimestamp": new Date().toISOString()
+					lastActivityTimestamp: new Date().toISOString()
 				}
 			}
 		)
