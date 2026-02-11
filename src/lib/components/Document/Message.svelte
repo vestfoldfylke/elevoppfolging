@@ -10,7 +10,8 @@
 
 <div class="message">
   <p>{message.content.text}</p>
-  <p>— {message.created.by.displayName}</p>
+  <!-- TODO: Find a better way to show who created the message. Fetch name from Users or do it on load? -->
+  <p>— {message.created.by.fallbackName}</p>
 </div>
 
 <style>
