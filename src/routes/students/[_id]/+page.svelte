@@ -97,7 +97,7 @@
     <div class="student-section-content student-information">
       <div class="student-important-info">
         <h4>Viktig informasjon</h4>
-        <p>Skylder meg en hundrings</p>
+        <p>{data.importantStuff?.importantInfo || "Skylder meg en hundrings"}</p>
       </div>
       <div>
         <h4>Oppfølging</h4>

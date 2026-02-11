@@ -15,7 +15,7 @@
 		facilitation: false
 	})
 
-	let sortBy = $state<"name" | "school" | "class" | "teacher">("name")
+	let sortBy = $state<"name" | "school" | "class" | "teacher" | "lastActivity">("name")
 	let sortDirection = $state<"asc" | "desc">("asc")
 
 	const resetFilters = () => {
@@ -54,6 +54,11 @@
 						const aTeachers = a.mainContactTeacherGroup?.teachers.map((t) => t.name).join(", ") || ""
 						const bTeachers = b.mainContactTeacherGroup?.teachers.map((t) => t.name).join(", ") || ""
 						return sortDirection === "asc" ? aTeachers.localeCompare(bTeachers) : bTeachers.localeCompare(aTeachers)
+					}
+					case "lastActivity": {
+						const aTimestamp = a.importantStuff?.lastActivityTimestamp ? new Date(a.importantStuff.lastActivityTimestamp).getTime() : 0
+						const bTimestamp = b.importantStuff?.lastActivityTimestamp ? new Date(b.importantStuff.lastActivityTimestamp).getTime() : 0
+						return sortDirection === "asc" ? aTimestamp - bTimestamp : bTimestamp - aTimestamp
 					}
 					default:
 						return 0
@@ -118,6 +123,9 @@
 		<div class="student-cell">
 			<button onclick={() => sortBy === "teacher" ? sortDirection = sortDirection === "asc" ? "desc" : "asc" : sortBy = "teacher"}>Kontaktlærer</button>
 		</div>
+		<div class="student-cell">
+			<button onclick={() => sortBy === "lastActivity" ? sortDirection = sortDirection === "asc" ? "desc" : "asc" : sortBy = "lastActivity"}>Siste aktivitet</button>
+		</div>
 	</div>
 	{#each filteredStudents as student}
 		<div class="student-row">
@@ -125,6 +133,7 @@
 			<div class="student-cell">{student.mainSchool?.name || "N/A"}</div>
 			<div class="student-cell">{student.mainClass?.name || "N/A"}</div>
 			<div class="student-cell">{student.mainContactTeacherGroup?.teachers.map((teacher) => teacher.name).join(", ") || "N/A"}</div>
+			<div class="student-cell">{student.importantStuff?.lastActivityTimestamp || "Ingen aktivitet"}</div>
 		</div>
 	{/each}
 </div>
