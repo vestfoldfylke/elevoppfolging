@@ -2,7 +2,6 @@
   import { slide } from "svelte/transition"
   import { enhance } from "$app/forms"
   import type { StudentDocument } from "$lib/types/db/shared-types"
-  import { getInitialsFromName } from "$lib/utils/name-stuff"
   import type { ActionData } from "../../../routes/students/[_id]/$types"
   import Message from "./Message.svelte"
 
@@ -38,17 +37,11 @@
       {/if}
       <div class="document-actions">
         {#if messageType === null}
-          <div class="person-badge">
-            {getInitialsFromName("Per Person")}
-          </div>
           <button onclick={() => messageType = "UPDATE"}>Oppdatering</button>
           <button onclick={() => messageType = "COMMENT"}>Kommentar</button>
         {:else if messageType === "UPDATE"}
           <div class="document-update">
             <div class="document-update-header">
-              <div class="person-badge">
-                PP
-              </div>
               <div>Ny oppdatering</div>
             </div>
             <textarea placeholder="Skriv en oppdatering..." value={document.content.text}></textarea>
@@ -58,9 +51,6 @@
             </div>
           </div>
         {:else if messageType === "COMMENT"}
-          <div class="person-badge">
-            PP
-          </div>
           <form method="POST" action="?/newMessageAction" use:enhance>
             <input type="hidden" name="documentId" value={document._id} />
             <input type="hidden" name="type" value="COMMENT" />
@@ -100,17 +90,6 @@
     display: flex;
     gap: 0.5rem;
     padding: 0.5rem;
-  }
-  .person-badge {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background-color: #007bff;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
   }
   .document-update {
     display: flex;

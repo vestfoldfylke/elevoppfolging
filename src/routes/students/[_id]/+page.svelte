@@ -1,7 +1,6 @@
 <script lang="ts">
   import DocumentComponent from "$lib/components/Document/Document.svelte"
   import DocumentCreator from "$lib/components/DocumentCreator.svelte"
-  import { getInitialsFromName } from "$lib/utils/name-stuff"
   import type { PageProps } from "./$types"
 
   let { data, form }: PageProps = $props()
@@ -178,18 +177,6 @@
     display: flex;
     align-items: center;
     gap: 1rem;
-  }
-  .student-badge {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background-color: #007bff;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 1.2rem;
   }
   .student-section {
     border: 1px solid #ccc;
