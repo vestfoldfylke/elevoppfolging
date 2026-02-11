@@ -6,37 +6,37 @@ import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
 import type { PageServerLoad } from "./$types"
 
 type StudentsPageData = {
-	students: FrontendOverviewStudent[]
+  students: FrontendOverviewStudent[]
 }
 
 const getStudents: ServerLoadNextFunction<StudentsPageData> = async ({ principal }) => {
-	const dbClient: IDbClient = getDbClient()
-	/*
+  const dbClient: IDbClient = getDbClient()
+  /*
 	- Get access for current principal
 	- Pass access to dbClient.getStudents to filter students based on access
 	- Returns list of students with some (but not too much) data - klasser navn, kontaktlærer etc
 	*/
-	const access = await dbClient.getAccess(principal)
+  const access = await dbClient.getAccess(principal)
 
-	if (!access) {
-		return {
-			data: {
-				students: []
-			},
-			isAuthorized: false
-		}
-	}
+  if (!access) {
+    return {
+      data: {
+        students: []
+      },
+      isAuthorized: false
+    }
+  }
 
-	const students: FrontendOverviewStudent[] = await dbClient.getStudents(access)
+  const students: FrontendOverviewStudent[] = await dbClient.getStudents(access)
 
-	return {
-		data: {
-			students
-		},
-		isAuthorized: true
-	}
+  return {
+    data: {
+      students
+    },
+    isAuthorized: true
+  }
 }
 
 export const load: PageServerLoad = async (requestEvent): Promise<StudentsPageData> => {
-	return await serverLoadRequestMiddleware(requestEvent, getStudents)
+  return await serverLoadRequestMiddleware(requestEvent, getStudents)
 }

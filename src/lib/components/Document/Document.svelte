@@ -1,20 +1,20 @@
 <script lang="ts">
-	import { slide } from "svelte/transition"
-	import { enhance } from "$app/forms"
-	import type { StudentDocument } from "$lib/types/db/shared-types"
-	import { getInitialsFromName } from "$lib/utils/name-stuff"
-	import type { ActionData } from "../../../routes/students/[_id]/$types"
-	import Message from "./Message.svelte"
+  import { slide } from "svelte/transition"
+  import { enhance } from "$app/forms"
+  import type { StudentDocument } from "$lib/types/db/shared-types"
+  import { getInitialsFromName } from "$lib/utils/name-stuff"
+  import type { ActionData } from "../../../routes/students/[_id]/$types"
+  import Message from "./Message.svelte"
 
-	type PageProps = {
-		document: StudentDocument
-		form: ActionData
-	}
+  type PageProps = {
+    document: StudentDocument
+    form: ActionData
+  }
 
-	let { document, form }: PageProps = $props()
+  let { document, form }: PageProps = $props()
 
-	let documentOpen = $state(false)
-	let messageType: "UPDATE" | "COMMENT" | null = $state(null)
+  let documentOpen = $state(false)
+  let messageType: "UPDATE" | "COMMENT" | null = $state(null)
 </script>
 
 <div class="document">

@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { enhance } from "$app/forms"
-	import type { AccessType } from "$lib/types/app-types"
-	import type { AppStudent } from "$lib/types/db/shared-types"
-	import type { ActionData } from "../../routes/students/[_id]/$types"
+  import { enhance } from "$app/forms"
+  import type { AccessType } from "$lib/types/app-types"
+  import type { AppStudent } from "$lib/types/db/shared-types"
+  import type { ActionData } from "../../routes/students/[_id]/$types"
 
-	type PageProps = {
-		form: ActionData
-		accessTypes: AccessType[]
-	}
+  type PageProps = {
+    form: ActionData
+    accessTypes: AccessType[]
+  }
 
-	let { form, accessTypes }: PageProps = $props()
-	let documentCreatorOpen = $state(false)
+  let { form, accessTypes }: PageProps = $props()
+  let documentCreatorOpen = $state(false)
 </script>
 
 {#if !documentCreatorOpen}

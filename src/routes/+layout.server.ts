@@ -4,18 +4,18 @@ import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
 import type { LayoutServerLoad } from "./$types"
 
 type LayoutLoadData = {
-	authenticatedPrincipal: AuthenticatedPrincipal
+  authenticatedPrincipal: AuthenticatedPrincipal
 }
 
 const layoutLoad: ServerLoadNextFunction<LayoutLoadData> = async ({ principal }) => {
-	return {
-		data: {
-			authenticatedPrincipal: principal
-		},
-		isAuthorized: true
-	}
+  return {
+    data: {
+      authenticatedPrincipal: principal
+    },
+    isAuthorized: true
+  }
 }
 
 export const load: LayoutServerLoad = async (requestEvent): Promise<LayoutLoadData> => {
-	return serverLoadRequestMiddleware(requestEvent, layoutLoad)
+  return serverLoadRequestMiddleware(requestEvent, layoutLoad)
 }

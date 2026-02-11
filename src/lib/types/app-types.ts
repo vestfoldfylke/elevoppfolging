@@ -1,20 +1,20 @@
 import type {
-	AppStudent,
-	ClassAutoAccessEntry,
-	ContactTeacherGroupAutoAccessEntry,
-	DocumentMessage,
-	ProgramAreaManualAccessEntry,
-	SchoolManualAccessEntry,
-	StudentDocument,
-	StudentImportantStuff,
-	StudentManualAccessEntry,
-	TeachingGroupAutoAccessEntry
+  AppStudent,
+  ClassAutoAccessEntry,
+  ContactTeacherGroupAutoAccessEntry,
+  DocumentMessage,
+  ProgramAreaManualAccessEntry,
+  SchoolManualAccessEntry,
+  StudentDocument,
+  StudentImportantStuff,
+  StudentManualAccessEntry,
+  TeachingGroupAutoAccessEntry
 } from "./db/shared-types"
 
 export type FrontendStudent = Omit<AppStudent, "lastSynced" | "ssn">
 
 export type FrontendOverviewStudent = Omit<FrontendStudent, "studentEnrollments"> & {
-	importantStuff: StudentImportantStuff | null
+  importantStuff: StudentImportantStuff | null
 }
 
 export type AccessType = SchoolManualAccessEntry | ProgramAreaManualAccessEntry | StudentManualAccessEntry | ClassAutoAccessEntry | ContactTeacherGroupAutoAccessEntry | TeachingGroupAutoAccessEntry
