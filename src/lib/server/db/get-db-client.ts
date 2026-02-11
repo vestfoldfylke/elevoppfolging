@@ -5,9 +5,9 @@ import { MongoDbClient } from "./mongodb-client"
 let dbClient: IDbClient
 
 if (env.MOCK_DB === "true") {
-	throw new Error("Mock DB client is not implemented yet")
+  throw new Error("Mock DB client is not implemented yet")
 } else {
-	dbClient = new MongoDbClient()
+  dbClient = new MongoDbClient()
 }
 
 export const getDbClient = (): IDbClient => dbClient

@@ -16,40 +16,40 @@ import { HTTPError } from "./http-error"
  * @returns {Promise<Response>} The final response to return to the client
  */
 export const apiRequestMiddleware = async (requestEvent: RequestEvent, next: ApiNextFunction): Promise<Response> => {
-	const request = requestEvent.request
-	let loggerPrefix = `[API Request Middleware] - ${request.method} ${request.url}`
+  const request = requestEvent.request
+  let loggerPrefix = `[API Request Middleware] - ${request.method} ${request.url}`
 
-	logger.info(`${loggerPrefix} - Incoming request`)
+  logger.info(`${loggerPrefix} - Incoming request`)
 
-	let principal: AuthenticatedPrincipal
-	try {
-		principal = getAuthenticatedPrincipal(request.headers)
-		loggerPrefix += ` - Principal: ${principal.id} (${principal.displayName})`
-		logger.info(`${loggerPrefix} - Authenticated`)
-	} catch (error) {
-		logger.errorException(error, `${loggerPrefix} - Error during authentication`)
-		return json({ message: "Unauthorized" }, { status: 401 })
-	}
-	try {
-		const { response, isAuthorized } = await next({ requestEvent, principal })
-		if (!isAuthorized) {
-			logger.warn(`${loggerPrefix} - Principal {principalId} is not authorized to access this resource`, principal.id)
-			return json({ message: "Forbidden" }, { status: 403 })
-		}
-		logger.info(`${loggerPrefix} - Request processed successfully for principal {principalId}`, principal.id)
-		if (!(response instanceof Response)) {
-			logger.error(`${loggerPrefix} - Next function did not return a valid Response object`)
-			return json({ message: "Internal Server Error" }, { status: 500 })
-		}
-		return response
-	} catch (error) {
-		if (error instanceof HTTPError) {
-			logger.errorException(error, `${loggerPrefix} - HTTP Error {status}`, error.status)
-			return json({ message: error.message, data: error.data || null }, { status: error.status })
-		}
-		logger.errorException(error, `${loggerPrefix} - Internal Server Error`)
-		return json({ message: "Internal Server Error" }, { status: 500 })
-	}
+  let principal: AuthenticatedPrincipal
+  try {
+    principal = getAuthenticatedPrincipal(request.headers)
+    loggerPrefix += ` - Principal: ${principal.id} (${principal.displayName})`
+    logger.info(`${loggerPrefix} - Authenticated`)
+  } catch (error) {
+    logger.errorException(error, `${loggerPrefix} - Error during authentication`)
+    return json({ message: "Unauthorized" }, { status: 401 })
+  }
+  try {
+    const { response, isAuthorized } = await next({ requestEvent, principal })
+    if (!isAuthorized) {
+      logger.warn(`${loggerPrefix} - Principal {principalId} is not authorized to access this resource`, principal.id)
+      return json({ message: "Forbidden" }, { status: 403 })
+    }
+    logger.info(`${loggerPrefix} - Request processed successfully for principal {principalId}`, principal.id)
+    if (!(response instanceof Response)) {
+      logger.error(`${loggerPrefix} - Next function did not return a valid Response object`)
+      return json({ message: "Internal Server Error" }, { status: 500 })
+    }
+    return response
+  } catch (error) {
+    if (error instanceof HTTPError) {
+      logger.errorException(error, `${loggerPrefix} - HTTP Error {status}`, error.status)
+      return json({ message: error.message, data: error.data || null }, { status: error.status })
+    }
+    logger.errorException(error, `${loggerPrefix} - Internal Server Error`)
+    return json({ message: "Internal Server Error" }, { status: 500 })
+  }
 }
 
 /**
@@ -62,40 +62,40 @@ export const apiRequestMiddleware = async (requestEvent: RequestEvent, next: Api
  * @returns {Promise<Response>} The final response to return to the client
  */
 export const serverLoadRequestMiddleware = async <T>(requestEvent: RequestEvent, next: ServerLoadNextFunction<T>): Promise<T> => {
-	const request = requestEvent.request
-	let loggerPrefix = `[Server load Request Middleware] - ${request.method} ${request.url}`
+  const request = requestEvent.request
+  let loggerPrefix = `[Server load Request Middleware] - ${request.method} ${request.url}`
 
-	logger.info(`${loggerPrefix} - Incoming request`)
+  logger.info(`${loggerPrefix} - Incoming request`)
 
-	let principal: AuthenticatedPrincipal
-	try {
-		principal = getAuthenticatedPrincipal(request.headers)
-		loggerPrefix += ` - Principal: ${principal.id} (${principal.displayName})`
-		logger.info(`${loggerPrefix} - Authenticated`)
-	} catch (error) {
-		logger.errorException(error, `${loggerPrefix} - Error during authentication`)
-		svelteError(401, "Unauthorized")
-	}
-	let data: T
-	let isAuthorized: boolean
-	try {
-		const nextResult = await next({ requestEvent, principal })
-		data = nextResult.data
-		isAuthorized = nextResult.isAuthorized
-	} catch (error) {
-		if (error instanceof HTTPError) {
-			logger.errorException(error, `${loggerPrefix} - HTTP Error {status}`, error.status)
-			svelteError(error.status, error.message)
-		}
-		logger.errorException(error, `${loggerPrefix} - Internal Server Error`)
-		svelteError(500, "Internal Server Error")
-	}
-	if (!isAuthorized) {
-		logger.warn(`${loggerPrefix} - Principal {principalId} is not authorized to access this resource`, principal.id)
-		svelteError(403, "Forbidden")
-	}
-	logger.info(`${loggerPrefix} - Request processed successfully for principal {principalId}`, principal.id)
-	return data
+  let principal: AuthenticatedPrincipal
+  try {
+    principal = getAuthenticatedPrincipal(request.headers)
+    loggerPrefix += ` - Principal: ${principal.id} (${principal.displayName})`
+    logger.info(`${loggerPrefix} - Authenticated`)
+  } catch (error) {
+    logger.errorException(error, `${loggerPrefix} - Error during authentication`)
+    svelteError(401, "Unauthorized")
+  }
+  let data: T
+  let isAuthorized: boolean
+  try {
+    const nextResult = await next({ requestEvent, principal })
+    data = nextResult.data
+    isAuthorized = nextResult.isAuthorized
+  } catch (error) {
+    if (error instanceof HTTPError) {
+      logger.errorException(error, `${loggerPrefix} - HTTP Error {status}`, error.status)
+      svelteError(error.status, error.message)
+    }
+    logger.errorException(error, `${loggerPrefix} - Internal Server Error`)
+    svelteError(500, "Internal Server Error")
+  }
+  if (!isAuthorized) {
+    logger.warn(`${loggerPrefix} - Principal {principalId} is not authorized to access this resource`, principal.id)
+    svelteError(403, "Forbidden")
+  }
+  logger.info(`${loggerPrefix} - Request processed successfully for principal {principalId}`, principal.id)
+  return data
 }
 
 /**
@@ -109,49 +109,49 @@ export const serverLoadRequestMiddleware = async <T>(requestEvent: RequestEvent,
  * @returns {Promise<Response>} The final response to return to the client
  */
 export const serverActionRequestMiddleware = async <TSuccess extends object, TFailure extends object>(
-	requestEvent: RequestEvent,
-	next: ServerActionNextFunction<TSuccess>
+  requestEvent: RequestEvent,
+  next: ServerActionNextFunction<TSuccess>
 ): Promise<TSuccess | ActionFailure<TFailure & { message: string }>> => {
-	const request = requestEvent.request
-	let loggerPrefix = `[Server action Request Middleware] - ${request.method} ${request.url}`
+  const request = requestEvent.request
+  let loggerPrefix = `[Server action Request Middleware] - ${request.method} ${request.url}`
 
-	logger.info(`${loggerPrefix} - Incoming request`)
+  logger.info(`${loggerPrefix} - Incoming request`)
 
-	let principal: AuthenticatedPrincipal
-	try {
-		principal = getAuthenticatedPrincipal(request.headers)
-		loggerPrefix += ` - Principal: ${principal.id} (${principal.displayName})`
-		logger.info(`${loggerPrefix} - Authenticated`)
-	} catch (error) {
-		logger.errorException(error, `${loggerPrefix} - Error during authentication`)
-		svelteError(401, "Unauthorized")
-	}
-	let data: TSuccess
-	let isAuthorized: boolean
-	try {
-		const nextResult = await next({ requestEvent, principal })
-		data = nextResult.data
-		isAuthorized = nextResult.isAuthorized
-	} catch (error) {
-		if (error instanceof FormActionError) {
-			logger.errorException(error.originalError || error, `${loggerPrefix} - Form Action Error {status}`, error.status)
-			return fail(error.status, { message: error.message, ...(error.values as TFailure) })
-		}
+  let principal: AuthenticatedPrincipal
+  try {
+    principal = getAuthenticatedPrincipal(request.headers)
+    loggerPrefix += ` - Principal: ${principal.id} (${principal.displayName})`
+    logger.info(`${loggerPrefix} - Authenticated`)
+  } catch (error) {
+    logger.errorException(error, `${loggerPrefix} - Error during authentication`)
+    svelteError(401, "Unauthorized")
+  }
+  let data: TSuccess
+  let isAuthorized: boolean
+  try {
+    const nextResult = await next({ requestEvent, principal })
+    data = nextResult.data
+    isAuthorized = nextResult.isAuthorized
+  } catch (error) {
+    if (error instanceof FormActionError) {
+      logger.errorException(error.originalError || error, `${loggerPrefix} - Form Action Error {status}`, error.status)
+      return fail(error.status, { message: error.message, ...(error.values as TFailure) })
+    }
 
-		if (error instanceof HTTPError) {
-			logger.errorException(error, `${loggerPrefix} - HTTP Error {status}`, error.status)
-			svelteError(error.status, error.message)
-		}
+    if (error instanceof HTTPError) {
+      logger.errorException(error, `${loggerPrefix} - HTTP Error {status}`, error.status)
+      svelteError(error.status, error.message)
+    }
 
-		logger.errorException(error, `${loggerPrefix} - Internal Server Error`)
-		svelteError(500, "Internal Server Error")
-	}
-	if (!isAuthorized) {
-		logger.warn(`${loggerPrefix} - Principal {principalId} is not authorized to access this resource`, principal.id)
-		svelteError(403, "Forbidden")
-	}
-	logger.info(`${loggerPrefix} - Request processed successfully for principal {principalId}`, principal.id)
-	// Redirect to the same page, but without the action in the URL
-	//redirect(303, requestEvent.url.pathname)
-	return data
+    logger.errorException(error, `${loggerPrefix} - Internal Server Error`)
+    svelteError(500, "Internal Server Error")
+  }
+  if (!isAuthorized) {
+    logger.warn(`${loggerPrefix} - Principal {principalId} is not authorized to access this resource`, principal.id)
+    svelteError(403, "Forbidden")
+  }
+  logger.info(`${loggerPrefix} - Request processed successfully for principal {principalId}`, principal.id)
+  // Redirect to the same page, but without the action in the URL
+  //redirect(303, requestEvent.url.pathname)
+  return data
 }

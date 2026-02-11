@@ -1,70 +1,70 @@
 <script lang="ts">
-	import type { PageProps } from "./$types"
+  import type { PageProps } from "./$types"
 
-	let { data }: PageProps = $props()
+  let { data }: PageProps = $props()
 
-	let searchTerms = $state({
-		name: "",
-		class: "",
-		teacher: ""
-	})
+  let searchTerms = $state({
+    name: "",
+    class: "",
+    teacher: ""
+  })
 
-	let filters = $state({
-		importantInfo: false,
-		followUp: false,
-		facilitation: false
-	})
+  let filters = $state({
+    importantInfo: false,
+    followUp: false,
+    facilitation: false
+  })
 
-	let sortBy = $state<"name" | "school" | "class" | "teacher" | "lastActivity">("name")
-	let sortDirection = $state<"asc" | "desc">("asc")
+  let sortBy = $state<"name" | "school" | "class" | "teacher" | "lastActivity">("name")
+  let sortDirection = $state<"asc" | "desc">("asc")
 
-	const resetFilters = () => {
-		searchTerms.name = ""
-		searchTerms.class = ""
-		searchTerms.teacher = ""
-		filters.importantInfo = false
-		filters.followUp = false
-		filters.facilitation = false
-	}
+  const resetFilters = () => {
+    searchTerms.name = ""
+    searchTerms.class = ""
+    searchTerms.teacher = ""
+    filters.importantInfo = false
+    filters.followUp = false
+    filters.facilitation = false
+  }
 
-	let filteredStudents = $derived.by(() => {
-		return data.students
-			.filter((student) => {
-				const searchFilters = {
-					matchesImportantInfo: !filters.importantInfo || student.importantStuff?.importantInfo,
-					matchesFollowUp: !filters.followUp || (student.importantStuff?.followUp && student.importantStuff.followUp.length > 0),
-					matchesFacilitation: !filters.facilitation || (student.importantStuff?.facilitation && student.importantStuff.facilitation.length > 0)
-				}
+  let filteredStudents = $derived.by(() => {
+    return data.students
+      .filter((student) => {
+        const searchFilters = {
+          matchesImportantInfo: !filters.importantInfo || student.importantStuff?.importantInfo,
+          matchesFollowUp: !filters.followUp || (student.importantStuff?.followUp && student.importantStuff.followUp.length > 0),
+          matchesFacilitation: !filters.facilitation || (student.importantStuff?.facilitation && student.importantStuff.facilitation.length > 0)
+        }
 
-				const matchesName = !searchTerms.name || student.name.toLowerCase().includes(searchTerms.name.toLowerCase())
-				const matchesClass = !searchTerms.class || student.mainClass?.name.toLowerCase().includes(searchTerms.class.toLowerCase()) || false
-				const matchesTeacher = !searchTerms.teacher || student.mainContactTeacherGroup?.teachers.some((teacher) => teacher.name.toLowerCase().includes(searchTerms.teacher.toLowerCase())) || false
+        const matchesName = !searchTerms.name || student.name.toLowerCase().includes(searchTerms.name.toLowerCase())
+        const matchesClass = !searchTerms.class || student.mainClass?.name.toLowerCase().includes(searchTerms.class.toLowerCase()) || false
+        const matchesTeacher = !searchTerms.teacher || student.mainContactTeacherGroup?.teachers.some((teacher) => teacher.name.toLowerCase().includes(searchTerms.teacher.toLowerCase())) || false
 
-				return matchesName && matchesClass && matchesTeacher && Object.values(searchFilters).every((filter) => filter)
-			})
-			.sort((a, b) => {
-				switch (sortBy) {
-					case "name":
-						return sortDirection === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
-					case "school":
-						return sortDirection === "asc" ? (a.mainSchool?.name || "").localeCompare(b.mainSchool?.name || "") : (b.mainSchool?.name || "").localeCompare(a.mainSchool?.name || "")
-					case "class":
-						return sortDirection === "asc" ? (a.mainClass?.name || "").localeCompare(b.mainClass?.name || "") : (b.mainClass?.name || "").localeCompare(a.mainClass?.name || "")
-					case "teacher": {
-						const aTeachers = a.mainContactTeacherGroup?.teachers.map((t) => t.name).join(", ") || ""
-						const bTeachers = b.mainContactTeacherGroup?.teachers.map((t) => t.name).join(", ") || ""
-						return sortDirection === "asc" ? aTeachers.localeCompare(bTeachers) : bTeachers.localeCompare(aTeachers)
-					}
-					case "lastActivity": {
-						const aTimestamp = a.importantStuff?.lastActivityTimestamp ? new Date(a.importantStuff.lastActivityTimestamp).getTime() : 0
-						const bTimestamp = b.importantStuff?.lastActivityTimestamp ? new Date(b.importantStuff.lastActivityTimestamp).getTime() : 0
-						return sortDirection === "asc" ? aTimestamp - bTimestamp : bTimestamp - aTimestamp
-					}
-					default:
-						return 0
-				}
-			})
-	})
+        return matchesName && matchesClass && matchesTeacher && Object.values(searchFilters).every((filter) => filter)
+      })
+      .sort((a, b) => {
+        switch (sortBy) {
+          case "name":
+            return sortDirection === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
+          case "school":
+            return sortDirection === "asc" ? (a.mainSchool?.name || "").localeCompare(b.mainSchool?.name || "") : (b.mainSchool?.name || "").localeCompare(a.mainSchool?.name || "")
+          case "class":
+            return sortDirection === "asc" ? (a.mainClass?.name || "").localeCompare(b.mainClass?.name || "") : (b.mainClass?.name || "").localeCompare(a.mainClass?.name || "")
+          case "teacher": {
+            const aTeachers = a.mainContactTeacherGroup?.teachers.map((t) => t.name).join(", ") || ""
+            const bTeachers = b.mainContactTeacherGroup?.teachers.map((t) => t.name).join(", ") || ""
+            return sortDirection === "asc" ? aTeachers.localeCompare(bTeachers) : bTeachers.localeCompare(aTeachers)
+          }
+          case "lastActivity": {
+            const aTimestamp = a.importantStuff?.lastActivityTimestamp ? new Date(a.importantStuff.lastActivityTimestamp).getTime() : 0
+            const bTimestamp = b.importantStuff?.lastActivityTimestamp ? new Date(b.importantStuff.lastActivityTimestamp).getTime() : 0
+            return sortDirection === "asc" ? aTimestamp - bTimestamp : bTimestamp - aTimestamp
+          }
+          default:
+            return 0
+        }
+      })
+  })
 </script>
 
 <h1>Elever</h1>
@@ -161,7 +161,7 @@
 	.student-row {
 		flex: 1;
 		display: flex;
-		padding: 0.5rem 0rem;
+		padding: 0.5rem 0;
 		align-items: center;
 	}
 	.student-row.header {

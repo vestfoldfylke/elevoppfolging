@@ -1,16 +1,17 @@
 <script lang="ts">
-	import type { DocumentMessage } from "$lib/types/db/shared-types"
+  import type { DocumentMessage } from "$lib/types/db/shared-types"
 
-	type PageProps = {
-		message: DocumentMessage
-	}
+  type PageProps = {
+    message: DocumentMessage
+  }
 
-	let { message }: PageProps = $props()
+  let { message }: PageProps = $props()
 </script>
 
 <div class="message">
   <p>{message.content.text}</p>
-  <p>— {message.created.by.displayName}</p>
+  <!-- TODO: Find a better way to show who created the message. Fetch name from Users or do it on load? -->
+  <p>— {message.created.by.fallbackName}</p>
 </div>
 
 <style>
