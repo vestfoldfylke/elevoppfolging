@@ -1,7 +1,6 @@
 <script lang="ts">
   import { enhance } from "$app/forms"
   import type { AccessType } from "$lib/types/app-types"
-  import type { AppStudent } from "$lib/types/db/shared-types"
   import type { ActionData } from "../../routes/students/[_id]/$types"
 
   type PageProps = {
@@ -35,37 +34,49 @@
             update()
           }
         }}>
-        <label for="title">
-          Title
-        </label>
-        <input id="title" name="title" type="text" value={form?.createDocumentFailedData?.title ?? ''}>
-        {#if accessTypes.length > 1}
-          <label for="schoolNumber">
-            School Number
-          </label>
-          <select id="schoolNumber" name="schoolNumber" required>
-            <option value="" disabled selected>Velg skole</option>
-            {#each accessTypes as access}
-              <option value={access.schoolNumber}>{access.schoolNumber}</option>
-            {/each}
-          </select>
-        {:else}
-          <input id="schoolNumber" name="schoolNumber" type="text" value={accessTypes[0]?.schoolNumber ?? ''} required hidden>
-        {/if}
-          <label for="type">
-          Type
-        </label>
-        <input id="type" name="type" type="text" value="NOTE" required>
-        <label for="note">
-          Note
-        </label>
-        <textarea id="note" name="note" value={form?.createDocumentFailedData?.note ?? ''} required></textarea>
-        <button type="submit">Add Document</button>
+          <div class="document-content-item">
+            <label for="type">
+              Type
+            </label>
+            <select id="type" name="type" required>
+              <option value="NOTE" selected>Notat</option>
+              <option value="FOLLOW_UP">Oppfølging</option>
+            </select>
+          </div>
+          <div class="document-content-item">
+            <label for="title">
+              Tittel
+            </label>
+            <input id="title" name="title" type="text" value={form?.createDocumentFailedData?.title ?? ''} required>
+          </div>
+          <div class="document-content-item">
+            {#if accessTypes.length > 1}
+              <label for="schoolNumber">
+                Skolenummer
+              </label>
+              <select id="schoolNumber" name="schoolNumber" required>
+                <option value="" disabled selected>Velg skole</option>
+                {#each accessTypes as access}
+                  <!-- TODO: Add school name to AccessType -->
+                  <option value={access.schoolNumber}>{access.schoolNumber}</option>
+                {/each}
+              </select>
+            {:else}
+              <input id="schoolNumber" name="schoolNumber" type="text" value={accessTypes[0]?.schoolNumber ?? ''} required hidden>
+            {/if}
+          </div>
+          <br />
+          <div class="document-content-item">
+            <label for="note">
+              Innhold
+            </label>
+            <textarea id="note" name="note" required>{form?.createDocumentFailedData?.note ?? ''}</textarea>
+          </div>
+          <button type="submit">Add Document</button>
       </form>
       {#if form?.createDocumentFailedData?.errorMessage}<p class="error">{form.createDocumentFailedData.errorMessage}</p>{/if}
       </div>
       <div class="document-actions">
-        <button>Lagre</button>
         <button onclick={() => documentCreatorOpen = false}>Avbryt</button>
       </div>
     </div>
@@ -78,6 +89,11 @@
     flex-direction: column;
     border: 1px solid #ccc;
   }
+  
+  .document-content-item {
+    margin-bottom: 0.5rem;
+  }
+
   .document-header {
     display: flex;
     align-items: center;
