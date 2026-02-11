@@ -71,6 +71,10 @@ export type StudentEnrollment = {
 	mainSchool: boolean
 }
 
+export type MainSchool = School & {
+	enrollmentSystemId: string
+}
+
 /** En elev i db for denne appen */
 export type NewAppStudent = {
 	/** FINT system-id for eleven */
@@ -82,6 +86,9 @@ export type NewAppStudent = {
 	name: string
 	feideName: string
 	studentEnrollments: StudentEnrollment[]
+	mainSchool: MainSchool | null
+	mainClass: Group | null
+	mainContactTeacherGroup: ContactTeacherGroup | null
 	lastSynced: string
 }
 
@@ -160,6 +167,7 @@ export type DbAccess = NewAccess & {
 }
 
 export type NewAppUser = {
+	active: boolean
 	feideName: string
 	entra: {
 		id: string
@@ -210,6 +218,7 @@ export type DocumentBase = {
 	schoolNumber: string
 	title: string
 	created: EditorData
+	modified: EditorData
 }
 
 export type DocumentMessageBase = {
@@ -271,4 +280,39 @@ export type StudentDocument = NewStudentDocument & {
 
 export type DbStudentDocument = NewStudentDocument & {
 	_id: ObjectId
+}
+
+// Important Stuff
+
+export type ImportantStuffBase = {
+	created: EditorData
+	modified: EditorData
+	importantInfo: string
+}
+
+export type NewStudentImportantStuff = ImportantStuffBase & {
+	type: "STUDENT"
+	followUp: string[]
+	facilitation: string[]
+	lastActivityTimestamp: string
+}
+
+export type StudentImportantStuff = NewStudentImportantStuff & {
+	_id: string
+	student: {
+		_id: string
+	}
+}
+
+export type NewDbStudentImportantStuff = NewStudentImportantStuff & {
+	student: {
+		_id: ObjectId
+	}
+}
+
+export type DbStudentImportantStuff = NewStudentImportantStuff & {
+	_id: ObjectId
+	student: {
+		_id: ObjectId
+	}
 }

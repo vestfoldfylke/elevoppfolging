@@ -10,6 +10,6 @@
 </svelte:head>
 
 <div>
-	{data.authenticatedPrincipal.displayName}
+	Logget inn som: {data.authenticatedPrincipal.displayName}
 	{@render children()}
 </div>

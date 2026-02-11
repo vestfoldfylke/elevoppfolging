@@ -1,12 +1,12 @@
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
-import type { SimpleAppStudent } from "$lib/types/app-types"
+import type { FrontendOverviewStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
 import type { PageServerLoad } from "./$types"
 
 type StudentsPageData = {
-	students: SimpleAppStudent[]
+	students: FrontendOverviewStudent[]
 }
 
 const getStudents: ServerLoadNextFunction<StudentsPageData> = async ({ principal }) => {
@@ -27,7 +27,7 @@ const getStudents: ServerLoadNextFunction<StudentsPageData> = async ({ principal
 		}
 	}
 
-	const students: SimpleAppStudent[] = await dbClient.getStudents(access)
+	const students: FrontendOverviewStudent[] = await dbClient.getStudents(access)
 
 	return {
 		data: {

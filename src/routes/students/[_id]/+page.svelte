@@ -8,21 +8,6 @@
 
 	let showAllStudentContacts = $state(false)
 
-	let studentInfo = $derived.by(() => {
-		const mainEnrollment = data.student.studentEnrollments.find((enrollment) => enrollment.mainSchool) || data.student.studentEnrollments[0] || null
-		const mainSchool = mainEnrollment?.school
-		const otherSchools = data.student.studentEnrollments.map((enrollment) => enrollment.school).filter((school) => school.schoolNumber !== mainSchool?.schoolNumber)
-		const mainClass = mainEnrollment?.classMemberships.find((membership) => membership.period.active)?.classGroup.name
-		const contactTeachers = mainEnrollment?.contactTeacherGroupMemberships.flatMap((membership) => membership.contactTeacherGroup.teachers)
-
-		return {
-			mainSchool,
-			otherSchools,
-			mainClass,
-			contactTeachers
-		}
-	})
-
 	type StudentContactPerson = {
 		name: string
 		type: "Kontaktlærer" | "Klasselærer" | "Faglærer" | "Noe"
@@ -46,6 +31,9 @@
 			}
 
 			enrollment.contactTeacherGroupMemberships.forEach((membership) => {
+				if (!membership.period.active) {
+					return
+				}
 				membership.contactTeacherGroup.teachers.forEach((teacher) => {
 					if (!schoolContacts[schoolNumber].contactPersons.some((contact) => contact.name === teacher.name)) {
 						schoolContacts[schoolNumber].contactPersons.push({ name: teacher.name, type: "Kontaktlærer" })
@@ -54,6 +42,9 @@
 			})
 
 			enrollment.classMemberships.forEach((membership) => {
+				if (!membership.period.active) {
+					return
+				}
 				membership.classGroup.teachers.forEach((teacher) => {
 					if (!schoolContacts[schoolNumber].contactPersons.some((contact) => contact.name === teacher.name)) {
 						schoolContacts[schoolNumber].contactPersons.push({ name: teacher.name, type: "Klasselærer" })
@@ -62,6 +53,9 @@
 			})
 
 			enrollment.teachingGroupMemberships.forEach((membership) => {
+				if (!membership.period.active) {
+					return
+				}
 				membership.teachingGroup.teachers.forEach((teacher) => {
 					if (!schoolContacts[schoolNumber].contactPersons.some((contact) => contact.name === teacher.name)) {
 						schoolContacts[schoolNumber].contactPersons.push({ name: teacher.name, type: "Faglærer" })
@@ -83,8 +77,8 @@
     -->
     <div class="student-essentials">
       <h2>{data.student.name}</h2>
-      <p>{studentInfo.mainSchool?.name ?? "Ukjent skole"} - {studentInfo.mainClass}</p>
-      <p><strong>Kontaktlærer{studentInfo.contactTeachers.length !== 1 ? "e" : ""}:</strong> {studentInfo.contactTeachers.map(teacher => teacher.name).join(", ")}</p>
+      <p>{data.student.mainSchool?.name ?? "Ukjent skole?"} - {data.student.mainClass?.name || "Ingen aktiv klasse ved hovedskole"}</p>
+      <p><strong>Kontaktlærer{data.student.mainContactTeacherGroup?.teachers.length !== 1 ? "e" : ""}:</strong> {(data.student.mainContactTeacherGroup?.teachers || [{ name: "Ingen kontaktlærer ved hovedskole" }]).map(teacher => teacher.name).join(", ")}</p>
       <p>
         {#each data.accessTypes as accessTypes}
           {accessTypes.type} ved {data.student.studentEnrollments.find(enrollment => enrollment.school.schoolNumber === accessTypes.schoolNumber)?.school.name} <br>
@@ -101,7 +95,7 @@
     <div class="student-section-content student-information">
       <div class="student-important-info">
         <h4>Viktig informasjon</h4>
-        <p>Skylder meg en hundrings</p>
+        <p>{data.importantStuff?.importantInfo || "Skylder meg en hundrings"}</p>
       </div>
       <div>
         <h4>Oppfølging</h4>
@@ -127,7 +121,7 @@
     </div>
     <div class="student-section-content">
       {#if schoolContacts.length > 1}
-        <p><strong>OBS!</strong> Har også elevforhold ved <strong>{schoolContacts.filter(school => school.schoolNumber !== studentInfo.mainSchool?.schoolNumber).map(school => school.name).join(", ")}</strong></p>
+        <p><strong>OBS!</strong> Har også elevforhold ved <strong>{schoolContacts.filter(school => school.schoolNumber !== data.student.mainSchool?.schoolNumber).map(school => school.name).join(", ")}</strong></p>
       {/if}
       {#each schoolContacts as schoolContact}
         <div class="school-contact">

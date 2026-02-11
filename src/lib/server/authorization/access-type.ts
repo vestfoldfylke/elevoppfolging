@@ -1,5 +1,5 @@
-import type { AccessType } from "$lib/types/app-types"
-import type { Access, AppStudent, StudentEnrollment } from "$lib/types/db/shared-types"
+import type { AccessType, FrontendStudent } from "$lib/types/app-types"
+import type { Access, StudentEnrollment } from "$lib/types/db/shared-types"
 import { getDbClient } from "../db/get-db-client"
 
 const getSchoolAccess = (studentEnrollment: StudentEnrollment, access: Access): AccessType | undefined => {
@@ -111,7 +111,7 @@ const getAccessTypeForEnrollment = async (studentEnrollment: StudentEnrollment, 
 	return null
 }
 
-export const getAccessTypesForStudent = async (student: AppStudent, access: Access): Promise<AccessType[]> => {
+export const getAccessTypesForStudent = async (student: FrontendStudent, access: Access): Promise<AccessType[]> => {
 	const accessTypes: AccessType[] = []
 	for (const enrollment of student.studentEnrollments) {
 		const accessType = await getAccessTypeForEnrollment(enrollment, access)

@@ -3,15 +3,16 @@ import { getDbClient } from "$lib/server/db/get-db-client"
 import { FormActionError } from "$lib/server/middleware/form-action-error"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverActionRequestMiddleware, serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
-import type { AccessType, DocumentMessageType, StudentDocumentType } from "$lib/types/app-types"
+import type { AccessType, DocumentMessageType, FrontendStudent, StudentDocumentType } from "$lib/types/app-types"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { Access, AppStudent, DocumentBase, DocumentMessage, DocumentMessageBase, NewDocumentMessage, NewStudentDocument, StudentDocument } from "$lib/types/db/shared-types"
+import type { Access, DocumentBase, DocumentMessage, DocumentMessageBase, EditorData, NewDocumentMessage, NewStudentDocument, StudentDocument, StudentImportantStuff } from "$lib/types/db/shared-types"
 import type { ServerActionNextFunction, ServerLoadNextFunction } from "$lib/types/middleware/http-request"
 import type { Actions, PageServerLoad } from "./$types"
 
 type StudentPageData = {
-	student: AppStudent
+	student: FrontendStudent
+	importantStuff: StudentImportantStuff | null
 	accessTypes: AccessType[]
 	documents: StudentDocument[]
 }
@@ -35,7 +36,7 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 		throw new HTTPError(404, "No access found for principal")
 	}
 
-	const student: AppStudent | null = await dbClient.getStudentById(studentDbId)
+	const student: FrontendStudent | null = await dbClient.getStudentById(studentDbId)
 	if (!student) {
 		throw new HTTPError(404, "Student not found")
 	}
@@ -46,13 +47,15 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 		throw new HTTPError(403, "No access to this student")
 	}
 
-	// Get student documents (streaming)
+	const studentImportantStuff: StudentImportantStuff | null = await dbClient.getStudentImportantStuff(studentDbId)
+
 	const documents: StudentDocument[] = await dbClient.getStudentDocuments(studentDbId)
 
 	return {
 		data: {
 			student,
 			accessTypes,
+			importantStuff: studentImportantStuff,
 			documents
 		},
 		isAuthorized: true
@@ -60,9 +63,6 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 }
 
 export const load: PageServerLoad = async (requestEvent): Promise<StudentPageData> => {
-	requestEvent.setHeaders({
-		"X-Accel-Buffering": "no" // Disable response buffering for streaming
-	})
 	return await serverLoadRequestMiddleware(requestEvent, getStudent)
 }
 
@@ -92,16 +92,18 @@ type CreateDocumentFailedData = {
 const createStudentDocument = (documentData: NewDocumentData, principal: AuthenticatedPrincipal): NewStudentDocument => {
 	const { type, schoolNumber, title, note, studentId } = documentData
 
+	const editorData: EditorData = {
+		by: {
+			entraUserId: principal.id,
+			fallbackName: principal.displayName
+		},
+		at: new Date().toISOString()
+	}
 	const newDocumentBase: DocumentBase = {
 		schoolNumber,
 		title,
-		created: {
-			by: {
-				entraUserId: principal.id,
-				fallbackName: principal.displayName
-			},
-			at: new Date().toISOString()
-		}
+		created: editorData,
+		modified: editorData
 	}
 
 	switch (type) {
@@ -182,7 +184,7 @@ const newDocument: ServerActionNextFunction<CreatedDocument> = async ({ requestE
 
 	const dbClient: IDbClient = getDbClient()
 	try {
-		const documentId = await dbClient.createStudentDocument(newDocument)
+		const documentId = await dbClient.createStudentDocument(studentId, newDocument)
 		return {
 			data: {
 				documentId
@@ -322,7 +324,7 @@ const newMessage: ServerActionNextFunction<CreatedMessage> = async ({ requestEve
 
 	const dbClient: IDbClient = getDbClient()
 	try {
-		const message = await dbClient.addDocumentMessage(documentId, newDocument)
+		const message = await dbClient.addDocumentMessage(studentId, documentId, newDocument)
 		return {
 			data: {
 				createdMessage: message
