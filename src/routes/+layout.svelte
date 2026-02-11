@@ -10,6 +10,7 @@
 </svelte:head>
 
 <div>
+	<a href="/">Hjem</a><br /><br />
 	Logget inn som: {data.authenticatedPrincipal.displayName}
 	{@render children()}
 </div>

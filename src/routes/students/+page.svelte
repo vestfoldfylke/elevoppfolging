@@ -161,7 +161,7 @@
 	.student-row {
 		flex: 1;
 		display: flex;
-		padding: 0.5rem 0rem;
+		padding: 0.5rem 0;
 		align-items: center;
 	}
 	.student-row.header {

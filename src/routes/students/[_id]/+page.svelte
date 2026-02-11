@@ -154,15 +154,9 @@
     </div>
     <DocumentCreator {form} accessTypes={data.accessTypes} />
 
-    {#await data.documents}
-      Laster...
-    {:then documents}
-      {#each documents as document (document._id)}
-        <DocumentComponent {document} {form}/>
-      {/each}
-    {:catch error}
-      <p>Feil ved lasting av dokumenter: {error.message}</p>
-    {/await}
+    {#each data.documents as document (document._id)}
+      <DocumentComponent {document} {form}/>
+    {/each}
   </div>
 </div>
 
