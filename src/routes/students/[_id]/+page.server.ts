@@ -1,12 +1,23 @@
+import { logger } from "@vestfoldfylke/loglady"
 import { getAccessTypesForStudent } from "$lib/server/authorization/access-type"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { FormActionError } from "$lib/server/middleware/form-action-error"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverActionRequestMiddleware, serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
-import type { AccessType, DocumentMessageType, FrontendStudent, StudentDocumentType } from "$lib/types/app-types"
+import type { AccessType, DocumentMessageType, FrontendStudent } from "$lib/types/app-types"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { Access, DocumentBase, DocumentMessage, DocumentMessageBase, EditorData, NewDocumentMessage, NewStudentDocument, StudentDocument, StudentImportantStuff } from "$lib/types/db/shared-types"
+import type {
+  Access,
+  DocumentContentItem,
+  DocumentMessage,
+  DocumentMessageBase,
+  EditorData,
+  NewDocumentMessage,
+  NewStudentDocument,
+  StudentDocument,
+  StudentImportantStuff
+} from "$lib/types/db/shared-types"
 import type { ServerActionNextFunction, ServerLoadNextFunction } from "$lib/types/middleware/http-request"
 import type { Actions, PageServerLoad } from "./$types"
 
@@ -66,73 +77,17 @@ export const load: PageServerLoad = async (requestEvent): Promise<StudentPageDat
   return await serverLoadRequestMiddleware(requestEvent, getStudent)
 }
 
-type NewDocumentData = {
-  documentId?: string
-  type: StudentDocumentType
-  schoolNumber: string
-  studentId: string
-  title: string
-  note: string | null
-}
-
 type CreatedDocument = {
   documentId: string
 }
 
 type CreateDocumentFailedData = {
   createDocumentFailedData: {
-    type: StudentDocumentType | null
+    documentContentTemplateId: string | null
     schoolNumber: string | null
-    title: string | null
-    note: string | null
+    documentTitle: string | null
+    content: string[]
     errorMessage: string
-  }
-}
-
-const createStudentDocument = (documentData: NewDocumentData, principal: AuthenticatedPrincipal): NewStudentDocument => {
-  const { type, schoolNumber, title, note, studentId } = documentData
-
-  const editorData: EditorData = {
-    by: {
-      entraUserId: principal.id,
-      fallbackName: principal.displayName
-    },
-    at: new Date().toISOString()
-  }
-  const newDocumentBase: DocumentBase = {
-    schoolNumber,
-    title,
-    created: editorData,
-    modified: editorData
-  }
-
-  switch (type) {
-    case "NOTE": {
-      if (!note || typeof note !== "string") {
-        throw new FormActionError(400, "Note text is required and must be a string.", { note })
-      }
-      const newDocument: NewStudentDocument = {
-        ...newDocumentBase,
-        type: "NOTE",
-        content: {
-          text: note
-        },
-        messages: [],
-        student: {
-          _id: studentId
-        }
-      }
-
-      return newDocument
-    }
-
-    case "FOLLOW_UP": {
-      throw new Error("Follow-up creation not implemented yet")
-    }
-
-    default: {
-      throw new FormActionError(400, "Invalid document type.", { type })
-    }
   }
 }
 
@@ -144,43 +99,96 @@ const newDocument: ServerActionNextFunction<CreatedDocument> = async ({ requestE
 
   // get form data fields and validate
   const formData = await requestEvent.request.formData()
-  const type: StudentDocumentType | null = formData.get("type") as StudentDocumentType | null
-  const schoolNumber = formData.get("schoolNumber") as string | null
-  const title = formData.get("title") as string | null
-  const note = formData.get("note") as string | null
+  const documentContentTemplateId: string | null = formData.get("documentContentTemplateId")?.toString() || null
+  const documentContentTemplateVersion: number | null = Number(formData.get("documentContentTemplateVersion")) || null
+  const schoolNumber: string | null = formData.get("schoolNumber")?.toString() || null
+  const documentTitle: string | null = formData.get("documentTitle")?.toString() || null
+
+  const contentItems: DocumentContentItem[] = []
+  const contentValues: string[] = []
+  for (const key of Array.from(new Set(formData.keys()))) {
+    logger.debug(`Processing form data key: ${key}`)
+    if (!key.startsWith("contentItem-")) {
+      continue
+    }
+    const formValues = formData.getAll(key)
+    if (formValues.length === 0 || formValues.length > 2) {
+      throw new FormActionError(400, `Invalid form data for document content items: ${key} ${formValues}`, {})
+    }
+
+    let documentContentItem: DocumentContentItem
+    try {
+      documentContentItem = JSON.parse(formValues[0].toString())
+    } catch (error) {
+      throw new FormActionError(400, `Invalid JSON for document content item: ${key} ${formValues[0]}`, {}, error)
+    }
+
+    // TODO validate all contentItem fields against the schema, but for now just check that it has the required fields
+    if (typeof documentContentItem !== "object" || !("type" in documentContentItem) || !("value" in documentContentItem)) {
+      throw new FormActionError(400, `Invalid document content item structure: ${key} ${formValues[0]}`, {})
+    }
+
+    let documentContentValue: string = ""
+    if (formValues.length === 2) {
+      if (typeof formValues[1] !== "string") {
+        throw new FormActionError(400, `Invalid form data for document content item value: ${key} ${formValues[1]} - value must be a string`, {})
+      }
+      documentContentValue = formValues[1]
+      documentContentItem.value = documentContentValue
+    }
+
+    contentItems.push(documentContentItem)
+    contentValues.push(documentContentValue)
+  }
 
   const returnOnFail: CreateDocumentFailedData = {
     createDocumentFailedData: {
-      type,
+      documentContentTemplateId,
       schoolNumber,
-      title,
-      note,
+      documentTitle,
+      content: contentValues,
       errorMessage: "Failed to create document, check the values and try again."
     }
   }
 
-  if (!type || typeof type !== "string") {
-    returnOnFail.createDocumentFailedData.errorMessage = "Document type is required and must be a string."
-    throw new FormActionError(400, "Document type is required and must be a string.", returnOnFail)
+  if (!documentContentTemplateId || typeof documentContentTemplateId !== "string") {
+    returnOnFail.createDocumentFailedData.errorMessage = "documentContentTemplateId is required and must be a string."
+    throw new FormActionError(400, "documentContentTemplateId is required and must be a string.", returnOnFail)
+  }
+  if (!documentContentTemplateVersion || typeof documentContentTemplateVersion !== "number") {
+    returnOnFail.createDocumentFailedData.errorMessage = "documentContentTemplateVersion is required and must be a number."
+    throw new FormActionError(400, "documentContentTemplateVersion is required and must be a number.", returnOnFail)
   }
   if (!schoolNumber || typeof schoolNumber !== "string") {
-    returnOnFail.createDocumentFailedData.errorMessage = "School number is required and must be a string."
-    throw new FormActionError(400, "School number is required and must be a string.", returnOnFail)
+    returnOnFail.createDocumentFailedData.errorMessage = "schoolNumber is required and must be a string."
+    throw new FormActionError(400, "schoolNumber is required and must be a string.", returnOnFail)
   }
-  if (!title || typeof title !== "string") {
-    returnOnFail.createDocumentFailedData.errorMessage = "Title is required and must be a string."
-    throw new FormActionError(400, "Title is required and must be a string.", returnOnFail)
+  if (!documentTitle || typeof documentTitle !== "string") {
+    returnOnFail.createDocumentFailedData.errorMessage = "documentTitle is required and must be a string."
+    throw new FormActionError(400, "documentTitle is required and must be a string.", returnOnFail)
   }
 
-  const newDocumentData: NewDocumentData = {
-    type,
+  const editorData: EditorData = {
+    by: {
+      entraUserId: principal.id,
+      fallbackName: principal.displayName
+    },
+    at: new Date().toISOString()
+  }
+
+  const newDocument: NewStudentDocument = {
+    title: documentTitle,
     schoolNumber,
-    title,
-    note,
-    studentId
+    student: {
+      _id: studentId
+    },
+    contentTemplateId: documentContentTemplateId,
+    contentTemplateVersion: documentContentTemplateVersion,
+    created: editorData,
+    modified: editorData,
+    content: contentItems,
+    messages: []
   }
-
-  const newDocument: NewStudentDocument = createStudentDocument(newDocumentData, principal)
 
   const dbClient: IDbClient = getDbClient()
   try {
@@ -230,14 +238,14 @@ const createDocumentMessage = (messageData: NewMessageData, principal: Authentic
   }
 
   switch (type) {
-    case "COMMENT": {
+    case "comment": {
       if (!comment || typeof comment !== "string") {
         returnOnFail.createMessageFailedData[messageData.documentId].errorMessage = "Comment text is required and must be a string."
         throw new FormActionError(400, "Comment text is required and must be a string.", returnOnFail)
       }
       const newMessage: NewDocumentMessage = {
         ...newMessageBase,
-        type: "COMMENT",
+        type: "comment",
         content: {
           text: comment
         }
@@ -245,7 +253,7 @@ const createDocumentMessage = (messageData: NewMessageData, principal: Authentic
 
       return newMessage
     }
-    case "UPDATE": {
+    case "update": {
       if (!update || typeof update !== "string") {
         returnOnFail.createMessageFailedData[messageData.documentId].errorMessage = "Update text is required and must be a string."
         throw new FormActionError(400, "Update text is required and must be a string.", returnOnFail)
@@ -257,7 +265,7 @@ const createDocumentMessage = (messageData: NewMessageData, principal: Authentic
       }
       const newMessage: NewDocumentMessage = {
         ...newMessageBase,
-        type: "UPDATE",
+        type: "update",
         title,
         content: {
           text: update

@@ -205,6 +205,26 @@ export type DbProgramArea = NewProgramArea & {
 
 // DOCUMENTS
 
+export type DocumentHeaderItem = {
+  type: "h1" | "h2" | "h3"
+  value: string
+}
+
+export type DocumentParagraphItem = {
+  type: "p"
+  value: string
+}
+
+export type DocumentInputItem = {
+  type: "textarea" | "inputText"
+  label: string
+  placeholder?: string
+  value: string
+  required: boolean
+}
+
+export type DocumentContentItem = DocumentHeaderItem | DocumentParagraphItem | DocumentInputItem
+
 export type EditorData = {
   by: {
     entraUserId: string
@@ -214,26 +234,19 @@ export type EditorData = {
   at: string
 }
 
-export type DocumentBase = {
-  schoolNumber: string
-  title: string
-  created: EditorData
-  modified: EditorData
-}
-
 export type DocumentMessageBase = {
   created: EditorData
 }
 
 export type DocumentComment = DocumentMessageBase & {
-  type: "COMMENT"
+  type: "comment"
   content: {
     text: string
   }
 }
 
 export type DocumentUpdate = DocumentMessageBase & {
-  type: "UPDATE"
+  type: "update"
   title: string
   content: {
     text: string
@@ -246,29 +259,18 @@ export type DocumentMessage = NewDocumentMessage & {
   messageId: string
 }
 
-export type DocumentNote = DocumentBase & {
-  type: "NOTE"
-  content: {
-    text: string
-  }
+export type Document = {
+  schoolNumber: string
+  title: string
+  created: EditorData
+  modified: EditorData
+  contentTemplateId: string
+  contentTemplateVersion: number
+  content: DocumentContentItem[]
   messages: DocumentMessage[]
 }
 
-export type DocumentFollowUp = DocumentBase & {
-  type: "FOLLOW_UP"
-  content: {
-    responsiblePerson: {
-      entraUserId: string
-      name: string
-    }
-    text: string
-  }
-  messages: DocumentMessage[]
-}
-
-type DocumentHelper = DocumentNote | DocumentFollowUp
-
-export type NewStudentDocument = DocumentHelper & {
+export type NewStudentDocument = Document & {
   student: {
     _id: string
   }
@@ -280,6 +282,17 @@ export type StudentDocument = NewStudentDocument & {
 
 export type DbStudentDocument = NewStudentDocument & {
   _id: ObjectId
+}
+
+// Document content templates
+
+export type DocumentContentTemplate = {
+  _id: string
+  name: string
+  version: number
+  created: EditorData
+  modified: EditorData
+  content: DocumentContentItem[]
 }
 
 // Important Stuff

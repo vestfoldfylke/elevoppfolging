@@ -1,6 +1,6 @@
 <script lang="ts">
   import DocumentComponent from "$lib/components/Document/Document.svelte"
-  import DocumentCreator from "$lib/components/DocumentCreator.svelte"
+  import DocumentCreator from "$lib/components/Document/DocumentCreator.svelte"
   import type { PageProps } from "./$types"
 
   let { data, form }: PageProps = $props()

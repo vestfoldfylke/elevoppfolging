@@ -1,8 +1,9 @@
 <script lang="ts">
   import { enhance } from "$app/forms"
   import type { AccessType } from "$lib/types/app-types"
-  import type { ActionData } from "../../routes/students/[_id]/$types"
-  import NoteContent from "$lib/components/NoteContent.svelte";
+  import type { DocumentContentTemplate, EditorData } from "$lib/types/db/shared-types"
+  import type { ActionData } from "../../../routes/students/[_id]/$types"
+  import DocumentContent from "./DocumentContent.svelte"
 
   type PageProps = {
     form: ActionData
@@ -11,40 +12,68 @@
 
   let { form, accessTypes }: PageProps = $props()
   let documentCreatorOpen = $state(false)
-  let noteType = $state()
-  
-  const noteSchema = {
-    title: "Tittel",
-    schoolNumber: "123456",
-    created: "2024-06-10",
-    modified: "2024-06-10",
-    schemaId: "oppstartssamtale",
-    schemaVersion: "999",
-    content: [
-      {
-        "type": "h1",
-        "value": "Dette er en tittel"
-      },
-      {
-        "type": "paragraph",
-        "value": "Dette er et avsnitt med litt tekst."
-      },
-      {
-        "type": "input[text]",
-        "placeholder": "Heisann",
-        "label": "Beskrivelse av tekstfelt",
-        "value": "",
-        "required": true
-      },
-      {
-        "type": "textarea",
-        "placeholder": "Heisann",
-        "label": "Beskrivelse av tekstfelt",
-        "value": "",
-        "required": true
-      }
-    ]
+  let selectedTemplateId = $state()
+
+  const mockEditor: EditorData = {
+    at: new Date().toISOString(),
+    by: {
+      entraUserId: "123",
+      fallbackName: "Ola Nordmann"
+    }
   }
+  const documentContentTemplates: DocumentContentTemplate[] = [
+    {
+      _id: "21894798237543ntgklj",
+      version: 999,
+      name: "Notat",
+      created: mockEditor,
+      modified: mockEditor,
+      content: [
+        {
+          type: "textarea",
+          placeholder: "Heisann",
+          label: "Beskrivelse av tekstfelt",
+          value: "",
+          required: true
+        }
+      ]
+    },
+    {
+      _id: "fdsfdsf",
+      name: "Oppstartssamtale",
+      version: 999,
+      created: mockEditor,
+      modified: mockEditor,
+      content: [
+        {
+          type: "h1",
+          value: "Dette er en tittel"
+        },
+        {
+          type: "p",
+          value: "Dette er et avsnitt med litt tekst."
+        },
+        {
+          type: "inputText",
+          placeholder: "Heisann",
+          label: "Beskrivelse av tekstfelt",
+          value: "",
+          required: true
+        },
+        {
+          type: "textarea",
+          placeholder: "Heisann",
+          label: "Beskrivelse av tekstfelt",
+          value: "",
+          required: true
+        }
+      ]
+    }
+  ]
+
+  let selectedTemplate = $derived.by(() => {
+    return documentContentTemplates.find((template) => template._id === selectedTemplateId) || documentContentTemplates[0]
+  })
 </script>
 
 {#if !documentCreatorOpen}
@@ -73,16 +102,18 @@
             <label for="type">
               Type
             </label>
-            <select id="type" name="type" required bind:value={noteType}>
-              <option value="NOTE" selected>Notat</option>
-              <option value="INITIAL_MEETING">Oppstartssamtale</option>
+            <select id="type" name="documentContentTemplateId" required bind:value={selectedTemplateId}>
+              {#each documentContentTemplates as documentContentTemplate, index}
+                <option selected={Boolean(form?.createDocumentFailedData?.documentContentTemplateId) || index === 0} value={documentContentTemplate._id}>{documentContentTemplate.name}</option>
+              {/each}
             </select>
+            <input type="hidden" name="documentContentTemplateVersion" value={selectedTemplate.version} />
           </div>
           <div class="document-content-item">
-            <label for="title">
+            <label for="documentTitle">
               Tittel
             </label>
-            <input id="title" name="title" type="text" value={form?.createDocumentFailedData?.title ?? ''} required>
+            <input id="documentTitle" name="documentTitle" type="text" value={form?.createDocumentFailedData?.documentTitle ?? ''} required>
           </div>
           <div class="document-content-item">
             {#if accessTypes.length > 1}
@@ -93,7 +124,7 @@
                 <option value="" disabled selected>Velg skole</option>
                 {#each accessTypes as access}
                   <!-- TODO: Add school name to AccessType -->
-                  <option value={access.schoolNumber}>{access.schoolNumber}</option>
+                  <option selected={Boolean(form?.createDocumentFailedData?.schoolNumber)} value={access.schoolNumber}>{access.schoolNumber}</option>
                 {/each}
               </select>
             {:else}
@@ -101,7 +132,7 @@
             {/if}
           </div>
           <br />
-          <NoteContent {form} {noteSchema} />
+          <DocumentContent {form} content={selectedTemplate.content} editMode={true} />
           <div class="document-actions">
             <button type="submit">Legg til notat</button>
             <button onclick={() => documentCreatorOpen = false}>Avbryt</button>
