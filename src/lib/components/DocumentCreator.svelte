@@ -2,6 +2,7 @@
   import { enhance } from "$app/forms"
   import type { AccessType } from "$lib/types/app-types"
   import type { ActionData } from "../../routes/students/[_id]/$types"
+  import NoteContent from "$lib/components/NoteContent.svelte";
 
   type PageProps = {
     form: ActionData
@@ -10,18 +11,52 @@
 
   let { form, accessTypes }: PageProps = $props()
   let documentCreatorOpen = $state(false)
+  let noteType = $state()
+  
+  const noteSchema = {
+    title: "Tittel",
+    schoolNumber: "123456",
+    created: "2024-06-10",
+    modified: "2024-06-10",
+    schemaId: "oppstartssamtale",
+    schemaVersion: "999",
+    content: [
+      {
+        "type": "h1",
+        "value": "Dette er en tittel"
+      },
+      {
+        "type": "paragraph",
+        "value": "Dette er et avsnitt med litt tekst."
+      },
+      {
+        "type": "input[text]",
+        "placeholder": "Heisann",
+        "label": "Beskrivelse av tekstfelt",
+        "value": "",
+        "required": true
+      },
+      {
+        "type": "textarea",
+        "placeholder": "Heisann",
+        "label": "Beskrivelse av tekstfelt",
+        "value": "",
+        "required": true
+      }
+    ]
+  }
 </script>
 
 {#if !documentCreatorOpen}
   <div class="document-creator-actions">
-    <button onclick={() => documentCreatorOpen = true}>Nytt dokument</button>
+    <button onclick={() => documentCreatorOpen = true}>Nytt notat</button>
   </div>
 {/if}
 {#if documentCreatorOpen}
   <div class="document-creator">
     <div class="document-header">
       <button class="document-title">
-        <h2>Nytt dokument</h2>
+        <h2>Nytt notat</h2>
       </button>
     </div>
     <div class="document-container">
@@ -38,9 +73,9 @@
             <label for="type">
               Type
             </label>
-            <select id="type" name="type" required>
+            <select id="type" name="type" required bind:value={noteType}>
               <option value="NOTE" selected>Notat</option>
-              <option value="FOLLOW_UP">Oppfølging</option>
+              <option value="INITIAL_MEETING">Oppstartssamtale</option>
             </select>
           </div>
           <div class="document-content-item">
@@ -66,18 +101,13 @@
             {/if}
           </div>
           <br />
-          <div class="document-content-item">
-            <label for="note">
-              Innhold
-            </label>
-            <textarea id="note" name="note" required>{form?.createDocumentFailedData?.note ?? ''}</textarea>
+          <NoteContent {form} {noteSchema} />
+          <div class="document-actions">
+            <button type="submit">Legg til notat</button>
+            <button onclick={() => documentCreatorOpen = false}>Avbryt</button>
           </div>
-          <button type="submit">Add Document</button>
       </form>
       {#if form?.createDocumentFailedData?.errorMessage}<p class="error">{form.createDocumentFailedData.errorMessage}</p>{/if}
-      </div>
-      <div class="document-actions">
-        <button onclick={() => documentCreatorOpen = false}>Avbryt</button>
       </div>
     </div>
   </div>
