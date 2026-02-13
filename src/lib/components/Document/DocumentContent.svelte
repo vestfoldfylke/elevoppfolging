@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { DocumentContentItem } from "$lib/types/db/shared-types"
+  import type { DocumentContentItem, DocumentInputItem } from "$lib/types/db/shared-types"
   import type { ActionData } from "../../../routes/students/[_id]/$types"
 
   type NoteProps = {
@@ -10,6 +10,14 @@
 
   let { editMode, form, content }: NoteProps = $props()
 </script>
+
+{#snippet helpText(inputItem: DocumentInputItem)}
+  {#if inputItem.helpText}
+    <div class="help-text">
+      {inputItem.helpText}
+    </div>
+  {/if}
+{/snippet}
 
 {#each content as contentItem, index}
   {#if editMode}
@@ -26,6 +34,7 @@
 
   {#if contentItem.type === "inputText"}
     <div class="document-content-item">
+      {@render helpText(contentItem)}
       <label for={contentItem.label}>{contentItem.label}</label>
       <input disabled={!editMode} type="text" id={contentItem.label} name="contentItem-{index}" placeholder={contentItem.placeholder} value={form?.createDocumentFailedData?.content[index] || contentItem.value} required={contentItem.required} />
     </div>
@@ -33,12 +42,17 @@
   
   {#if contentItem.type === "textarea"}
     <div class="document-content-item">
+      {@render helpText(contentItem)}
       <label for={contentItem.label}>{contentItem.label}</label>
-      <textarea disabled={!editMode} id={contentItem.label} name="contentItem-{index}" placeholder={contentItem.placeholder} required={contentItem.required}>{form?.createDocumentFailedData?.content[index] || contentItem.value}</textarea>
+      <textarea disabled={!editMode} id={contentItem.label} name="contentItem-{index}" rows={contentItem.initialRows} placeholder={contentItem.placeholder} required={contentItem.required}>{form?.createDocumentFailedData?.content[index] || contentItem.value}</textarea>
     </div>
   {/if}
 {/each}
 
 <style>
-  
+  .help-text {
+    background-color: pink;
+    padding: 0.25rem;
+    border: 5px dotted red;
+  }
 </style>

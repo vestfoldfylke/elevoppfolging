@@ -215,13 +215,26 @@ export type DocumentParagraphItem = {
   value: string
 }
 
-export type DocumentInputItem = {
-  type: "textarea" | "inputText"
+export type DocumentTextInputItem = {
+  type: "inputText"
   label: string
-  placeholder?: string
   value: string
   required: boolean
+  placeholder?: string
+  helpText?: string
 }
+
+export type DocumentTextAreaItem = {
+  type: "textarea"
+  label: string
+  value: string
+  required: boolean
+  initialRows: number
+  placeholder?: string
+  helpText?: string
+}
+
+export type DocumentInputItem = DocumentTextInputItem | DocumentTextAreaItem
 
 export type DocumentContentItem = DocumentHeaderItem | DocumentParagraphItem | DocumentInputItem
 
@@ -285,14 +298,20 @@ export type DbStudentDocument = NewStudentDocument & {
 }
 
 // Document content templates
-
-export type DocumentContentTemplate = {
-  _id: string
+export type NewDocumentContentTemplate = {
   name: string
   version: number
   created: EditorData
   modified: EditorData
   content: DocumentContentItem[]
+}
+
+export type DocumentContentTemplate = NewDocumentContentTemplate & {
+  _id: string
+}
+
+export type DbDocumentContentTemplate = NewDocumentContentTemplate & {
+  _id: ObjectId
 }
 
 // Important Stuff

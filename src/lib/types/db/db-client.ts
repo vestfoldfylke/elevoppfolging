@@ -1,6 +1,17 @@
 import type { FrontendOverviewStudent, FrontendStudent } from "../app-types.js"
 import type { AuthenticatedPrincipal } from "../authentication.js"
-import type { Access, DocumentMessage, NewDocumentMessage, NewStudentDocument, NewStudentImportantStuff, ProgramArea, StudentDocument, StudentImportantStuff } from "./shared-types.js"
+import type {
+  Access,
+  DocumentContentTemplate,
+  DocumentMessage,
+  NewDocumentContentTemplate,
+  NewDocumentMessage,
+  NewStudentDocument,
+  NewStudentImportantStuff,
+  ProgramArea,
+  StudentDocument,
+  StudentImportantStuff
+} from "./shared-types.js"
 
 export interface IDbClient {
   getAccess(principal: AuthenticatedPrincipal): Promise<Access | null>
@@ -13,4 +24,7 @@ export interface IDbClient {
   getStudentImportantStuff(studentId: string): Promise<StudentImportantStuff | null>
   upsertStudentImportantStuff(studentId: string, importantStuff: NewStudentImportantStuff): Promise<void>
   updateStudentLatestActivityTimestamp(studentId: string): Promise<void>
+  getDocumentContentTemplates(): Promise<DocumentContentTemplate[]>
+  createDocumentContentTemplate(template: NewDocumentContentTemplate): Promise<string>
+  updateDocumentContentTemplate(templateId: string, template: NewDocumentContentTemplate): Promise<string>
 }

@@ -135,7 +135,7 @@ export const serverActionRequestMiddleware = async <TSuccess extends object, TFa
   } catch (error) {
     if (error instanceof FormActionError) {
       logger.errorException(error.originalError || error, `${loggerPrefix} - Form Action Error {status}`, error.status)
-      return fail(error.status, { message: error.message, ...(error.values as TFailure) })
+      return fail<{ message: string } & TFailure>(error.status, { message: error.message, ...(error.values as TFailure) })
     }
 
     if (error instanceof HTTPError) {

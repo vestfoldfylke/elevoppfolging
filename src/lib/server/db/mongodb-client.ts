@@ -9,12 +9,15 @@ import type {
   Access,
   DbAccess,
   DbAppStudent,
+  DbDocumentContentTemplate,
   DbStudentDocument,
   DbStudentImportantStuff,
+  DocumentContentTemplate,
   DocumentMessage,
   EditorData,
   ImportantStuffBase,
   NewDbStudentImportantStuff,
+  NewDocumentContentTemplate,
   NewDocumentMessage,
   NewStudentDocument,
   NewStudentImportantStuff,
@@ -33,6 +36,7 @@ export class MongoDbClient implements IDbClient {
   private readonly importantStuffCollectionName = "important-stuff"
   private readonly programAreasCollectionName = "program-areas"
   private readonly documentsCollectionName = "documents"
+  private readonly documentContentTemplatesCollectionName = "document-content-templates"
 
   constructor() {
     if (!env.MONGODB_CONNECTION_STRING) {
@@ -407,5 +411,38 @@ export class MongoDbClient implements IDbClient {
         }
       }
     )
+  }
+
+  async getDocumentContentTemplates(): Promise<DocumentContentTemplate[]> {
+    const db = await this.getDb()
+    const documentContentTemplatesCollection = db.collection<DbDocumentContentTemplate>(this.documentContentTemplatesCollectionName)
+
+    const templates = await documentContentTemplatesCollection.find().toArray()
+
+    return templates.map((template) => ({
+      ...template,
+      _id: template._id.toString()
+    }))
+  }
+
+  async createDocumentContentTemplate(template: NewDocumentContentTemplate): Promise<string> {
+    const db = await this.getDb()
+    const documentContentTemplatesCollection = db.collection<NewDocumentContentTemplate>(this.documentContentTemplatesCollectionName)
+
+    const result = await documentContentTemplatesCollection.insertOne(template)
+    return result.insertedId.toString()
+  }
+
+  async updateDocumentContentTemplate(templateId: string, template: DocumentContentTemplate): Promise<string> {
+    const db = await this.getDb()
+    const documentContentTemplatesCollection = db.collection<DbDocumentContentTemplate>(this.documentContentTemplatesCollectionName)
+
+    const result = await documentContentTemplatesCollection.updateOne({ _id: new ObjectId(templateId) }, { $set: { ...template, _id: new ObjectId(templateId) } })
+
+    if (result.modifiedCount === 0) {
+      throw new Error("Failed to update document content template")
+    }
+
+    return templateId
   }
 }

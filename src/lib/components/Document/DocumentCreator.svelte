@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { fail } from "node:assert"
   import { enhance } from "$app/forms"
   import type { AccessType } from "$lib/types/app-types"
   import type { DocumentContentTemplate, EditorData } from "$lib/types/db/shared-types"
@@ -34,6 +35,7 @@
           placeholder: "Heisann",
           label: "Beskrivelse av tekstfelt",
           value: "",
+          initialRows: 3,
           required: true
         }
       ]
@@ -65,6 +67,7 @@
           placeholder: "Heisann",
           label: "Beskrivelse av tekstfelt",
           value: "",
+          initialRows: 30,
           required: true
         }
       ]
@@ -92,9 +95,13 @@
       <div class="document-content">
         <form method="POST" action="?/newDocumentAction" use:enhance={() => {
           return async ({ result, update }) => {
+
+            
             if (result.type === "success") {
               documentCreatorOpen = false
             }
+            
+            console.log(result)
             update()
           }
         }}>
