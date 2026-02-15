@@ -50,6 +50,11 @@
 {/each}
 
 <style>
+  .document-content-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
   .help-text {
     background-color: pink;
     padding: 0.25rem;

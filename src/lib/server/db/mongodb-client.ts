@@ -425,6 +425,22 @@ export class MongoDbClient implements IDbClient {
     }))
   }
 
+  async getDocumentContentTemplateById(templateId: string): Promise<DocumentContentTemplate | null> {
+    const db = await this.getDb()
+    const documentContentTemplatesCollection = db.collection<DbDocumentContentTemplate>(this.documentContentTemplatesCollectionName)
+
+    const template = await documentContentTemplatesCollection.findOne({ _id: new ObjectId(templateId) })
+
+    if (!template) {
+      return null
+    }
+
+    return {
+      ...template,
+      _id: template._id.toString()
+    }
+  }
+
   async createDocumentContentTemplate(template: NewDocumentContentTemplate): Promise<string> {
     const db = await this.getDb()
     const documentContentTemplatesCollection = db.collection<NewDocumentContentTemplate>(this.documentContentTemplatesCollectionName)
@@ -433,16 +449,27 @@ export class MongoDbClient implements IDbClient {
     return result.insertedId.toString()
   }
 
-  async updateDocumentContentTemplate(templateId: string, template: DocumentContentTemplate): Promise<string> {
+  async updateDocumentContentTemplate(templateId: string, template: NewDocumentContentTemplate): Promise<string> {
     const db = await this.getDb()
     const documentContentTemplatesCollection = db.collection<DbDocumentContentTemplate>(this.documentContentTemplatesCollectionName)
 
-    const result = await documentContentTemplatesCollection.updateOne({ _id: new ObjectId(templateId) }, { $set: { ...template, _id: new ObjectId(templateId) } })
+    const result = await documentContentTemplatesCollection.updateOne({ _id: new ObjectId(templateId) }, { $set: { ...template } })
 
     if (result.modifiedCount === 0) {
       throw new Error("Failed to update document content template")
     }
 
     return templateId
+  }
+
+  async deleteDocumentContentTemplate(templateId: string): Promise<void> {
+    const db = await this.getDb()
+    const documentContentTemplatesCollection = db.collection<DbDocumentContentTemplate>(this.documentContentTemplatesCollectionName)
+
+    const result = await documentContentTemplatesCollection.deleteOne({ _id: new ObjectId(templateId) })
+
+    if (result.deletedCount === 0) {
+      throw new Error("Failed to delete document content template")
+    }
   }
 }

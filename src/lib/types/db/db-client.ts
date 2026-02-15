@@ -25,6 +25,8 @@ export interface IDbClient {
   upsertStudentImportantStuff(studentId: string, importantStuff: NewStudentImportantStuff): Promise<void>
   updateStudentLatestActivityTimestamp(studentId: string): Promise<void>
   getDocumentContentTemplates(): Promise<DocumentContentTemplate[]>
+  getDocumentContentTemplateById(templateId: string): Promise<DocumentContentTemplate | null>
   createDocumentContentTemplate(template: NewDocumentContentTemplate): Promise<string>
   updateDocumentContentTemplate(templateId: string, template: NewDocumentContentTemplate): Promise<string>
+  deleteDocumentContentTemplate(templateId: string): Promise<void>
 }

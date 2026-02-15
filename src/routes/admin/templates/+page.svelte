@@ -1,5 +1,5 @@
 <script lang="ts">
-  import TemplateEditor from "$lib/components/TemplateEditor.svelte"
+  import TemplateEditor from "$lib/components/TemplateEditor/TemplateEditor.svelte"
   import type { PageProps } from "./$types"
 
   let { data }: PageProps = $props()
@@ -8,25 +8,22 @@
 </script>
 
 <h1>Notatmaler</h1>
-<p>Lag deg en notat-type da</p>
 
-<button onclick={() => showTemplateEditor = !showTemplateEditor}>
-  {#if showTemplateEditor}
-    Lukk notat-type-editor
-  {:else}
-    Åpne notat-type-editor
-  {/if}
-</button>
+{#if !showTemplateEditor}
+  <button class="filled" onclick={() => showTemplateEditor = true}>Ny notat-mal</button>
+{/if}
 
 {#if showTemplateEditor}
   <TemplateEditor />
 {/if}
 
-{#each data.templates as template}
-  <div class="template">
-    <h2>{template.name}</h2>
-  </div>
-{/each}
+{#if !showTemplateEditor}
+  {#each data.templates as template}
+    <div class="template">
+      <a href={`/admin/templates/${template._id}`}>{template.name}</a>
+    </div>
+  {/each}
+{/if}
 
 <style>
 

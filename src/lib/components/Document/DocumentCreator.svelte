@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { fail } from "node:assert"
   import { enhance } from "$app/forms"
   import type { AccessType } from "$lib/types/app-types"
   import type { DocumentContentTemplate, EditorData } from "$lib/types/db/shared-types"
