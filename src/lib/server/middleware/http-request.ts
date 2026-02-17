@@ -1,4 +1,4 @@
-import { type ActionFailure, fail, json, type RequestEvent, error as svelteError } from "@sveltejs/kit"
+import { type ActionFailure, fail, json, redirect, type RequestEvent, error as svelteError } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
 import type { ApiNextFunction, ServerActionNextFunction, ServerLoadNextFunction } from "$lib/types/middleware/http-request"
@@ -128,10 +128,12 @@ export const serverActionRequestMiddleware = async <TSuccess extends object, TFa
   }
   let data: TSuccess
   let isAuthorized: boolean
+  let redirectUrl: string | null
   try {
     const nextResult = await next({ requestEvent, principal })
     data = nextResult.data
     isAuthorized = nextResult.isAuthorized
+    redirectUrl = nextResult.redirectUrl || null
   } catch (error) {
     if (error instanceof FormActionError) {
       logger.errorException(error.originalError || error, `${loggerPrefix} - Form Action Error {status}`, error.status)
@@ -153,5 +155,9 @@ export const serverActionRequestMiddleware = async <TSuccess extends object, TFa
   logger.info(`${loggerPrefix} - Request processed successfully for principal {principalId}`, principal.id)
   // Redirect to the same page, but without the action in the URL
   //redirect(303, requestEvent.url.pathname)
+  if (redirectUrl) {
+    logger.info(`${loggerPrefix} - Redirecting to {redirectUrl}`, redirectUrl)
+    redirect(301, redirectUrl)
+  }
   return data
 }

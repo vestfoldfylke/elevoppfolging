@@ -23,6 +23,10 @@ type ServerLoadNextParams = {
   principal: AuthenticatedPrincipal
 }
 
+type ServerActionNextResponse<T> = ServerLoadNextResponse<T> & {
+  redirectUrl?: string
+}
+
 export type ServerLoadNextFunction<T> = (params: ServerLoadNextParams) => Promise<ServerLoadNextResponse<T>>
 
-export type ServerActionNextFunction<TSuccess extends object> = (params: ServerLoadNextParams) => Promise<ServerLoadNextResponse<TSuccess>>
+export type ServerActionNextFunction<TSuccess extends object> = (params: ServerLoadNextParams) => Promise<ServerActionNextResponse<TSuccess>>
