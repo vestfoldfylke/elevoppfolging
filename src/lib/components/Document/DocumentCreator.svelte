@@ -36,13 +36,9 @@
       <div class="document-content">
         <form method="POST" action="?/newDocumentAction" use:enhance={() => {
           return async ({ result, update }) => {
-
-            
             if (result.type === "success") {
               documentCreatorOpen = false
             }
-            
-            console.log(result)
             update()
           }
         }}>

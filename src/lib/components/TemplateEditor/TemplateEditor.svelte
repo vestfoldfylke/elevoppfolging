@@ -156,8 +156,7 @@
       }
       if (result.type === "failure") {
         alert("Noe gikk galt ved lagring av malen, prøv igjen senere")
-        const failureResult = result.data as ActionData
-        console.log(failureResult)
+        // const failureResult = result.data as ActionData // If we need it
       }
     }
   }}>
