@@ -1,52 +1,52 @@
 <script lang="ts">
-	import { onMount } from "svelte"
-	import { fade, slide } from "svelte/transition"
-	import { onNavigate } from "$app/navigation"
-	import { page } from "$app/state"
-	import favicon32 from "$lib/assets/favicon-32x32.png"
-	import type { AuthenticatedPrincipal } from "$lib/types/authentication"
+  import { onMount } from "svelte"
+  import { fade, slide } from "svelte/transition"
+  import { onNavigate } from "$app/navigation"
+  import { page } from "$app/state"
+  import favicon32 from "$lib/assets/favicon-32x32.png"
+  import type { AuthenticatedPrincipal } from "$lib/types/authentication"
 
-	type Props = {
-		authenticatedPrincipal: AuthenticatedPrincipal
-		appName: string
-	}
-	let { authenticatedPrincipal: authenticatedUser, appName }: Props = $props()
+  type Props = {
+    authenticatedPrincipal: AuthenticatedPrincipal
+    appName: string
+  }
+  let { authenticatedPrincipal: authenticatedUser, appName }: Props = $props()
 
-	let menuOpen = $state(true)
+  let menuOpen = $state(true)
 
-	const smallScreenWidth = 1120
-	let screenIsLarge = true
+  const smallScreenWidth = 1120
+  let screenIsLarge = true
 
-	$effect(() => {
-		page.url // Track page url changes
-		if (!screenIsLarge) {
-			menuOpen = false
-		}
-	})
+  $effect(() => {
+    page.url // Track page url changes
+    if (!screenIsLarge) {
+      menuOpen = false
+    }
+  })
 
-	onMount(() => {
-		if (window.innerWidth <= smallScreenWidth) {
-			menuOpen = false
-			screenIsLarge = false
-		}
-		const handleResize = () => {
-			if (window.innerWidth >= smallScreenWidth && !screenIsLarge) {
-				screenIsLarge = true
-				menuOpen = true
-			}
-			if (window.innerWidth < smallScreenWidth && screenIsLarge) {
-				screenIsLarge = false
-				menuOpen = false
-			}
-		}
-		window.addEventListener("resize", handleResize)
+  onMount(() => {
+    if (window.innerWidth <= smallScreenWidth) {
+      menuOpen = false
+      screenIsLarge = false
+    }
+    const handleResize = () => {
+      if (window.innerWidth >= smallScreenWidth && !screenIsLarge) {
+        screenIsLarge = true
+        menuOpen = true
+      }
+      if (window.innerWidth < smallScreenWidth && screenIsLarge) {
+        screenIsLarge = false
+        menuOpen = false
+      }
+    }
+    window.addEventListener("resize", handleResize)
 
-		return () => window.removeEventListener("resize", handleResize)
-	})
+    return () => window.removeEventListener("resize", handleResize)
+  })
 
-	const toggleMenu = () => {
-		menuOpen = !menuOpen
-	}
+  const toggleMenu = () => {
+    menuOpen = !menuOpen
+  }
 </script>
 
 {#if !menuOpen}

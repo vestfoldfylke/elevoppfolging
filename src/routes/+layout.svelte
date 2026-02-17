@@ -1,12 +1,12 @@
 <script lang="ts">
-	import favicon16 from "$lib/assets/favicon-32x32.png"
-	import favicon32 from "$lib/assets/favicon-32x32.png"
-	import "../style.css" // Add global css (and make it hot reload)
-	import Menu from "$lib/components/Menu.svelte"
-	import type { LayoutProps } from "./$types.js"
+  import favicon16 from "$lib/assets/favicon-32x32.png"
+  import favicon32 from "$lib/assets/favicon-32x32.png"
+  import "../style.css" // Add global css (and make it hot reload)
+  import Menu from "$lib/components/Menu.svelte"
+  import type { LayoutProps } from "./$types.js"
 
-	// Get layout props, data will be accessible for children as well, so do not put too much here to avoid overfetching
-	let { children, data }: LayoutProps = $props()
+  // Get layout props, data will be accessible for children as well, so do not put too much here to avoid overfetching
+  let { children, data }: LayoutProps = $props()
 </script>
 
 <svelte:head>

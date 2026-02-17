@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { DocumentContentItem } from "$lib/types/db/shared-types"
-    import DocumentContent from "../Document/DocumentContent.svelte";
+  import DocumentContent from "../Document/DocumentContent.svelte"
 
   type TemplateEditorElementProps = {
     displayName: string
@@ -14,7 +14,6 @@
   let { displayName, index, contentItem = $bindable(), contentItemsLength, moveItem, removeItem }: TemplateEditorElementProps = $props()
 
   let isEditing = $state(false)
-
 </script>
 
 <!--

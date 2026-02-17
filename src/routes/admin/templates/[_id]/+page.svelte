@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { enhance } from "$app/forms";
+  import { enhance } from "$app/forms"
   import TemplateEditor from "$lib/components/TemplateEditor/TemplateEditor.svelte"
   import type { ActionData, PageProps } from "./$types"
 
   let { data }: PageProps = $props()
-
 </script>
 
 <h1>{data.template.name}</h1>

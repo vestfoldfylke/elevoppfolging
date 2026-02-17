@@ -1,127 +1,127 @@
 :root {
-	--font-family: "Nunito Sans", sans-serif;
-	--header-height: 4rem;
-	--color-navigation: rgb(0, 82, 96); /* Vann */
+  --font-family: "Nunito Sans", sans-serif;
+  --header-height: 4rem;
+  --color-navigation: rgb(0, 82, 96); /* Vann */
 
-	--color-primary-10: rgb(236, 237, 242);
-	--color-primary-20: rgb(217, 218, 230);
-	--color-primary-30: rgb(198, 200, 217);
-	--color-primary-40: rgb(179, 181, 205);
-	--color-primary-50: rgb(160, 163, 192);
-	--color-primary-60: rgb(141, 144, 179);
-	--color-primary-70: rgb(122, 126, 167);
-	--color-primary-80: rgb(103, 107, 154);
-	--color-primary-90: rgb(84, 89, 142);
-	--color-primary: rgb(65, 70, 129); /* Blåveis */
-	--color-secondary-10: rgb(239, 234, 239);
-	--color-secondary-20: rgb(222, 213, 223);
-	--color-secondary-30: rgb(206, 192, 208);
-	--color-secondary-40: rgb(189, 171, 192);
-	--color-secondary-50: rgb(173, 151, 176);
-	--color-secondary-60: rgb(156, 130, 160);
-	--color-secondary-70: rgb(140, 109, 144);
-	--color-secondary-80: rgb(123, 88, 129);
-	--color-secondary-90: rgb(107, 67, 113);
-	--color-secondary: rgb(90, 46, 97); /* Plomme */
-	--color-danger: #b7173d; /* Nype */
-	--color-danger-70: #cd5d77;
-	--color-danger-80: #c54564;
+  --color-primary-10: rgb(236, 237, 242);
+  --color-primary-20: rgb(217, 218, 230);
+  --color-primary-30: rgb(198, 200, 217);
+  --color-primary-40: rgb(179, 181, 205);
+  --color-primary-50: rgb(160, 163, 192);
+  --color-primary-60: rgb(141, 144, 179);
+  --color-primary-70: rgb(122, 126, 167);
+  --color-primary-80: rgb(103, 107, 154);
+  --color-primary-90: rgb(84, 89, 142);
+  --color-primary: rgb(65, 70, 129); /* Blåveis */
+  --color-secondary-10: rgb(239, 234, 239);
+  --color-secondary-20: rgb(222, 213, 223);
+  --color-secondary-30: rgb(206, 192, 208);
+  --color-secondary-40: rgb(189, 171, 192);
+  --color-secondary-50: rgb(173, 151, 176);
+  --color-secondary-60: rgb(156, 130, 160);
+  --color-secondary-70: rgb(140, 109, 144);
+  --color-secondary-80: rgb(123, 88, 129);
+  --color-secondary-90: rgb(107, 67, 113);
+  --color-secondary: rgb(90, 46, 97); /* Plomme */
+  --color-danger: #b7173d; /* Nype */
+  --color-danger-70: #cd5d77;
+  --color-danger-80: #c54564;
 }
 
 html,
 body {
-	margin: 0;
-	padding: 0;
-	height: 100%;
-	font-family: var(--font-family);
-	font-optical-sizing: auto;
-	font-weight: 300;
-	font-style: normal;
-	font-variation-settings:
-		"wdth" 100,
-		"YTLC" 500;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: var(--font-family);
+  font-optical-sizing: auto;
+  font-weight: 300;
+  font-style: normal;
+  font-variation-settings:
+    "wdth" 100,
+    "YTLC" 500;
 }
 
 a,
 a:visited {
-	color: var(--color-navigation);
-	text-decoration: underline;
+  color: var(--color-navigation);
+  text-decoration: underline;
 }
 
 a:hover {
-	color: black;
+  color: black;
 }
 
 button {
-	cursor: pointer;
-	height: 2rem;
-	font-family: var(--font-family);
-	border: 2px solid var(--color-primary);
-	background-color: transparent;
-	border-radius: 4px;
-	display: flex;
-	align-items: center;
-	gap: 0.25rem;
-	color: var(--color-primary);
+  cursor: pointer;
+  height: 2rem;
+  font-family: var(--font-family);
+  border: 2px solid var(--color-primary);
+  background-color: transparent;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--color-primary);
 }
 
 button.icon-button {
-	border: none;
-	background-color: transparent;
+  border: none;
+  background-color: transparent;
 }
 
 button:hover,
 button.icon-button:hover {
-	background-color: var(--color-primary-20);
+  background-color: var(--color-primary-20);
 }
 button:active,
 button.icon-button:active {
-	background-color: var(--color-primary-30);
+  background-color: var(--color-primary-30);
 }
 
 button.filled {
-	background-color: var(--color-primary);
-	color: white;
-	border: none;
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
 }
 button.filled:hover {
-	background-color: var(--color-primary-80);
+  background-color: var(--color-primary-80);
 }
 button.filled:active {
-	background-color: var(--color-primary-70);
+  background-color: var(--color-primary-70);
 }
 
 button.filled.danger {
-	background-color: var(--color-danger);
+  background-color: var(--color-danger);
 }
 
 button.filled.danger:hover {
-	background-color: var(--color-danger-80);
+  background-color: var(--color-danger-80);
 }
 
 button.filled.danger:active {
-	background-color: var(--color-danger-70);
+  background-color: var(--color-danger-70);
 }
 
 button:disabled,
 button.icon-button:disabled,
 button.filled:disabled {
-	background-color: var(--color-primary-10);
-	color: gray;
-	cursor: not-allowed;
+  background-color: var(--color-primary-10);
+  color: gray;
+  cursor: not-allowed;
 }
 
 details > summary {
-	cursor: pointer;
-	color: var(--color-primary);
+  cursor: pointer;
+  color: var(--color-primary);
 }
 
 details > summary:hover {
-	color: black;
+  color: black;
 }
 
 /* Katex override for not breaking layout... */
 .katex .katex-mathml {
-	top: 0px;
-	left: 0px;
+  top: 0px;
+  left: 0px;
 }

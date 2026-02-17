@@ -1,10 +1,10 @@
 <script lang="ts">
   import { enhance } from "$app/forms"
-  import { page } from "$app/state";
+  import { page } from "$app/state"
   import type { DocumentContentItem, DocumentContentTemplate } from "$lib/types/db/shared-types"
   import type { ActionData } from "../../../routes/admin/templates/$types"
   import DocumentContent from "../Document/DocumentContent.svelte"
-  import TemplateEditorItem from "./TemplateEditorItem.svelte";
+  import TemplateEditorItem from "./TemplateEditorItem.svelte"
 
   type TemplateEditorProps = {
     initialTemplate?: DocumentContentTemplate

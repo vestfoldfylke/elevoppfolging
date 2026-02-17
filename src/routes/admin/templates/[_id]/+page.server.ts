@@ -111,7 +111,7 @@ const updateDocumentContentTemplate: ServerActionNextFunction<UpdatedTemplate> =
 const deleteDocumentContentTemplate: ServerActionNextFunction<{ deletedId: string }> = async ({ requestEvent }) => {
   const formData = await requestEvent.request.formData()
   const templateId: string | null = formData.get("templateId")?.toString() || null
-  
+
   if (!templateId) {
     throw new HTTPError(400, "Missing template id")
   }
