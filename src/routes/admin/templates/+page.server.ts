@@ -69,6 +69,10 @@ const newDocumentContentTemplate: ServerActionNextFunction<CreatedTemplate> = as
 
   const newDocument: NewDocumentContentTemplate = {
     name: newDocumentContentTemplateData.name,
+    availableForDocumentType: {
+      student: newDocumentContentTemplateData.availableForDocumentType.student,
+      group: newDocumentContentTemplateData.availableForDocumentType.group
+    },
     version: 1,
     created: editorData,
     modified: editorData,

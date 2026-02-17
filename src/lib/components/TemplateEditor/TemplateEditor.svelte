@@ -14,6 +14,10 @@
     _id: "",
     version: 1,
     name: "Ny notat-type",
+    availableForDocumentType: {
+      student: true,
+      group: false
+    },
     created: {
       at: new Date().toISOString(),
       by: {
@@ -103,8 +107,18 @@
   {#if !previewMode}
     <div class="template-editor">
       <div class="template-metadata">
-        <label for="template-name">Notat-type navn</label>
-        <input id="template-name" type="text" bind:value={currentTemplate.name} />
+        <div>
+          <label for="template-name">Notat-type navn</label>
+          <input id="template-name" type="text" bind:value={currentTemplate.name} />
+        </div>
+        <div>
+          <label for="available-for-students">Elevnotat</label>
+          <input id="available-for-students" type="checkbox" bind:checked={currentTemplate.availableForDocumentType.student} />
+        </div>
+        <div>
+          <label for="available-for-groups">Gruppe-notat</label>
+          <input id="available-for-groups" type="checkbox" bind:checked={currentTemplate.availableForDocumentType.group} />
+        </div>
       </div>
 
       <div class="template-content">

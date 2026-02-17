@@ -152,7 +152,7 @@
     <div class="document-header">
       <h2>Tidslinje</h2>
     </div>
-    <DocumentCreator {form} accessTypes={data.accessTypes} />
+    <DocumentCreator {form} accessTypes={data.accessTypes} documentContentTemplates={data.documentContentTemplates} />
 
     {#each data.documents as document (document._id)}
       <DocumentComponent {document} {form}/>

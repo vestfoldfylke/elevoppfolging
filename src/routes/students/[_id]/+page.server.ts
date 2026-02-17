@@ -10,6 +10,7 @@ import type { IDbClient } from "$lib/types/db/db-client"
 import type {
   Access,
   DocumentContentItem,
+  DocumentContentTemplate,
   DocumentMessage,
   DocumentMessageBase,
   EditorData,
@@ -26,6 +27,7 @@ type StudentPageData = {
   importantStuff: StudentImportantStuff | null
   accessTypes: AccessType[]
   documents: StudentDocument[]
+  documentContentTemplates: DocumentContentTemplate[]
 }
 
 const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, requestEvent }) => {
@@ -61,13 +63,15 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
   const studentImportantStuff: StudentImportantStuff | null = await dbClient.getStudentImportantStuff(studentDbId)
 
   const documents: StudentDocument[] = await dbClient.getStudentDocuments(studentDbId)
+  const documentContentTemplates: DocumentContentTemplate[] = await dbClient.getDocumentContentTemplates({ student: true, group: false })
 
   return {
     data: {
       student,
       accessTypes,
       importantStuff: studentImportantStuff,
-      documents
+      documents,
+      documentContentTemplates
     },
     isAuthorized: true
   }

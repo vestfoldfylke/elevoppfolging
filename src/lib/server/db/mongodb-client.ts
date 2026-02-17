@@ -7,6 +7,7 @@ import type { IDbClient } from "$lib/types/db/db-client"
 import type { KeysToNumber } from "$lib/types/db/db-helpers"
 import type {
   Access,
+  AvailableForDocumentType,
   DbAccess,
   DbAppStudent,
   DbDocumentContentTemplate,
@@ -413,11 +414,13 @@ export class MongoDbClient implements IDbClient {
     )
   }
 
-  async getDocumentContentTemplates(): Promise<DocumentContentTemplate[]> {
+  async getDocumentContentTemplates(availableFor?: AvailableForDocumentType): Promise<DocumentContentTemplate[]> {
     const db = await this.getDb()
     const documentContentTemplatesCollection = db.collection<DbDocumentContentTemplate>(this.documentContentTemplatesCollectionName)
+    
+    const query = availableFor ? { "availableForDocumentType.student": availableFor.student, "availableForDocumentType.group": availableFor.group } : {}
 
-    const templates = await documentContentTemplatesCollection.find().toArray()
+    const templates = await documentContentTemplatesCollection.find(query).toArray()
 
     return templates.map((template) => ({
       ...template,

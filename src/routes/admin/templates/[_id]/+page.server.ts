@@ -85,6 +85,10 @@ const updateDocumentContentTemplate: ServerActionNextFunction<UpdatedTemplate> =
 
   const updatedTemplate: NewDocumentContentTemplate = {
     name: updateDocumentContentTemplateData.name,
+    availableForDocumentType: {
+      student: updateDocumentContentTemplateData.availableForDocumentType.student,
+      group: updateDocumentContentTemplateData.availableForDocumentType.group
+    },
     version: existingTemplate.version + 1,
     created: existingTemplate.created,
     modified: editorData,

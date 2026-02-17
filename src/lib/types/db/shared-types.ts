@@ -297,10 +297,16 @@ export type DbStudentDocument = NewStudentDocument & {
   _id: ObjectId
 }
 
+export type AvailableForDocumentType = {
+  student: boolean
+  group: boolean
+}
+
 // Document content templates
 export type NewDocumentContentTemplate = {
   name: string
   version: number
+  availableForDocumentType: AvailableForDocumentType
   created: EditorData
   modified: EditorData
   content: DocumentContentItem[]

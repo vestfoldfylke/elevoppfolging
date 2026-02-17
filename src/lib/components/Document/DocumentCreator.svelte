@@ -8,70 +8,12 @@
   type PageProps = {
     form: ActionData
     accessTypes: AccessType[]
+    documentContentTemplates: DocumentContentTemplate[]
   }
 
-  let { form, accessTypes }: PageProps = $props()
+  let { form, accessTypes, documentContentTemplates }: PageProps = $props()
   let documentCreatorOpen = $state(false)
   let selectedTemplateId = $state()
-
-  const mockEditor: EditorData = {
-    at: new Date().toISOString(),
-    by: {
-      entraUserId: "123",
-      fallbackName: "Ola Nordmann"
-    }
-  }
-  const documentContentTemplates: DocumentContentTemplate[] = [
-    {
-      _id: "21894798237543ntgklj",
-      version: 999,
-      name: "Notat",
-      created: mockEditor,
-      modified: mockEditor,
-      content: [
-        {
-          type: "textarea",
-          placeholder: "Heisann",
-          label: "Beskrivelse av tekstfelt",
-          value: "",
-          initialRows: 3,
-          required: true
-        }
-      ]
-    },
-    {
-      _id: "fdsfdsf",
-      name: "Oppstartssamtale",
-      version: 999,
-      created: mockEditor,
-      modified: mockEditor,
-      content: [
-        {
-          type: "h1",
-          value: "Dette er en tittel"
-        },
-        {
-          type: "p",
-          value: "Dette er et avsnitt med litt tekst."
-        },
-        {
-          type: "inputText",
-          placeholder: "Heisann",
-          label: "Beskrivelse av tekstfelt",
-          value: "",
-          required: true
-        },
-        {
-          type: "textarea",
-          placeholder: "Heisann",
-          label: "Beskrivelse av tekstfelt",
-          value: "",
-          initialRows: 30,
-          required: true
-        }
-      ]
-    }
-  ]
 
   let selectedTemplate = $derived.by(() => {
     return documentContentTemplates.find((template) => template._id === selectedTemplateId) || documentContentTemplates[0]
@@ -109,6 +51,9 @@
               Type
             </label>
             <select id="type" name="documentContentTemplateId" required bind:value={selectedTemplateId}>
+              {#if !selectedTemplateId}
+                <option value="" disabled selected>Ingen notat-typer tilgjengelig</option>
+              {/if}
               {#each documentContentTemplates as documentContentTemplate, index}
                 <option selected={Boolean(form?.createDocumentFailedData?.documentContentTemplateId) || index === 0} value={documentContentTemplate._id}>{documentContentTemplate.name}</option>
               {/each}
