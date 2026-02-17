@@ -3,7 +3,6 @@
   import DocumentContent from "../Document/DocumentContent.svelte"
 
   type TemplateEditorElementProps = {
-    displayName: string
     index: number
     contentItem: DocumentContentItem
     contentItemsLength: number
@@ -11,9 +10,8 @@
     removeItem: () => void
   }
 
-  let { displayName, index, contentItem = $bindable(), contentItemsLength, moveItem, removeItem }: TemplateEditorElementProps = $props()
+  let { index, contentItem = $bindable(), contentItemsLength, moveItem, removeItem }: TemplateEditorElementProps = $props()
 
-  let isEditing = $state(false)
 </script>
 
 <!--
@@ -25,65 +23,62 @@
   <div class="template-content-item">
     <DocumentContent content={[contentItem]} editMode={false} form={null} />
 
-    {#if isEditing}
-      <div class="content-item-editor">
-        {#if contentItem.type === "h1"}
-          <input id="h1-{index}" class="h1" type="text" bind:value={contentItem.value} />
-        {/if}
+    <div class="content-item-editor">
+      {#if contentItem.type === "h1"}
+        <input required id="h1-{index}" class="h1" type="text" bind:value={contentItem.value} />
+      {/if}
 
-        {#if contentItem.type === "p"}
-          <textarea id="p-{index}" bind:value={contentItem.value}></textarea>
-        {/if}
+      {#if contentItem.type === "p"}
+        <textarea id="p-{index}" bind:value={contentItem.value}></textarea>
+      {/if}
 
-        {#if contentItem.type === "inputText"}
-          <label for="inputText-helpText-{index}">Informasjonstekst (valgfri)</label>
-          <input id="inputText-helpText-{index}" type="text" bind:value={contentItem.helpText} />
+      {#if contentItem.type === "inputText"}
+        <label for="inputText-helpText-{index}">Informasjonstekst (valgfri)</label>
+        <input id="inputText-helpText-{index}" type="text" bind:value={contentItem.helpText} />
 
-          <label for="inputText-label-{index}">Etikett</label>
-          <input id="inputText-label-{index}" type="text" bind:value={contentItem.label} />
+        <label for="inputText-label-{index}">Etikett</label>
+        <input required id="inputText-label-{index}" type="text" bind:value={contentItem.label} />
 
-          <label for="inputText-placeholder-{index}">Eksempeltekst (valgfri)</label>
-          <input id="inputText-placeholder-{index}" type="text" bind:value={contentItem.placeholder} />
+        <label for="inputText-placeholder-{index}">Eksempeltekst (valgfri)</label>
+        <input required id="inputText-placeholder-{index}" type="text" bind:value={contentItem.placeholder} />
 
-          <label for="inputText-value-{index}">Standardverdi (valgfri)</label>
-          <input id="inputText-value-{index}" type="text" bind:value={contentItem.value} />
+        <label for="inputText-value-{index}">Standardverdi (valgfri)</label>
+        <input id="inputText-value-{index}" type="text" bind:value={contentItem.value} />
 
-          <label for="inputText-required-{index}">Obligatorisk</label>
-          <input id="inputText-required-{index}" type="checkbox" bind:checked={contentItem.required} />
-        {/if}       
-        
-        {#if contentItem.type === "textarea"}
-          <label for="textarea-helpText-{index}">Informasjonstekst (valgfri)</label>
-          <input id="textarea-helpText-{index}" type="text" bind:value={contentItem.helpText} />
+        <label for="inputText-required-{index}">Obligatorisk</label>
+        <input id="inputText-required-{index}" type="checkbox" bind:checked={contentItem.required} />
+      {/if}       
+      
+      {#if contentItem.type === "textarea"}
+        <label for="textarea-helpText-{index}">Informasjonstekst (valgfri)</label>
+        <input id="textarea-helpText-{index}" type="text" bind:value={contentItem.helpText} />
 
-          <label for="textarea-label-{index}">Etikett</label>
-          <input id="textarea-label-{index}" type="text" bind:value={contentItem.label} />
+        <label for="textarea-label-{index}">Etikett</label>
+        <input required id="textarea-label-{index}" type="text" bind:value={contentItem.label} />
 
-          <label for="textarea-placeholder-{index}">Eksempeltekst (valgfri)</label>
-          <input id="textarea-placeholder-{index}" type="text" bind:value={contentItem.placeholder} />
+        <label for="textarea-placeholder-{index}">Eksempeltekst (valgfri)</label>
+        <input required id="textarea-placeholder-{index}" type="text" bind:value={contentItem.placeholder} />
 
-          <label for="textarea-value-{index}">Standardverdi (valgfri)</label>
-          <input id="textarea-value-{index}" type="text" bind:value={contentItem.value} />
+        <label for="textarea-value-{index}">Standardverdi (valgfri)</label>
+        <input id="textarea-value-{index}" type="text" bind:value={contentItem.value} />
 
-          <label for="textarea-initialRows-{index}">Antall rader</label>
-          <input id="textarea-initialRows-{index}" type="number" bind:value={contentItem.initialRows} />
+        <label for="textarea-initialRows-{index}">Antall rader</label>
+        <input id="textarea-initialRows-{index}" type="number" bind:value={contentItem.initialRows} />
 
-          <label for="textarea-required-{index}">Obligatorisk</label>
-          <input id="textarea-required-{index}" type="checkbox" bind:checked={contentItem.required} />
-        {/if}
-      </div>
-    {/if}
+        <label for="textarea-required-{index}">Obligatorisk</label>
+        <input id="textarea-required-{index}" type="checkbox" bind:checked={contentItem.required} />
+      {/if}
+    </div>
   </div>
 
   <div class="template-content-item-actions">
-    <button onclick={() => isEditing = !isEditing}>{isEditing ? "Ok" : "Rediger"}</button>
-    <button disabled={index === 0} onclick={() => {
+    <button type="button" disabled={index === 0} onclick={() => {
       moveItem(index - 1)
     }}>Flytt opp</button>
-    <button disabled={index === contentItemsLength - 1} onclick={() => {
+    <button type="button" disabled={index === contentItemsLength - 1} onclick={() => {
       moveItem(index + 1)
     }}>Flytt ned</button>
-    <button onclick={() => removeItem()}>Fjern</button>
+    <button type="button" onclick={() => removeItem()}>Fjern</button>
   </div>
 </div>
 

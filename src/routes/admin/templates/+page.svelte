@@ -1,30 +1,20 @@
 <script lang="ts">
-  import TemplateEditor from "$lib/components/TemplateEditor/TemplateEditor.svelte"
   import type { PageProps } from "./$types"
 
   let { data }: PageProps = $props()
 
-  let showTemplateEditor = $state(false)
 </script>
 
 <h1>Notatmaler</h1>
 
-{#if !showTemplateEditor}
-  <button class="filled" onclick={() => showTemplateEditor = true}>Ny notat-mal</button>
-{/if}
+<a href="/admin/templates/new">Ny notat-mal</a>
 
-{#if showTemplateEditor}
-  <TemplateEditor />
-{/if}
-
-{#if !showTemplateEditor}
-  {#each data.templates as template}
-    <div class="template">
-      <a href={`/admin/templates/${template._id}`}>{template.name}</a>
-    </div>
-  {/each}
-{/if}
+<h2>Eksisterende maler</h2>
+{#each data.templates as template}
+  <div class="template">
+    <a href={`/admin/templates/${template._id}`}>{template.name}</a>
+  </div>
+{/each}
 
 <style>
-
 </style>

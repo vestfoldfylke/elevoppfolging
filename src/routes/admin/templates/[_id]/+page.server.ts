@@ -18,6 +18,39 @@ const getTemplate: ServerLoadNextFunction<TemplatePageData> = async ({ requestEv
     throw new HTTPError(400, "Missing template id")
   }
 
+  if (templateId === "new") {
+    const newTemplate: DocumentContentTemplate = {
+      _id: "",
+      version: 1,
+      name: "",
+      availableForDocumentType: {
+        student: true,
+        group: false
+      },
+      created: {
+        at: new Date().toISOString(),
+        by: {
+          entraUserId: "nei",
+          fallbackName: "nei"
+        }
+      },
+      modified: {
+        at: new Date().toISOString(),
+        by: {
+          entraUserId: "nei",
+          fallbackName: "nei"
+        }
+      },
+      content: []
+    }
+    return {
+      data: {
+        template: newTemplate
+      },
+      isAuthorized: true
+    }
+  }
+
   const dbClient: IDbClient = getDbClient()
   const template = await dbClient.getDocumentContentTemplateById(templateId)
 
@@ -35,6 +68,71 @@ const getTemplate: ServerLoadNextFunction<TemplatePageData> = async ({ requestEv
 
 export const load: PageServerLoad = async (requestEvent): Promise<TemplatePageData> => {
   return await serverLoadRequestMiddleware(requestEvent, getTemplate)
+}
+
+type CreatedTemplate = {
+  templateId: string
+}
+
+type CreateTemplateFailedData = {
+  failedTemplate: DocumentContentTemplate
+}
+
+const newDocumentContentTemplate: ServerActionNextFunction<CreatedTemplate> = async ({ requestEvent, principal }) => {
+  // TODO validate that user can create templates, right now any authenticated user can create templates
+
+  // get form data fields and validate
+  const formData = await requestEvent.request.formData()
+  const templateData: string | null = formData.get("templateData")?.toString() || null
+
+  if (!templateData) {
+    throw new HTTPError(400, "Missing templateData in form data")
+  }
+
+  const newDocumentContentTemplateData: DocumentContentTemplate = JSON.parse(templateData)
+
+  const returnOnFail: CreateTemplateFailedData = {
+    failedTemplate: newDocumentContentTemplateData
+  }
+
+  // TODO validate the entire template
+  if (!newDocumentContentTemplateData.name || typeof newDocumentContentTemplateData.name !== "string") {
+    throw new FormActionError(400, "documentTitle is required and must be a string.", returnOnFail)
+  }
+
+  const editorData: EditorData = {
+    by: {
+      entraUserId: principal.id,
+      fallbackName: principal.displayName
+    },
+    at: new Date().toISOString()
+  }
+
+  const newDocument: NewDocumentContentTemplate = {
+    name: newDocumentContentTemplateData.name,
+    availableForDocumentType: {
+      student: newDocumentContentTemplateData.availableForDocumentType.student,
+      group: newDocumentContentTemplateData.availableForDocumentType.group
+    },
+    version: 1,
+    created: editorData,
+    modified: editorData,
+    content: newDocumentContentTemplateData.content
+  }
+
+  const dbClient: IDbClient = getDbClient()
+  try {
+    const templateId = await dbClient.createDocumentContentTemplate(newDocument)
+    return {
+      redirectUrl: `/admin/templates/${templateId}`,
+      data: {
+        templateId
+      },
+      isAuthorized: true
+    }
+  } catch (error) {
+    throw new FormActionError(500, "Error creating student document, try again", returnOnFail, error)
+  }
 }
 
 type UpdatedTemplate = {
@@ -121,6 +219,7 @@ const deleteDocumentContentTemplate: ServerActionNextFunction<{ deletedId: strin
   try {
     await dbClient.deleteDocumentContentTemplate(templateId)
     return {
+      redirectUrl: "/admin/templates",
       data: {
         deletedId: templateId
       },
@@ -132,6 +231,9 @@ const deleteDocumentContentTemplate: ServerActionNextFunction<{ deletedId: strin
 }
 
 export const actions = {
+  newDocumentContentTemplateAction: async (event) => {
+    return serverActionRequestMiddleware<CreatedTemplate, CreateTemplateFailedData>(event, newDocumentContentTemplate)
+  },
   updateDocumentContentTemplateAction: async (event) => {
     return serverActionRequestMiddleware<UpdatedTemplate, UpdateTemplateFailedData>(event, updateDocumentContentTemplate)
   },
