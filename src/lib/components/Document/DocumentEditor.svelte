@@ -20,7 +20,7 @@
     }
     const formIsValid = documentEditorForm.reportValidity()
     if (!formIsValid) {
-      return
+      throw new Error("Form is not valid")
     }
 
     await apiFetch(`/api/documents`, {
