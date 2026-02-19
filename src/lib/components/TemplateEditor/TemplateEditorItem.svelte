@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { DocumentContentItem } from "$lib/types/db/shared-types"
-  import DocumentContent from "../Document/DocumentContent.svelte"
+  import DocumentContentItemComponent from "../Document/DocumentContentItem.svelte"
 
   type TemplateEditorElementProps = {
     index: number
@@ -11,7 +11,6 @@
   }
 
   let { index, contentItem = $bindable(), contentItemsLength, moveItem, removeItem }: TemplateEditorElementProps = $props()
-
 </script>
 
 <!--
@@ -21,7 +20,7 @@
 
 <div class="template-content-item-container">
   <div class="template-content-item">
-    <DocumentContent content={[contentItem]} editMode={false} form={null} />
+    <DocumentContentItemComponent index={index} {contentItem} editMode={false} />
 
     <div class="content-item-editor">
       {#if contentItem.type === "h1"}

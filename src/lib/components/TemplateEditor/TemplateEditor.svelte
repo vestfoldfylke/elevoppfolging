@@ -1,25 +1,23 @@
 <script lang="ts">
+  import { goto } from "$app/navigation"
+  import { apiFetch } from "$lib/api-fetch/api-fetch"
   import type { DocumentContentItem, DocumentContentTemplate } from "$lib/types/db/shared-types"
-  import DocumentContent from "../Document/DocumentContent.svelte"
+  import AsyncButton from "../AsyncButton.svelte"
+  import DocumentContentItemComponent from "../Document/DocumentContentItem.svelte"
   import TemplateEditorItem from "./TemplateEditorItem.svelte"
 
   type TemplateEditorProps = {
-    currentTemplate: DocumentContentTemplate
-    validateTemplate: () => boolean
+    template: DocumentContentTemplate
   }
 
-  let { currentTemplate = $bindable(), validateTemplate = $bindable() }: TemplateEditorProps = $props()
+  let { template }: TemplateEditorProps = $props()
 
-  let previewMode = $state(false)
+  // svelte-ignore state_referenced_locally (vi vil ha en kopi her, så kan den resettes hvis det trengs)
+  let editableTemplate = $state(template)
+
+  let previewMode = $state(Boolean(editableTemplate._id))
 
   let templateForm: HTMLFormElement | undefined = $state()
-
-  validateTemplate = () => {
-    if (!templateForm) {
-      throw new Error("Template form not found")      
-    }
-    return templateForm.reportValidity()
-  }
 
   const templateItems: (DocumentContentItem & { displayName: string })[] = [
     {
@@ -55,74 +53,137 @@
     if (!newItem) {
       throw new Error("Ugyldig item-type")
     }
-    currentTemplate.content.push(JSON.parse(JSON.stringify(newItem)))
-  }
-
-  const getDisplayNameForContentItem = (contentItemType: string) => {
-    const templateItem = templateItems.find((item) => item.type === contentItemType)
-    return templateItem ? templateItem.displayName : ""
+    editableTemplate.content.push(JSON.parse(JSON.stringify(newItem)))
   }
 
   const moveTemplateItem = (currentIndex: number, toIndex: number) => {
-    if (toIndex < 0 || toIndex >= currentTemplate.content.length || currentIndex === toIndex) {
+    if (toIndex < 0 || toIndex >= editableTemplate.content.length || currentIndex === toIndex) {
       return
     }
-    const itemToMove = currentTemplate.content[currentIndex]
-    currentTemplate.content.splice(currentIndex, 1)
-    currentTemplate.content.splice(toIndex, 0, itemToMove)
+    const itemToMove = editableTemplate.content[currentIndex]
+    editableTemplate.content.splice(currentIndex, 1)
+    editableTemplate.content.splice(toIndex, 0, itemToMove)
   }
 
   const removeTemplateItem = (index: number) => {
-    currentTemplate.content.splice(index, 1)
+    editableTemplate.content.splice(index, 1)
   }
 
+  const validateTemplate = (): boolean => {
+    if (!templateForm) {
+      throw new Error("Template editor form not found")
+    }
+    return templateForm.reportValidity()
+  }
+
+  const newTemplate = async (): Promise<void> => {
+    const formIsValid = validateTemplate()
+    if (!formIsValid) {
+      return
+    }
+
+    const { templateId } = await apiFetch(`/api/templates`, {
+      method: "POST",
+      body: editableTemplate,
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+
+    previewMode = true
+    // redirect and reload page data
+    goto(`/admin/templates/${templateId}`, { invalidateAll: true })
+  }
+
+  const updateTemplate = async (): Promise<void> => {
+    const formIsValid = validateTemplate()
+    if (!formIsValid) {
+      return
+    }
+
+    await apiFetch(`/api/templates/${editableTemplate._id}`, {
+      method: "PUT",
+      body: editableTemplate,
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+  }
+
+  const deleteTemplate = async (): Promise<void> => {
+    const confirmDelete = confirm("Er du heeeelt sikker på du vil slette denne malen da? Den blir heeeelt borte 😱")
+    if (!confirmDelete) {
+      return
+    }
+
+    await apiFetch(`/api/templates/${editableTemplate._id}`, {
+      method: "DELETE"
+    })
+    // redirect and reload page data
+    goto(`/admin/templates`, { invalidateAll: true })
+  }
 </script>
 
-<!--
-- Skal kunne legge til elementer og fjerne, og endre rekkefølge på elementer
-- Skal kunne lagre maler - det kommer sikkert til å ligge på +page (for der har vi form server
--->
-
-<div class="template-editor-container">
-  {#if !previewMode}
-    <form bind:this={templateForm}>
-      <div class="template-editor">
-        <div class="template-metadata">
-          <div>
-            <label for="template-name">Notat-type navn</label>
-            <input required id="template-name" type="text" bind:value={currentTemplate.name} />
-          </div>
-          <div>
-            <label for="available-for-students">Elevnotat</label>
-            <input id="available-for-students" type="checkbox" bind:checked={currentTemplate.availableForDocumentType.student} />
-          </div>
-          <div>
-            <label for="available-for-groups">Gruppe-notat</label>
-            <input id="available-for-groups" type="checkbox" bind:checked={currentTemplate.availableForDocumentType.group} />
-          </div>
+<div class="template-editor-container" class:hidden={previewMode}>
+  <form bind:this={templateForm}>
+    <div class="template-editor">
+      <div class="template-metadata">
+        <div>
+          <label for="template-name">Notat-type navn</label>
+          <input required id="template-name" type="text" bind:value={editableTemplate.name} />
         </div>
-
-        <div class="template-content">
-          {#if currentTemplate.content.length === 0}
-            <p>Ingen elementer i malen enda</p>
-          {/if}
-          {#each currentTemplate.content as _contentItem, index}
-            <TemplateEditorItem bind:contentItem={currentTemplate.content[index]} index={index} contentItemsLength={currentTemplate.content.length} moveItem={(toIndex: number) => moveTemplateItem(index, toIndex)} removeItem={() => removeTemplateItem(index)} />
-          {/each}
+        <div>
+          <label for="available-for-students">Elevnotat</label>
+          <input id="available-for-students" type="checkbox" bind:checked={editableTemplate.availableForDocumentType.student} />
+        </div>
+        <div>
+          <label for="available-for-groups">Gruppe-notat</label>
+          <input id="available-for-groups" type="checkbox" bind:checked={editableTemplate.availableForDocumentType.group} />
         </div>
       </div>
-    </form>
 
-    <div class="template-editor-actions">
-      {#each templateItems as templateItem}
-        <button type="button" onclick={() => addTemplateItem(templateItem.type)}><span class="material-symbols-outlined">add</span>{templateItem.displayName}</button>
-      {/each}
+      <div class="template-content">
+        {#if editableTemplate.content.length === 0}
+          <p>Ingen elementer i malen enda</p>
+        {/if}
+        {#each editableTemplate.content as _contentItem, index}
+          <TemplateEditorItem bind:contentItem={editableTemplate.content[index]} index={index} contentItemsLength={editableTemplate.content.length} moveItem={(toIndex: number) => moveTemplateItem(index, toIndex)} removeItem={() => removeTemplateItem(index)} />
+        {/each}
+      </div>
     </div>
+  </form>
+
+  <div class="template-editor-actions">
+    {#each templateItems as templateItem}
+      <button type="button" onclick={() => addTemplateItem(templateItem.type)}><span class="material-symbols-outlined">add</span>{templateItem.displayName}</button>
+    {/each}
+  </div>
+</div>
+
+<div class="template-preview" class:hidden={!previewMode}>
+  {#each editableTemplate.content as contentItem, index}
+    <DocumentContentItemComponent editMode={true} {index} {contentItem} />
+  {/each}
+</div>
+
+<div class="template-actions">
+  {#if previewMode}
+    <button type="button" onclick={() => previewMode = false}>Rediger mal</button>
+  {:else}
+    <button type="button" onclick={() => previewMode = true}>Forhåndsvis mal</button>
+    {#if !editableTemplate._id}
+      <AsyncButton buttonText="Lagre mal" onClick={newTemplate} />
+    {:else}
+      <AsyncButton buttonText="Lagre endringer" onClick={updateTemplate} reloadPageDataOnSuccess={true} />
+      <AsyncButton buttonText="Slett mal" onClick={deleteTemplate} />
+    {/if}
   {/if}
 </div>
 
-
 <style>
+  .template-editor-container.hidden, .template-preview.hidden {
+    display: none;
+  }
   .template-editor-container {
     display: flex;
     flex-direction: column;

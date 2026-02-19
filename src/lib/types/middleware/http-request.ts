@@ -1,17 +1,13 @@
 import type { RequestEvent } from "@sveltejs/kit"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
 
-type ApiNextResponse = {
-  response: Response
-  isAuthorized: boolean
-}
-
-type ApiNextParams = {
+type ApiNextParams<TRequestBody = undefined> = {
   requestEvent: RequestEvent
   principal: AuthenticatedPrincipal
+  body: TRequestBody
 }
 
-export type ApiNextFunction = (params: ApiNextParams) => Promise<ApiNextResponse>
+export type ApiNextFunction<TResponse extends object, TRequestBody = undefined> = (params: ApiNextParams<TRequestBody>) => Promise<TResponse>
 
 type ServerLoadNextResponse<T> = {
   data: T
@@ -23,10 +19,5 @@ type ServerLoadNextParams = {
   principal: AuthenticatedPrincipal
 }
 
-type ServerActionNextResponse<T> = ServerLoadNextResponse<T> & {
-  redirectUrl?: string
-}
-
+// TODO drop isAuthorized from this to - just return T like apinextfunction
 export type ServerLoadNextFunction<T> = (params: ServerLoadNextParams) => Promise<ServerLoadNextResponse<T>>
-
-export type ServerActionNextFunction<TSuccess extends object> = (params: ServerLoadNextParams) => Promise<ServerActionNextResponse<TSuccess>>

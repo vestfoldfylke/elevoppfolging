@@ -1,11 +1,28 @@
 <script lang="ts">
   import DocumentComponent from "$lib/components/Document/Document.svelte"
-  import DocumentCreator from "$lib/components/Document/DocumentCreator.svelte"
+  import NewDocument from "$lib/components/Document/NewDocument.svelte"
+  import type { School } from "$lib/types/db/shared-types"
   import type { PageProps } from "./$types"
 
-  let { data, form }: PageProps = $props()
+  let { data }: PageProps = $props()
 
   let showAllStudentContacts = $state(false)
+
+  let accessSchools: School[] = $derived.by(() => {
+    const accessSchools = data.accessTypes.map((access) => {
+      const school = data.student.studentEnrollments.find((enrollment) => enrollment.school.schoolNumber === access.schoolNumber)?.school
+      if (!school) {
+        throw new Error(`School not found for access with school number ${access.schoolNumber}, something wrong here gitt`)
+      }
+      return school
+    })
+
+    if (accessSchools.length === 0) {
+      throw new Error("No access found for student, something wrong here gitt")
+    }
+
+    return accessSchools
+  })
 
   type StudentContactPerson = {
     name: string
@@ -152,11 +169,15 @@
     <div class="document-header">
       <h2>Tidslinje</h2>
     </div>
-    <DocumentCreator {form} accessTypes={data.accessTypes} documentContentTemplates={data.documentContentTemplates} />
+
+    <NewDocument {accessSchools} documentContentTemplates={data.documentContentTemplates} studentId={data.student._id} />
 
     {#each data.documents as document (document._id)}
-      <DocumentComponent {document} {form}/>
+      <DocumentComponent {document} />
     {/each}
+
+    <br>
+    <br><br><br><br><br><br><br><br> <!-- haha -->
   </div>
 </div>
 

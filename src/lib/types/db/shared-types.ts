@@ -249,6 +249,7 @@ export type EditorData = {
 
 export type DocumentMessageBase = {
   created: EditorData
+  modified: EditorData
 }
 
 export type DocumentComment = DocumentMessageBase & {
@@ -260,8 +261,8 @@ export type DocumentComment = DocumentMessageBase & {
 
 export type DocumentUpdate = DocumentMessageBase & {
   type: "update"
-  title: string
   content: {
+    title: string
     text: string
   }
 }
@@ -272,28 +273,40 @@ export type DocumentMessage = NewDocumentMessage & {
   messageId: string
 }
 
-export type Document = {
-  schoolNumber: string
+export type DocumentBase = {
+  school: School
   title: string
   created: EditorData
   modified: EditorData
-  contentTemplateId: string
-  contentTemplateVersion: number
+  template: {
+    _id: string
+    name: string
+    version: number
+  }
   content: DocumentContentItem[]
   messages: DocumentMessage[]
+  group?: {
+    systemId: string
+  }
 }
 
-export type NewStudentDocument = Document & {
-  student: {
+export type NewDocument = DocumentBase & {
+  student?: {
     _id: string
   }
 }
 
-export type StudentDocument = NewStudentDocument & {
+export type Document = NewDocument & {
   _id: string
 }
 
-export type DbStudentDocument = NewStudentDocument & {
+export type NewDbDocument = DocumentBase & {
+  student?: {
+    _id: ObjectId
+  }
+}
+
+export type DbDocument = NewDbDocument & {
   _id: ObjectId
 }
 

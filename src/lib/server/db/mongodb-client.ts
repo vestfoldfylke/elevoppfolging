@@ -10,20 +10,21 @@ import type {
   AvailableForDocumentType,
   DbAccess,
   DbAppStudent,
+  DbDocument,
   DbDocumentContentTemplate,
-  DbStudentDocument,
   DbStudentImportantStuff,
+  Document,
   DocumentContentTemplate,
   DocumentMessage,
   EditorData,
   ImportantStuffBase,
+  NewDbDocument,
   NewDbStudentImportantStuff,
+  NewDocument,
   NewDocumentContentTemplate,
   NewDocumentMessage,
-  NewStudentDocument,
   NewStudentImportantStuff,
   ProgramArea,
-  StudentDocument,
   StudentImportantStuff
 } from "$lib/types/db/shared-types"
 import type { DbProgramArea } from "$lib/types/program-area"
@@ -225,11 +226,11 @@ export class MongoDbClient implements IDbClient {
     }
   }
 
-  async getStudentDocuments(studentDbId: string): Promise<StudentDocument[]> {
+  async getStudentDocuments(studentDbId: string): Promise<Document[]> {
     const db = await this.getDb()
-    const documentsCollection = db.collection<DbStudentDocument>(this.documentsCollectionName)
+    const documentsCollection = db.collection<DbDocument>(this.documentsCollectionName)
 
-    type DocumentWithCreator = DbStudentDocument & {
+    type DocumentWithCreator = DbDocument & {
       tyler_the_creator?: {
         entra: {
           displayName: string
@@ -241,7 +242,7 @@ export class MongoDbClient implements IDbClient {
       .aggregate<DocumentWithCreator>([
         {
           $match: {
-            "student._id": studentDbId
+            "student._id": new ObjectId(studentDbId)
           }
         },
         {
@@ -268,12 +269,13 @@ export class MongoDbClient implements IDbClient {
     // await new Promise((resolve) => setTimeout(resolve, 2500))
 
     return documents
-      .map((document: DocumentWithCreator): StudentDocument => {
+      .map((document: DocumentWithCreator): Document => {
         const createdByDisplayName = document.tyler_the_creator && document.tyler_the_creator.length > 0 ? document.tyler_the_creator[0].entra.displayName : undefined
         delete document.tyler_the_creator
 
-        const studentDocument: StudentDocument = {
+        const studentDocument: Document = {
           ...document,
+          student: document.student ? { _id: document.student._id.toString() } : undefined,
           _id: document._id.toString()
         }
         if (createdByDisplayName) {
@@ -284,32 +286,52 @@ export class MongoDbClient implements IDbClient {
       .sort((a, b) => new Date(b.created.at).getTime() - new Date(a.created.at).getTime()) // Sort by created date descending
   }
 
-  async createStudentDocument(studentId: string, document: NewStudentDocument): Promise<string> {
+  async getDocumentById(documentId: string): Promise<Document | null> {
     const db = await this.getDb()
-    const documentsCollection = db.collection<NewStudentDocument>(this.documentsCollectionName)
+    const documentsCollection = db.collection<DbDocument>(this.documentsCollectionName)
 
-    if (document.student._id !== studentId) {
-      throw new Error("Student ID in document does not match the provided student ID")
+    const document = await documentsCollection.findOne({ _id: new ObjectId(documentId) })
+
+    if (!document) {
+      return null
     }
 
-    const result = await documentsCollection.insertOne(document)
+    return {
+      ...document,
+      student: document.student ? { _id: document.student._id.toString() } : undefined,
+      _id: document._id.toString()
+    }
+  }
 
-    try {
-      await this.updateStudentLatestActivityTimestamp(document.student._id)
-    } catch (error) {
-      logger.errorException(
-        error,
-        "Failed to update student's latest activity timestamp after creating document. Document ID: {documentId}. OBS, returning document ID anyway",
-        result.insertedId.toString()
-      )
+  async createDocument(document: NewDocument): Promise<string> {
+    const db = await this.getDb()
+    const documentsCollection = db.collection<NewDbDocument>(this.documentsCollectionName)
+
+    const documentToInsert: NewDbDocument = {
+      ...document,
+      student: document.student ? { _id: new ObjectId(document.student._id) } : undefined
+    }
+
+    const result = await documentsCollection.insertOne(documentToInsert)
+
+    if (document.student?._id) {
+      try {
+        await this.updateStudentLatestActivityTimestamp(document.student._id)
+      } catch (error) {
+        logger.errorException(
+          error,
+          "Failed to update student's latest activity timestamp after creating document. Document ID: {documentId}. OBS, returning document ID anyway",
+          result.insertedId.toString()
+        )
+      }
     }
 
     return result.insertedId.toString()
   }
 
-  async addDocumentMessage(studentId: string, documentId: string, message: NewDocumentMessage): Promise<DocumentMessage> {
+  async addDocumentMessage(documentId: string, message: NewDocumentMessage, studentId?: string): Promise<DocumentMessage> {
     const db = await this.getDb()
-    const documentsCollection = db.collection<DbStudentDocument>(this.documentsCollectionName)
+    const documentsCollection = db.collection<DbDocument>(this.documentsCollectionName)
 
     const messageWithId = {
       ...message,
@@ -322,10 +344,12 @@ export class MongoDbClient implements IDbClient {
       throw new Error("Failed to add message to document")
     }
 
-    try {
-      await this.updateStudentLatestActivityTimestamp(studentId)
-    } catch (error) {
-      logger.errorException(error, "Failed to update student's latest activity timestamp after adding document message. Document ID: {documentId}. OBS, returning message anyway", documentId)
+    if (studentId) {
+      try {
+        await this.updateStudentLatestActivityTimestamp(studentId)
+      } catch (error) {
+        logger.errorException(error, "Failed to update student's latest activity timestamp after adding document message. Document ID: {documentId}. OBS, returning message anyway", documentId)
+      }
     }
 
     return messageWithId
