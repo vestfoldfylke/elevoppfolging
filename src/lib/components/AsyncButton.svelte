@@ -1,14 +1,16 @@
 <script lang="ts">
-  import { invalidateAll } from "$app/navigation";
+  import { invalidateAll } from "$app/navigation"
 
   type AsyncButtonProps = {
     buttonText: string
     onClick: () => Promise<void>
     reloadPageDataOnSuccess?: boolean
+    /** If you need anything to trigger after page data is reloaded (requires reloadPageDataOnSuccess to be true) */
+    callBackAfterReloadPageData?: () => void
     errorMessage?: string
   }
 
-  let { buttonText, onClick, reloadPageDataOnSuccess = false, errorMessage = $bindable() }: AsyncButtonProps = $props()
+  let { buttonText, onClick, reloadPageDataOnSuccess = false, callBackAfterReloadPageData, errorMessage = $bindable() }: AsyncButtonProps = $props()
 
   type ButtonState = {
     loading: boolean
@@ -22,7 +24,7 @@
 
   const wrappedOnClick = async () => {
     buttonState.loading = true
-    
+
     buttonState.errorMessage = null
     if (typeof errorMessage === "string") {
       errorMessage = ""
@@ -32,11 +34,16 @@
       await onClick()
 
       if (reloadPageDataOnSuccess) {
-        invalidateAll().then(() => {
-          console.log("Page data invalidated successfully")
-        }).catch((error) => {
-          console.error("Error invalidating page data:", error)
-        })
+        invalidateAll()
+          .then(() => {
+            console.log("Page data invalidated successfully")
+            if (callBackAfterReloadPageData) {
+              callBackAfterReloadPageData()
+            }
+          })
+          .catch((error) => {
+            console.error("Error invalidating page data:", error)
+          })
       }
     } catch (error) {
       console.error("Error in AsyncButton onClick:", error)
