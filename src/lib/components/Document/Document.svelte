@@ -1,19 +1,17 @@
 <script lang="ts">
   import { slide } from "svelte/transition"
-  import { enhance } from "$app/forms"
-  import type { StudentDocument } from "$lib/types/db/shared-types"
-  import type { ActionData } from "../../../routes/students/[_id]/$types"
+  import type { Document } from "$lib/types/db/shared-types"
+  import DocumentContent from "./DocumentContentItem.svelte"
   import Message from "./Message.svelte"
+  import NewMessage from "./NewMessage.svelte"
 
   type PageProps = {
-    document: StudentDocument
-    form: ActionData
+    document: Document
   }
 
-  let { document, form }: PageProps = $props()
+  let { document }: PageProps = $props()
 
   let documentOpen = $state(false)
-  let messageType: "UPDATE" | "COMMENT" | null = $state(null)
 </script>
 
 <div class="document">
@@ -26,40 +24,19 @@
   {#if documentOpen}
     <div class="document-collapsible" transition:slide={{ duration: 200 }}>
       <div class="document-content">
-        {document.content.text}
+        {#each document.content as contentItem, index}
+          <DocumentContent {contentItem} editMode={false} {index} />
+        {/each}
       </div>
       {#if document.messages.length > 0}
         <div class="document-messages">
-          {#each document.messages as message}
-            <Message {message} />
+          {#each document.messages as message (message.messageId)}
+            <Message {message} editMode={false} documentId={document._id} />
           {/each}
         </div>
       {/if}
       <div class="document-actions">
-        {#if messageType === null}
-          <button onclick={() => messageType = "UPDATE"}>Oppdatering</button>
-          <button onclick={() => messageType = "COMMENT"}>Kommentar</button>
-        {:else if messageType === "UPDATE"}
-          <div class="document-update">
-            <div class="document-update-header">
-              <div>Ny oppdatering</div>
-            </div>
-            <textarea placeholder="Skriv en oppdatering..." value={document.content.text}></textarea>
-            <div class="document-update-actions">
-              <button>Send</button>
-              <button onclick={() => messageType = null}>Avbryt</button>
-            </div>
-          </div>
-        {:else if messageType === "COMMENT"}
-          <form method="POST" action="?/newMessageAction" use:enhance>
-            <input type="hidden" name="documentId" value={document._id} />
-            <input type="hidden" name="type" value="COMMENT" />
-            <input type="text" name="comment" placeholder="Skriv en kommentar..." />
-            <button type="submit">Send</button>
-            <button onclick={() => messageType = null}>Avbryt</button>
-          </form>
-        {/if}
-        {#if form?.createMessageFailedData?.[document._id]?.errorMessage}<p class="error">{form?.createMessageFailedData?.[document._id]?.errorMessage}</p>{/if}
+        <NewMessage documentId={document._id} />
       </div>
     </div>
   {/if}
@@ -90,15 +67,5 @@
     display: flex;
     gap: 0.5rem;
     padding: 0.5rem;
-  }
-  .document-update {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  .document-update-header, .document-update-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
   }
 </style>

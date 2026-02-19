@@ -5,7 +5,6 @@ import type {
   DocumentMessage,
   ProgramAreaManualAccessEntry,
   SchoolManualAccessEntry,
-  StudentDocument,
   StudentImportantStuff,
   StudentManualAccessEntry,
   TeachingGroupAutoAccessEntry
@@ -18,7 +17,5 @@ export type FrontendOverviewStudent = Omit<FrontendStudent, "studentEnrollments"
 }
 
 export type AccessType = SchoolManualAccessEntry | ProgramAreaManualAccessEntry | StudentManualAccessEntry | ClassAutoAccessEntry | ContactTeacherGroupAutoAccessEntry | TeachingGroupAutoAccessEntry
-
-export type StudentDocumentType = StudentDocument["type"]
 
 export type DocumentMessageType = DocumentMessage["type"]
