@@ -1,5 +1,6 @@
 <script lang="ts">
-  import type { PageProps } from "./$types"
+  import PageHeader from "$lib/components/PageHeader.svelte";
+import type { PageProps } from "./$types"
 
   let { data }: PageProps = $props()
 
@@ -67,7 +68,7 @@
   })
 </script>
 
-<h1>Elever</h1>
+<PageHeader title="Elever" />
 <div class="student-filter-container">
 	<div class="search-boxes">
 		<div class="search-box">
