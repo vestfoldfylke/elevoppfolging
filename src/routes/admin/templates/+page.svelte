@@ -1,10 +1,11 @@
 <script lang="ts">
-  import type { PageProps } from "./$types"
+  import PageHeader from "$lib/components/PageHeader.svelte";
+import type { PageProps } from "./$types"
 
   let { data }: PageProps = $props()
 </script>
 
-<h1>Notatmaler</h1>
+<PageHeader title="Notat-maler" />
 
 <a href="/admin/templates/new">Ny notat-mal</a>
 

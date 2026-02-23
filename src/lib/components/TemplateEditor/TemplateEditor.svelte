@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation"
   import { apiFetch } from "$lib/api-fetch/api-fetch"
-  import type { DocumentContentItem, DocumentContentTemplate } from "$lib/types/db/shared-types"
+  import type { DocumentContentItem, DocumentContentTemplate, DocumentRadioGroupItem } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
   import DocumentContentItemComponent from "../Document/DocumentContentItem.svelte"
   import TemplateEditorItem from "./TemplateEditorItem.svelte"
@@ -22,12 +22,12 @@
   const templateItems: (DocumentContentItem & { displayName: string })[] = [
     {
       displayName: "Overskrift",
-      type: "h1",
+      type: "header",
       value: "Dette er en tittel"
     },
     {
       displayName: "Tekst-avsnitt",
-      type: "p",
+      type: "paragraph",
       value: "Dette er et avsnitt med litt tekst."
     },
     {
@@ -44,6 +44,23 @@
       label: "Beskrivelse av tekstfelt",
       value: "",
       initialRows: 3,
+      required: true
+    },
+    {
+      type: "radioGroup",
+      displayName: "Valggruppe (brukeren kan velge ett alternativ)",
+      selectedValue: "",
+      header: "Beskrivelse av valggruppe",
+      items: [
+        {
+          label: "",
+          value: crypto.randomUUID()
+        },
+        {
+          label: "",
+          value: crypto.randomUUID()
+        }
+      ],
       required: true
     }
   ]
@@ -108,10 +125,12 @@
         "Content-Type": "application/json"
       }
     })
+
+    previewMode = true
   }
 
   const deleteTemplate = async (): Promise<void> => {
-    const confirmDelete = confirm("Er du heeeelt sikker på du vil slette denne malen da? Den blir heeeelt borte 😱")
+    const confirmDelete = confirm("Er du heeeelt sikker på du vil slette denne malen da? Den vil ikke kunne brukes lenger. Dokumentene som er laget med malen vil ikke bli slettet.")
     if (!confirmDelete) {
       return
     }
@@ -127,19 +146,19 @@
 <div class="template-editor-container" class:hidden={previewMode}>
   <form bind:this={templateForm}>
     <div class="template-editor">
-      <div class="template-metadata">
-        <div>
-          <label for="template-name">Notat-type navn</label>
-          <input required id="template-name" type="text" bind:value={editableTemplate.name} />
-        </div>
-        <div>
-          <label for="available-for-students">Elevnotat</label>
-          <input id="available-for-students" type="checkbox" bind:checked={editableTemplate.availableForDocumentType.student} />
-        </div>
-        <div>
-          <label for="available-for-groups">Gruppe-notat</label>
-          <input id="available-for-groups" type="checkbox" bind:checked={editableTemplate.availableForDocumentType.group} />
-        </div>
+      <div class="template-name">
+        <label for="template-name">Navn på notat-typen</label>
+        <input required id="template-name" type="text" bind:value={editableTemplate.name} />
+      </div>
+
+      <div class="template-availability-options">
+        <strong>Tilgjengelig som:</strong>
+        <br />
+        <label for="available-for-students">Elevnotat</label>
+        <input id="available-for-students" type="checkbox" bind:checked={editableTemplate.availableForDocumentType.student} />
+
+        <label for="available-for-groups">Klassenotat</label>
+        <input id="available-for-groups" type="checkbox" bind:checked={editableTemplate.availableForDocumentType.group} />
       </div>
 
       <div class="template-content">
@@ -153,6 +172,7 @@
     </div>
   </form>
 
+  <strong>Legg til element:</strong>
   <div class="template-editor-actions">
     {#each templateItems as templateItem}
       <button type="button" onclick={() => addTemplateItem(templateItem.type)}><span class="material-symbols-outlined">add</span>{templateItem.displayName}</button>
@@ -191,10 +211,25 @@
   .template-editor {
     flex: 1;
   }
+  .template-name {
+    display: flex;
+    flex-direction: column;
+    margin: 1rem 0rem;
+  }
+  .template-name > input {
+    max-width: 20rem;
+  }
+  .template-availability-options {
+    margin: 1rem 0rem;
+  }
   .template-editor-actions {
     display: flex;
     gap: 0.5rem;
-    padding: 1rem 0rem;
+    margin-bottom: 1rem;
+  }
+  .template-actions {
+    display: flex;
+    gap: 0.5rem;
   }
   .template-content {
     display: flex;

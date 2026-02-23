@@ -206,12 +206,12 @@ export type DbProgramArea = NewProgramArea & {
 // DOCUMENTS
 
 export type DocumentHeaderItem = {
-  type: "h1" | "h2" | "h3"
+  type: "header"
   value: string
 }
 
 export type DocumentParagraphItem = {
-  type: "p"
+  type: "paragraph"
   value: string
 }
 
@@ -234,7 +234,21 @@ export type DocumentTextAreaItem = {
   helpText?: string
 }
 
-export type DocumentInputItem = DocumentTextInputItem | DocumentTextAreaItem
+export type DocumentRadioButtonItem = {
+  label: string
+  value: string
+}
+
+export type DocumentRadioGroupItem = {
+  type: "radioGroup"
+  header: string
+  items: DocumentRadioButtonItem[]
+  selectedValue: string
+  required: boolean
+  helpText?: string
+}
+
+export type DocumentInputItem = DocumentTextInputItem | DocumentTextAreaItem | DocumentRadioGroupItem
 
 export type DocumentContentItem = DocumentHeaderItem | DocumentParagraphItem | DocumentInputItem
 
