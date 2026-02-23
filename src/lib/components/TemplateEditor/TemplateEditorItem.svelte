@@ -27,7 +27,6 @@
     }
     radioGroup.items.splice(optionIndex, 1)
   }
-
 </script>
 
 <!--

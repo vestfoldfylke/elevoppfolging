@@ -24,13 +24,13 @@
   --color-secondary-80: rgb(123, 88, 129);
   --color-secondary-90: rgb(107, 67, 113);
   --color-secondary: rgb(90, 46, 97); /* Plomme */
- 
+
   --color-danger: #b7173d; /* Nype */
   --color-danger-70: #cd5d77;
   --color-danger-80: #c54564;
 
-  --color-warning: #BC7726; /* Siv */
-  --color-warning-20: #F2E4D4;
+  --color-warning: #bc7726; /* Siv */
+  --color-warning-20: #f2e4d4;
 }
 
 html,
