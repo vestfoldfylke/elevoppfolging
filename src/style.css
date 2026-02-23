@@ -1,7 +1,7 @@
 :root {
   --font-family: "Nunito Sans", sans-serif;
   --header-height: 4rem;
-  
+
   --color-navigation: rgb(0, 82, 96); /* Vann */
 
   --color-primary-10: rgb(236, 237, 242);
@@ -111,4 +111,3 @@ button.filled:disabled {
   color: gray;
   cursor: not-allowed;
 }
-

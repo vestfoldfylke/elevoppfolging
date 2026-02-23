@@ -2,7 +2,7 @@ import type { Document, DocumentContentTemplate, DocumentMessage } from "../db/s
 
 type ApiDocumentsIdMessages = {
   POST: { req: DocumentMessage; res: { messageId: string } }
-};
+}
 
 type ApiTemplatesId = {
   PUT: { req: DocumentContentTemplate; res: { updatedTemplateId: string } }
@@ -23,7 +23,7 @@ export interface ApiRouteMap {
   "/api/templates": {
     POST: { req: DocumentContentTemplate; res: { templateId: string } }
   }
-  
+
   [key: `/api/templates/${string}`]: ApiTemplatesId
   "api/templates/${string}": ApiTemplatesId
 }

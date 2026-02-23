@@ -4,7 +4,6 @@
   }
 
   let { title }: PageHeaderProps = $props()
-  
 </script>
 
 <header>
