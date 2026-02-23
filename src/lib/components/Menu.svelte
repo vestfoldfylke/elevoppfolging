@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte"
   import { fade, slide } from "svelte/transition"
-  import { onNavigate } from "$app/navigation"
   import { page } from "$app/state"
   import favicon32 from "$lib/assets/favicon-32x32.png"
   import type { AuthenticatedPrincipal } from "$lib/types/authentication"
@@ -51,7 +50,7 @@
 
 {#if !menuOpen}
 	<div class="open-menu-container" transition:fade={{ duration: 100, delay: 100 }}>
-		<button class="icon-button" onclick={toggleMenu} title="Åpne meny">
+		<button class="icon-button menu-button" onclick={toggleMenu} title="Åpne meny">
 			<span class="material-symbols-rounded">left_panel_open</span>
 		</button>
 	</div>
@@ -123,6 +122,9 @@
 	.open-menu-container {
 		position: fixed;
 		z-index: 100;
+	}
+	.menu-button {
+		background-color: var(--color-secondary-10);
 	}
 	.menu-header {
 		justify-content: space-between;
