@@ -182,20 +182,20 @@
 
 <div class="template-preview" class:hidden={!previewMode}>
   {#each editableTemplate.content as contentItem, index}
-    <DocumentContentItemComponent editMode={true} {index} {contentItem} />
+    <DocumentContentItemComponent editMode={true} previewMode={true} {index} {contentItem} />
   {/each}
 </div>
 
 <div class="template-actions">
   {#if previewMode}
-    <button type="button" onclick={() => previewMode = false}>Rediger mal</button>
+    <button type="button" onclick={() => previewMode = false}><span class="material-symbols-outlined">edit</span>Rediger mal</button>
   {:else}
-    <button type="button" onclick={() => previewMode = true}>Forhåndsvis mal</button>
+    <button type="button" onclick={() => previewMode = true}><span class="material-symbols-outlined">visibility</span>Forhåndsvis mal</button>
     {#if !editableTemplate._id}
-      <AsyncButton buttonText="Lagre mal" onClick={newTemplate} />
+      <AsyncButton buttonText="Lagre mal" onClick={newTemplate} iconName="save" />
     {:else}
-      <AsyncButton buttonText="Lagre endringer" onClick={updateTemplate} reloadPageDataOnSuccess={true} />
-      <AsyncButton buttonText="Slett mal" onClick={deleteTemplate} />
+      <AsyncButton buttonText="Lagre endringer" onClick={updateTemplate} reloadPageDataOnSuccess={true} iconName="save" />
+      <AsyncButton buttonText="Slett mal" onClick={deleteTemplate} iconName="delete" />
     {/if}
   {/if}
 </div>
@@ -228,6 +228,7 @@
     margin-bottom: 1rem;
   }
   .template-actions {
+    margin-top: 1rem;
     display: flex;
     gap: 0.5rem;
   }

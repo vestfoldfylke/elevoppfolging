@@ -123,10 +123,6 @@
             </div>
             <button class="icon-button" type="button" onclick={() => removeRadioGroupOption(contentItem, radioIndex)}><span class="material-symbols-outlined">delete</span></button>
           </div>
-          <div class="input-item small" style="">
-            <label for="radioGroup-{index}-itemValue-{radioIndex}">Valg {radioIndex + 1} - Verdi</label>
-            <input disabled required id="radioGroup-{index}-itemValue-{radioIndex}" type="text" bind:value={radioItem.value} />
-          </div>
         {/each}
         <div class="input-item-actions">
           <button type="button" onclick={() => addRadioGroupOption(contentItem)}>Legg til valg</button>
