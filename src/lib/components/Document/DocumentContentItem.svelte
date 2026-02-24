@@ -4,10 +4,11 @@
   type ItemProps = {
     index: number
     editMode: boolean
+    previewMode?: boolean
     contentItem: DocumentContentItem
   }
 
-  let { editMode, contentItem = $bindable(), index }: ItemProps = $props()
+  let { editMode, previewMode = false, contentItem = $bindable(), index }: ItemProps = $props()
 </script>
 
 {#snippet helpText(inputItem: DocumentInputItem)}
@@ -30,7 +31,11 @@
   <div class="document-content-item">
     {@render helpText(contentItem)}
     <label for={contentItem.label}>{contentItem.label}<span class="required-indicator">{contentItem.required ? "*" : ""}</span></label>
-    <input disabled={!editMode} type="text" id={contentItem.label} name="contentItem-{index}" placeholder={contentItem.placeholder} bind:value={contentItem.value} required={contentItem.required} />
+    {#if previewMode}
+      <input disabled={!editMode} type="text" id={contentItem.label} name="contentItem-{index}" placeholder={contentItem.placeholder} value={contentItem.value} required={contentItem.required} />
+    {:else}
+      <input disabled={!editMode} type="text" id={contentItem.label} name="contentItem-{index}" placeholder={contentItem.placeholder} bind:value={contentItem.value} required={contentItem.required} />
+    {/if}
   </div>
 {/if}
 
@@ -38,7 +43,11 @@
   <div class="document-content-item">
     {@render helpText(contentItem)}
     <label for={contentItem.label}>{contentItem.label}<span class="required-indicator">{contentItem.required ? "*" : ""}</span></label>
-    <textarea disabled={!editMode} id={contentItem.label} name="contentItem-{index}" rows={contentItem.initialRows} placeholder={contentItem.placeholder} required={contentItem.required} bind:value={contentItem.value}></textarea>
+    {#if previewMode}
+      <textarea disabled={!editMode} id={contentItem.label} name="contentItem-{index}" rows={contentItem.initialRows} placeholder={contentItem.placeholder} required={contentItem.required}>{contentItem.value}</textarea>
+    {:else}
+      <textarea disabled={!editMode} id={contentItem.label} name="contentItem-{index}" rows={contentItem.initialRows} placeholder={contentItem.placeholder} required={contentItem.required} bind:value={contentItem.value}></textarea>
+    {/if}
   </div>
 {/if}
 
@@ -49,7 +58,12 @@
     <div class="radio-group-options">
       {#each contentItem.items as item, itemIndex}
         <label>
-          <input disabled={!editMode} type="radio" id="contentItem-{index}-radio-{itemIndex}" name="contentItem-{index}" bind:group={contentItem.selectedValue} value={item.value} required={contentItem.required} />{item.label}
+          {#if previewMode}
+            <input disabled={!editMode} type="radio" id={`contentItem-${index}-radio-${itemIndex}`} name={`contentItem-${index}`} value={item.value} required={contentItem.required} checked={contentItem.selectedValue === item.value} />
+          {:else}
+             <input disabled={!editMode} type="radio" id={`contentItem-${index}-radio-${itemIndex}`} name={`contentItem-${index}`} bind:group={contentItem.selectedValue} value={item.value} required={contentItem.required} />
+          {/if}
+          {item.label}
         </label>
       {/each}
     </div>
@@ -77,7 +91,6 @@
   .radio-group-options {
     display: flex;
     gap: 0.5rem;
-    align-items: center;
   }
 
   .help-text {
