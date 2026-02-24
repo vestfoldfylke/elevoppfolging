@@ -4,13 +4,14 @@
   type AsyncButtonProps = {
     buttonText: string
     onClick: () => Promise<void>
+    iconName?: string
     reloadPageDataOnSuccess?: boolean
     /** If you need anything to trigger after page data is reloaded (requires reloadPageDataOnSuccess to be true) */
     callBackAfterReloadPageData?: () => void
     errorMessage?: string
   }
 
-  let { buttonText, onClick, reloadPageDataOnSuccess = false, callBackAfterReloadPageData, errorMessage = $bindable() }: AsyncButtonProps = $props()
+  let { buttonText, onClick, iconName, reloadPageDataOnSuccess = false, callBackAfterReloadPageData, errorMessage = $bindable() }: AsyncButtonProps = $props()
 
   type ButtonState = {
     loading: boolean
@@ -57,6 +58,9 @@
 </script>
 
 <button type="button" onclick={wrappedOnClick} disabled={buttonState.loading}>
+  {#if iconName}
+    <span class="material-symbols-outlined">{iconName}</span>
+  {/if}
   {buttonState.loading ? "Laster..." : buttonText}
 </button>
 
