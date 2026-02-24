@@ -19,35 +19,43 @@
 
   let templateForm: HTMLFormElement | undefined = $state()
 
-  const templateItems: (DocumentContentItem & { displayName: string })[] = [
+  const templateItems: (DocumentContentItem & { displayName: string, iconName: string })[] = [
     {
       displayName: "Overskrift",
+      iconName: "title",
       type: "header",
       value: "Dette er en tittel"
     },
     {
       displayName: "Tekst-avsnitt",
+      iconName: "text_fields",
       type: "paragraph",
       value: "Dette er et avsnitt med litt tekst."
     },
     {
       type: "inputText",
+      iconName: "text_fields_alt",
       displayName: "Inputfelt (felt brukeren putter inn tekst i)",
       placeholder: "Heisann",
       label: "Beskrivelse av tekstfelt",
+      helpText: "",
       value: "",
       required: true
     },
     {
       type: "textarea",
+      iconName: "format_align_left",
       displayName: "Tekstområde (felt brukeren putter inn mye tekst i)",
       label: "Beskrivelse av tekstfelt",
+      helpText: "",
+      placeholder: "",
       value: "",
       initialRows: 3,
       required: true
     },
     {
       type: "radioGroup",
+      iconName: "task_alt",
       displayName: "Valggruppe (brukeren kan velge ett alternativ)",
       selectedValue: "",
       header: "Beskrivelse av valggruppe",
@@ -172,11 +180,13 @@
     </div>
   </form>
 
-  <strong>Legg til element:</strong>
   <div class="template-editor-actions">
-    {#each templateItems as templateItem}
-      <button type="button" onclick={() => addTemplateItem(templateItem.type)}><span class="material-symbols-outlined">add</span>{templateItem.displayName}</button>
-    {/each}
+    <strong>Legg til element:</strong>
+    <div class="template-editor-actions-buttons">
+      {#each templateItems as templateItem}
+        <button type="button" onclick={() => addTemplateItem(templateItem.type)}><span class="material-symbols-outlined">{templateItem.iconName}</span>{templateItem.displayName}</button>
+      {/each}
+    </div>
   </div>
 </div>
 
@@ -194,8 +204,8 @@
     {#if !editableTemplate._id}
       <AsyncButton buttonText="Lagre mal" onClick={newTemplate} iconName="save" />
     {:else}
-      <AsyncButton buttonText="Lagre endringer" onClick={updateTemplate} reloadPageDataOnSuccess={true} iconName="save" />
-      <AsyncButton buttonText="Slett mal" onClick={deleteTemplate} iconName="delete" />
+      <AsyncButton disabled={JSON.stringify(editableTemplate) === JSON.stringify(template)} buttonText="Lagre endringer" onClick={updateTemplate} reloadPageDataOnSuccess={true} iconName="save" classList={["filled"]} />
+      <AsyncButton buttonText="Slett mal" onClick={deleteTemplate} iconName="delete" classList={["filled", "danger"]} />
     {/if}
   {/if}
 </div>
@@ -222,12 +232,19 @@
   .template-availability-options {
     margin: 1rem 0rem;
   }
+
   .template-editor-actions {
+    margin: 1rem 0rem;
+  }
+  .template-editor-actions-buttons {
     display: flex;
     gap: 0.5rem;
-    margin-bottom: 1rem;
+    flex-wrap: wrap;
   }
+
   .template-actions {
+    border-top: 1px solid var(--color-primary);
+    padding: 1rem 0rem;
     margin-top: 1rem;
     display: flex;
     gap: 0.5rem;

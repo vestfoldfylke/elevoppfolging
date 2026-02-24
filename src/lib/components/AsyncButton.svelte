@@ -9,9 +9,11 @@
     /** If you need anything to trigger after page data is reloaded (requires reloadPageDataOnSuccess to be true) */
     callBackAfterReloadPageData?: () => void
     errorMessage?: string
+    classList?: ("filled" | "danger")[]
+    disabled?: boolean
   }
 
-  let { buttonText, onClick, iconName, reloadPageDataOnSuccess = false, callBackAfterReloadPageData, errorMessage = $bindable() }: AsyncButtonProps = $props()
+  let { buttonText, onClick, iconName, reloadPageDataOnSuccess = false, callBackAfterReloadPageData, errorMessage = $bindable(), classList = [], disabled = false }: AsyncButtonProps = $props()
 
   type ButtonState = {
     loading: boolean
@@ -57,7 +59,7 @@
   }
 </script>
 
-<button type="button" onclick={wrappedOnClick} disabled={buttonState.loading}>
+<button type="button" onclick={wrappedOnClick} class={classList.join(" ")} disabled={buttonState.loading || disabled}>
   {#if iconName}
     <span class="material-symbols-outlined">{iconName}</span>
   {/if}

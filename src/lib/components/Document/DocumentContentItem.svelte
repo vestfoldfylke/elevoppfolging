@@ -54,7 +54,7 @@
 {#if contentItem.type === "radioGroup"}
   <div class="document-content-item">
     {@render helpText(contentItem)}
-    <strong>{contentItem.header}<span class="required-indicator">{contentItem.required ? "*" : ""}</span></strong>
+    <div class="label">{contentItem.header}<span class="required-indicator">{contentItem.required ? "*" : ""}</span></div>
     <div class="radio-group-options">
       {#each contentItem.items as item, itemIndex}
         <label>
@@ -75,8 +75,8 @@
     display: flex;
     flex-direction: column;
     gap: 0.2rem;
+    margin: 1rem 0rem;
   }
-
 
   .document-content-item-header {
     font-weight: bold;

@@ -35,13 +35,11 @@
 <style>
 	main {
 		box-sizing: border-box;
-		height: 100%;
 		display: flex;
 	}
 	.page-content {
 		box-sizing: border-box;
-		padding: 0rem 0.25rem;
-		height: 100%;
+		padding: 0rem 0.25rem 2rem 0.25rem;
 		flex: 1;
 		max-width: 64rem;
 		margin: 0 auto;

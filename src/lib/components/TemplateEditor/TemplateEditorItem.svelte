@@ -38,7 +38,7 @@
   <div class="template-content-item">
     <strong>Forhåndsvisning</strong>
     <div class="template-content-item-preview">
-      <DocumentContentItemComponent index={index} {contentItem} editMode={false} />
+      <DocumentContentItemComponent index={index} {contentItem} editMode={false} previewMode={true} />
     </div>
 
     <div class="content-item-editor">
@@ -151,6 +151,7 @@
     margin-bottom: 0.5rem;
     background-color: var(--color-primary-10);
     padding: 1rem;
+    border-radius: 0.5rem;
   }
   .template-content-item {
     flex: 1;
