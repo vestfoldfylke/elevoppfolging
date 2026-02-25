@@ -1,5 +1,5 @@
-import { env } from "$env/dynamic/private";
-import type { ApplicationInfo } from "$lib/types/app-types";
+import { env } from "$env/dynamic/private"
+import type { ApplicationInfo } from "$lib/types/app-types"
 import { version } from "../../../package.json"
 
 export const APP_INFO: ApplicationInfo = {

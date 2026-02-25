@@ -19,7 +19,7 @@
 
   let templateForm: HTMLFormElement | undefined = $state()
 
-  const templateItems: (DocumentContentItem & { displayName: string, iconName: string })[] = [
+  const templateItems: (DocumentContentItem & { displayName: string; iconName: string })[] = [
     {
       displayName: "Overskrift",
       iconName: "title",

@@ -116,7 +116,8 @@ button.filled:disabled {
   cursor: not-allowed;
 }
 
-label, .label {
+label,
+.label {
   font-size: 0.9rem;
 }
 

@@ -3,7 +3,7 @@
   import { fade, slide } from "svelte/transition"
   import { page } from "$app/state"
   import favicon32 from "$lib/assets/favicon-32x32.png"
-  import { isSystemAdmin } from "$lib/shared-authorization/authorization";
+  import { isSystemAdmin } from "$lib/shared-authorization/authorization"
 
   type Props = {
     appName: string

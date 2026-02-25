@@ -9,7 +9,6 @@ type ApiTemplatesId = {
   DELETE: { res: { deletedTemplateId: string } }
 }
 
-
 /**
  * Define a mapping of API routes to their expected request and response types. This will be used to provide type safety for api routes and the apiFetch function, ensuring that the correct request body is provided for each route and that the response is correctly typed.
  */

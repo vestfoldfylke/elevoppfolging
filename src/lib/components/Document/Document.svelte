@@ -1,12 +1,12 @@
 <script lang="ts">
   import { slide } from "svelte/transition"
+  import { page } from "$app/state"
+  import { canEditDocument } from "$lib/shared-authorization/authorization"
   import type { Document, School } from "$lib/types/db/shared-types"
   import DocumentContent from "./DocumentContentItem.svelte"
+  import DocumentEditor from "./DocumentEditor.svelte"
   import Message from "./Message.svelte"
   import NewMessage from "./NewMessage.svelte"
-  import { canEditDocument } from "$lib/shared-authorization/authorization";
-  import { page } from "$app/state";
-  import DocumentEditor from "./DocumentEditor.svelte";
 
   type PageProps = {
     document: Document
@@ -20,7 +20,6 @@
 
   let documentOpen = $state(false)
   let editMode = $state(false)
-
 </script>
 
 <div class="document" class:open={documentOpen}>

@@ -7,11 +7,8 @@ declare global {
   namespace App {
     // interface Error {}
     // interface Locals {}
-    interface PageData extends RootLayoutData {
-    }
+    interface PageData extends RootLayoutData {}
     // interface PageState {}
     // interface Platform {}
   }
 }
-
-export {}
