@@ -14,15 +14,17 @@
   let documentOpen = $state(false)
 </script>
 
-<div class="document">
-  <div class="document-header">
-    <button class="document-title" onclick={() => documentOpen = !documentOpen}>
-      <h2>{document.title}</h2>
-      <p>{document.created.by.displayName}</p>
-    </button>
-  </div>
+<div class="document" class:open={documentOpen}>
+  <button class="document-title" class:open={documentOpen} onclick={() => documentOpen = !documentOpen}>
+    <h2>{document.template.name}: {document.title}</h2>
+    <div class="document-title-metadata">
+      <div><strong>{document.created.by.displayName}</strong></div>
+      <div>{new Date(document.modified.at).toLocaleString('no-NO', { dateStyle: 'short', timeStyle: 'short' })}</div>
+      <div>{document.school.name}</div>
+    </div>
+  </button>
   {#if documentOpen}
-    <div class="document-collapsible" transition:slide={{ duration: 200 }}>
+    <div class="collapsible-content" transition:slide={{ duration: 200 }}>
       <div class="document-content">
         {#each document.content as contentItem, index}
           <DocumentContent {contentItem} editMode={false} {index} />
@@ -35,7 +37,7 @@
           {/each}
         </div>
       {/if}
-      <div class="document-actions">
+      <div class="message-actions">
         <NewMessage documentId={document._id} />
       </div>
     </div>
@@ -46,26 +48,37 @@
   .document {
     display: flex;
     flex-direction: column;
-    border: 1px solid #ccc;
+    border: 1px solid var(--color-primary);
+    border-radius: 0.5rem;
   }
-  .document-header {
-    display: flex;
-    align-items: center;
+  .document.open {
+    margin-bottom: 1rem;
   }
+
   .document-title {
     flex: 1;
     display: flex;
-    cursor: pointer;
     justify-content: space-between;
     border: none;
+    border-radius: 0.5rem;
   }
-  .document-collapsible > div {
-    padding: 0.5rem;
-    border-bottom: 1px solid #ccc;
+  .document-title.open {
+    border-bottom: 1px solid var(--color-primary);
+    border-radius: 0.5rem 0.5rem 0rem 0rem;
+    background-color: var(--color-primary-10);
   }
-  .document-actions {
-    display: flex;
-    gap: 0.5rem;
-    padding: 0.5rem;
+  .document-title.open:hover {
+    background-color: var(--color-primary-20);
+  }
+  .document-title.open:active {
+    background-color: var(--color-primary-30);
+  }
+
+  .document-content, .document-messages, .message-actions {
+    padding: 0rem 1rem 1rem 1rem;
+  }
+
+  .document-content {
+    border-bottom: 1px solid var(--color-primary);
   }
 </style>

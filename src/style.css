@@ -119,3 +119,14 @@ button.filled:disabled {
 label, .label {
   font-size: 0.9rem;
 }
+
+.required-indicator {
+  color: var(--color-danger);
+  margin-left: 0.1rem;
+}
+
+.box-container {
+  border: 1px solid var(--color-primary);
+  border-radius: 0.5rem;
+  padding: 1rem;
+}

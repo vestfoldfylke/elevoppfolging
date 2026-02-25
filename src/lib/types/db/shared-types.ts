@@ -273,15 +273,7 @@ export type DocumentComment = DocumentMessageBase & {
   }
 }
 
-export type DocumentUpdate = DocumentMessageBase & {
-  type: "update"
-  content: {
-    title: string
-    text: string
-  }
-}
-
-export type NewDocumentMessage = DocumentComment | DocumentUpdate
+export type NewDocumentMessage = DocumentComment
 
 export type DocumentMessage = NewDocumentMessage & {
   messageId: string

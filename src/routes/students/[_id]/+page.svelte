@@ -170,14 +170,18 @@
       <h2>Tidslinje</h2>
     </div>
 
-    <NewDocument {accessSchools} documentContentTemplates={data.documentContentTemplates} studentId={data.student._id} />
+    <div class="new-document">
+      <NewDocument {accessSchools} documentContentTemplates={data.documentContentTemplates} studentId={data.student._id} />
+    </div>
 
-    {#each data.documents as document (document._id)}
-      <DocumentComponent {document} />
-    {/each}
+    {#if data.documents.length === 0}
+      <p>Ingen notater her</p>
+    {:else}
+      {#each data.documents as document (document._id)}
+        <DocumentComponent {document} />
+      {/each}
+    {/if}
 
-    <br>
-    <br><br><br><br><br><br><br><br> <!-- haha -->
   </div>
 </div>
 
@@ -220,8 +224,10 @@
   }
   .documents {
     display: flex;
-    gap: 1rem 1rem;
     flex-direction: column;
     border-radius: 4px;
+  }
+  .new-document {
+    margin-bottom: 1rem;
   }
 </style>

@@ -8,7 +8,7 @@
 
   let { documentId }: PageProps = $props()
 
-  let messageType: "update" | "comment" | null = $state(null)
+  let messageType: "comment" | null = $state(null)
 
   const mockEditor: EditorData = {
     by: {
@@ -26,16 +26,6 @@
     created: mockEditor,
     modified: mockEditor
   }
-  const newUpdate: DocumentMessage = {
-    messageId: "",
-    type: "update",
-    content: {
-      title: "",
-      text: ""
-    },
-    created: mockEditor,
-    modified: mockEditor
-  }
 
   const onNewMessageCreated = () => {
     messageType = null
@@ -43,10 +33,7 @@
 </script>
 
 {#if messageType === null}
-  <button onclick={() => messageType = "update"}>Oppdatering</button>
-  <button onclick={() => messageType = "comment"}>Kommentar</button>
-{:else if messageType === "update"}
-  <Message editMode={true} {documentId} message={newUpdate} callback={onNewMessageCreated} />
+  <button onclick={() => messageType = "comment"}><span class="material-symbols-outlined">add_comment</span>Ny kommentar</button>
 {:else if messageType === "comment"}
   <Message editMode={true} {documentId} message={newComment} callback={onNewMessageCreated} />
 {/if}

@@ -81,6 +81,7 @@
   .document-content-item-header {
     font-weight: bold;
     font-size: 1.1rem;
+    margin: 1rem 0rem;
   }
 
   .paragraph {
@@ -96,9 +97,5 @@
   .help-text {
     background-color: var(--color-warning-20);
     padding: 0.25rem;
-  }
-  .required-indicator {
-    color: var(--color-danger);
-    margin-left: 0.1rem;
   }
 </style>

@@ -33,17 +33,13 @@
   }
 </script>
 
-<div class="document-container">
-  <h2>{currentDocument.template.name}: {currentDocument.title}</h2>
-  <div>{currentDocument.school.name}</div>
+<div class="document-container box-container">
+  <div class="document-header">
+    <h2>{currentDocument.template.name}: {currentDocument.title}</h2>
+    <div>{currentDocument.school.name}</div>
+  </div>
   <div class="document-content">
     <form bind:this={documentEditorForm}>
-      <div class="document-content-item">
-        <label for="documentTitle">
-          Tittel
-        </label>
-        <input id="documentTitle" name="documentTitle" type="text" bind:value={currentDocument.title} required>
-      </div>
       {#if accessSchools.length > 1}
         <div class="document-content-item">
           <label for="schoolNumber">
@@ -57,7 +53,12 @@
           </select>
         </div>
       {/if}
-      <br />
+      <div class="document-content-item">
+        <label for="documentTitle">
+          Tittel<span class="required-indicator">*</span>
+        </label>
+        <input id="documentTitle" name="documentTitle" type="text" bind:value={currentDocument.title} required>
+      </div>
       {#each currentDocument.content as _contentItem, index}
         <DocumentContentItem bind:contentItem={currentDocument.content[index]} {index} editMode={true} />
       {/each}
@@ -65,9 +66,9 @@
   </div>
   <div class="document-actions">
     {#if !currentDocument._id}
-      <AsyncButton buttonText="Lagre nytt dokument" onClick={newDocument} reloadPageDataOnSuccess={true} callBackAfterReloadPageData={closeEditor} />
-      <button onclick={closeEditor}>Avbryt</button>
+      <AsyncButton buttonText="Lagre notat" onClick={newDocument} reloadPageDataOnSuccess={true} callBackAfterReloadPageData={closeEditor} iconName="save" classList={["filled"]} />
     {/if}
+    <button class="filled danger" onclick={closeEditor}><span class="material-symbols-outlined">close</span>Avbryt</button>
   </div>
 </div>
 
@@ -75,12 +76,23 @@
   .document-container {
     display: flex;
     flex-direction: column;
-    border: 1px solid #ccc;
   }
   
   .document-content-item {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+  }
+
+  h2 {
+    margin: 0rem;
+  }
+  .document-header {
+    margin-bottom: 1rem;
+  }
+
+  .document-actions {
+    display: flex;
+    gap: 0.5rem;
   }
 </style>

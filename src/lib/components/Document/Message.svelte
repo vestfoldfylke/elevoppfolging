@@ -42,30 +42,52 @@
 </script>
 
 <div class="message">
-  {#if editMode}
-    <form bind:this={messageForm}>
-      {#if editableMessage.type === "update"}
-        <input type="text" name="updateTitle" bind:value={editableMessage.content.title} />
-      {/if}
-      <textarea required name="messageContent" id="messageContent" rows={3} bind:value={editableMessage.content.text}></textarea>
-    </form>
-  {:else}
-    {#if editableMessage.type === "update"}
-      <h3>{editableMessage.content.title}</h3>
-    {/if}
-    <p>{editableMessage.content.text}</p>
-    <!-- TODO: Find a better way to show who created the message. Fetch name from Users or do it on load? -->
-    <p>— {editableMessage.created.by.fallbackName}</p>
-  {/if}
-  
-  <div class="message-actions">
-    {#if editMode}
-      <AsyncButton buttonText="LAGRE" onClick={newMessage} reloadPageDataOnSuccess={true} />
-    {/if}
+  <div class="message-icon">
+    <span class="material-symbols-outlined">feedback</span>
   </div>
-
+  <div>
+    {#if editMode}
+      <form bind:this={messageForm}>
+        <textarea required name="messageContent" id="messageContent" rows={3} bind:value={editableMessage.content.text}></textarea>
+      </form>
+    {:else}
+      <!-- TODO: Find a better way to show who created the message. Fetch name from Users or do it on load? -->
+      <div class="message-header">
+        <strong>{message.created.by.fallbackName}</strong> - <span class="created-at">{new Date(message.created.at).toLocaleString("no-NO", { dateStyle: "short", timeStyle: "short" })}</span>
+      </div>
+      <pre class="message-text">{editableMessage.content.text}</pre>
+    {/if}
+    
+    <div class="message-actions">
+      {#if editMode}
+        <AsyncButton buttonText="LAGRE" onClick={newMessage} reloadPageDataOnSuccess={true} />
+      {/if}
+    </div>
+  </div>
 </div>
 
 <style>
-
+  .message {
+    margin: 1.5rem 0rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .message-header {
+    font-size: 0.9rem;
+  }
+  .message-icon > span {
+    color: var(--color-primary);
+    background-color: var(--color-primary-20);
+    border-radius: 50%;
+    padding: 0.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .message-text {
+    white-space: pre-wrap;
+    font: inherit;
+    margin: 0;
+  }
 </style>

@@ -75,21 +75,27 @@
 </script>
 
 {#if !creatorOpen}
-  <button onclick={() => creatorOpen = true}>Nytt notat</button>
+  <div>
+    <button class="filled" onclick={() => creatorOpen = true}><span class="material-symbols-outlined">note_add</span>Nytt notat</button>
+  </div>
 {:else}
-  <pre>{JSON.stringify(newDocument, null, 2)}</pre>
-  <label for="type">
-    Type
-  </label>
-  <select id="type" name="documentContentTemplateId" onchange={(event) => changeDocumentTemplate((event.target as HTMLSelectElement).value)}>
-    {#each newDocumentTemplates as documentTemplate}
-      <option value={documentTemplate.template._id}>{documentTemplate.template.name}</option>
-    {/each}
-  </select>
+  <div class="template-selector">
+    <label for="type">
+      Type notat
+    </label>
+    <br />
+    <select id="type" name="documentContentTemplateId" onchange={(event) => changeDocumentTemplate((event.target as HTMLSelectElement).value)}>
+      {#each newDocumentTemplates as documentTemplate}
+        <option value={documentTemplate.template._id}>{documentTemplate.template.name}</option>
+      {/each}
+    </select>
+  </div>
 
   <DocumentEditor {accessSchools} bind:currentDocument={newDocument} closeEditor={() => creatorOpen = false} />
 {/if}
 
 <style>
-
+  .template-selector {
+    margin-bottom: 1rem;
+  }
 </style>
