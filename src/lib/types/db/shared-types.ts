@@ -205,6 +205,53 @@ export type DbProgramArea = NewProgramArea & {
 
 // DOCUMENTS
 
+export type DocumentHeaderItem = {
+  type: "header"
+  value: string
+}
+
+export type DocumentParagraphItem = {
+  type: "paragraph"
+  value: string
+}
+
+export type DocumentTextInputItem = {
+  type: "inputText"
+  label: string
+  value: string
+  required: boolean
+  placeholder?: string
+  helpText?: string
+}
+
+export type DocumentTextAreaItem = {
+  type: "textarea"
+  label: string
+  value: string
+  required: boolean
+  initialRows: number
+  placeholder?: string
+  helpText?: string
+}
+
+export type DocumentRadioButtonItem = {
+  label: string
+  value: string
+}
+
+export type DocumentRadioGroupItem = {
+  type: "radioGroup"
+  header: string
+  items: DocumentRadioButtonItem[]
+  selectedValue: string
+  required: boolean
+  helpText?: string
+}
+
+export type DocumentInputItem = DocumentTextInputItem | DocumentTextAreaItem | DocumentRadioGroupItem
+
+export type DocumentContentItem = DocumentHeaderItem | DocumentParagraphItem | DocumentInputItem
+
 export type EditorData = {
   by: {
     entraUserId: string
@@ -214,71 +261,81 @@ export type EditorData = {
   at: string
 }
 
-export type DocumentBase = {
-  schoolNumber: string
-  title: string
+export type DocumentMessageBase = {
   created: EditorData
   modified: EditorData
 }
 
-export type DocumentMessageBase = {
-  created: EditorData
-}
-
 export type DocumentComment = DocumentMessageBase & {
-  type: "COMMENT"
+  type: "comment"
   content: {
     text: string
   }
 }
 
-export type DocumentUpdate = DocumentMessageBase & {
-  type: "UPDATE"
-  title: string
-  content: {
-    text: string
-  }
-}
-
-export type NewDocumentMessage = DocumentComment | DocumentUpdate
+export type NewDocumentMessage = DocumentComment
 
 export type DocumentMessage = NewDocumentMessage & {
   messageId: string
 }
 
-export type DocumentNote = DocumentBase & {
-  type: "NOTE"
-  content: {
-    text: string
+export type DocumentBase = {
+  school: School
+  title: string
+  created: EditorData
+  modified: EditorData
+  template: {
+    _id: string
+    name: string
+    version: number
   }
+  content: DocumentContentItem[]
   messages: DocumentMessage[]
+  group?: {
+    systemId: string
+  }
 }
 
-export type DocumentFollowUp = DocumentBase & {
-  type: "FOLLOW_UP"
-  content: {
-    responsiblePerson: {
-      entraUserId: string
-      name: string
-    }
-    text: string
-  }
-  messages: DocumentMessage[]
-}
-
-type DocumentHelper = DocumentNote | DocumentFollowUp
-
-export type NewStudentDocument = DocumentHelper & {
-  student: {
+export type NewDocument = DocumentBase & {
+  student?: {
     _id: string
   }
 }
 
-export type StudentDocument = NewStudentDocument & {
+export type Document = NewDocument & {
   _id: string
 }
 
-export type DbStudentDocument = NewStudentDocument & {
+export type NewDbDocument = DocumentBase & {
+  student?: {
+    _id: ObjectId
+  }
+}
+
+export type DbDocument = NewDbDocument & {
+  _id: ObjectId
+}
+
+export type AvailableForDocumentType = {
+  student: boolean
+  group: boolean
+}
+
+// Document content templates
+export type NewDocumentContentTemplate = {
+  name: string
+  version: number
+  availableForDocumentType: AvailableForDocumentType
+  created: EditorData
+  modified: EditorData
+  content: DocumentContentItem[]
+}
+
+export type DocumentContentTemplate = NewDocumentContentTemplate & {
+  _id: string
+}
+
+export type DbDocumentContentTemplate = NewDocumentContentTemplate & {
   _id: ObjectId
 }
 

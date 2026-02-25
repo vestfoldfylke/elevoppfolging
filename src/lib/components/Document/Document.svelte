@@ -1,65 +1,63 @@
 <script lang="ts">
   import { slide } from "svelte/transition"
-  import { enhance } from "$app/forms"
-  import type { StudentDocument } from "$lib/types/db/shared-types"
-  import type { ActionData } from "../../../routes/students/[_id]/$types"
+  import { page } from "$app/state"
+  import { canEditDocument } from "$lib/shared-authorization/authorization"
+  import type { Document, School } from "$lib/types/db/shared-types"
+  import DocumentContent from "./DocumentContentItem.svelte"
+  import DocumentEditor from "./DocumentEditor.svelte"
   import Message from "./Message.svelte"
+  import NewMessage from "./NewMessage.svelte"
 
   type PageProps = {
-    document: StudentDocument
-    form: ActionData
+    document: Document
+    accessSchools: School[]
   }
 
-  let { document, form }: PageProps = $props()
+  let { document, accessSchools }: PageProps = $props()
+
+  // svelte-ignore state_referenced_locally - we don't want to mutate the original document prop, but we want to be able to edit the document in the editor, so we create a local copy of the document that we can mutate
+  let editableDocument = $state(JSON.parse(JSON.stringify(document)))
 
   let documentOpen = $state(false)
-  let messageType: "UPDATE" | "COMMENT" | null = $state(null)
+  let editMode = $state(false)
 </script>
 
-<div class="document">
-  <div class="document-header">
-    <button class="document-title" onclick={() => documentOpen = !documentOpen}>
-      <h2>{document.title}</h2>
-      <p>{document.created.by.displayName}</p>
-    </button>
-  </div>
+<div class="document" class:open={documentOpen}>
+  <button class="document-title" class:open={documentOpen} onclick={() => documentOpen = !documentOpen}>
+    <h2>{document.template.name}: {editableDocument.title}</h2>
+    <div class="document-title-metadata">
+      <div><strong>{document.created.by.displayName}</strong></div>
+      <div>{new Date(document.modified.at).toLocaleString('nb-NO', { dateStyle: 'short', timeStyle: 'short' })}</div>
+      <div>{document.school.name}</div>
+    </div>
+  </button>
   {#if documentOpen}
-    <div class="document-collapsible" transition:slide={{ duration: 200 }}>
+    <div class="collapsible-content" transition:slide={{ duration: 200 }}>
       <div class="document-content">
-        {document.content.text}
+        {#if !editMode}
+          {#each document.content as contentItem, index}
+            <DocumentContent {contentItem} editMode={false} {index} previewMode={true} />
+          {/each}
+        {:else}
+          <DocumentEditor bind:currentDocument={editableDocument} accessSchools={accessSchools} closeEditor={() => { editMode = false; editableDocument = JSON.parse(JSON.stringify(document)); }} />
+        {/if}
+        <div class="document-actions">
+          {#if !editMode && canEditDocument(page.data.authenticatedPrincipal, document)}
+            <button onclick={() => editMode = !editMode}>
+              <span class="material-symbols-outlined">{editMode ? "close" : "edit"}</span>{editMode ? "Lukk redigering" : "Rediger"}
+            </button>
+          {/if}
+        </div>
       </div>
       {#if document.messages.length > 0}
         <div class="document-messages">
-          {#each document.messages as message}
-            <Message {message} />
+          {#each document.messages as message (message.messageId)}
+            <Message {message} editMode={false} documentId={document._id} />
           {/each}
         </div>
       {/if}
-      <div class="document-actions">
-        {#if messageType === null}
-          <button onclick={() => messageType = "UPDATE"}>Oppdatering</button>
-          <button onclick={() => messageType = "COMMENT"}>Kommentar</button>
-        {:else if messageType === "UPDATE"}
-          <div class="document-update">
-            <div class="document-update-header">
-              <div>Ny oppdatering</div>
-            </div>
-            <textarea placeholder="Skriv en oppdatering..." value={document.content.text}></textarea>
-            <div class="document-update-actions">
-              <button>Send</button>
-              <button onclick={() => messageType = null}>Avbryt</button>
-            </div>
-          </div>
-        {:else if messageType === "COMMENT"}
-          <form method="POST" action="?/newMessageAction" use:enhance>
-            <input type="hidden" name="documentId" value={document._id} />
-            <input type="hidden" name="type" value="COMMENT" />
-            <input type="text" name="comment" placeholder="Skriv en kommentar..." />
-            <button type="submit">Send</button>
-            <button onclick={() => messageType = null}>Avbryt</button>
-          </form>
-        {/if}
-        {#if form?.createMessageFailedData?.[document._id]?.errorMessage}<p class="error">{form?.createMessageFailedData?.[document._id]?.errorMessage}</p>{/if}
+      <div class="message-actions">
+        <NewMessage documentId={document._id} />
       </div>
     </div>
   {/if}
@@ -69,36 +67,37 @@
   .document {
     display: flex;
     flex-direction: column;
-    border: 1px solid #ccc;
+    border: 1px solid var(--color-primary);
+    border-radius: 0.5rem;
   }
-  .document-header {
-    display: flex;
-    align-items: center;
+  .document.open {
+    margin-bottom: 1rem;
   }
+
   .document-title {
     flex: 1;
     display: flex;
-    cursor: pointer;
     justify-content: space-between;
     border: none;
+    border-radius: 0.5rem;
   }
-  .document-collapsible > div {
-    padding: 0.5rem;
-    border-bottom: 1px solid #ccc;
+  .document-title.open {
+    border-bottom: 1px solid var(--color-primary);
+    border-radius: 0.5rem 0.5rem 0rem 0rem;
+    background-color: var(--color-primary-10);
   }
-  .document-actions {
-    display: flex;
-    gap: 0.5rem;
-    padding: 0.5rem;
+  .document-title.open:hover {
+    background-color: var(--color-primary-20);
   }
-  .document-update {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+  .document-title.open:active {
+    background-color: var(--color-primary-30);
   }
-  .document-update-header, .document-update-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+
+  .document-content, .document-messages, .message-actions {
+    padding: 0rem 1rem 1rem 1rem;
+  }
+
+  .document-content {
+    border-bottom: 1px solid var(--color-primary);
   }
 </style>

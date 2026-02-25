@@ -1,2 +1,9 @@
-<h1>admin</h1>
-<p>Dra fram høyrehånda</p>
+<script lang="ts">
+  import PageHeader from "$lib/components/PageHeader.svelte"
+</script>
+
+<PageHeader title="Administrator" />
+<a href="/admin/templates">Templates</a>
+
+<style>
+</style>

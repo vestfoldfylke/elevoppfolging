@@ -1,21 +1,19 @@
+import { APP_INFO } from "$lib/server/app-info"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
-import type { AuthenticatedPrincipal } from "$lib/types/authentication"
+import type { RootLayoutData } from "$lib/types/app-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
 import type { LayoutServerLoad } from "./$types"
 
-type LayoutLoadData = {
-  authenticatedPrincipal: AuthenticatedPrincipal
-}
-
-const layoutLoad: ServerLoadNextFunction<LayoutLoadData> = async ({ principal }) => {
+const layoutLoad: ServerLoadNextFunction<RootLayoutData> = async ({ principal }) => {
   return {
     data: {
-      authenticatedPrincipal: principal
+      authenticatedPrincipal: principal,
+      APP_INFO
     },
     isAuthorized: true
   }
 }
 
-export const load: LayoutServerLoad = async (requestEvent): Promise<LayoutLoadData> => {
+export const load: LayoutServerLoad = async (requestEvent): Promise<RootLayoutData> => {
   return serverLoadRequestMiddleware(requestEvent, layoutLoad)
 }
