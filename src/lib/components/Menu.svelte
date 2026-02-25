@@ -3,13 +3,13 @@
   import { fade, slide } from "svelte/transition"
   import { page } from "$app/state"
   import favicon32 from "$lib/assets/favicon-32x32.png"
-  import type { AuthenticatedPrincipal } from "$lib/types/authentication"
+  import { isSystemAdmin } from "$lib/shared-authorization/authorization";
 
   type Props = {
-    authenticatedPrincipal: AuthenticatedPrincipal
     appName: string
   }
-  let { authenticatedPrincipal: authenticatedUser, appName }: Props = $props()
+
+  let { appName }: Props = $props()
 
   let menuOpen = $state(true)
 
@@ -74,30 +74,32 @@
 			</div>
 			<div class="menu-section">
 				<div class="menu-section">
-					<div class="menu-section-title">Jaudu</div>
+					<div class="menu-section-title">Oppfølging</div>
 					<div class="menu-items">
 						<a class="menu-item" class:active={page.url.pathname === "/students"} href="/students">
 							<span class="material-symbols-outlined">person</span>Elever
 						</a>
 					</div>
 				</div>
-				<div class="menu-section">
-					<div class="menu-section-title">Admin</div>
-					<div class="menu-items">
-						<a class="menu-item" class:active={page.url.pathname === "/admin"} href="/admin">
-							<span class="material-symbols-outlined">settings</span>Admin
-						</a>
-						<a class="menu-item" class:active={page.url.pathname === "/admin/templates"} href="/admin/templates">
-							<span class="material-symbols-outlined">add_notes</span>Notatmaler
-						</a>
-					</div>	
-				</div>
+				{#if isSystemAdmin(page.data.authenticatedPrincipal, page.data.APP_INFO)}
+					<div class="menu-section">
+						<div class="menu-section-title">System-admin</div>
+						<div class="menu-items">
+							<a class="menu-item" class:active={page.url.pathname === "/admin"} href="/admin">
+								<span class="material-symbols-outlined">settings</span>Admin
+							</a>
+							<a class="menu-item" class:active={page.url.pathname === "/admin/templates"} href="/admin/templates">
+								<span class="material-symbols-outlined">add_notes</span>Notatmaler
+							</a>
+						</div>	
+					</div>
+				{/if}
 			</div>
 		</div>
 		<div class="menu-footer">
 			<div class="logged-in-user">
 				<span class="material-symbols-outlined">account_circle</span>
-				{authenticatedUser.displayName}
+				{page.data.authenticatedPrincipal.displayName}
 			</div>
 			<!--
 			<button class="icon-button" title="Logg ut" onclick={() => { console.log("Logging out...") }}>
@@ -184,9 +186,6 @@
 		color: var(--color-primary);
 	}
 	.menu-footer {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
 		padding: 1rem 0rem;
 	}
 	.logged-in-user {

@@ -91,11 +91,24 @@
     </select>
   </div>
 
-  <DocumentEditor {accessSchools} bind:currentDocument={newDocument} closeEditor={() => creatorOpen = false} />
+  <div class="document-container box-container">
+    <div class="document-header">
+      <h2>{newDocument.template.name}: {newDocument.title}</h2>
+      <div>{newDocument.school.name}</div>
+    </div>
+    <DocumentEditor {accessSchools} bind:currentDocument={newDocument} closeEditor={() => creatorOpen = false} />
+  </div>
 {/if}
 
 <style>
   .template-selector {
     margin-bottom: 1rem;
+  }
+  .document-container {
+    display: flex;
+    flex-direction: column;
+  }
+  h2 {
+    margin: 0rem;
   }
 </style>

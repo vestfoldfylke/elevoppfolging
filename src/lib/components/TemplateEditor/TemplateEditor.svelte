@@ -104,7 +104,7 @@
   const newTemplate = async (): Promise<void> => {
     const formIsValid = validateTemplate()
     if (!formIsValid) {
-      throw new Error("Form is not valid")
+      throw new Error("Mangler påkrevd felt")
     }
 
     const { templateId } = await apiFetch(`/api/templates`, {
@@ -123,7 +123,7 @@
   const updateTemplate = async (): Promise<void> => {
     const formIsValid = validateTemplate()
     if (!formIsValid) {
-      throw new Error("Form is not valid")
+      throw new Error("Mangler påkrevd felt")
     }
 
     await apiFetch(`/api/templates/${editableTemplate._id}`, {

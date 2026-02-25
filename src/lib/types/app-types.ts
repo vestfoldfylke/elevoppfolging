@@ -1,8 +1,8 @@
+import type { AuthenticatedPrincipal } from "./authentication"
 import type {
   AppStudent,
   ClassAutoAccessEntry,
   ContactTeacherGroupAutoAccessEntry,
-  DocumentMessage,
   ProgramAreaManualAccessEntry,
   SchoolManualAccessEntry,
   StudentImportantStuff,
@@ -18,4 +18,17 @@ export type FrontendOverviewStudent = Omit<FrontendStudent, "studentEnrollments"
 
 export type AccessType = SchoolManualAccessEntry | ProgramAreaManualAccessEntry | StudentManualAccessEntry | ClassAutoAccessEntry | ContactTeacherGroupAutoAccessEntry | TeachingGroupAutoAccessEntry
 
-export type DocumentMessageType = DocumentMessage["type"]
+export type ApplicationInfo = {
+  NAME: string
+  VERSION: string
+  ENVIRONMENT: string
+  ROLES: {
+    EMPLOYEE: string
+    ADMIN: string
+  }
+}
+
+export type RootLayoutData = {
+  APP_INFO: ApplicationInfo
+  authenticatedPrincipal: AuthenticatedPrincipal
+}

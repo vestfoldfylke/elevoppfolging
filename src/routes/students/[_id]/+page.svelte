@@ -177,9 +177,11 @@
     {#if data.documents.length === 0}
       <p>Ingen notater her</p>
     {:else}
-      {#each data.documents as document (document._id)}
-        <DocumentComponent {document} />
-      {/each}
+      {#key data.student._id} <!-- Re-render document components when student-id change -->
+        {#each data.documents as document (document._id)}
+          <DocumentComponent {document} {accessSchools} />
+        {/each}
+      {/key}
     {/if}
 
   </div>

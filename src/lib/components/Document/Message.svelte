@@ -23,7 +23,7 @@
     }
     const formIsValid = messageForm.reportValidity()
     if (!formIsValid) {
-      throw new Error("Form is not valid")
+      throw new Error("Mangler påkrevd felt")
     }
 
     await apiFetch(`/api/documents/${documentId}/messages`, {
@@ -53,7 +53,7 @@
     {:else}
       <!-- TODO: Find a better way to show who created the message. Fetch name from Users or do it on load? -->
       <div class="message-header">
-        <strong>{message.created.by.fallbackName}</strong> - <span class="created-at">{new Date(message.created.at).toLocaleString("no-NO", { dateStyle: "short", timeStyle: "short" })}</span>
+        <strong>{message.created.by.fallbackName}</strong> - <span class="created-at">{new Date(message.created.at).toLocaleString("nb-NO", { dateStyle: "short", timeStyle: "short" })}</span>
       </div>
       <pre class="message-text">{editableMessage.content.text}</pre>
     {/if}
