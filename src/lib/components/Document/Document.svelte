@@ -2,7 +2,7 @@
   import { slide } from "svelte/transition"
   import { page } from "$app/state"
   import { canEditDocument } from "$lib/shared-authorization/authorization"
-  import type { Document, School } from "$lib/types/db/shared-types"
+  import type { Document, SchoolInfo } from "$lib/types/db/shared-types"
   import DocumentContent from "./DocumentContentItem.svelte"
   import DocumentEditor from "./DocumentEditor.svelte"
   import Message from "./Message.svelte"
@@ -10,7 +10,7 @@
 
   type PageProps = {
     document: Document
-    accessSchools: School[]
+    accessSchools: SchoolInfo[]
   }
 
   let { document, accessSchools }: PageProps = $props()

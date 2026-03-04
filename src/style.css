@@ -47,6 +47,12 @@ body {
     "YTLC" 500;
 }
 
+.page-content {
+  max-width: 64rem;
+  padding: 0rem 1rem;
+  margin: 0 auto;
+}
+
 a,
 a:visited {
   color: var(--color-navigation);
@@ -55,6 +61,10 @@ a:visited {
 
 a:hover {
   color: black;
+}
+
+a .material-symbols-outlined {
+  vertical-align: text-bottom;
 }
 
 button {

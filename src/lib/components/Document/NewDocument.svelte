@@ -1,10 +1,11 @@
 <script lang="ts">
-  import type { Document, DocumentContentTemplate, EditorData, School } from "$lib/types/db/shared-types"
+  import type { Document, DocumentContentTemplate, EditorData, SchoolInfo } from "$lib/types/db/shared-types"
   import DocumentEditor from "./DocumentEditor.svelte"
+  import { onMount } from 'svelte';
 
   type PageProps = {
     documentContentTemplates: DocumentContentTemplate[]
-    accessSchools: School[]
+    accessSchools: SchoolInfo[]
     studentId?: string
     groupId?: string
   }

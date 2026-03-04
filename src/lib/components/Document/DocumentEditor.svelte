@@ -1,12 +1,12 @@
 <script lang="ts">
   import { apiFetch } from "$lib/api-fetch/api-fetch"
-  import type { Document, School } from "$lib/types/db/shared-types"
+  import type { Document, SchoolInfo } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
   import DocumentContentItem from "./DocumentContentItem.svelte"
 
   type EditorProps = {
     currentDocument: Document
-    accessSchools: School[]
+    accessSchools: SchoolInfo[]
     closeEditor: () => void
   }
 
