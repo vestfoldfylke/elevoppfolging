@@ -14,13 +14,15 @@ const addDocumentMessage: ApiNextFunction<AddDocumentResponse, AddDocumentBody> 
   // TODO validate body
 
   // TODO authorization check if principal has access to the student or group
+  // Har brukeren tilgang til eleven på DENNE skolen
+  
 
   const editorData: EditorData = {
     by: {
       entraUserId: principal.id,
       fallbackName: principal.displayName
     },
-    at: new Date().toISOString()
+    at: new Date()
   }
 
   if (newDocumentData.student?._id && newDocumentData.group?.systemId) {

@@ -1,12 +1,13 @@
 import { logger } from "@vestfoldfylke/loglady"
 import { type Db, type Filter, MongoClient, ObjectId, type WithId } from "mongodb"
 import { env } from "$env/dynamic/private"
-import type { FrontendOverviewStudent, FrontendStudent } from "$lib/types/app-types"
+import type { FrontendStudent } from "$lib/types/app-types"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { KeysToNumber } from "$lib/types/db/db-helpers"
 import type {
   Access,
+  AppUser,
   AvailableForDocumentType,
   DbAccess,
   DbAppStudent,
@@ -17,7 +18,7 @@ import type {
   DocumentContentTemplate,
   DocumentMessage,
   EditorData,
-  ImportantStuffBase,
+  NewAccess,
   NewDbDocument,
   NewDbStudentImportantStuff,
   NewDocument,
@@ -25,9 +26,14 @@ import type {
   NewDocumentMessage,
   NewStudentImportantStuff,
   ProgramArea,
-  StudentImportantStuff
+  DbProgramArea,
+  StudentImportantStuff,
+  StudentDataSharingConsent,
+  DbStudentDataSharingConsent,
+  NewStudentDataSharingConsent,
+  NewDbStudentDataSharingConsent,
+  SchoolInfo
 } from "$lib/types/db/shared-types"
-import type { DbProgramArea } from "$lib/types/program-area"
 
 export class MongoDbClient implements IDbClient {
   private readonly mongoClient: MongoClient
@@ -39,6 +45,7 @@ export class MongoDbClient implements IDbClient {
   private readonly programAreasCollectionName = "program-areas"
   private readonly documentsCollectionName = "documents"
   private readonly documentContentTemplatesCollectionName = "document-content-templates"
+  private readonly studentDataSharingConsentsCollectionName = "student-data-sharing-consents"
 
   constructor() {
     if (!env.MONGODB_CONNECTION_STRING) {
@@ -61,7 +68,19 @@ export class MongoDbClient implements IDbClient {
     }
   }
 
-  async getAccess(principal: AuthenticatedPrincipal): Promise<Access | null> {
+  async getAllAppUsers(): Promise<AppUser[]> {
+    const db = await this.getDb()
+    const usersCollection = db.collection<AppUser>(this.usersCollectionName)
+    const appUsers = await usersCollection.find({}).toArray()
+    return appUsers.map((appUser) => {
+      return {
+        ...appUser,
+        _id: appUser._id.toString()
+      }
+    })
+  }
+
+  async getPrincipalAccess(principal: AuthenticatedPrincipal): Promise<Access | null> {
     const db = await this.getDb()
     const accessCollection = db.collection<DbAccess>(this.accessCollectionName)
     const access = await accessCollection.findOne({ entraUserId: principal.id })
@@ -73,6 +92,62 @@ export class MongoDbClient implements IDbClient {
       ...access,
       _id: access._id.toString()
     }
+  }
+
+  async getSchoolLeaderAccess(): Promise<Access[]> {
+    const db = await this.getDb()
+    const accessCollection = db.collection<DbAccess>(this.accessCollectionName)
+    const accessList = await accessCollection.find({ schools: { $exists: true, $ne: [] } }).toArray()
+    return accessList.map((access) => {
+      return {
+        ...access,
+        _id: access._id.toString()
+      }
+    })
+  }
+
+  private async upsertAccess(access: NewAccess): Promise<string> {
+    const db = await this.getDb()
+    const accessCollection = db.collection<DbAccess>(this.accessCollectionName)
+    const result = await accessCollection.updateOne({ entraUserId: access.entraUserId }, { $set: access }, { upsert: true })
+    if (!result.upsertedId) {
+      throw new Error("Failed to upsert access")
+    }
+    return result.upsertedId.toString()
+  }
+
+  async upsertSchoolLeaderAccess(access: NewAccess): Promise<string> {
+    return await this.upsertAccess(access)
+  }
+
+  async upsertManualAccess(access: NewAccess): Promise<string> {
+    return await this.upsertAccess(access)
+  }
+
+  async getManualAccess(schoolNumber: string): Promise<Access[]> {
+    const db = await this.getDb()
+    const accessCollection = db.collection<DbAccess>(this.accessCollectionName)
+    const accessList = await accessCollection.find(
+      {
+        $or: [
+          {
+            programAreas: { $exists: true, $ne: [], $elemMatch: { schoolNumber } }
+          },
+          {
+            classes: { $exists: true, $ne: [], $elemMatch: { schoolNumber, type: "MANUELL-KLASSE-TILGANG" } }
+          },
+          {
+            students: { $exists: true, $ne: [], $elemMatch: { schoolNumber } }
+          }
+        ]
+      }
+    ).toArray()
+    return accessList.map((access) => {
+      return {
+        ...access,
+        _id: access._id.toString()
+      }
+    })
   }
 
   async getProgramArea(_id: string): Promise<ProgramArea | null> {
@@ -90,7 +165,7 @@ export class MongoDbClient implements IDbClient {
     }
   }
 
-  async getStudents(access: Access): Promise<FrontendOverviewStudent[]> {
+  async getStudents(access: Access): Promise<FrontendStudent[]> {
     const db = await this.getDb()
     const studentsCollection = db.collection<DbAppStudent>(this.studentsCollectionName)
 
@@ -108,82 +183,80 @@ export class MongoDbClient implements IDbClient {
       return entry.systemId
     })
 
+    const allowedPeriodStart = { $lte: new Date() }
+    const allowedPeriodEnd = { $gte: new Date() }
+
+    const enrollementPeriodCriteria = {
+      "studentEnrollments.period.start": allowedPeriodStart,
+      $or: [
+        { "studentEnrollments.period.end": null },
+        { "studentEnrollments.period.end": allowedPeriodEnd }
+      ]
+    }
+
+    const groupMembershipPeriodCriteria = {
+      "period.start": allowedPeriodStart,
+      $or: [
+        { "period.end": null },
+        { "period.end": allowedPeriodEnd }
+      ]
+    }
+
     const query: Filter<DbAppStudent> = {
       $or: [
         {
           "studentEnrollments.school.schoolNumber": { $in: schoolNumbers }
         },
         {
+          ...enrollementPeriodCriteria,
           "studentEnrollments.classMemberships": {
             $elemMatch: {
               "classGroup.systemId": { $in: classSystemIds },
-              "period.active": true
+              // Og at perioden er innenfor et kriterie
+              ...groupMembershipPeriodCriteria
             }
           }
         },
         {
+          ...enrollementPeriodCriteria,
           "studentEnrollments.teachingGroupMemberships": {
             $elemMatch: {
               "teachingGroup.systemId": { $in: teachingGroupSystemIds },
-              "period.active": true
+              ...groupMembershipPeriodCriteria
             }
           }
         },
         {
+          ...enrollementPeriodCriteria,
           "studentEnrollments.contactTeacherGroupMemberships": {
             $elemMatch: {
               "contactTeacherGroup.systemId": { $in: contactTeacherGroupSystemIds },
-              "period.active": true
+              ...groupMembershipPeriodCriteria
             }
           }
         }
       ]
     }
 
-    type StudentWithImportantStuff = DbAppStudent & {
-      importantStuff?: StudentImportantStuff[]
-    }
-
-    const projection: KeysToNumber<WithId<FrontendOverviewStudent>> = {
+    const projection: KeysToNumber<WithId<FrontendStudent>> = {
       _id: 1,
-      active: 1,
       feideName: 1,
       name: 1,
       studentNumber: 1,
       systemId: 1,
-      mainSchool: 1,
-      mainClass: 1,
-      mainContactTeacherGroup: 1,
-      importantStuff: 1
+      created: 1,
+      modified: 1,
+      source: 1,
+      studentEnrollments: 1,
+      mainEnrollment: 1
     }
 
-    const superAllStudent = await studentsCollection
-      .aggregate<StudentWithImportantStuff>([
-        {
-          $match: query
-        },
-        {
-          $lookup: {
-            from: this.importantStuffCollectionName,
-            localField: "_id",
-            foreignField: "student._id",
-            as: "importantStuff"
-          }
-        }
-      ])
-      .project<FrontendOverviewStudent & { importantStuff: StudentImportantStuff[] }>(projection)
-      .toArray()
+    const superAllStudent = await studentsCollection.find<FrontendStudent>(query, { projection }).toArray()
 
     return superAllStudent.map((student) => {
-      const importantStuffForStudent: StudentImportantStuff | null = student.importantStuff && student.importantStuff.length > 0 ? student.importantStuff[0] : null
-      if (importantStuffForStudent) {
-        importantStuffForStudent._id = importantStuffForStudent._id.toString()
-        importantStuffForStudent.student._id = importantStuffForStudent.student._id.toString()
-      }
       return {
         ...student,
         _id: student._id.toString(),
-        importantStuff: importantStuffForStudent
       }
     })
   }
@@ -195,15 +268,15 @@ export class MongoDbClient implements IDbClient {
 
     const projection: KeysToNumber<WithId<FrontendStudent>> = {
       _id: 1,
-      active: 1,
       feideName: 1,
       name: 1,
       studentEnrollments: 1,
+      mainEnrollment: 1,
       studentNumber: 1,
       systemId: 1,
-      mainSchool: 1,
-      mainClass: 1,
-      mainContactTeacherGroup: 1
+      created: 1,
+      modified: 1,
+      source: 1
     }
 
     const student = await studentsCollection.findOne({ _id: new ObjectId(studentDbId) }, { projection })
@@ -214,15 +287,15 @@ export class MongoDbClient implements IDbClient {
 
     return {
       _id: student._id.toString(),
-      active: student.active,
       feideName: student.feideName,
       name: student.name,
       studentEnrollments: student.studentEnrollments,
+      mainEnrollment: student.mainEnrollment,
       studentNumber: student.studentNumber,
       systemId: student.systemId,
-      mainClass: student.mainClass,
-      mainContactTeacherGroup: student.mainContactTeacherGroup,
-      mainSchool: student.mainSchool
+      created: student.created,
+      modified: student.modified,
+      source: student.source
     }
   }
 
@@ -316,7 +389,7 @@ export class MongoDbClient implements IDbClient {
 
     if (document.student?._id) {
       try {
-        await this.updateStudentLatestActivityTimestamp(document.student._id)
+        await this.updateStudentLastActivityTimestamp(document.student._id, document.school)
       } catch (error) {
         logger.errorException(
           error,
@@ -338,15 +411,15 @@ export class MongoDbClient implements IDbClient {
       messageId: new ObjectId().toString()
     }
 
-    const result = await documentsCollection.updateOne({ _id: new ObjectId(documentId) }, { $push: { messages: messageWithId } })
+    const document = await documentsCollection.findOneAndUpdate({ _id: new ObjectId(documentId) }, { $push: { messages: messageWithId } })
 
-    if (result.modifiedCount === 0) {
+    if (!document?._id) {
       throw new Error("Failed to add message to document")
     }
 
     if (studentId) {
       try {
-        await this.updateStudentLatestActivityTimestamp(studentId)
+        await this.updateStudentLastActivityTimestamp(studentId, document.school)
       } catch (error) {
         logger.errorException(error, "Failed to update student's latest activity timestamp after adding document message. Document ID: {documentId}. OBS, returning message anyway", documentId)
       }
@@ -355,13 +428,42 @@ export class MongoDbClient implements IDbClient {
     return messageWithId
   }
 
-  async getStudentImportantStuff(studentId: string): Promise<StudentImportantStuff | null> {
+  async getStudentsImportantStuff(studentIds: string[]): Promise<Record<string, Record<string, StudentImportantStuff>>> {
     const db = await this.getDb()
 
     const importantStuffCollection = db.collection<DbStudentImportantStuff>(this.importantStuffCollectionName)
-    logger.info("Getting important stuff for student with _id {studentId}", studentId)
+    const importantStuffList = await importantStuffCollection.find({ "student._id": { $in: studentIds.map((id) => new ObjectId(id)) } }).toArray()
 
-    const importantStuffForStudent = await importantStuffCollection.findOne({ "student._id": new ObjectId(studentId) })
+    /*
+    - Skal hente important stuff for alle elever brukeren har tilgang på - og important stuff skal være knyttet til skolene brukeren har tilgang på.
+    - Hvis vi har liste med
+
+    */
+
+    return importantStuffList.reduce((acc: Record<string, Record<string, StudentImportantStuff>>, importantStuff: DbStudentImportantStuff) => {
+      const studentId = importantStuff.student._id.toString()
+      const schoolNumber = importantStuff.school.schoolNumber
+      acc[studentId] = {
+        ...acc[studentId],
+        [schoolNumber]: {
+          ...importantStuff,
+          _id: importantStuff._id.toString(),
+          student: {
+            _id: studentId
+          }
+        }
+      }
+      return acc
+    }, {})
+  }
+
+  async getStudentImportantStuff(studentId: string, schoolNumber: string): Promise<StudentImportantStuff | null> {
+    const db = await this.getDb()
+
+    const importantStuffCollection = db.collection<DbStudentImportantStuff>(this.importantStuffCollectionName)
+    logger.info("Getting important stuff for student with _id {studentId} and schoolNumber {schoolNumber}", studentId, schoolNumber)
+
+    const importantStuffForStudent = await importantStuffCollection.findOne({ "student._id": new ObjectId(studentId), "school.schoolNumber": schoolNumber })
     logger.info("Important stuff for student with _id {studentId} exists: {importantStuffExists}", studentId, importantStuffForStudent !== null)
 
     if (!importantStuffForStudent) {
@@ -377,11 +479,11 @@ export class MongoDbClient implements IDbClient {
     }
   }
 
-  async upsertStudentImportantStuff(studentId: string, importantStuff: NewStudentImportantStuff): Promise<void> {
+  async upsertStudentImportantStuff(studentId: string, importantStuff: NewStudentImportantStuff): Promise<string> {
     const db = await this.getDb()
     const importantStuffCollection = db.collection<DbStudentImportantStuff>(this.importantStuffCollectionName)
 
-    await importantStuffCollection.updateOne(
+    const result = await importantStuffCollection.updateOne(
       { "student._id": new ObjectId(studentId) },
       {
         $set: {
@@ -393,17 +495,23 @@ export class MongoDbClient implements IDbClient {
       },
       { upsert: true }
     )
+
+    if (!result.upsertedId) {
+      throw new Error("Failed to upsert student important stuff")
+    }
+
+    return result.upsertedId.toString()
   }
 
-  async updateStudentLatestActivityTimestamp(studentId: string): Promise<void> {
+  async updateStudentLastActivityTimestamp(studentId: string, school: SchoolInfo): Promise<string> {
     const db = await this.getDb()
-    const importantStuffCollection = db.collection<ImportantStuffBase>(this.importantStuffCollectionName)
+    const importantStuffCollection = db.collection<NewDbStudentImportantStuff>(this.importantStuffCollectionName)
 
-    const existingImportantStuff = await importantStuffCollection.findOne({ "student._id": new ObjectId(studentId) })
+    const existingImportantStuff = await importantStuffCollection.findOne({ "student._id": new ObjectId(studentId), "school.schoolNumber": school.schoolNumber })
 
     if (!existingImportantStuff) {
       const editor: EditorData = {
-        at: new Date().toISOString(),
+        at: new Date(),
         by: {
           entraUserId: "SYSTEM",
           fallbackName: "SYSTEM"
@@ -412,30 +520,42 @@ export class MongoDbClient implements IDbClient {
       const newImportantStuff: NewStudentImportantStuff = {
         type: "STUDENT",
         created: editor,
+        school,
         modified: editor,
         facilitation: [],
         followUp: [],
         importantInfo: "",
-        lastActivityTimestamp: new Date().toISOString()
+        lastActivityTimestamp: new Date()
       }
 
-      await importantStuffCollection.insertOne({
+      const result = await importantStuffCollection.insertOne({
         ...newImportantStuff,
         student: {
           _id: new ObjectId(studentId)
         }
-      } as NewDbStudentImportantStuff)
-      return
+      })
+
+      if (!result.insertedId) {
+        throw new Error("Failed to insert new student important stuff")
+      }
+
+      return result.insertedId.toString()
     }
 
-    await importantStuffCollection.updateOne(
-      { "student._id": new ObjectId(studentId) },
+    const result = await importantStuffCollection.updateOne(
+      { "student._id": new ObjectId(studentId), "school.schoolNumber": school.schoolNumber },
       {
         $set: {
-          lastActivityTimestamp: new Date().toISOString()
+          lastActivityTimestamp: new Date()
         }
       }
     )
+    
+    if (!result.modifiedCount) {
+      throw new Error("Failed to update student's latest activity timestamp")
+    }
+    
+    return existingImportantStuff._id.toString()
   }
 
   async getDocumentContentTemplates(availableFor?: AvailableForDocumentType): Promise<DocumentContentTemplate[]> {
@@ -498,5 +618,48 @@ export class MongoDbClient implements IDbClient {
     if (result.deletedCount === 0) {
       throw new Error("Failed to delete document content template")
     }
+  }
+
+  async getStudentDataSharingConsent(studentId: string): Promise<StudentDataSharingConsent | null> {
+    const db = await this.getDb()
+    const studentDataSharingConsentsCollection = db.collection<DbStudentDataSharingConsent>(this.studentDataSharingConsentsCollectionName)
+
+    const consent = await studentDataSharingConsentsCollection.findOne({ "student._id": new ObjectId(studentId) })
+
+    if (!consent) {
+      return null
+    }
+
+    return {
+      ...consent,
+      _id: consent._id.toString(),
+      student: {
+        _id: consent.student._id.toString()
+      }
+    }
+  }
+
+  async upsertStudentDataSharingConsent(studentId: string, consent: NewStudentDataSharingConsent): Promise<string> {
+    const db = await this.getDb()
+    const studentDataSharingConsentsCollection = db.collection<NewDbStudentDataSharingConsent>(this.studentDataSharingConsentsCollectionName)
+
+    const updatedConsent: NewDbStudentDataSharingConsent = {
+      ...consent,
+      student: {
+        _id: new ObjectId(studentId)
+      }
+    }
+
+    const result = await studentDataSharingConsentsCollection.updateOne(
+      { "student._id": new ObjectId(studentId) },
+      { $set: updatedConsent },
+      { upsert: true }
+    )
+
+    if (!result.upsertedId) {
+      throw new Error("Failed to upsert student data sharing consent")
+    }
+
+    return result.upsertedId.toString()
   }
 }

@@ -22,8 +22,8 @@
 </svelte:head>
 
 <main>
-	<Menu authenticatedPrincipal={data.authenticatedPrincipal} appName="Elevoppfølging" />
-	<div class="page-content">
+	<Menu />
+	<div class="page-content-container">
 		{#if children}
 			{@render children()}
 		{:else}
@@ -37,11 +37,9 @@
 		box-sizing: border-box;
 		display: flex;
 	}
-	.page-content {
+	.page-content-container {
 		box-sizing: border-box;
-		padding: 0rem 0.25rem 2rem 0.25rem;
+		padding-bottom: 2rem;
 		flex: 1;
-		max-width: 64rem;
-		margin: 0 auto;
 	}
 </style>

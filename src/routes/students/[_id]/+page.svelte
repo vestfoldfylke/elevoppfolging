@@ -1,15 +1,21 @@
 <script lang="ts">
   import DocumentComponent from "$lib/components/Document/Document.svelte"
   import NewDocument from "$lib/components/Document/NewDocument.svelte"
-  import type { School } from "$lib/types/db/shared-types"
+  import PageHeader from "$lib/components/PageHeader.svelte";
+  import type { SchoolInfo } from "$lib/types/db/shared-types"
+  import { getFrontendStudentDetails } from "$lib/utils/frontend-student-details";
   import type { PageProps } from "./$types"
 
   let { data }: PageProps = $props()
 
   let showAllStudentContacts = $state(false)
 
-  let accessSchools: School[] = $derived.by(() => {
-    const accessSchools = data.accessTypes.map((access) => {
+  let studentDetails = $derived.by(() => {
+    return getFrontendStudentDetails(data.student, data.APP_INFO)
+  })
+
+  let accessSchools: SchoolInfo[] = $derived.by(() => {
+    const accessSchools = data.studentAccessInfo.accessTypes.map((access) => {
       const school = data.student.studentEnrollments.find((enrollment) => enrollment.school.schoolNumber === access.schoolNumber)?.school
       if (!school) {
         throw new Error(`School not found for access with school number ${access.schoolNumber}, something wrong here gitt`)
@@ -37,54 +43,9 @@
       contactPersons: StudentContactPerson[]
     }
   }
-  let schoolContacts = $derived.by(() => {
-    const schoolContacts: SchoolContacts = {}
-
-    data.student.studentEnrollments.forEach((enrollment) => {
-      const schoolNumber = enrollment.school.schoolNumber
-      if (!schoolContacts[schoolNumber]) {
-        schoolContacts[schoolNumber] = { mainSchool: enrollment.mainSchool, schoolNumber, name: enrollment.school.name, contactPersons: [] }
-      }
-
-      enrollment.contactTeacherGroupMemberships.forEach((membership) => {
-        if (!membership.period.active) {
-          return
-        }
-        membership.contactTeacherGroup.teachers.forEach((teacher) => {
-          if (!schoolContacts[schoolNumber].contactPersons.some((contact) => contact.name === teacher.name)) {
-            schoolContacts[schoolNumber].contactPersons.push({ name: teacher.name, type: "Kontaktlærer" })
-          }
-        })
-      })
-
-      enrollment.classMemberships.forEach((membership) => {
-        if (!membership.period.active) {
-          return
-        }
-        membership.classGroup.teachers.forEach((teacher) => {
-          if (!schoolContacts[schoolNumber].contactPersons.some((contact) => contact.name === teacher.name)) {
-            schoolContacts[schoolNumber].contactPersons.push({ name: teacher.name, type: "Klasselærer" })
-          }
-        })
-      })
-
-      enrollment.teachingGroupMemberships.forEach((membership) => {
-        if (!membership.period.active) {
-          return
-        }
-        membership.teachingGroup.teachers.forEach((teacher) => {
-          if (!schoolContacts[schoolNumber].contactPersons.some((contact) => contact.name === teacher.name)) {
-            schoolContacts[schoolNumber].contactPersons.push({ name: teacher.name, type: "Faglærer" })
-          }
-        })
-      })
-    })
-
-    return Object.values(schoolContacts).sort((a, b) => Number(b.mainSchool) - Number(a.mainSchool))
-  })
 </script>
 
-<div class="student-page">
+<div class="student-page page-content">
   <div class="student-header">
     <!--
     <div class="student-badge">
@@ -92,12 +53,12 @@
     </div>
     -->
     <div class="student-essentials">
-      <h2>{data.student.name}</h2>
-      <p>{data.student.mainSchool?.name ?? "Ukjent skole?"} - {data.student.mainClass?.name || "Ingen aktiv klasse ved hovedskole"}</p>
-      <p><strong>Kontaktlærer{data.student.mainContactTeacherGroup?.teachers.length !== 1 ? "e" : ""}:</strong> {(data.student.mainContactTeacherGroup?.teachers || [{ name: "Ingen kontaktlærer ved hovedskole" }]).map(teacher => teacher.name).join(", ")}</p>
+      <PageHeader title={data.student.name} />
+      <p>{studentDetails.mainSchool?.name ?? "Ukjent skole?"} - {studentDetails.mainClassMembership?.classGroup.name || "Ingen aktiv klasse ved hovedskole"}</p>
+      <p><strong>Kontaktlærer{studentDetails.mainContactTeacherGroupMembership?.contactTeacherGroup.teachers.length !== 1 ? "e" : ""}:</strong> {(studentDetails.mainContactTeacherGroupMembership?.contactTeacherGroup.teachers || [{ name: "Ingen kontaktlærer ved hovedskole" }]).map(teacher => teacher.name).join(", ")}</p>
       <p>
-        {#each data.accessTypes as accessTypes}
-          {accessTypes.type} ved {data.student.studentEnrollments.find(enrollment => enrollment.school.schoolNumber === accessTypes.schoolNumber)?.school.name} <br>
+        {#each data.studentAccessInfo.accessTypes as accessType}
+          {accessType.type} ved {data.student.studentEnrollments.find(enrollment => enrollment.school.schoolNumber === accessType.schoolNumber)?.school.name} <br>
         {/each}
       </p>
     </div>
@@ -133,34 +94,10 @@
 
   <div class="student-section">
     <div class="student-section-header">
-      <h3>Tilknyttede personer</h3>
+      <h3>Personer med tilgang til eleven</h3>
     </div>
     <div class="student-section-content">
-      {#if schoolContacts.length > 1}
-        <p><strong>OBS!</strong> Har også elevforhold ved <strong>{schoolContacts.filter(school => school.schoolNumber !== data.student.mainSchool?.schoolNumber).map(school => school.name).join(", ")}</strong></p>
-      {/if}
-      {#each schoolContacts as schoolContact}
-        <div class="school-contact">
-          <h4>{schoolContact.name}</h4>
-          <ul>
-            {#each showAllStudentContacts ? schoolContact.contactPersons : schoolContact.contactPersons.slice(0, 3) as contactPerson}
-              <li>{contactPerson.name} - {contactPerson.type}</li>
-            {/each}
-            {#if schoolContact.contactPersons.length > 3}
-              {#if !showAllStudentContacts}
-                <li>... og {schoolContact.contactPersons.length} flere kontaktpersoner</li>
-              {/if}
-            {/if}
-          </ul>
-        </div>
-      {/each}
-      {#if schoolContacts.some(schoolContactList => schoolContactList.contactPersons.length > 3)}
-        {#if !showAllStudentContacts}
-          <button onclick={() => showAllStudentContacts = true}>Vis alle kontaktpersoner</button>
-        {:else}
-          <button onclick={() => showAllStudentContacts = false}>Vis færre kontaktpersoner</button>
-        {/if}
-      {/if}
+      Kommer etterhvert
       <button>Send en epost til alle disse ellerno</button>
     </div>
   </div>
