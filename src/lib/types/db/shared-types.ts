@@ -398,7 +398,6 @@ export type DbStudentImportantStuff = NewStudentImportantStuff & {
   }
 }
 
-
 // StudentDataSharingConsent
 
 export type StudentDataSharingConsentBase = {

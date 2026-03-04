@@ -15,7 +15,7 @@ type StudentPageData = {
   studentAccessInfo: StudentAccessInfo
   documents: Document[]
   unavailableSchoolDocuments: {
-    school: SchoolInfo,
+    school: SchoolInfo
     numberOfDocuments: number
   }[]
   documentContentTemplates: DocumentContentTemplate[]
@@ -57,19 +57,19 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 
   const studentDataSharingConsent: StudentDataSharingConsent | null = await dbClient.getStudentDataSharingConsent(studentDbId)
 
-  const documents = allStudentDocuments.filter(document => {
+  const documents = allStudentDocuments.filter((document) => {
     // Hvis eleven har samtykket til deling, kan vi vise alle dokumenter
     if (studentDataSharingConsent?.consent) {
       return true
     }
 
     // Hvis eleven ikke har samtykket til deling, kan vi kun vise dokumenter knyttet til skoler brukeren har tilgang til elevn på
-    return studentAccessInfo.accessTypes.some(accessType => accessType.schoolNumber === document.school.schoolNumber)
+    return studentAccessInfo.accessTypes.some((accessType) => accessType.schoolNumber === document.school.schoolNumber)
   })
 
-  const unavailableDocuments = allStudentDocuments.filter(document => !documents.some(availableDocument => availableDocument._id === document._id))
+  const unavailableDocuments = allStudentDocuments.filter((document) => !documents.some((availableDocument) => availableDocument._id === document._id))
 
-  const unavailableSchoolDocumentsMap: Record<string, { school: SchoolInfo, numberOfDocuments: number }> = {}
+  const unavailableSchoolDocumentsMap: Record<string, { school: SchoolInfo; numberOfDocuments: number }> = {}
   for (const document of unavailableDocuments) {
     if (!unavailableSchoolDocumentsMap[document.school.schoolNumber]) {
       unavailableSchoolDocumentsMap[document.school.schoolNumber] = {

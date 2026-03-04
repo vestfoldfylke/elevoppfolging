@@ -1,3 +1,4 @@
+import { logger } from "@vestfoldfylke/loglady"
 import { getStudentAccessInfo } from "$lib/server/authorization/student-access"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
@@ -5,7 +6,6 @@ import type { FrontendOverviewStudentWithImportantStuff, FrontendStudent } from 
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { StudentImportantStuff } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
-import { logger } from "@vestfoldfylke/loglady"
 import type { LayoutServerLoad } from "./$types"
 
 type StudentsPageData = {
@@ -34,25 +34,26 @@ const getStudents: ServerLoadNextFunction<StudentsPageData> = async ({ principal
   const now = Date.now()
   const students: FrontendStudent[] = await dbClient.getStudents(access)
   const timeTaken = Date.now() - now
-  logger.info(`Fant ${students.length} elever - brukte ${timeTaken/1000} sekunder`)
+  logger.info(`Fant ${students.length} elever - brukte ${timeTaken / 1000} sekunder`)
 
   logger.info("NÅ HENTER JEG IMPORTANT STUFF FOR ALLE ELEVER")
   const now2 = Date.now()
-  const importantStuffByStudentId: Record<string, Record<string, StudentImportantStuff>> = await dbClient.getStudentsImportantStuff(students.map(student => student._id))
+  const importantStuffByStudentId: Record<string, Record<string, StudentImportantStuff>> = await dbClient.getStudentsImportantStuff(students.map((student) => student._id))
   const timeTaken2 = Date.now() - now2
-  logger.info(`Fant important stuff for ${Object.keys(importantStuffByStudentId).length} elever - brukte ${timeTaken2/1000} sekunder`)
+  logger.info(`Fant important stuff for ${Object.keys(importantStuffByStudentId).length} elever - brukte ${timeTaken2 / 1000} sekunder`)
 
   const overviewStudents: FrontendOverviewStudentWithImportantStuff[] = []
-
 
   logger.info("NÅ SKAL JEG SJEKKE SISTE AKTIVITETSTIDSPUNKT FOR ALLE ELEVER OG MAPPE ALLE SAMMEN")
   const now3 = Date.now()
   for (const student of students) {
     const studentAccessInfo = await getStudentAccessInfo(student, access)
     const accessSchoolsForStudent = studentAccessInfo.accessTypes.map((accessType) => accessType.schoolNumber)
-    
+
     if (accessSchoolsForStudent.length === 0) {
-      throw new Error(`Student ${student._id} has no access schools. This should not happen since we got the student through an access-based query, but it can happen if the access was deleted after we fetched the students but before we fetched the important stuff.`)
+      throw new Error(
+        `Student ${student._id} has no access schools. This should not happen since we got the student through an access-based query, but it can happen if the access was deleted after we fetched the students but before we fetched the important stuff.`
+      )
     }
 
     // Hvis eleven har samtykket til deling, kan vi finne nyeste timestamp basert på ALLE importantStuff
@@ -98,8 +99,8 @@ const getStudents: ServerLoadNextFunction<StudentsPageData> = async ({ principal
     overviewStudents.push(overviewStudent)
   }
   const timeTaken3 = Date.now() - now3
-  logger.info(`Sjekket siste aktivitetstidspunkt og mappet important stuff for ${overviewStudents.length} elever - brukte ${timeTaken3/1000} sekunder`)
-  logger.info(`Totalt tid brukt på å hente og mappe elever: ${(timeTaken + timeTaken2 + timeTaken3)/1000} sekunder`)
+  logger.info(`Sjekket siste aktivitetstidspunkt og mappet important stuff for ${overviewStudents.length} elever - brukte ${timeTaken3 / 1000} sekunder`)
+  logger.info(`Totalt tid brukt på å hente og mappe elever: ${(timeTaken + timeTaken2 + timeTaken3) / 1000} sekunder`)
 
   return {
     data: {

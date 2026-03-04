@@ -8,7 +8,6 @@ import type {
   ContactTeacherGroupMembership,
   Period,
   ProgramAreaManualAccessEntry,
-  School,
   SchoolInfo,
   SchoolManualAccessEntry,
   StudentImportantStuff,
@@ -32,7 +31,14 @@ export type FrontendStudentDetails = {
   additionalSchools: SchoolInfo[]
 }
 
-export type AccessType = SchoolManualAccessEntry | ProgramAreaManualAccessEntry | StudentManualAccessEntry | ClassAutoAccessEntry | ClassManualAccessEntry | ContactTeacherGroupAutoAccessEntry | TeachingGroupAutoAccessEntry
+export type AccessType =
+  | SchoolManualAccessEntry
+  | ProgramAreaManualAccessEntry
+  | StudentManualAccessEntry
+  | ClassAutoAccessEntry
+  | ClassManualAccessEntry
+  | ContactTeacherGroupAutoAccessEntry
+  | TeachingGroupAutoAccessEntry
 
 export type StudentAccessInfo = {
   accessTypes: AccessType[]
@@ -46,7 +52,7 @@ export type ApplicationInfo = {
   ROLES: {
     EMPLOYEE: string
     ADMIN: string
-  },
+  }
   STUDENT_ACCESS_BEFORE_ACTIVE_DAYS: number
   STUDENT_ACCESS_AFTER_EXPIRE_DAYS: number
 }

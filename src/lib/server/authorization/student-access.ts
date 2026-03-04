@@ -127,7 +127,9 @@ const getAccessTypeForEnrollment = async (studentEnrollment: StudentEnrollment, 
  */
 export const getStudentAccessInfo = async (student: FrontendStudent, access: Access): Promise<StudentAccessInfo> => {
   const accessTypes: AccessType[] = []
-  for (const enrollment of student.studentEnrollments.sort((a) => { return a.mainSchool ? -1 : 1 })) {
+  for (const enrollment of student.studentEnrollments.sort((a) => {
+    return a.mainSchool ? -1 : 1
+  })) {
     const accessType = await getAccessTypeForEnrollment(enrollment, access)
     if (accessType) {
       const existingAccessTypeIndex = accessTypes.findIndex((existingAccessType) => existingAccessType.schoolNumber === accessType.schoolNumber)

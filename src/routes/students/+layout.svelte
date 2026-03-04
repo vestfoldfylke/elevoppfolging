@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { page } from "$app/state";
+  import { page } from "$app/state"
   import PageHeader from "$lib/components/PageHeader.svelte"
-  import { getFrontendStudentDetails } from "$lib/utils/frontend-student-details";
+  import { getFrontendStudentDetails } from "$lib/utils/frontend-student-details"
   import type { LayoutProps } from "./$types"
 
   let { data, children }: LayoutProps = $props()
 
-	let onStudentsOverviewPage = $derived(page.route.id === "/students")
+  let onStudentsOverviewPage = $derived(page.route.id === "/students")
 
-	let studentsQuickView = $state(true)
+  let studentsQuickView = $state(true)
 
   let searchTerms = $state({
     name: "",
@@ -34,9 +34,9 @@
     filters.facilitation = false
   }
 
-	let studentsWithDetails = $derived.by(() => {
-		return data.students.map((student) => ({ student, details: getFrontendStudentDetails(student, data.APP_INFO) }))
-	})
+  let studentsWithDetails = $derived.by(() => {
+    return data.students.map((student) => ({ student, details: getFrontendStudentDetails(student, data.APP_INFO) }))
+  })
 
   let filteredStudentsWithDetails = $derived.by(() => {
     return studentsWithDetails
@@ -49,7 +49,10 @@
 
         const matchesName = !searchTerms.name || studentWithDetails.student.name.toLowerCase().includes(searchTerms.name.toLowerCase())
         const matchesClass = !searchTerms.class || studentWithDetails.details.mainClassMembership?.classGroup?.name.toLowerCase().includes(searchTerms.class.toLowerCase()) || false
-        const matchesTeacher = !searchTerms.teacher || studentWithDetails.details.mainContactTeacherGroupMembership?.contactTeacherGroup?.teachers.some((teacher) => teacher.name.toLowerCase().includes(searchTerms.teacher.toLowerCase())) || false
+        const matchesTeacher =
+          !searchTerms.teacher ||
+          studentWithDetails.details.mainContactTeacherGroupMembership?.contactTeacherGroup?.teachers.some((teacher) => teacher.name.toLowerCase().includes(searchTerms.teacher.toLowerCase())) ||
+          false
 
         return matchesName && matchesClass && matchesTeacher && Object.values(searchFilters).every((filter) => filter)
       })
@@ -58,9 +61,13 @@
           case "name":
             return sortDirection === "asc" ? a.student.name.localeCompare(b.student.name) : b.student.name.localeCompare(a.student.name)
           case "school":
-            return sortDirection === "asc" ? (a.details.mainSchool?.name || "").localeCompare(b.details.mainSchool?.name || "") : (b.details.mainSchool?.name || "").localeCompare(a.details.mainSchool?.name || "")
+            return sortDirection === "asc"
+              ? (a.details.mainSchool?.name || "").localeCompare(b.details.mainSchool?.name || "")
+              : (b.details.mainSchool?.name || "").localeCompare(a.details.mainSchool?.name || "")
           case "class":
-            return sortDirection === "asc" ? (a.details.mainClassMembership?.classGroup?.name || "").localeCompare(b.details.mainClassMembership?.classGroup?.name || "") : (b.details.mainClassMembership?.classGroup?.name || "").localeCompare(a.details.mainClassMembership?.classGroup?.name || "")
+            return sortDirection === "asc"
+              ? (a.details.mainClassMembership?.classGroup?.name || "").localeCompare(b.details.mainClassMembership?.classGroup?.name || "")
+              : (b.details.mainClassMembership?.classGroup?.name || "").localeCompare(a.details.mainClassMembership?.classGroup?.name || "")
           case "teacher": {
             const aTeachers = a.details.mainContactTeacherGroupMembership?.contactTeacherGroup?.teachers.map((t) => t.name).join(", ") || ""
             const bTeachers = b.details.mainContactTeacherGroupMembership?.contactTeacherGroup?.teachers.map((t) => t.name).join(", ") || ""

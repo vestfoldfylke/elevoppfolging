@@ -13,6 +13,8 @@ import type {
   DbAppStudent,
   DbDocument,
   DbDocumentContentTemplate,
+  DbProgramArea,
+  DbStudentDataSharingConsent,
   DbStudentImportantStuff,
   Document,
   DocumentContentTemplate,
@@ -20,19 +22,17 @@ import type {
   EditorData,
   NewAccess,
   NewDbDocument,
+  NewDbStudentDataSharingConsent,
   NewDbStudentImportantStuff,
   NewDocument,
   NewDocumentContentTemplate,
   NewDocumentMessage,
+  NewStudentDataSharingConsent,
   NewStudentImportantStuff,
   ProgramArea,
-  DbProgramArea,
-  StudentImportantStuff,
+  SchoolInfo,
   StudentDataSharingConsent,
-  DbStudentDataSharingConsent,
-  NewStudentDataSharingConsent,
-  NewDbStudentDataSharingConsent,
-  SchoolInfo
+  StudentImportantStuff
 } from "$lib/types/db/shared-types"
 
 export class MongoDbClient implements IDbClient {
@@ -127,8 +127,8 @@ export class MongoDbClient implements IDbClient {
   async getManualAccess(schoolNumber: string): Promise<Access[]> {
     const db = await this.getDb()
     const accessCollection = db.collection<DbAccess>(this.accessCollectionName)
-    const accessList = await accessCollection.find(
-      {
+    const accessList = await accessCollection
+      .find({
         $or: [
           {
             programAreas: { $exists: true, $ne: [], $elemMatch: { schoolNumber } }
@@ -140,8 +140,8 @@ export class MongoDbClient implements IDbClient {
             students: { $exists: true, $ne: [], $elemMatch: { schoolNumber } }
           }
         ]
-      }
-    ).toArray()
+      })
+      .toArray()
     return accessList.map((access) => {
       return {
         ...access,
@@ -188,18 +188,12 @@ export class MongoDbClient implements IDbClient {
 
     const enrollementPeriodCriteria = {
       "studentEnrollments.period.start": allowedPeriodStart,
-      $or: [
-        { "studentEnrollments.period.end": null },
-        { "studentEnrollments.period.end": allowedPeriodEnd }
-      ]
+      $or: [{ "studentEnrollments.period.end": null }, { "studentEnrollments.period.end": allowedPeriodEnd }]
     }
 
     const groupMembershipPeriodCriteria = {
       "period.start": allowedPeriodStart,
-      $or: [
-        { "period.end": null },
-        { "period.end": allowedPeriodEnd }
-      ]
+      $or: [{ "period.end": null }, { "period.end": allowedPeriodEnd }]
     }
 
     const query: Filter<DbAppStudent> = {
@@ -256,7 +250,7 @@ export class MongoDbClient implements IDbClient {
     return superAllStudent.map((student) => {
       return {
         ...student,
-        _id: student._id.toString(),
+        _id: student._id.toString()
       }
     })
   }
@@ -550,11 +544,11 @@ export class MongoDbClient implements IDbClient {
         }
       }
     )
-    
+
     if (!result.modifiedCount) {
       throw new Error("Failed to update student's latest activity timestamp")
     }
-    
+
     return existingImportantStuff._id.toString()
   }
 
@@ -650,11 +644,7 @@ export class MongoDbClient implements IDbClient {
       }
     }
 
-    const result = await studentDataSharingConsentsCollection.updateOne(
-      { "student._id": new ObjectId(studentId) },
-      { $set: updatedConsent },
-      { upsert: true }
-    )
+    const result = await studentDataSharingConsentsCollection.updateOne({ "student._id": new ObjectId(studentId) }, { $set: updatedConsent }, { upsert: true })
 
     if (!result.upsertedId) {
       throw new Error("Failed to upsert student data sharing consent")

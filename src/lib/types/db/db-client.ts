@@ -1,4 +1,4 @@
-import type { FrontendOverviewStudent, FrontendStudent } from "../app-types.js"
+import type { FrontendStudent } from "../app-types.js"
 import type { AuthenticatedPrincipal } from "../authentication.js"
 import type {
   Access,
@@ -35,20 +35,20 @@ export interface IDbClient {
   upsertSchoolLeaderAccess(access: NewAccess): Promise<string>
 
   getProgramArea(_id: string): Promise<ProgramArea | null>
-  
+
   getStudents(access: Access): Promise<FrontendStudent[]>
   getStudentById(studentDbId: string): Promise<FrontendStudent | null>
-  
+
   getStudentDocuments(studentDbId: string): Promise<Document[]>
   getDocumentById(documentId: string): Promise<Document | null>
   createDocument(document: NewDocument): Promise<string>
   addDocumentMessage(documentId: string, message: NewDocumentMessage, studentId?: string): Promise<DocumentMessage>
-  
+
   getStudentsImportantStuff(studentIds: string[]): Promise<Record<string, Record<string, StudentImportantStuff>>>
   getStudentImportantStuff(studentId: string, schoolNumber: string): Promise<StudentImportantStuff | null>
   upsertStudentImportantStuff(studentId: string, importantStuff: NewStudentImportantStuff): Promise<string>
   updateStudentLastActivityTimestamp(studentId: string, school: SchoolInfo): Promise<string>
-  
+
   getDocumentContentTemplates(availableFor?: AvailableForDocumentType): Promise<DocumentContentTemplate[]>
   getDocumentContentTemplateById(templateId: string): Promise<DocumentContentTemplate | null>
   createDocumentContentTemplate(template: NewDocumentContentTemplate): Promise<string>

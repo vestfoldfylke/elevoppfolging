@@ -1,5 +1,5 @@
-import type { ApplicationInfo, PeriodDetails } from "$lib/types/app-types";
-import type { Period } from "$lib/types/db/shared-types";
+import type { ApplicationInfo, PeriodDetails } from "$lib/types/app-types"
+import type { Period } from "$lib/types/db/shared-types"
 
 const isActive = (period: Period): boolean => {
   if (!period.start) {
@@ -44,7 +44,7 @@ export const getPeriodDetails = (period: Period, APP_INFO: ApplicationInfo): Per
   const daysUntilActive = getDaysUntilActive(period)
   const daysUntilExpire = getDaysUntilExpire(period)
   const withinViewAccessWindow = isWithinPeriodAccessWindow(daysUntilActive, daysUntilExpire, APP_INFO)
-  
+
   return {
     ...period,
     active: isActive(period),

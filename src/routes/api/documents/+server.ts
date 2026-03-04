@@ -15,7 +15,6 @@ const addDocumentMessage: ApiNextFunction<AddDocumentResponse, AddDocumentBody> 
 
   // TODO authorization check if principal has access to the student or group
   // Har brukeren tilgang til eleven på DENNE skolen
-  
 
   const editorData: EditorData = {
     by: {

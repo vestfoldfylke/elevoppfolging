@@ -1,7 +1,7 @@
 <script lang="ts">
+  import { onMount } from "svelte"
   import type { Document, DocumentContentTemplate, EditorData, SchoolInfo } from "$lib/types/db/shared-types"
   import DocumentEditor from "./DocumentEditor.svelte"
-  import { onMount } from 'svelte';
 
   type PageProps = {
     documentContentTemplates: DocumentContentTemplate[]
