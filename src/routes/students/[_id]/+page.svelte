@@ -30,19 +30,6 @@
     return accessSchools
   })
 
-  type StudentContactPerson = {
-    name: string
-    type: "Kontaktlærer" | "Klasselærer" | "Faglærer" | "Noe"
-  }
-
-  type SchoolContacts = {
-    [schoolNumber: string]: {
-      mainSchool: boolean
-      schoolNumber: string
-      name: string
-      contactPersons: StudentContactPerson[]
-    }
-  }
 </script>
 
 <div class="student-page page-content">
@@ -89,6 +76,25 @@
           <li>Dysleksi</li>
         </ul>
       </div>
+    </div>
+  </div>
+
+  <div class="student-section">
+    <div class="student-section-header">
+      <h3>Skolesamarbeid</h3>
+    </div>
+    <div class="student-section-content">
+      <p>Eleven har {data.studentDataSharingConsent?.consent ? "samtykket til deling av data" : "ikke samtykket til deling av data"}</p>
+      {#if data.unavailableSchoolDocuments.length > 0}
+        <p>Det finnes dokumenter fra følgende skoler som ikke er tilgjengelige for deg:</p>
+        <ul>
+          {#each data.unavailableSchoolDocuments as unavailableSchoolDocument}
+            <li>{unavailableSchoolDocument.school.name} - {unavailableSchoolDocument.numberOfDocuments} dokument{unavailableSchoolDocument.numberOfDocuments > 1 ? "er" : ""}</li>
+          {/each}
+        </ul>
+      {:else}
+        <p>Det finnes ikke noen notater fra andre skoler på denne eleven</p>
+      {/if}
     </div>
   </div>
 
