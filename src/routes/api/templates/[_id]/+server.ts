@@ -33,7 +33,7 @@ const updateDocumentContentTemplate: ApiNextFunction<UpdateDocumentContentTempla
       entraUserId: principal.id,
       fallbackName: principal.displayName
     },
-    at: new Date().toISOString()
+    at: new Date()
   }
 
   const documentTemplate: NewDocumentContentTemplate = {

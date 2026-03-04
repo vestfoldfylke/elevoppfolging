@@ -27,14 +27,14 @@ const getTemplate: ServerLoadNextFunction<TemplatePageData> = async ({ requestEv
         group: false
       },
       created: {
-        at: new Date().toISOString(),
+        at: new Date(),
         by: {
           entraUserId: "nei",
           fallbackName: "nei"
         }
       },
       modified: {
-        at: new Date().toISOString(),
+        at: new Date(),
         by: {
           entraUserId: "nei",
           fallbackName: "nei"

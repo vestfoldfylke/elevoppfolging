@@ -23,7 +23,7 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
       entraUserId: principal.id,
       fallbackName: principal.displayName
     },
-    at: new Date().toISOString()
+    at: new Date()
   }
 
   let newMessage: NewDocumentMessage

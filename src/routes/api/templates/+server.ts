@@ -19,7 +19,7 @@ const addDocumentContentTemplate: ApiNextFunction<AddDocumentContentTemplateResp
       entraUserId: principal.id,
       fallbackName: principal.displayName
     },
-    at: new Date().toISOString()
+    at: new Date()
   }
 
   const newDocument: NewDocumentContentTemplate = {
