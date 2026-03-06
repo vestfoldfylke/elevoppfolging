@@ -1,8 +1,7 @@
 import { logger } from "@vestfoldfylke/loglady"
 import { type Db, type Filter, MongoClient, ObjectId, type WithId } from "mongodb"
 import { env } from "$env/dynamic/private"
-import type { FrontendStudent } from "$lib/types/app-types"
-import type { AuthenticatedPrincipal } from "$lib/types/authentication"
+import type { AccessEntry, FrontendStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { KeysToNumber } from "$lib/types/db/db-helpers"
 import type {
@@ -14,6 +13,7 @@ import type {
   DbDocument,
   DbDocumentContentTemplate,
   DbProgramArea,
+  DbSchool,
   DbStudentDataSharingConsent,
   DbStudentImportantStuff,
   Document,
@@ -27,9 +27,11 @@ import type {
   NewDocument,
   NewDocumentContentTemplate,
   NewDocumentMessage,
+  NewSchool,
   NewStudentDataSharingConsent,
   NewStudentImportantStuff,
   ProgramArea,
+  School,
   SchoolInfo,
   StudentDataSharingConsent,
   StudentImportantStuff
@@ -38,6 +40,7 @@ import type {
 export class MongoDbClient implements IDbClient {
   private readonly mongoClient: MongoClient
   private db: Db | null = null
+  private readonly schoolsCollectionName = "schools"
   private readonly accessCollectionName = "access"
   private readonly studentsCollectionName = "students"
   private readonly usersCollectionName = "users"
@@ -80,10 +83,73 @@ export class MongoDbClient implements IDbClient {
     })
   }
 
-  async getPrincipalAccess(principal: AuthenticatedPrincipal): Promise<Access | null> {
+  async getAppUser(entraUserId: string): Promise<AppUser | null> {
+    const db = await this.getDb()
+    const usersCollection = db.collection<AppUser>(this.usersCollectionName)
+    const appUser = await usersCollection.findOne({ entraUserId })
+    if (!appUser) {
+      return null
+    }
+    return {
+      ...appUser,
+      _id: appUser._id.toString()
+    }
+  }
+
+  async getSchools(): Promise<School[]> {
+    const db = await this.getDb()
+    const schoolsCollection = db.collection<School>(this.schoolsCollectionName)
+    const schools = await schoolsCollection.find({}).toArray()
+    return schools.map((school) => {
+      return {
+        ...school,
+        _id: school._id.toString()
+      }
+    })
+  }
+
+  async createSchool(newSchool: NewSchool): Promise<string> {
+    const db = await this.getDb()
+
+    const existingSchool = await db.collection<DbSchool>(this.schoolsCollectionName).find({ schoolNumber: newSchool.schoolNumber }).toArray()
+    if (existingSchool.length > 0) {
+      throw new Error(`School with schoolNumber: ${newSchool.schoolNumber} already exists`)
+    }
+
+    const schoolsCollection = db.collection<NewSchool>(this.schoolsCollectionName)
+    const result = await schoolsCollection.insertOne(newSchool)
+    if (!result.insertedId) {
+      throw new Error("Failed to create school")
+    }
+    return result.insertedId.toString()
+  }
+
+  async updateSchool(schoolNumber: string, schoolData: NewSchool): Promise<string> {
+    const db = await this.getDb()
+    const schoolsCollection = db.collection<DbSchool>(this.schoolsCollectionName)
+    const result = await schoolsCollection.updateOne({ schoolNumber }, { $set: schoolData })
+    if (result.matchedCount === 0) {
+      throw new Error(`School with schoolNumber: ${schoolNumber} not found`)
+    }
+    if (result.modifiedCount === 0) {
+      throw new Error(`Failed to update school with schoolNumber: ${schoolNumber}`)
+    }
+    return schoolNumber
+  }
+
+  async deleteSchool(schoolNumber: string): Promise<void> {
+    const db = await this.getDb()
+    const schoolsCollection = db.collection<DbSchool>(this.schoolsCollectionName)
+    const result = await schoolsCollection.deleteOne({ schoolNumber })
+    if (result.deletedCount === 0) {
+      throw new Error(`Failed to delete school with schoolNumber: ${schoolNumber}`)
+    }
+  }
+
+  async getPrincipalAccess(entraUserId: string): Promise<Access | null> {
     const db = await this.getDb()
     const accessCollection = db.collection<DbAccess>(this.accessCollectionName)
-    const access = await accessCollection.findOne({ entraUserId: principal.id })
+    const access = await accessCollection.findOne({ entraUserId })
     if (!access) {
       return null
     }
@@ -106,22 +172,66 @@ export class MongoDbClient implements IDbClient {
     })
   }
 
-  private async upsertAccess(access: NewAccess): Promise<string> {
+  async createAccess(access: NewAccess): Promise<string> {
+    const db = await this.getDb()
+    const accessCollection = db.collection<NewAccess>(this.accessCollectionName)
+    const result = await accessCollection.insertOne(access)
+    if (!result.insertedId) {
+      throw new Error("Failed to create access")
+    }
+    return result.insertedId.toString()
+  }
+
+  async addAccessEntry(entraUserId: string, accessEntry: AccessEntry): Promise<string> {
     const db = await this.getDb()
     const accessCollection = db.collection<DbAccess>(this.accessCollectionName)
-    const result = await accessCollection.updateOne({ entraUserId: access.entraUserId }, { $set: access }, { upsert: true })
-    if (!result.upsertedId) {
-      throw new Error("Failed to upsert access")
+    let updateResult: DbAccess | null
+    switch (accessEntry.type) {
+      case "MANUELL-SKOLELEDER-TILGANG":
+        updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { schools: accessEntry } })
+        break
+      case "MANUELL-ELEV-TILGANG":
+        updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { students: accessEntry } })
+        break
+      case "MANUELL-KLASSE-TILGANG":
+        updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { classes: accessEntry } })
+        break
+      case "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG":
+        updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { programAreas: accessEntry } })
+        break
+      default:
+        throw new Error(`Invalid access entry type: ${accessEntry.type}`)
     }
-    return result.upsertedId.toString()
+    if (!updateResult || !updateResult._id) {
+      throw new Error("Failed to add access entry")
+    }
+    return updateResult._id.toString()
   }
 
-  async upsertSchoolLeaderAccess(access: NewAccess): Promise<string> {
-    return await this.upsertAccess(access)
-  }
-
-  async upsertManualAccess(access: NewAccess): Promise<string> {
-    return await this.upsertAccess(access)
+  async removeAccessEntry(entraUserId: string, accessEntry: AccessEntry): Promise<string> {
+    const db = await this.getDb()
+    const accessCollection = db.collection<DbAccess>(this.accessCollectionName)
+    let updatedAccess: DbAccess | null
+    switch (accessEntry.type) {
+      case "MANUELL-SKOLELEDER-TILGANG":
+        updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { schools: { schoolNumber: accessEntry.schoolNumber } } })
+        break
+      case "MANUELL-ELEV-TILGANG":
+        updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { students: { _id: accessEntry._id, schoolNumber: accessEntry.schoolNumber } } })
+        break
+      case "MANUELL-KLASSE-TILGANG":
+        updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { classes: { systemId: accessEntry.systemId, schoolNumber: accessEntry.schoolNumber } } })
+        break
+      case "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG":
+        updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { programAreas: { _id: accessEntry._id, schoolNumber: accessEntry.schoolNumber } } })
+        break
+      default:
+        throw new Error(`Invalid access entry type: ${accessEntry.type}`)
+    }
+    if (!updatedAccess || !updatedAccess._id) {
+      throw new Error("Failed to remove access entry")
+    }
+    return updatedAccess._id.toString()
   }
 
   async getManualAccess(schoolNumber: string): Promise<Access[]> {
@@ -182,6 +292,8 @@ export class MongoDbClient implements IDbClient {
     const contactTeacherGroupSystemIds: string[] = access.contactTeacherGroups.map((entry) => {
       return entry.systemId
     })
+
+    // Expand programareas right here, and cache it (add them to classSystemIds)
 
     const allowedPeriodStart = { $lte: new Date() }
     const allowedPeriodEnd = { $gte: new Date() }

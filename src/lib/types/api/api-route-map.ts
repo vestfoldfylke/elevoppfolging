@@ -1,4 +1,5 @@
-import type { Document, DocumentContentTemplate, DocumentMessage } from "../db/shared-types"
+import type { AccessEntry } from "../app-types"
+import type { Document, DocumentContentTemplate, DocumentMessage, NewSchool } from "../db/shared-types"
 
 type ApiDocumentsIdMessages = {
   POST: { req: DocumentMessage; res: { messageId: string } }
@@ -7,6 +8,19 @@ type ApiDocumentsIdMessages = {
 type ApiTemplatesId = {
   PUT: { req: DocumentContentTemplate; res: { updatedTemplateId: string } }
   DELETE: { res: { deletedTemplateId: string } }
+}
+
+type ApiSchoolsId = {
+  DELETE: { res: { deletedSchoolNumber: string } }
+  PUT: { req: NewSchool; res: { updatedSchoolId: string } }
+}
+
+type ApiAccessEntraUserIdAdd = {
+  POST: { req: AccessEntry; res: { updatedAccessId: string } }
+}
+
+type ApiAccessEntraUserIdRemove = {
+  POST: { req: AccessEntry; res: { updatedAccessId: string } }
 }
 
 /**
@@ -26,4 +40,17 @@ export interface ApiRouteMap {
 
   [key: `/api/templates/${string}`]: ApiTemplatesId
   "/api/templates/${string}": ApiTemplatesId
+
+  "/api/schools/${string}": ApiSchoolsId
+  [key: `/api/schools/${string}`]: ApiSchoolsId
+
+  "/api/schools": {
+    POST: { req: NewSchool; res: { schoolId: string } }
+  }
+
+  [key: `/api/access/${string}/add`]: ApiAccessEntraUserIdAdd
+  "/api/access/${string}/add": ApiAccessEntraUserIdAdd
+
+  [key: `/api/access/${string}/remove`]: ApiAccessEntraUserIdRemove
+  "/api/access/${string}/remove": ApiAccessEntraUserIdRemove
 }

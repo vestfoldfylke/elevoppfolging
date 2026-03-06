@@ -89,8 +89,8 @@
 					<div class="menu-section">
 						<div class="menu-section-title">System-admin</div>
 						<div class="menu-items">
-							<a class="menu-item" class:active={page.url.pathname === "/admin/access"} href="/admin/access">
-								<span class="material-symbols-outlined">lock_open</span>Führer-tilgang
+							<a class="menu-item" class:active={page.url.pathname === "/admin/schools"} href="/admin/schools">
+								<span class="material-symbols-outlined">lock_open</span>Skoleadministrasjon
 							</a>
 							<a class="menu-item" class:active={page.url.pathname === "/admin/templates"} href="/admin/templates">
 								<span class="material-symbols-outlined">add_notes</span>Notatmaler

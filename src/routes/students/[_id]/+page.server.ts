@@ -35,7 +35,7 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 	- Så har vi en støgg funksjon som sjekker at brukeren har tilgang til denne eleven - og hva slags tilgang, for da kan vi lage litt tester på funksjonen, i stedet for en psyjo query monster
 	*/
 
-  const access: Access | null = await dbClient.getPrincipalAccess(principal)
+  const access: Access | null = await dbClient.getPrincipalAccess(principal.id)
   if (!access) {
     throw new HTTPError(404, "No access found for principal")
   }

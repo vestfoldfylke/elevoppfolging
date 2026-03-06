@@ -1,5 +1,4 @@
-import type { FrontendStudent } from "../app-types.js"
-import type { AuthenticatedPrincipal } from "../authentication.js"
+import type { AccessEntry, FrontendStudent } from "../app-types.js"
 import type {
   Access,
   AppUser,
@@ -11,9 +10,11 @@ import type {
   NewDocument,
   NewDocumentContentTemplate,
   NewDocumentMessage,
+  NewSchool,
   NewStudentDataSharingConsent,
   NewStudentImportantStuff,
   ProgramArea,
+  School,
   SchoolInfo,
   StudentDataSharingConsent,
   StudentImportantStuff
@@ -21,18 +22,19 @@ import type {
 
 export interface IDbClient {
   getAllAppUsers(): Promise<AppUser[]>
+  getAppUser(entraUserId: string): Promise<AppUser | null>
 
-  /*
-  getSchools(): Promise<[]>
-  createSchool(school: ): Promise<string>
+  getSchools(): Promise<School[]>
+  createSchool(school: NewSchool): Promise<string>
+  updateSchool(schoolNumber: string, schoolData: NewSchool): Promise<string>
   deleteSchool(schoolNumber: string): Promise<void>
-  */
 
-  getPrincipalAccess(principal: AuthenticatedPrincipal): Promise<Access | null>
+  getPrincipalAccess(entraUserId: string): Promise<Access | null>
   getManualAccess(schoolNumber: string): Promise<Access[]>
-  upsertManualAccess(access: NewAccess): Promise<string>
+  createAccess(access: NewAccess): Promise<string>
+  addAccessEntry(entraUserId: string, accessEntry: AccessEntry): Promise<string>
+  removeAccessEntry(entraUserId: string, accessEntry: AccessEntry): Promise<string>
   getSchoolLeaderAccess(): Promise<Access[]>
-  upsertSchoolLeaderAccess(access: NewAccess): Promise<string>
 
   getProgramArea(_id: string): Promise<ProgramArea | null>
 

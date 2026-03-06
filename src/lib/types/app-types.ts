@@ -31,7 +31,7 @@ export type FrontendStudentDetails = {
   additionalSchools: SchoolInfo[]
 }
 
-export type AccessType =
+export type AccessEntry =
   | SchoolManualAccessEntry
   | ProgramAreaManualAccessEntry
   | StudentManualAccessEntry
@@ -41,7 +41,7 @@ export type AccessType =
   | TeachingGroupAutoAccessEntry
 
 export type StudentAccessInfo = {
-  accessTypes: AccessType[]
+  accessTypes: AccessEntry[]
   studentDataSharingConsent: boolean
 }
 

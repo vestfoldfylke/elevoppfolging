@@ -135,8 +135,8 @@ export type ProgramAreaManualAccessEntry = AccessEntryBase & {
 }
 
 export type StudentManualAccessEntry = AccessEntryBase & {
-  /** FINT system-id for eleven det er gitt tilgang til */
-  systemId: string
+  /** db _id for eleven det er gitt tilgang til */
+  _id: string
   type: "MANUELL-ELEV-TILGANG"
 }
 

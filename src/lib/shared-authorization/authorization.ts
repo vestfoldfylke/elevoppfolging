@@ -1,6 +1,6 @@
 import type { ApplicationInfo } from "$lib/types/app-types"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
-import type { Document, DocumentMessage } from "$lib/types/db/shared-types"
+import type { Access, Document, DocumentMessage } from "$lib/types/db/shared-types"
 
 export const isSystemAdmin = (authenticatedPrincipal: AuthenticatedPrincipal, APP_INFO: ApplicationInfo): boolean => {
   return authenticatedPrincipal.roles.includes(APP_INFO.ROLES.ADMIN)
@@ -12,4 +12,8 @@ export const canEditDocument = (authenticatedPrincipal: AuthenticatedPrincipal, 
 
 export const canEditDocumentMessage = (authenticatedPrincipal: AuthenticatedPrincipal, message: DocumentMessage): boolean => {
   return message.created.by.entraUserId === authenticatedPrincipal.id
+}
+
+export const canGrantAndRemoveAccessForSchool = (schoolNumber: string, principalAccess: Access): boolean => {
+  return principalAccess.schools.some((schoolAccess) => schoolAccess.type === "MANUELL-SKOLELEDER-TILGANG" && schoolAccess.schoolNumber === schoolNumber)
 }

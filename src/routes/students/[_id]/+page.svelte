@@ -29,7 +29,6 @@
 
     return accessSchools
   })
-
 </script>
 
 <div class="student-page page-content">

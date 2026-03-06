@@ -1,0 +1,139 @@
+<script lang="ts">
+  import { goto } from "$app/navigation"
+  import { page } from "$app/state"
+  import { apiFetch } from "$lib/api-fetch/api-fetch"
+  import AsyncButton from "$lib/components/AsyncButton.svelte"
+  import PageHeader from "$lib/components/PageHeader.svelte"
+  import type { EditorData, NewSchool, SchoolManualAccessEntry } from "$lib/types/db/shared-types"
+  import type { PageProps } from "./$types"
+
+  let { data }: PageProps = $props()
+
+  let currentSchool = $derived.by(() => {
+    if (data.schools.length === 0) {
+      throw new Error("Ingen skoler funnet")
+    }
+    const school = data.schools.find((school) => school.schoolNumber === page.params.schoolnumber)
+    if (!school) {
+      throw new Error("Skole ikke funnet")
+    }
+    return school
+  })
+
+  let schoolLeaderAccessesForCurrentSchool = $derived.by(() => {
+    return data.schoolLeaderAccess.filter((access) => access.schools.some((school) => school.schoolNumber === currentSchool.schoolNumber))
+  })
+
+  let addSchoolLeaderOpen = $state(false)
+
+  const deleteManualSchool = async (): Promise<void> => {
+    const confirmDelete = confirm(`Er du sikker på at du vil slette skolen "${currentSchool.name}"? Dette kan ikke angres.`)
+
+    if (!confirmDelete) {
+      return
+    }
+
+    await apiFetch(`/api/schools/${currentSchool.schoolNumber}`, {
+      method: "DELETE"
+    })
+
+    // redirect to schools admin page and reload dependent data
+    goto("/admin/schools", { invalidateAll: true })
+  }
+
+  let schoolLeaderForm: HTMLFormElement | undefined = $state()
+  let selectedEntraUserId = $state("")
+
+  const addSchoolLeaderAccess = async (): Promise<void> => {
+    await apiFetch(`/api/access/${selectedEntraUserId}/add`, {
+      method: "POST",
+      body: {
+        type: "MANUELL-SKOLELEDER-TILGANG",
+        schoolNumber: currentSchool.schoolNumber,
+        granted: {
+          at: new Date(), // server ordner
+          by: {
+            entraUserId: "samma",
+            fallbackName: "samma"
+          }
+        },
+        source: "MANUAL"
+      },
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+  }
+
+  const removeSchoolLeaderAccess = async (entraUserId: string): Promise<void> => {
+    await apiFetch(`/api/access/${entraUserId}/remove`, {
+      method: "POST",
+      body: {
+        type: "MANUELL-SKOLELEDER-TILGANG",
+        schoolNumber: currentSchool.schoolNumber,
+        granted: {
+          at: new Date(), // server ordner
+          by: {
+            entraUserId: "samma",
+            fallbackName: "samma"
+          }
+        },
+        source: "MANUAL"
+      },
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+  }
+</script>
+
+<div class="page-content">
+  <PageHeader title="Skoleadministrasjon" />
+
+  <h2>{currentSchool.name}</h2>
+  {#if currentSchool.source === "MANUAL"}
+    <AsyncButton onClick={deleteManualSchool} buttonText="Slett skole" classList={["filled", "danger"]} iconName="delete" />    
+  {/if}
+
+  <p>Skolenummer: {currentSchool.schoolNumber}</p>
+  <p>Kilde: {currentSchool.source}</p>
+
+
+  <h2>Skoleledere</h2>
+  <p>Kan administrere tilganger på skolen, og se alle elevene på skolen</p>
+
+  <div class="add-school-leader">
+    {#if !addSchoolLeaderOpen}
+      <button onclick={() => addSchoolLeaderOpen = true}>Legg til ny skoleleder</button>
+    {/if}
+    {#if addSchoolLeaderOpen}
+      <h3>Legg til skoleleder</h3>
+      <form bind:this={schoolLeaderForm}>
+        <div class="form-group">
+          <!-- TODO - lag en people select med litt søk og fancy, og bind mulighet -->
+          <label for="appUser">Velg bruker</label>
+          <select id="appUser" name="appUser" bind:value={selectedEntraUserId} required>
+            {#each data.appUsers as appUser}
+              <option value={appUser.entra.id}>{appUser.entra.displayName} ({appUser.entra.companyName})</option>
+            {/each}
+          </select>
+        </div>
+      </form>
+      <div class="new-school-leader-actions">
+        <AsyncButton onClick={addSchoolLeaderAccess} buttonText="Legg til skoleleder" reloadPageDataOnSuccess={true} classList={["filled"]} iconName="add" callBackAfterReloadPageData={() => { addSchoolLeaderOpen = false; selectedEntraUserId = ""; }} />
+        <button onclick={() => addSchoolLeaderOpen = false} class="filled danger">Avbryt</button>
+      </div>
+    {/if}
+  </div>
+
+  {#each data.schoolLeaderAccess.filter((access) => access.schools.some((school) => school.schoolNumber === currentSchool.schoolNumber)) as schoolLeaderAccess}
+    <div class="school-leader-access-entry">
+      <p>Skoleleder: {schoolLeaderAccess.name}</p>
+      <AsyncButton onClick={() => removeSchoolLeaderAccess(schoolLeaderAccess.entraUserId)} reloadPageDataOnSuccess={true} buttonText="Fjern skoleleder" classList={["filled", "danger"]} iconName="delete" />
+    </div>
+  {/each}
+</div>
+
+
+<style>
+</style>

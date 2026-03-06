@@ -1,0 +1,99 @@
+<script lang="ts">
+  import { apiFetch } from "$lib/api-fetch/api-fetch"
+  import AsyncButton from "$lib/components/AsyncButton.svelte"
+  import PageHeader from "$lib/components/PageHeader.svelte"
+  import type { EditorData, NewSchool } from "$lib/types/db/shared-types"
+  import type { PageProps } from "./$types"
+
+  let { data }: PageProps = $props()
+
+  let newSchoolOpen = $state(false)
+
+  let newSchoolForm: HTMLFormElement | undefined = $state()
+
+  const mockEditor: EditorData = {
+    at: new Date(),
+    by: {
+      entraUserId: "samma",
+      fallbackName: "samma"
+    }
+  }
+
+  let newSchoolData: NewSchool = {
+    name: "",
+    schoolNumber: "",
+    source: "MANUAL",
+    created: mockEditor,
+    modified: mockEditor
+  }
+
+  const newSchool = async (): Promise<void> => {
+    if (!newSchoolForm) {
+      throw new Error("New school form not found")
+    }
+    const formIsValid = newSchoolForm.reportValidity()
+    if (!formIsValid) {
+      throw new Error("Mangler påkrevd felt")
+    }
+
+    await apiFetch("/api/schools", {
+      method: "POST",
+      body: newSchoolData,
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+  }
+</script>
+
+<div class="page-content">
+  <PageHeader title="Skoleadministrasjon" />
+
+  <div class="add-school">
+    {#if !newSchoolOpen}
+      <button onclick={() => newSchoolOpen = true}><span class="material-symbols-outlined">add</span>Opprett ny skole</button>
+    {/if}
+    {#if newSchoolOpen}
+      <h2>Legg til ny skole</h2>
+      <form bind:this={newSchoolForm}>
+        <div class="form-group">
+          <label for="schoolName">Skolenavn (minst 4 tegn, kun bokstaver)</label>
+          <input id="schoolName" name="schoolName" type="text" bind:value={newSchoolData.name} required minlength="4" maxlength="256" pattern="^[A-Za-zÆØÅæøå-\s]+$">
+        </div>
+        <div class="form-group">
+          <label for="schoolNumber">Skolenummer (minst 4 siffer, ingen bokstaver)</label>
+          <input id="schoolNumber" name="schoolNumber" type="text" bind:value={newSchoolData.schoolNumber} required minlength="4" maxlength="20" pattern="^[0-9]+$">
+        </div>
+      </form>
+      <div class="new-school-actions">
+        <AsyncButton onClick={newSchool} buttonText="Legg til skole" reloadPageDataOnSuccess={true} classList={["filled"]} iconName="add" callBackAfterReloadPageData={() => newSchoolOpen = false} />
+        <button onclick={() => newSchoolOpen = false} class="filled danger">Avbryt</button>
+      </div>
+    {/if}
+    <!-- Form for adding a new school would go here -->
+  </div>
+
+  <h2>Skoler</h2>
+
+  {#each data.schools as school}
+    <div class="school">
+      <a href={`/admin/schools/${school.schoolNumber}`}><h3>{school.name}</h3></a>
+      <p>Skolenummer: {school.schoolNumber}</p>
+      <p>Kilde: {school.source}</p>
+    </div>
+  {/each}
+</div>
+
+
+<style>
+  .form-group {
+    max-width: 20rem;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+  }
+  .new-school-actions {
+    display: flex;
+    gap: 1rem;
+  }
+</style>
