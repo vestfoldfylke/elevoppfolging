@@ -1,59 +1,62 @@
 import { logger } from "@vestfoldfylke/loglady"
-import { getStudentAccessInfo } from "$lib/server/authorization/student-access"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
-import type { FrontendOverviewStudentWithImportantStuff, FrontendStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { StudentImportantStuff } from "$lib/types/db/shared-types"
+import type { StudentDataSharingConsent, StudentImportantStuff } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
 import type { LayoutServerLoad } from "./$types"
+import { HTTPError } from "$lib/server/middleware/http-error"
+import { getStudentsFromCache } from "$lib/server/cache/students-cache"
+import type { CachedFrontendStudentWithAccessInfo, FrontendOverviewStudent } from "$lib/types/app-types"
 
 type StudentsPageData = {
-  students: FrontendOverviewStudentWithImportantStuff[]
+  students: FrontendOverviewStudent[]
 }
 
 const getStudents: ServerLoadNextFunction<StudentsPageData> = async ({ principal }) => {
   const dbClient: IDbClient = getDbClient()
   /*
-	- Get access for current principal
-	- Pass access to dbClient.getStudents to filter students based on access
-	- Returns list of students with some (but not too much) data - klasser navn, kontaktlærer etc
-	*/
-  const access = await dbClient.getPrincipalAccess(principal)
+  - Get access for current principal
+  - Pass access to dbClient.getStudents to filter students based on access
+  - Returns list of students with some (but not too much) data - klasser navn, kontaktlærer etc
+  */
+  const access = await dbClient.getPrincipalAccess(principal.id)
 
   if (!access) {
-    return {
-      data: {
-        students: []
-      },
-      isAuthorized: false
-    }
+    throw new HTTPError(403, "No access entry found for user")
   }
 
-  logger.info("NÅ HENTER JEG ELEVER")
+  logger.info("NÅ HENTER JEG ELEVER") // TODO - indexer på felter, drit i å sjekke date.. Det kan vi ta i egen logikk (getStudentAccessInfo)
   const now = Date.now()
-  const students: FrontendStudent[] = await dbClient.getStudents(access)
+  const studentsWithAccessInfo: CachedFrontendStudentWithAccessInfo[] = await getStudentsFromCache(access)
   const timeTaken = Date.now() - now
-  logger.info(`Fant ${students.length} elever - brukte ${timeTaken / 1000} sekunder`)
+  logger.info(`Fant ${studentsWithAccessInfo.length} elever - brukte ${timeTaken / 1000} sekunder`)
 
-  logger.info("NÅ HENTER JEG IMPORTANT STUFF FOR ALLE ELEVER")
+  logger.info("NÅ HENTER JEG IMPORTANT STUFF FOR ELEVENE JEG FANT")
   const now2 = Date.now()
-  const importantStuffByStudentId: Record<string, Record<string, StudentImportantStuff>> = await dbClient.getStudentsImportantStuff(students.map((student) => student._id))
+  const importantStuffByStudentId: Record<string, Record<string, StudentImportantStuff>> = await dbClient.getStudentsImportantStuff(studentsWithAccessInfo.map((student) => student._id))
   const timeTaken2 = Date.now() - now2
   logger.info(`Fant important stuff for ${Object.keys(importantStuffByStudentId).length} elever - brukte ${timeTaken2 / 1000} sekunder`)
 
-  const overviewStudents: FrontendOverviewStudentWithImportantStuff[] = []
+  logger.info("NÅ HENTER JEG SHARING CONSENT FOR ELEVENE JEG FANT")
+  const now3 = Date.now()
+  const sharingConsentByStudentId: Record<string, StudentDataSharingConsent> = await dbClient.getStudentsDataSharingConsent(studentsWithAccessInfo.map((student) => student._id))
+  const timeTaken3 = Date.now() - now3
+  logger.info(`Fant sharing consent for ${Object.keys(sharingConsentByStudentId).length} elever - brukte ${timeTaken3 / 1000} sekunder`)
+
+  // Og deretter kan getStudentAccessInfo returnere alle elevene eller no fett?
+  // Og den kan få lov å kjøre i parallell for alle elevene, og bli cachet i et kvarter ellerno. Men hvis de lager et dokument, så stemmer jo ikke lastactivity, så den kan vi ha på utsiden?
+  // Vi kan cache tilgangen og samtykke en kort stund hvis det er for tregt
+
+  const overviewStudents: FrontendOverviewStudent[] = []
 
   logger.info("NÅ SKAL JEG SJEKKE SISTE AKTIVITETSTIDSPUNKT FOR ALLE ELEVER OG MAPPE ALLE SAMMEN")
-  const now3 = Date.now()
-  for (const student of students) {
-    const studentAccessInfo = await getStudentAccessInfo(student, access)
-    const accessSchoolsForStudent = studentAccessInfo.accessTypes.map((accessType) => accessType.schoolNumber)
+  const now4 = Date.now()
+  for (const student of studentsWithAccessInfo) {
+    const accessSchoolsForStudent = student.accessTypes.map((accessType) => accessType.schoolNumber)
 
     if (accessSchoolsForStudent.length === 0) {
-      throw new Error(
-        `Student ${student._id} has no access schools. This should not happen since we got the student through an access-based query, but it can happen if the access was deleted after we fetched the students but before we fetched the important stuff.`
-      )
+      throw new HTTPError(500, `User has no access to any schools for student ${student._id}, this should not happen...`)
     }
 
     // Hvis eleven har samtykket til deling, kan vi finne nyeste timestamp basert på ALLE importantStuff
@@ -63,7 +66,7 @@ const getStudents: ServerLoadNextFunction<StudentsPageData> = async ({ principal
 
     // Hent samtykke
 
-    if (studentAccessInfo.studentDataSharingConsent) {
+    if (sharingConsentByStudentId[student._id]?.consent) {
       // Finn siste aktivitet basert på alle importantStuff siden eleven har samtykket til deling av ALL informasjon
       for (const importantStuff of Object.values(importantStuffByStudentId[student._id] || {})) {
         if (lastActivityTimestamp === null || lastActivityTimestamp < importantStuff.lastActivityTimestamp) {
@@ -82,25 +85,19 @@ const getStudents: ServerLoadNextFunction<StudentsPageData> = async ({ principal
       }
     }
 
-    const overviewStudent: FrontendOverviewStudentWithImportantStuff = {
-      _id: student._id,
-      name: student.name,
-      created: student.created,
-      modified: student.modified,
-      feideName: student.feideName,
-      mainEnrollment: student.mainEnrollment,
-      source: student.source,
-      studentNumber: student.studentNumber,
-      systemId: student.systemId,
+    const overviewStudent: FrontendOverviewStudent = {
+      ...student,
+      dataSharingConsent: sharingConsentByStudentId[student._id]?.consent || false,
       importantStuff: importantStuffByStudentId[student._id]?.[accessSchoolsForStudent[0]] || null,
       lastActivityTimestamp
     }
 
     overviewStudents.push(overviewStudent)
   }
-  const timeTaken3 = Date.now() - now3
-  logger.info(`Sjekket siste aktivitetstidspunkt og mappet important stuff for ${overviewStudents.length} elever - brukte ${timeTaken3 / 1000} sekunder`)
-  logger.info(`Totalt tid brukt på å hente og mappe elever: ${(timeTaken + timeTaken2 + timeTaken3) / 1000} sekunder`)
+
+  const timeTaken4 = Date.now() - now4
+  logger.info(`Sjekket siste aktivitetstidspunkt og mappet important stuff for ${overviewStudents.length} elever - brukte ${timeTaken4 / 1000} sekunder`)
+  logger.info(`Totalt tid brukt på å hente og mappe elever: ${(timeTaken + timeTaken2 + timeTaken3 + timeTaken4) / 1000} sekunder`)
 
   return {
     data: {

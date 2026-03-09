@@ -20,10 +20,6 @@
     return school
   })
 
-  let schoolLeaderAccessesForCurrentSchool = $derived.by(() => {
-    return data.schoolLeaderAccess.filter((access) => access.schools.some((school) => school.schoolNumber === currentSchool.schoolNumber))
-  })
-
   let addSchoolLeaderOpen = $state(false)
 
   const deleteManualSchool = async (): Promise<void> => {

@@ -5,6 +5,7 @@ import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import type { ApiRouteMap } from "$lib/types/api/api-route-map"
 import type { EditorData, NewDocument } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
+import { logger } from "@vestfoldfylke/loglady"
 
 type AddDocumentResponse = ApiRouteMap["/api/documents"]["POST"]["res"]
 type AddDocumentBody = ApiRouteMap["/api/documents"]["POST"]["req"]
@@ -60,6 +61,8 @@ const addDocumentMessage: ApiNextFunction<AddDocumentResponse, AddDocumentBody> 
   }
 
   const documentId = await dbClient.createDocument(newDocument)
+
+  logger.info(`Document created with ID ${documentId} by user ${principal.displayName} (${principal.id})`)
 
   return {
     documentId

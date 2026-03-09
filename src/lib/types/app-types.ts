@@ -17,19 +17,14 @@ import type {
 
 export type FrontendStudent = Omit<AppStudent, "ssn">
 
-export type FrontendOverviewStudent = Omit<FrontendStudent, "studentEnrollments">
-
-export type FrontendOverviewStudentWithImportantStuff = FrontendOverviewStudent & {
-  importantStuff: StudentImportantStuff | null
-  lastActivityTimestamp: Date | null
-}
-
 export type FrontendStudentDetails = {
   mainSchool: SchoolInfo | null
   mainClassMembership: ClassMembership | null
   mainContactTeacherGroupMembership: ContactTeacherGroupMembership | null
   additionalSchools: SchoolInfo[]
 }
+
+export type CachedFrontendStudent = FrontendStudent & FrontendStudentDetails
 
 export type AccessEntry =
   | SchoolManualAccessEntry
@@ -40,9 +35,14 @@ export type AccessEntry =
   | ContactTeacherGroupAutoAccessEntry
   | TeachingGroupAutoAccessEntry
 
-export type StudentAccessInfo = {
+export type CachedFrontendStudentWithAccessInfo = Omit<CachedFrontendStudent, "studentEnrollments"> & {
   accessTypes: AccessEntry[]
-  studentDataSharingConsent: boolean
+}
+
+export type FrontendOverviewStudent = CachedFrontendStudentWithAccessInfo & {
+  importantStuff: StudentImportantStuff | null
+  lastActivityTimestamp: Date | null
+  dataSharingConsent: boolean
 }
 
 export type ApplicationInfo = {
@@ -55,6 +55,7 @@ export type ApplicationInfo = {
   }
   STUDENT_ACCESS_BEFORE_ACTIVE_DAYS: number
   STUDENT_ACCESS_AFTER_EXPIRE_DAYS: number
+  STUDENT_CACHE_MAX_AGE_MINUTES: number
 }
 
 export type RootLayoutData = {

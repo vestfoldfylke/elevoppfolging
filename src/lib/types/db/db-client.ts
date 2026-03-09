@@ -38,6 +38,7 @@ export interface IDbClient {
 
   getProgramArea(_id: string): Promise<ProgramArea | null>
 
+  getAllStudents(): Promise<FrontendStudent[]>
   getStudents(access: Access): Promise<FrontendStudent[]>
   getStudentById(studentDbId: string): Promise<FrontendStudent | null>
 
@@ -58,5 +59,6 @@ export interface IDbClient {
   deleteDocumentContentTemplate(templateId: string): Promise<void>
 
   getStudentDataSharingConsent(studentId: string): Promise<StudentDataSharingConsent | null>
+  getStudentsDataSharingConsent(studentIds: string[]): Promise<Record<string, StudentDataSharingConsent>>
   upsertStudentDataSharingConsent(studentId: string, consent: NewStudentDataSharingConsent): Promise<string>
 }

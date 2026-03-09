@@ -100,9 +100,8 @@ export type NewAppStudent = {
   ssn: string
   name: string
   feideName: string
+  /** Alle FINT elevforholdene til eleven */
   studentEnrollments: StudentEnrollment[]
-  /** FINT-elevforholdet som har hovedskole true */
-  mainEnrollment: StudentEnrollment | null
   created: EditorData
   modified: EditorData
   source: Source

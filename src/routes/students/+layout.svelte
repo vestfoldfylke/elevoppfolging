@@ -1,7 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state"
   import PageHeader from "$lib/components/PageHeader.svelte"
-  import { getFrontendStudentDetails } from "$lib/utils/frontend-student-details"
   import type { LayoutProps } from "./$types"
 
   let { data, children }: LayoutProps = $props()
@@ -34,24 +33,20 @@
     filters.facilitation = false
   }
 
-  let studentsWithDetails = $derived.by(() => {
-    return data.students.map((student) => ({ student, details: getFrontendStudentDetails(student, data.APP_INFO) }))
-  })
-
-  let filteredStudentsWithDetails = $derived.by(() => {
-    return studentsWithDetails
-      .filter((studentWithDetails) => {
+  let filteredStudents = $derived.by(() => {
+    return data.students
+      .filter((student) => {
         const searchFilters = {
-          matchesImportantInfo: !filters.importantInfo || studentWithDetails.student.importantStuff?.importantInfo,
-          matchesFollowUp: !filters.followUp || (studentWithDetails.student.importantStuff?.followUp && studentWithDetails.student.importantStuff.followUp.length > 0),
-          matchesFacilitation: !filters.facilitation || (studentWithDetails.student.importantStuff?.facilitation && studentWithDetails.student.importantStuff.facilitation.length > 0)
+          matchesImportantInfo: !filters.importantInfo || student.importantStuff?.importantInfo,
+          matchesFollowUp: !filters.followUp || (student.importantStuff?.followUp && student.importantStuff.followUp.length > 0),
+          matchesFacilitation: !filters.facilitation || (student.importantStuff?.facilitation && student.importantStuff.facilitation.length > 0)
         }
 
-        const matchesName = !searchTerms.name || studentWithDetails.student.name.toLowerCase().includes(searchTerms.name.toLowerCase())
-        const matchesClass = !searchTerms.class || studentWithDetails.details.mainClassMembership?.classGroup?.name.toLowerCase().includes(searchTerms.class.toLowerCase()) || false
+        const matchesName = !searchTerms.name || student.name.toLowerCase().includes(searchTerms.name.toLowerCase())
+        const matchesClass = !searchTerms.class || student.mainClassMembership?.classGroup?.name.toLowerCase().includes(searchTerms.class.toLowerCase()) || false
         const matchesTeacher =
           !searchTerms.teacher ||
-          studentWithDetails.details.mainContactTeacherGroupMembership?.contactTeacherGroup?.teachers.some((teacher) => teacher.name.toLowerCase().includes(searchTerms.teacher.toLowerCase())) ||
+          student.mainContactTeacherGroupMembership?.contactTeacherGroup?.teachers.some((teacher) => teacher.name.toLowerCase().includes(searchTerms.teacher.toLowerCase())) ||
           false
 
         return matchesName && matchesClass && matchesTeacher && Object.values(searchFilters).every((filter) => filter)
@@ -59,23 +54,23 @@
       .sort((a, b) => {
         switch (sortBy) {
           case "name":
-            return sortDirection === "asc" ? a.student.name.localeCompare(b.student.name) : b.student.name.localeCompare(a.student.name)
+            return sortDirection === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
           case "school":
             return sortDirection === "asc"
-              ? (a.details.mainSchool?.name || "").localeCompare(b.details.mainSchool?.name || "")
-              : (b.details.mainSchool?.name || "").localeCompare(a.details.mainSchool?.name || "")
+              ? (a.mainSchool?.name || "").localeCompare(b.mainSchool?.name || "")
+              : (b.mainSchool?.name || "").localeCompare(a.mainSchool?.name || "")
           case "class":
             return sortDirection === "asc"
-              ? (a.details.mainClassMembership?.classGroup?.name || "").localeCompare(b.details.mainClassMembership?.classGroup?.name || "")
-              : (b.details.mainClassMembership?.classGroup?.name || "").localeCompare(a.details.mainClassMembership?.classGroup?.name || "")
+              ? (a.mainClassMembership?.classGroup?.name || "").localeCompare(b.mainClassMembership?.classGroup?.name || "")
+              : (b.mainClassMembership?.classGroup?.name || "").localeCompare(a.mainClassMembership?.classGroup?.name || "")
           case "teacher": {
-            const aTeachers = a.details.mainContactTeacherGroupMembership?.contactTeacherGroup?.teachers.map((t) => t.name).join(", ") || ""
-            const bTeachers = b.details.mainContactTeacherGroupMembership?.contactTeacherGroup?.teachers.map((t) => t.name).join(", ") || ""
+            const aTeachers = a.mainContactTeacherGroupMembership?.contactTeacherGroup?.teachers.map((t) => t.name).join(", ") || ""
+            const bTeachers = b.mainContactTeacherGroupMembership?.contactTeacherGroup?.teachers.map((t) => t.name).join(", ") || ""
             return sortDirection === "asc" ? aTeachers.localeCompare(bTeachers) : bTeachers.localeCompare(aTeachers)
           }
           case "lastActivity": {
-            const aTimestamp = a.student.importantStuff?.lastActivityTimestamp ? a.student.importantStuff.lastActivityTimestamp.getTime() : 0
-            const bTimestamp = b.student.importantStuff?.lastActivityTimestamp ? b.student.importantStuff.lastActivityTimestamp.getTime() : 0
+            const aTimestamp = a.importantStuff?.lastActivityTimestamp ? a.importantStuff.lastActivityTimestamp.getTime() : 0
+            const bTimestamp = b.importantStuff?.lastActivityTimestamp ? b.importantStuff.lastActivityTimestamp.getTime() : 0
             return sortDirection === "asc" ? aTimestamp - bTimestamp : bTimestamp - aTimestamp
           }
           default:
@@ -131,7 +126,7 @@ Hvis på /students/:id, så viser vi en sticky liste (egen scroll) med alle elev
 			</div>
 		</div>
 
-		<p>{filteredStudentsWithDetails.length} elever her nu gitt</p>
+		<p>{filteredStudents.length} elever her nu gitt</p>
 
 		<div class="students-container">
 			<!--
@@ -156,17 +151,17 @@ Hvis på /students/:id, så viser vi en sticky liste (egen scroll) med alle elev
 			<div>
 				Elever
 			</div>
-			{#each filteredStudentsWithDetails as studentWithDetails}
+			{#each filteredStudents as student}
 				<div class="student-row">
 					<div class="student-info-cell first">
-						<a href={`/students/${studentWithDetails.student._id}`}>{studentWithDetails.student.name}</a>
+						<a href={`/students/${student._id}`}>{student.name}</a>
 					</div>
 					<div class="student-info-cell desktop-only">
-						<div>{studentWithDetails.details.mainClassMembership?.classGroup.name || "Ukjent klasse"}</div>
-						<div class="school-name">{studentWithDetails.details.mainSchool?.name || "N/A"}</div>
+						<div>{student.mainClassMembership?.classGroup.name || "Ukjent klasse"}</div>
+						<div class="school-name">{student.mainSchool?.name || "N/A"}</div>
 					</div>
-					<div class="student-info-cell desktop-only">{studentWithDetails.details.mainContactTeacherGroupMembership?.contactTeacherGroup.teachers[0]?.name || "Ingen kontaktlærer"}</div>
-					<div class="student-info-cell desktop-only">{studentWithDetails.student.lastActivityTimestamp?.toLocaleString("no-NB", { dateStyle: 'short', timeStyle: 'short' }) || "Ingen aktivitet"}</div>
+					<div class="student-info-cell desktop-only">{student.mainContactTeacherGroupMembership?.contactTeacherGroup.teachers[0]?.name || "Ingen kontaktlærer"}</div>
+					<div class="student-info-cell desktop-only">{student.lastActivityTimestamp?.toLocaleString("no-NB", { dateStyle: 'short', timeStyle: 'short' }) || "Ingen aktivitet"}</div>
 				</div>
 			{/each}
 		</div>
@@ -190,10 +185,10 @@ Hvis på /students/:id, så viser vi en sticky liste (egen scroll) med alle elev
 			<div class="students-quick-view-actions">
 				<a href="/students"><span class="material-symbols-outlined">arrow_back</span>Rediger filter</a>
 			</div>
-			{#each filteredStudentsWithDetails as studentWithDetails}
-				<div class="student-row" class:active={page.url.pathname === `/students/${studentWithDetails.student._id}`}>
+			{#each filteredStudents as student}
+				<div class="student-row" class:active={page.url.pathname === `/students/${student._id}`}>
 					<div class="student-info-cell first">
-						<a href={`/students/${studentWithDetails.student._id}`}>{studentWithDetails.student.name}</a>
+						<a href={`/students/${student._id}`}>{student.name}</a>
 					</div>
 				</div>
 			{/each}

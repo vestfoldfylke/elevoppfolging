@@ -275,73 +275,85 @@ export class MongoDbClient implements IDbClient {
     }
   }
 
+  async getAllStudents(): Promise<FrontendStudent[]> {
+    const db = await this.getDb()
+    const studentsCollection = db.collection<DbAppStudent>(this.studentsCollectionName)
+    
+    const projection: KeysToNumber<WithId<FrontendStudent>> = {
+      _id: 1,
+      feideName: 1,
+      name: 1,
+      studentNumber: 1,
+      systemId: 1,
+      created: 1,
+      modified: 1,
+      source: 1,
+      studentEnrollments: 1,
+    }
+
+    const students = await studentsCollection.find<FrontendStudent>({}, { projection }).toArray()
+    
+    return students.map((student) => ({
+      ...student,
+      _id: student._id.toString()
+    }))
+  }
+
   async getStudents(access: Access): Promise<FrontendStudent[]> {
     const db = await this.getDb()
     const studentsCollection = db.collection<DbAppStudent>(this.studentsCollectionName)
 
-    const schoolNumbers: string[] = access.schools.map((entry) => {
-      return entry.schoolNumber
-    })
+    const query: Filter<DbAppStudent> = {}
+    query.$or = [] // ts doesn't understand that this is defined, if defined in the object above
 
-    const classSystemIds: string[] = access.classes.map((entry) => {
-      return entry.systemId
-    })
-    const teachingGroupSystemIds: string[] = access.teachingGroups.map((entry) => {
-      return entry.systemId
-    })
-    const contactTeacherGroupSystemIds: string[] = access.contactTeacherGroups.map((entry) => {
-      return entry.systemId
-    })
-
-    // Expand programareas right here, and cache it (add them to classSystemIds)
-
-    const allowedPeriodStart = { $lte: new Date() }
-    const allowedPeriodEnd = { $gte: new Date() }
-
-    const enrollementPeriodCriteria = {
-      "studentEnrollments.period.start": allowedPeriodStart,
-      $or: [{ "studentEnrollments.period.end": null }, { "studentEnrollments.period.end": allowedPeriodEnd }]
+    for (const schoolAccessEntry of access.schools) {
+      query.$or.push({ "studentEnrollments.school.schoolNumber": schoolAccessEntry.schoolNumber })
     }
 
-    const groupMembershipPeriodCriteria = {
-      "period.start": allowedPeriodStart,
-      $or: [{ "period.end": null }, { "period.end": allowedPeriodEnd }]
+    const accessEntryNotInSchoolsAccess = (accessEntry: AccessEntry): boolean => {
+      return !access.schools.some(school => school.schoolNumber === accessEntry.schoolNumber)
     }
 
-    const query: Filter<DbAppStudent> = {
-      $or: [
-        {
-          "studentEnrollments.school.schoolNumber": { $in: schoolNumbers }
-        },
-        {
-          ...enrollementPeriodCriteria,
-          "studentEnrollments.classMemberships": {
-            $elemMatch: {
-              "classGroup.systemId": { $in: classSystemIds },
-              // Og at perioden er innenfor et kriterie
-              ...groupMembershipPeriodCriteria
-            }
-          }
-        },
-        {
-          ...enrollementPeriodCriteria,
-          "studentEnrollments.teachingGroupMemberships": {
-            $elemMatch: {
-              "teachingGroup.systemId": { $in: teachingGroupSystemIds },
-              ...groupMembershipPeriodCriteria
-            }
-          }
-        },
-        {
-          ...enrollementPeriodCriteria,
-          "studentEnrollments.contactTeacherGroupMemberships": {
-            $elemMatch: {
-              "contactTeacherGroup.systemId": { $in: contactTeacherGroupSystemIds },
-              ...groupMembershipPeriodCriteria
-            }
-          }
-        }
-      ]
+    const studentAccessEntries = access.students.filter(accessEntryNotInSchoolsAccess)
+    const programAreaAccessEntries = access.programAreas.filter(accessEntryNotInSchoolsAccess)
+    const contactTeacherGroupAccessEntries = access.contactTeacherGroups.filter(accessEntryNotInSchoolsAccess)
+    const classAccessEntries = access.classes.filter(accessEntryNotInSchoolsAccess)
+    const teachingGroupAccessEntries = access.teachingGroups.filter(accessEntryNotInSchoolsAccess)
+
+    const schoolsToAddToQuery = [...new Set<string>([
+      ...programAreaAccessEntries.map(programArea => programArea.schoolNumber),
+      ...studentAccessEntries.map(student => student.schoolNumber),
+      ...classAccessEntries.map(classAccess => classAccess.schoolNumber),
+      ...contactTeacherGroupAccessEntries.map(contactTeacherGroupAccess => contactTeacherGroupAccess.schoolNumber),
+      ...teachingGroupAccessEntries.map(teachingGroupAccess => teachingGroupAccess.schoolNumber)
+    ])]
+
+    // Expand programareas right here, and cache it (add them to classSystemIds) - get it from function that has caching (or get them once somewhere else and pass them in)
+
+    for (const schoolNumber of schoolsToAddToQuery) {
+      const schoolQuery: Filter<DbAppStudent> = { "studentEnrollments.school.schoolNumber": schoolNumber, $or: [] }
+      
+      const studentIds = studentAccessEntries.filter(studentAccess => studentAccess.schoolNumber === schoolNumber).map(studentAccess => studentAccess._id)
+      if (studentIds.length > 0) {
+        schoolQuery.$or?.push({ _id: { $in: studentIds.map(id => new ObjectId(id)) } })
+      }
+
+      const contactTeacherGroupSystemIds = contactTeacherGroupAccessEntries.filter(contactTeacherGroupAccess => contactTeacherGroupAccess.schoolNumber === schoolNumber).map(contactTeacherGroupAccess => contactTeacherGroupAccess.systemId)
+      if (contactTeacherGroupSystemIds.length > 0) {
+        schoolQuery.$or?.push({ "studentEnrollments.contactTeacherGroupMemberships.contactTeacherGroup.systemId": { $in: contactTeacherGroupSystemIds } })
+      }
+
+      const classSystemIds = classAccessEntries.filter(classAccess => classAccess.schoolNumber === schoolNumber).map(classAccess => classAccess.systemId)
+      if (classSystemIds.length > 0) {
+        schoolQuery.$or?.push({ "studentEnrollments.classMemberships.classGroup.systemId": { $in: classSystemIds } })
+      }
+
+      const teachingGroupSystemIds = teachingGroupAccessEntries.filter(teachingGroupAccess => teachingGroupAccess.schoolNumber === schoolNumber).map(teachingGroupAccess => teachingGroupAccess.systemId)
+      if (teachingGroupSystemIds.length > 0) {
+        schoolQuery.$or?.push({ "studentEnrollments.teachingGroupMemberships.teachingGroup.systemId": { $in: teachingGroupSystemIds } })
+      }
+
+      query.$or.push(schoolQuery)
     }
 
     const projection: KeysToNumber<WithId<FrontendStudent>> = {
@@ -354,7 +366,6 @@ export class MongoDbClient implements IDbClient {
       modified: 1,
       source: 1,
       studentEnrollments: 1,
-      mainEnrollment: 1
     }
 
     const superAllStudent = await studentsCollection.find<FrontendStudent>(query, { projection }).toArray()
@@ -377,7 +388,6 @@ export class MongoDbClient implements IDbClient {
       feideName: 1,
       name: 1,
       studentEnrollments: 1,
-      mainEnrollment: 1,
       studentNumber: 1,
       systemId: 1,
       created: 1,
@@ -396,7 +406,6 @@ export class MongoDbClient implements IDbClient {
       feideName: student.feideName,
       name: student.name,
       studentEnrollments: student.studentEnrollments,
-      mainEnrollment: student.mainEnrollment,
       studentNumber: student.studentNumber,
       systemId: student.systemId,
       created: student.created,
@@ -743,6 +752,24 @@ export class MongoDbClient implements IDbClient {
         _id: consent.student._id.toString()
       }
     }
+  }
+
+  async getStudentsDataSharingConsent(studentIds: string[]): Promise<Record<string, StudentDataSharingConsent>> {
+    const db = await this.getDb()
+    const studentDataSharingConsentsCollection = db.collection<DbStudentDataSharingConsent>(this.studentDataSharingConsentsCollectionName)
+    const consentsList = await studentDataSharingConsentsCollection.find({ "student._id": { $in: studentIds.map((id) => new ObjectId(id)) } }).toArray()
+
+    return consentsList.reduce((acc: Record<string, StudentDataSharingConsent>, consent: DbStudentDataSharingConsent) => {
+      const studentId = consent.student._id.toString()
+      acc[studentId] = {
+        ...consent,
+        _id: consent._id.toString(),
+        student: {
+          _id: studentId
+        }
+      }
+      return acc
+    }, {})
   }
 
   async upsertStudentDataSharingConsent(studentId: string, consent: NewStudentDataSharingConsent): Promise<string> {

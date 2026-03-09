@@ -15,7 +15,7 @@
   })
 
   let accessSchools: SchoolInfo[] = $derived.by(() => {
-    const accessSchools = data.studentAccessInfo.accessTypes.map((access) => {
+    const accessSchools = data.studentAccessInfo.map((access) => {
       const school = data.student.studentEnrollments.find((enrollment) => enrollment.school.schoolNumber === access.schoolNumber)?.school
       if (!school) {
         throw new Error(`School not found for access with school number ${access.schoolNumber}, something wrong here gitt`)
@@ -43,7 +43,7 @@
       <p>{studentDetails.mainSchool?.name ?? "Ukjent skole?"} - {studentDetails.mainClassMembership?.classGroup.name || "Ingen aktiv klasse ved hovedskole"}</p>
       <p><strong>Kontaktlærer{studentDetails.mainContactTeacherGroupMembership?.contactTeacherGroup.teachers.length !== 1 ? "e" : ""}:</strong> {(studentDetails.mainContactTeacherGroupMembership?.contactTeacherGroup.teachers || [{ name: "Ingen kontaktlærer ved hovedskole" }]).map(teacher => teacher.name).join(", ")}</p>
       <p>
-        {#each data.studentAccessInfo.accessTypes as accessType}
+        {#each data.studentAccessInfo as accessType}
           {accessType.type} ved {data.student.studentEnrollments.find(enrollment => enrollment.school.schoolNumber === accessType.schoolNumber)?.school.name} <br>
         {/each}
       </p>
@@ -113,7 +113,9 @@
     </div>
 
     <div class="new-document">
-      <NewDocument {accessSchools} documentContentTemplates={data.documentContentTemplates} studentId={data.student._id} />
+      {#key data.student._id} <!-- Re-render document components when student-id change DO NOT REMOVE ME, OR ELSE DOCUMENTS CAN BE CREATED ON WRONG STUDENT!  -->
+        <NewDocument {accessSchools} documentContentTemplates={data.documentContentTemplates} studentId={data.student._id} />
+      {/key}
     </div>
 
     {#if data.documents.length === 0}
