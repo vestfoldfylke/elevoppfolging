@@ -37,16 +37,11 @@
       await onClick()
       // TODO - vent med loading state til data er reloaded, og gi en feimelding med beskjed om å laste inn siden på nytt hvis det feiler (ctrl + r)
       if (reloadPageDataOnSuccess) {
-        invalidateAll()
-          .then(() => {
-            console.log("Page data invalidated successfully")
-            if (callBackAfterReloadPageData) {
-              callBackAfterReloadPageData()
-            }
-          })
-          .catch((error) => {
-            console.error("Error invalidating page data:", error)
-          })
+        await invalidateAll()
+        console.log("Page data invalidated successfully")
+        if (callBackAfterReloadPageData) {
+          callBackAfterReloadPageData()
+        }
       }
     } catch (error) {
       console.error("Error in AsyncButton onClick:", error)
