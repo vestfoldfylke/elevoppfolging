@@ -1,7 +1,7 @@
-import type { AccessEntry } from "$lib/types/app-types"
 import type { ValidationResult } from "$lib/types/data-validation"
+import type { ManualAccessEntryInput } from "$lib/types/db/shared-types"
 
-export const validateAccessEntry = (accessEntry: AccessEntry): ValidationResult => {
+export const validateAccessEntryInput = (accessEntry: ManualAccessEntryInput): ValidationResult => {
   if (!accessEntry.schoolNumber || !accessEntry.type) {
     return { valid: false, message: "Both 'schoolNumber' and 'type' are required" }
   }
@@ -20,16 +20,9 @@ export const validateAccessEntry = (accessEntry: AccessEntry): ValidationResult 
         return { valid: false, message: "'_id' is required for MANUELL-ELEV-TILGANG" }
       }
       break
-    case "AUTOMATISK-KLASSE-TILGANG":
     case "MANUELL-KLASSE-TILGANG":
       if (!accessEntry.systemId || typeof accessEntry.systemId !== "string") {
         return { valid: false, message: "'systemId' is required for KLASSE-TILGANG" }
-      }
-      break
-    case "AUTOMATISK-KONTAKTLÆRERGRUPPE-TILGANG":
-    case "AUTOMATISK-UNDERVISNINGSGRUPPE-TILGANG":
-      if (!accessEntry.systemId || typeof accessEntry.systemId !== "string") {
-        return { valid: false, message: "'systemId' is required for KONTAKTLÆRERGRUPPE-TILGANG and UNDERVISNINGSGRUPPE-TILGANG" }
       }
       break
     default:

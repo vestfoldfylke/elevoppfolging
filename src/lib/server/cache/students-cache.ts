@@ -63,6 +63,7 @@ export const getStudentsFromCache = async (access: Access): Promise<CachedFronte
           modified: student.modified,
           studentNumber: student.studentNumber,
           systemId: student.systemId,
+          studentEnrollments: student.studentEnrollments,
           source: student.source,
           mainSchool: student.mainSchool,
           mainClassMembership: student.mainClassMembership,

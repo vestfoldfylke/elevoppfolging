@@ -86,7 +86,19 @@ const getStudents: ServerLoadNextFunction<StudentsPageData> = async ({ principal
     }
 
     const overviewStudent: FrontendOverviewStudent = {
-      ...student,
+      accessTypes: student.accessTypes,
+      _id: student._id,
+      feideName: student.feideName,
+      name: student.name,
+      created: student.created,
+      modified: student.modified,
+      studentNumber: student.studentNumber,
+      systemId: student.systemId,
+      mainSchool: student.mainSchool,
+      mainClassMembership: student.mainClassMembership,
+      mainContactTeacherGroupMembership: student.mainContactTeacherGroupMembership,
+      additionalSchools: student.additionalSchools,
+      source: student.source,
       dataSharingConsent: sharingConsentByStudentId[student._id]?.consent || false,
       importantStuff: importantStuffByStudentId[student._id]?.[accessSchoolsForStudent[0]] || null,
       lastActivityTimestamp

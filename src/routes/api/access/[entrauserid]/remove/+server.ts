@@ -1,5 +1,5 @@
 import type { RequestHandler } from "@sveltejs/kit"
-import { validateAccessEntry } from "$lib/data-validation/access-entry"
+import { validateAccessEntryInput } from "$lib/data-validation/access-entry"
 import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
@@ -17,24 +17,12 @@ const removeAccess: ApiNextFunction<RemoveAccessResponse, RemoveAccessBody> = as
     throw new HTTPError(400, "Entra user ID is missing in request parameters")
   }
 
-  const validationResult = validateAccessEntry(body)
+  const validationResult = validateAccessEntryInput(body)
   if (!validationResult.valid) {
     throw new HTTPError(400, `Invalid access entry: ${validationResult.message}`)
   }
 
   const accessEntryToRemove = body
-
-  if (
-    accessEntryToRemove.type !== "MANUELL-SKOLELEDER-TILGANG" &&
-    accessEntryToRemove.type !== "MANUELL-ELEV-TILGANG" &&
-    accessEntryToRemove.type !== "MANUELL-KLASSE-TILGANG" &&
-    accessEntryToRemove.type !== "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG"
-  ) {
-    throw new HTTPError(
-      400,
-      "Invalid access entry type. Only MANUELL-SKOLELEDER-TILGANG, MANUELL-ELEV-TILGANG, MANUELL-KLASSE-TILGANG and MANUELL-UNDERVISNINGSOMRÅDE-TILGANG are allowed to remove manually."
-    )
-  }
 
   const dbClient = getDbClient()
 

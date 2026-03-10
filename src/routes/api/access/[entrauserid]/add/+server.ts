@@ -1,13 +1,16 @@
 import type { RequestHandler } from "@sveltejs/kit"
-import { validateAccessEntry } from "$lib/data-validation/access-entry"
+import { validateAccessEntryInput } from "$lib/data-validation/access-entry"
 import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canGrantAndRemoveAccessForSchool, isSystemAdmin } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap } from "$lib/types/api/api-route-map"
-import type { NewAccess } from "$lib/types/db/shared-types"
+import type { NewAccess, ClassGroup } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
+import type { AccessEntry, CachedFrontendStudentWithAccessInfo } from "$lib/types/app-types"
+import { getStudentsFromCache } from "$lib/server/cache/students-cache"
+import { getClassesFromStudents } from "$lib/utils/classes-from-students"
 
 type GrantAccessResponse = ApiRouteMap[`/api/access/${string}/add`]["POST"]["res"]
 type GrantAccessBody = ApiRouteMap[`/api/access/${string}/add`]["POST"]["req"]
@@ -18,28 +21,16 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
     throw new HTTPError(400, "Entra user ID is missing in request parameters")
   }
 
-  const validationResult = validateAccessEntry(body)
+  const validationResult = validateAccessEntryInput(body)
   if (!validationResult.valid) {
     throw new HTTPError(400, `Invalid access entry: ${validationResult.message}`)
   }
 
-  const accessEntryToGrant = body
-
-  if (
-    accessEntryToGrant.type !== "MANUELL-SKOLELEDER-TILGANG" &&
-    accessEntryToGrant.type !== "MANUELL-ELEV-TILGANG" &&
-    accessEntryToGrant.type !== "MANUELL-KLASSE-TILGANG" &&
-    accessEntryToGrant.type !== "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG"
-  ) {
-    throw new HTTPError(
-      400,
-      "Invalid access entry type. Only MANUELL-SKOLELEDER-TILGANG, MANUELL-ELEV-TILGANG, MANUELL-KLASSE-TILGANG and MANUELL-UNDERVISNINGSOMRÅDE-TILGANG are allowed to add manually."
-    )
-  }
+  const accessEntryInput = body
 
   const dbClient = getDbClient()
 
-  if (accessEntryToGrant.type === "MANUELL-SKOLELEDER-TILGANG") {
+  if (accessEntryInput.type === "MANUELL-SKOLELEDER-TILGANG") {
     if (!isSystemAdmin(principal, APP_INFO)) {
       throw new HTTPError(403, "Forbidden")
     }
@@ -49,9 +40,30 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
     if (!principalAccess) {
       throw new HTTPError(403, "Forbidden")
     }
-    const canGrantAccess = canGrantAndRemoveAccessForSchool(accessEntryToGrant.schoolNumber, principalAccess)
+    const canGrantAccess = canGrantAndRemoveAccessForSchool(accessEntryInput.schoolNumber, principalAccess)
     if (!canGrantAccess) {
       throw new HTTPError(403, "Forbidden")
+    }
+
+    const principalAccessStudents: CachedFrontendStudentWithAccessInfo[] = await getStudentsFromCache(principalAccess)
+    const principalClasses: (ClassGroup & { schoolNumber: string})[] = getClassesFromStudents(principalAccessStudents)
+
+    // Check also that the principal has access to the specific program area, class or student if the access entry is for those types
+    switch (accessEntryInput.type) {
+      case "MANUELL-ELEV-TILGANG": {
+        if (!principalAccessStudents.some(student => student._id === accessEntryInput._id && student.accessTypes.some(a => a.type === "MANUELL-SKOLELEDER-TILGANG" && a.schoolNumber === accessEntryInput.schoolNumber))) {
+          throw new HTTPError(403, "Not allowed to grant access to this student")
+        }
+        break
+      }
+      case "MANUELL-KLASSE-TILGANG": {
+        if (!principalClasses.some(c => c.systemId === accessEntryInput.systemId && c.schoolNumber === accessEntryInput.schoolNumber)) {
+          throw new HTTPError(403, "Not allowed to grant access to this class")
+        }
+        break
+      }
+      default:
+        throw new Error("PROGRAM-OMRÅDE-TILGANG IKKE IMPLEMENTERT ENDA")
     }
   }
 
@@ -76,32 +88,47 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
     await dbClient.createAccess(newAccess)
   } else {
     // If the same access entry already exists, we should not add it again
-    switch (accessEntryToGrant.type) {
+    switch (accessEntryInput.type) {
       case "MANUELL-SKOLELEDER-TILGANG":
-        if (existingAccess.schools.some((s) => s.schoolNumber === accessEntryToGrant.schoolNumber && s.type === "MANUELL-SKOLELEDER-TILGANG")) {
+        if (existingAccess.schools.some((s) => s.schoolNumber === accessEntryInput.schoolNumber && s.type === "MANUELL-SKOLELEDER-TILGANG")) {
           throw new HTTPError(400, "Access entry already exists")
         }
+
         break
       case "MANUELL-ELEV-TILGANG":
-        if (existingAccess.students.some((s) => s._id === accessEntryToGrant._id && s.schoolNumber === accessEntryToGrant.schoolNumber && s.type === "MANUELL-ELEV-TILGANG")) {
+        if (existingAccess.students.some((s) => s._id === accessEntryInput._id && s.schoolNumber === accessEntryInput.schoolNumber && s.type === "MANUELL-ELEV-TILGANG")) {
           throw new HTTPError(400, "Access entry already exists")
         }
         break
       case "MANUELL-KLASSE-TILGANG":
-        if (existingAccess.classes.some((c) => c.systemId === accessEntryToGrant.systemId && c.schoolNumber === accessEntryToGrant.schoolNumber && c.type === "MANUELL-KLASSE-TILGANG")) {
+        if (existingAccess.classes.some((c) => c.systemId === accessEntryInput.systemId && c.schoolNumber === accessEntryInput.schoolNumber && c.type === "MANUELL-KLASSE-TILGANG")) {
           throw new HTTPError(400, "Access entry already exists")
         }
         break
+      /* TODO uncomment when we implement program area access
       case "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG":
-        if (existingAccess.programAreas.some((p) => p._id === accessEntryToGrant._id && p.schoolNumber === accessEntryToGrant.schoolNumber && p.type === "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG")) {
+        if (existingAccess.programAreas.some((p) => p._id === accessEntryInput._id && p.schoolNumber === accessEntryInput.schoolNumber && p.type === "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG")) {
           throw new HTTPError(400, "Access entry already exists")
         }
         break
+      */
     }
   }
 
+  const accessEntryToAdd: AccessEntry = {
+    ...accessEntryInput,
+    granted: {
+      by: {
+        entraUserId: principal.id,
+        fallbackName: principal.displayName
+      },
+      at: new Date()
+    },
+    source: "MANUAL"
+  }
+
   // Then we can finally add the access entry
-  const updatedAccessId = await dbClient.addAccessEntry(entraUserId, accessEntryToGrant)
+  const updatedAccessId = await dbClient.addAccessEntry(entraUserId, accessEntryToAdd)
 
   return {
     updatedAccessId

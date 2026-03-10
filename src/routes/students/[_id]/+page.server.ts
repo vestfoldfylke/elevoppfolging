@@ -2,7 +2,7 @@ import { getStudentAccessInfo } from "$lib/server/authorization/student-access"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
-import type { AccessEntry, FrontendStudent } from "$lib/types/app-types"
+import type { AccessEntry, FrontendStudent, StudentUnavailableSchoolDocuments } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { Access, Document, DocumentContentTemplate, SchoolInfo, StudentDataSharingConsent, StudentImportantStuff } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
@@ -14,16 +14,13 @@ type StudentPageData = {
   importantStuff: StudentImportantStuff | null
   studentAccessInfo: AccessEntry[]
   documents: Document[]
-  unavailableSchoolDocuments: {
-    school: SchoolInfo
-    numberOfDocuments: number
-  }[]
+  unavailableSchoolDocuments: StudentUnavailableSchoolDocuments[]
   documentContentTemplates: DocumentContentTemplate[]
 }
 
 const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, requestEvent }) => {
-  const studentDbId = requestEvent.params._id
-  if (!studentDbId) {
+  const studentId = requestEvent.params._id
+  if (!studentId) {
     throw new Error("Student ID is missing in request parameters")
   }
 
@@ -40,7 +37,7 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
     throw new HTTPError(404, "No access found for principal")
   }
 
-  const student: FrontendStudent | null = await dbClient.getStudentById(studentDbId)
+  const student: FrontendStudent | null = await dbClient.getStudentById(studentId)
   if (!student) {
     throw new HTTPError(404, "Student not found")
   }
@@ -55,19 +52,21 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 
   const schoolNumberToGetImportantStuffFor = studentMainSchool && studentAccessInfo.some((accessEntry) => accessEntry.schoolNumber === studentMainSchool.schoolNumber) ? studentMainSchool.schoolNumber : studentAccessInfo[0].schoolNumber // Main school if access or first in access
 
-  const studentImportantStuff: StudentImportantStuff | null = await dbClient.getStudentImportantStuff(studentDbId, schoolNumberToGetImportantStuffFor) // Vi henter kun important stuff for første skolen de har eleven tilgjengelig på
+  const studentImportantStuff: StudentImportantStuff | null = await dbClient.getStudentImportantStuff(studentId, schoolNumberToGetImportantStuffFor) // Vi henter kun important stuff for første skolen de har eleven tilgjengelig på
 
-  const allStudentDocuments: Document[] = await dbClient.getStudentDocuments(studentDbId)
+  const allStudentDocuments: Document[] = await dbClient.getStudentDocuments(studentId)
 
-  const studentDataSharingConsent: StudentDataSharingConsent | null = await dbClient.getStudentDataSharingConsent(studentDbId)
+  const studentDataSharingConsent: StudentDataSharingConsent | null = await dbClient.getStudentDataSharingConsent(studentId)
 
+  // HVis eleven har consent - bare gi tilbake da! (men sjekk også tilgang på hvert dokument...)
   const documents = allStudentDocuments.filter((document) => {
     // Hvis eleven har samtykket til deling, kan vi vise alle dokumenter
     if (studentDataSharingConsent?.consent) {
       return true
     }
 
-    // Hvis eleven ikke har samtykket til deling, kan vi kun vise dokumenter knyttet til skoler brukeren har tilgang til elevn på
+    // Hvis eleven ikke har samtykket til deling, kan vi kun vise dokumenter knyttet til skoler brukeren har tilgang til eleven på
+    // Og vi må etterhvert også sjekke at dokumentet er tilgjengelig for DEN tilgangstypen (for eksempel hvis dokumentet ikke er tilgjengelig for faglærere)
     return studentAccessInfo.some((accessType) => accessType.schoolNumber === document.school.schoolNumber)
   })
 

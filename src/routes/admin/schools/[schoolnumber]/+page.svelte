@@ -45,15 +45,7 @@
       method: "POST",
       body: {
         type: "MANUELL-SKOLELEDER-TILGANG",
-        schoolNumber: currentSchool.schoolNumber,
-        granted: {
-          at: new Date(), // server ordner
-          by: {
-            entraUserId: "samma",
-            fallbackName: "samma"
-          }
-        },
-        source: "MANUAL"
+        schoolNumber: currentSchool.schoolNumber
       },
       headers: {
         "Content-Type": "application/json"
@@ -66,15 +58,7 @@
       method: "POST",
       body: {
         type: "MANUELL-SKOLELEDER-TILGANG",
-        schoolNumber: currentSchool.schoolNumber,
-        granted: {
-          at: new Date(), // server ordner
-          by: {
-            entraUserId: "samma",
-            fallbackName: "samma"
-          }
-        },
-        source: "MANUAL"
+        schoolNumber: currentSchool.schoolNumber
       },
       headers: {
         "Content-Type": "application/json"

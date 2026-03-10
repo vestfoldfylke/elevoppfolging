@@ -70,7 +70,6 @@
         <button onclick={() => newSchoolOpen = false} class="filled danger">Avbryt</button>
       </div>
     {/if}
-    <!-- Form for adding a new school would go here -->
   </div>
 
   <h2>Skoler</h2>

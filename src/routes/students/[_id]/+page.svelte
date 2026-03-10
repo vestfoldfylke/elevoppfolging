@@ -2,6 +2,8 @@
   import DocumentComponent from "$lib/components/Document/Document.svelte"
   import NewDocument from "$lib/components/Document/NewDocument.svelte"
   import PageHeader from "$lib/components/PageHeader.svelte"
+    import DataSharingConsent from "$lib/components/StudentBoxes/DataSharingConsent.svelte";
+    import { canEditStudentDataSharingConsent } from "$lib/shared-authorization/authorization";
   import type { SchoolInfo } from "$lib/types/db/shared-types"
   import { getFrontendStudentDetails } from "$lib/utils/frontend-student-details"
   import type { PageProps } from "./$types"
@@ -31,105 +33,86 @@
   })
 </script>
 
-<div class="student-page page-content">
-  <div class="student-header">
-    <!--
-    <div class="student-badge">
-      {getInitialsFromName(data.student.name)}
-    </div>
-    -->
-    <div class="student-essentials">
-      <PageHeader title={data.student.name} />
-      <p>{studentDetails.mainSchool?.name ?? "Ukjent skole?"} - {studentDetails.mainClassMembership?.classGroup.name || "Ingen aktiv klasse ved hovedskole"}</p>
-      <p><strong>Kontaktlærer{studentDetails.mainContactTeacherGroupMembership?.contactTeacherGroup.teachers.length !== 1 ? "e" : ""}:</strong> {(studentDetails.mainContactTeacherGroupMembership?.contactTeacherGroup.teachers || [{ name: "Ingen kontaktlærer ved hovedskole" }]).map(teacher => teacher.name).join(", ")}</p>
-      <p>
-        {#each data.studentAccessInfo as accessType}
-          {accessType.type} ved {data.student.studentEnrollments.find(enrollment => enrollment.school.schoolNumber === accessType.schoolNumber)?.school.name} <br>
-        {/each}
-      </p>
-    </div>
-  </div>
-
-  <div class="student-section">
-    <div class="student-section-header">
-      <div>&nbsp;</div>
-      <button>Rediger</button>
-    </div>
-    <div class="student-section-content student-information">
-      <div class="student-important-info">
-        <h4>Viktig informasjon</h4>
-        <p>{data.importantStuff?.importantInfo || "Skylder meg en hundrings"}</p>
+{#key data.student._id} <!-- Re-render student page when student-id change -->
+  <div class="student-page page-content">
+    <div class="student-header">
+      <!--
+      <div class="student-badge">
+        {getInitialsFromName(data.student.name)}
       </div>
-      <div>
-        <h4>Oppfølging</h4>
-        <ul>
-          <li>PPT</li>
-          <li>Elevtjenesten</li>
-        </ul>
-      </div>
-      <div>
-        <h4>Tilrettelegging</h4>
-        <ul>
-          <li>Tilrettelegging på eksamen</li>
-          <li>IOP</li>
-          <li>Dysleksi</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <div class="student-section">
-    <div class="student-section-header">
-      <h3>Skolesamarbeid</h3>
-    </div>
-    <div class="student-section-content">
-      <p>Eleven har {data.studentDataSharingConsent?.consent ? "samtykket til deling av data" : "ikke samtykket til deling av data"}</p>
-      {#if data.unavailableSchoolDocuments.length > 0}
-        <p>Det finnes dokumenter fra følgende skoler som ikke er tilgjengelige for deg:</p>
-        <ul>
-          {#each data.unavailableSchoolDocuments as unavailableSchoolDocument}
-            <li>{unavailableSchoolDocument.school.name} - {unavailableSchoolDocument.numberOfDocuments} dokument{unavailableSchoolDocument.numberOfDocuments > 1 ? "er" : ""}</li>
+      -->
+      <div class="student-essentials">
+        <PageHeader title={data.student.name} />
+        <p>{studentDetails.mainSchool?.name ?? "Ukjent skole?"} - {studentDetails.mainClassMembership?.classGroup.name || "Ingen aktiv klasse ved hovedskole"}</p>
+        <p><strong>Kontaktlærer{studentDetails.mainContactTeacherGroupMembership?.contactTeacherGroup.teachers.length !== 1 ? "e" : ""}:</strong> {(studentDetails.mainContactTeacherGroupMembership?.contactTeacherGroup.teachers || [{ name: "Ingen kontaktlærer ved hovedskole" }]).map(teacher => teacher.name).join(", ")}</p>
+        <p>
+          {#each data.studentAccessInfo as accessType}
+            {accessType.type} ved {data.student.studentEnrollments.find(enrollment => enrollment.school.schoolNumber === accessType.schoolNumber)?.school.name} <br>
           {/each}
-        </ul>
-      {:else}
-        <p>Det finnes ikke noen notater fra andre skoler på denne eleven</p>
-      {/if}
-    </div>
-  </div>
-
-  <div class="student-section">
-    <div class="student-section-header">
-      <h3>Personer med tilgang til eleven</h3>
-    </div>
-    <div class="student-section-content">
-      Kommer etterhvert
-      <button>Send en epost til alle disse ellerno</button>
-    </div>
-  </div>
-
-  <div class="documents">
-    <div class="document-header">
-      <h2>Tidslinje</h2>
+        </p>
+      </div>
     </div>
 
-    <div class="new-document">
-      {#key data.student._id} <!-- Re-render document components when student-id change DO NOT REMOVE ME, OR ELSE DOCUMENTS CAN BE CREATED ON WRONG STUDENT!  -->
+    <div class="student-section">
+      <div class="student-section-header">
+        <div>&nbsp;</div>
+        <button>Rediger</button>
+      </div>
+      <div class="student-section-content student-information">
+        <div class="student-important-info">
+          <h4>Viktig informasjon</h4>
+          <p>{data.importantStuff?.importantInfo || "Skylder meg en hundrings"}</p>
+        </div>
+        <div>
+          <h4>Oppfølging</h4>
+          <ul>
+            <li>PPT</li>
+            <li>Elevtjenesten</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Tilrettelegging</h4>
+          <ul>
+            <li>Tilrettelegging på eksamen</li>
+            <li>IOP</li>
+            <li>Dysleksi</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <DataSharingConsent canEdit={canEditStudentDataSharingConsent(data.studentAccessInfo)} student={data.student} studentDataSharingConsent={data.studentDataSharingConsent} unavailableSchoolDocuments={data.unavailableSchoolDocuments} />
+
+    <div class="student-section">
+      <div class="student-section-header">
+        <h3>Personer med tilgang til eleven</h3>
+      </div>
+      <div class="student-section-content">
+        Kommer etterhvert
+        <button>Send en epost til alle disse ellerno</button>
+      </div>
+    </div>
+
+    <div class="documents">
+      <div class="document-header">
+        <h2>Tidslinje</h2>
+      </div>
+
+      <div class="new-document">
         <NewDocument {accessSchools} documentContentTemplates={data.documentContentTemplates} studentId={data.student._id} />
-      {/key}
-    </div>
+      </div>
 
-    {#if data.documents.length === 0}
-      <p>Ingen notater her</p>
-    {:else}
-      {#key data.student._id} <!-- Re-render document components when student-id change -->
+      {#if data.documents.length === 0}
+        <p>Ingen notater her</p>
+      {:else}
         {#each data.documents as document (document._id)}
           <DocumentComponent {document} {accessSchools} />
         {/each}
-      {/key}
-    {/if}
+      {/if}
 
+    </div>
   </div>
-</div>
+{/key}
 
 
 <style>

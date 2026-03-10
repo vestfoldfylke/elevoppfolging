@@ -1,4 +1,4 @@
-import type { ApplicationInfo } from "$lib/types/app-types"
+import type { AccessEntry, ApplicationInfo } from "$lib/types/app-types"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
 import type { Access, Document, DocumentMessage } from "$lib/types/db/shared-types"
 
@@ -16,4 +16,8 @@ export const canEditDocumentMessage = (authenticatedPrincipal: AuthenticatedPrin
 
 export const canGrantAndRemoveAccessForSchool = (schoolNumber: string, principalAccess: Access): boolean => {
   return principalAccess.schools.some((schoolAccess) => schoolAccess.type === "MANUELL-SKOLELEDER-TILGANG" && schoolAccess.schoolNumber === schoolNumber)
+}
+
+export const canEditStudentDataSharingConsent = (accessToStudent: AccessEntry[]): boolean => {
+  return accessToStudent.some((accessEntry) => accessEntry.type !== "AUTOMATISK-UNDERVISNINGSGRUPPE-TILGANG" && accessEntry.type !== "AUTOMATISK-KLASSE-TILGANG")
 }

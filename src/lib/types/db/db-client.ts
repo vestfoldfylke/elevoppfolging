@@ -6,6 +6,7 @@ import type {
   Document,
   DocumentContentTemplate,
   DocumentMessage,
+  ManualAccessEntryInput,
   NewAccess,
   NewDocument,
   NewDocumentContentTemplate,
@@ -33,19 +34,19 @@ export interface IDbClient {
   getManualAccess(schoolNumber: string): Promise<Access[]>
   createAccess(access: NewAccess): Promise<string>
   addAccessEntry(entraUserId: string, accessEntry: AccessEntry): Promise<string>
-  removeAccessEntry(entraUserId: string, accessEntry: AccessEntry): Promise<string>
+  removeAccessEntry(entraUserId: string, accessEntry: ManualAccessEntryInput): Promise<string>
   getSchoolLeaderAccess(): Promise<Access[]>
 
   getProgramArea(_id: string): Promise<ProgramArea | null>
 
   getAllStudents(): Promise<FrontendStudent[]>
   getStudents(access: Access): Promise<FrontendStudent[]>
-  getStudentById(studentDbId: string): Promise<FrontendStudent | null>
+  getStudentById(studentId: string): Promise<FrontendStudent | null>
 
-  getStudentDocuments(studentDbId: string): Promise<Document[]>
+  getStudentDocuments(studentId: string): Promise<Document[]>
   getDocumentById(documentId: string): Promise<Document | null>
   createDocument(document: NewDocument): Promise<string>
-  addDocumentMessage(documentId: string, message: NewDocumentMessage, studentId?: string): Promise<DocumentMessage>
+  addDocumentMessage(documentId: string, message: NewDocumentMessage, studentId?: string): Promise<DocumentMessage> // TODO - lag egne metoder for createStudentDocument osv
 
   getStudentsImportantStuff(studentIds: string[]): Promise<Record<string, Record<string, StudentImportantStuff>>>
   getStudentImportantStuff(studentId: string, schoolNumber: string): Promise<StudentImportantStuff | null>

@@ -35,11 +35,11 @@ export type AccessEntry =
   | ContactTeacherGroupAutoAccessEntry
   | TeachingGroupAutoAccessEntry
 
-export type CachedFrontendStudentWithAccessInfo = Omit<CachedFrontendStudent, "studentEnrollments"> & {
+export type CachedFrontendStudentWithAccessInfo = CachedFrontendStudent & {
   accessTypes: AccessEntry[]
 }
 
-export type FrontendOverviewStudent = CachedFrontendStudentWithAccessInfo & {
+export type FrontendOverviewStudent = Omit<CachedFrontendStudentWithAccessInfo, "studentEnrollments"> & {
   importantStuff: StudentImportantStuff | null
   lastActivityTimestamp: Date | null
   dataSharingConsent: boolean
@@ -68,4 +68,9 @@ export type PeriodDetails = Period & {
   daysUntilExpire: number | null
   daysUntilActive: number | null
   withinViewAccessWindow: boolean
+}
+
+export type StudentUnavailableSchoolDocuments = {
+  school: SchoolInfo
+  numberOfDocuments: number
 }

@@ -20,6 +20,7 @@ import type {
   DocumentContentTemplate,
   DocumentMessage,
   EditorData,
+  ManualAccessEntryInput,
   NewAccess,
   NewDbDocument,
   NewDbStudentDataSharingConsent,
@@ -208,7 +209,7 @@ export class MongoDbClient implements IDbClient {
     return updateResult._id.toString()
   }
 
-  async removeAccessEntry(entraUserId: string, accessEntry: AccessEntry): Promise<string> {
+  async removeAccessEntry(entraUserId: string, accessEntry: ManualAccessEntryInput): Promise<string> {
     const db = await this.getDb()
     const accessCollection = db.collection<DbAccess>(this.accessCollectionName)
     let updatedAccess: DbAccess | null
@@ -225,8 +226,6 @@ export class MongoDbClient implements IDbClient {
       case "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG":
         updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { programAreas: { _id: accessEntry._id, schoolNumber: accessEntry.schoolNumber } } })
         break
-      default:
-        throw new Error(`Invalid access entry type: ${accessEntry.type}`)
     }
     if (!updatedAccess || !updatedAccess._id) {
       throw new Error("Failed to remove access entry")
@@ -254,8 +253,15 @@ export class MongoDbClient implements IDbClient {
       .toArray()
     return accessList.map((access) => {
       return {
-        ...access,
-        _id: access._id.toString()
+        _id: access._id.toString(),
+        entraUserId: access.entraUserId,
+        name: access.name,
+        schools: [],
+        programAreas: access.programAreas.filter((programArea) => programArea.schoolNumber === schoolNumber),
+        classes: access.classes.filter((classAccess) => classAccess.type === "MANUELL-KLASSE-TILGANG" && classAccess.schoolNumber === schoolNumber),
+        students: access.students.filter((studentAccess) => studentAccess.schoolNumber === schoolNumber),
+        contactTeacherGroups: [],
+        teachingGroups: []
       }
     })
   }
@@ -378,10 +384,10 @@ export class MongoDbClient implements IDbClient {
     })
   }
 
-  async getStudentById(studentDbId: string): Promise<FrontendStudent | null> {
+  async getStudentById(studentId: string): Promise<FrontendStudent | null> {
     const db = await this.getDb()
     const studentsCollection = db.collection<DbAppStudent>(this.studentsCollectionName)
-    logger.info("Getting student by _id {studentDbId}", studentDbId)
+    logger.info("Getting student by _id {studentId}", studentId)
 
     const projection: KeysToNumber<WithId<FrontendStudent>> = {
       _id: 1,
@@ -395,11 +401,11 @@ export class MongoDbClient implements IDbClient {
       source: 1
     }
 
-    const student = await studentsCollection.findOne({ _id: new ObjectId(studentDbId) }, { projection })
+    const student = await studentsCollection.findOne({ _id: new ObjectId(studentId) }, { projection })
     if (!student) {
       return null
     }
-    logger.info("Student with _id {studentDbId} found: {feideName}", studentDbId, student.feideName)
+    logger.info("Student with _id {studentId} found: {feideName}", studentId, student.feideName)
 
     return {
       _id: student._id.toString(),
@@ -414,7 +420,7 @@ export class MongoDbClient implements IDbClient {
     }
   }
 
-  async getStudentDocuments(studentDbId: string): Promise<Document[]> {
+  async getStudentDocuments(studentId: string): Promise<Document[]> {
     const db = await this.getDb()
     const documentsCollection = db.collection<DbDocument>(this.documentsCollectionName)
 
@@ -430,7 +436,7 @@ export class MongoDbClient implements IDbClient {
       .aggregate<DocumentWithCreator>([
         {
           $match: {
-            "student._id": new ObjectId(studentDbId)
+            "student._id": new ObjectId(studentId)
           }
         },
         {
@@ -532,6 +538,7 @@ export class MongoDbClient implements IDbClient {
       throw new Error("Failed to add message to document")
     }
 
+    // TODO - flytt denne ut, den hører ikke hjemme her - men der den blir påkalt fra
     if (studentId) {
       try {
         await this.updateStudentLastActivityTimestamp(studentId, document.school)
