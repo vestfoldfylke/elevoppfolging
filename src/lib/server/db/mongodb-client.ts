@@ -598,7 +598,7 @@ export class MongoDbClient implements IDbClient {
     const db = await this.getDb()
     const importantStuffCollection = db.collection<DbStudentImportantStuff>(this.importantStuffCollectionName)
 
-    const result = await importantStuffCollection.updateOne(
+    const result = await importantStuffCollection.findOneAndUpdate(
       { "student._id": new ObjectId(studentId) },
       {
         $set: {
@@ -608,14 +608,14 @@ export class MongoDbClient implements IDbClient {
           }
         }
       },
-      { upsert: true }
+      { upsert: true, returnDocument: "after" }
     )
 
-    if (!result.upsertedId) {
+    if (!result?._id) {
       throw new Error("Failed to upsert student important stuff")
     }
 
-    return result.upsertedId.toString()
+    return result._id.toString()
   }
 
   async updateStudentLastActivityTimestamp(studentId: string, school: SchoolInfo): Promise<string> {
@@ -783,12 +783,12 @@ export class MongoDbClient implements IDbClient {
       }
     }
 
-    const result = await studentDataSharingConsentsCollection.updateOne({ "student._id": new ObjectId(studentId) }, { $set: updatedConsent }, { upsert: true })
+    const result = await studentDataSharingConsentsCollection.findOneAndUpdate({ "student._id": new ObjectId(studentId) }, { $set: updatedConsent }, { upsert: true, returnDocument: "after" })
 
-    if (!result.upsertedId) {
+    if (!result?._id) {
       throw new Error("Failed to upsert student data sharing consent")
     }
 
-    return result.upsertedId.toString()
+    return result._id.toString()
   }
 }
