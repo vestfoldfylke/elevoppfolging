@@ -95,6 +95,9 @@
 							<a class="menu-item" class:active={page.url.pathname === "/admin/templates"} href="/admin/templates">
 								<span class="material-symbols-outlined">add_notes</span>Notatmaler
 							</a>
+							<a class="menu-item" class:active={page.url.pathname === "/admin/configuration"} href="/admin/configuration">
+								<span class="material-symbols-outlined">settings</span>Konfigurasjon
+							</a>
 						</div>	
 					</div>
 				{/if}

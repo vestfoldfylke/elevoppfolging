@@ -88,6 +88,6 @@ const updateStudentCheckBox: ApiNextFunction<UpdateStudentCheckBoxResponse, Upda
   }
 }
 
-export const PUT: RequestHandler = async (requestEvent) => {
+export const PATCH: RequestHandler = async (requestEvent) => {
   return apiRequestMiddleware<UpdateStudentCheckBoxResponse, UpdateStudentCheckBoxBody>(requestEvent, updateStudentCheckBox)
 }
