@@ -2,8 +2,8 @@
   import DocumentComponent from "$lib/components/Document/Document.svelte"
   import NewDocument from "$lib/components/Document/NewDocument.svelte"
   import PageHeader from "$lib/components/PageHeader.svelte"
-    import DataSharingConsent from "$lib/components/StudentBoxes/DataSharingConsent.svelte";
-    import { canEditStudentDataSharingConsent } from "$lib/shared-authorization/authorization";
+  import DataSharingConsent from "$lib/components/StudentBoxes/DataSharingConsent.svelte"
+  import { canEditStudentDataSharingConsent } from "$lib/shared-authorization/authorization"
   import type { SchoolInfo } from "$lib/types/db/shared-types"
   import { getFrontendStudentDetails } from "$lib/utils/frontend-student-details"
   import type { PageProps } from "./$types"

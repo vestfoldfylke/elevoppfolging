@@ -56,9 +56,7 @@
           case "name":
             return sortDirection === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
           case "school":
-            return sortDirection === "asc"
-              ? (a.mainSchool?.name || "").localeCompare(b.mainSchool?.name || "")
-              : (b.mainSchool?.name || "").localeCompare(a.mainSchool?.name || "")
+            return sortDirection === "asc" ? (a.mainSchool?.name || "").localeCompare(b.mainSchool?.name || "") : (b.mainSchool?.name || "").localeCompare(a.mainSchool?.name || "")
           case "class":
             return sortDirection === "asc"
               ? (a.mainClassMembership?.classGroup?.name || "").localeCompare(b.mainClassMembership?.classGroup?.name || "")

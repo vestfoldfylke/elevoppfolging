@@ -4,7 +4,7 @@ import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
 import type { AccessEntry, FrontendStudent, StudentUnavailableSchoolDocuments } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { Access, StudentDocument, DocumentContentTemplate, SchoolInfo, StudentDataSharingConsent, StudentImportantStuff } from "$lib/types/db/shared-types"
+import type { Access, DocumentContentTemplate, SchoolInfo, StudentDataSharingConsent, StudentDocument, StudentImportantStuff } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
 import type { PageServerLoad } from "./$types"
 
@@ -50,7 +50,8 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 
   const studentMainSchool = student.studentEnrollments.find((enrollment) => enrollment.mainSchool)?.school
 
-  const schoolNumberToGetImportantStuffFor = studentMainSchool && studentAccessInfo.some((accessEntry) => accessEntry.schoolNumber === studentMainSchool.schoolNumber) ? studentMainSchool.schoolNumber : studentAccessInfo[0].schoolNumber // Main school if access or first in access
+  const schoolNumberToGetImportantStuffFor =
+    studentMainSchool && studentAccessInfo.some((accessEntry) => accessEntry.schoolNumber === studentMainSchool.schoolNumber) ? studentMainSchool.schoolNumber : studentAccessInfo[0].schoolNumber // Main school if access or first in access
 
   const studentImportantStuff: StudentImportantStuff | null = await dbClient.getStudentImportantStuff(studentId, schoolNumberToGetImportantStuffFor) // Vi henter kun important stuff for første skolen de har eleven tilgjengelig på
 

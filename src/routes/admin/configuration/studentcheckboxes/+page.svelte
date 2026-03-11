@@ -1,8 +1,8 @@
 <script lang="ts">
   import PageHeader from "$lib/components/PageHeader.svelte"
-    import StudentCheckBoxComponent from "$lib/components/StudentCheckBox.svelte";
-    import type { EditorData, NewStudentCheckBox, StudentCheckBox } from "$lib/types/db/shared-types";
-    import type { PageProps } from "./$types";
+  import StudentCheckBoxComponent from "$lib/components/StudentCheckBox.svelte"
+  import type { EditorData, NewStudentCheckBox, StudentCheckBox } from "$lib/types/db/shared-types"
+  import type { PageProps } from "./$types"
 
   let { data }: PageProps = $props()
 
@@ -28,9 +28,8 @@
 
   const newStudentFacilitationCheckBox: StudentCheckBox = {
     ...newStudentFollowUpCheckBox,
-    type: "FACILITATION",
+    type: "FACILITATION"
   }
-
 </script>
 
 <div class="page-content">

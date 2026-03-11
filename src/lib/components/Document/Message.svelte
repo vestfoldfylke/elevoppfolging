@@ -15,7 +15,7 @@
   let { documentId, message, editMode, studentId, groupId, callback }: PageProps = $props()
 
   // svelte-ignore state_referenced_locally (we dont want to modify the original)
-  let editableMessage: DocumentMessageInput  = $state({
+  let editableMessage: DocumentMessageInput = $state({
     type: message.type,
     content: {
       text: message.content.text

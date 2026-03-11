@@ -1,15 +1,15 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { validateAccessEntryInput } from "$lib/data-validation/access-entry"
 import { APP_INFO } from "$lib/server/app-info"
+import { getStudentsFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canGrantAndRemoveAccessForSchool, isSystemAdmin } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap } from "$lib/types/api/api-route-map"
-import type { NewAccess, ClassGroup } from "$lib/types/db/shared-types"
-import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 import type { AccessEntry, CachedFrontendStudentWithAccessInfo } from "$lib/types/app-types"
-import { getStudentsFromCache } from "$lib/server/cache/students-cache"
+import type { ClassGroup, NewAccess } from "$lib/types/db/shared-types"
+import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 import { getClassesFromStudents } from "$lib/utils/classes-from-students"
 
 type GrantAccessResponse = ApiRouteMap[`/api/access/${string}/add`]["POST"]["res"]
@@ -46,18 +46,22 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
     }
 
     const principalAccessStudents: CachedFrontendStudentWithAccessInfo[] = await getStudentsFromCache(principalAccess)
-    const principalClasses: (ClassGroup & { schoolNumber: string})[] = getClassesFromStudents(principalAccessStudents)
+    const principalClasses: (ClassGroup & { schoolNumber: string })[] = getClassesFromStudents(principalAccessStudents)
 
     // Check also that the principal has access to the specific program area, class or student if the access entry is for those types
     switch (accessEntryInput.type) {
       case "MANUELL-ELEV-TILGANG": {
-        if (!principalAccessStudents.some(student => student._id === accessEntryInput._id && student.accessTypes.some(a => a.type === "MANUELL-SKOLELEDER-TILGANG" && a.schoolNumber === accessEntryInput.schoolNumber))) {
+        if (
+          !principalAccessStudents.some(
+            (student) => student._id === accessEntryInput._id && student.accessTypes.some((a) => a.type === "MANUELL-SKOLELEDER-TILGANG" && a.schoolNumber === accessEntryInput.schoolNumber)
+          )
+        ) {
           throw new HTTPError(403, "Not allowed to grant access to this student")
         }
         break
       }
       case "MANUELL-KLASSE-TILGANG": {
-        if (!principalClasses.some(c => c.systemId === accessEntryInput.systemId && c.schoolNumber === accessEntryInput.schoolNumber)) {
+        if (!principalClasses.some((c) => c.systemId === accessEntryInput.systemId && c.schoolNumber === accessEntryInput.schoolNumber)) {
           throw new HTTPError(403, "Not allowed to grant access to this class")
         }
         break

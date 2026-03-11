@@ -35,7 +35,7 @@ export const getStudentAccessInfo = (student: FrontendStudent, access: Access): 
   }
 
   // If school access, no need to check other access types for that school
-  for (const studentAccess of access.students.filter(entry => !accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === entry.schoolNumber))) {
+  for (const studentAccess of access.students.filter((entry) => !accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === entry.schoolNumber))) {
     const studentAccessForCurrentStudent = enrollmentsToCheck.some((enrollment) => enrollment.school.schoolNumber === studentAccess.schoolNumber)
     if (studentAccessForCurrentStudent) {
       accessTypesForCurrentStudent.push(studentAccess)
@@ -53,7 +53,7 @@ export const getStudentAccessInfo = (student: FrontendStudent, access: Access): 
   // TODO - programområder / programAreas når vi har en cache på det for å slippe drittoppslag hele tida
 
   // // If school access, no need to check other access types for that school
-  for (const contactTeacherGroupAccess of access.contactTeacherGroups.filter(entry => !accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === entry.schoolNumber))) {
+  for (const contactTeacherGroupAccess of access.contactTeacherGroups.filter((entry) => !accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === entry.schoolNumber))) {
     const contactTeacherGroupAccessForCurrentStudent = enrollmentsToCheck.some((enrollment) => {
       if (enrollment.school.schoolNumber !== contactTeacherGroupAccess.schoolNumber) {
         return false
@@ -78,9 +78,9 @@ export const getStudentAccessInfo = (student: FrontendStudent, access: Access): 
   if (enrollmentsToCheck.length === 0) {
     return accessTypesForCurrentStudent
   }
-  
+
   // If school access, no need to check other access types for that school
-  for (const classAccess of access.classes.filter(entry => !accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === entry.schoolNumber))) {
+  for (const classAccess of access.classes.filter((entry) => !accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === entry.schoolNumber))) {
     const classAccessForCurrentStudent = enrollmentsToCheck.some((enrollment) => {
       if (enrollment.school.schoolNumber !== classAccess.schoolNumber) {
         return false
@@ -107,7 +107,7 @@ export const getStudentAccessInfo = (student: FrontendStudent, access: Access): 
   }
 
   // If school access, no need to check other access types for that school
-  for (const teachingGroupAccess of access.teachingGroups.filter(entry => !accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === entry.schoolNumber))) {
+  for (const teachingGroupAccess of access.teachingGroups.filter((entry) => !accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === entry.schoolNumber))) {
     const teachingGroupAccessForCurrentStudent = enrollmentsToCheck.some((enrollment) => {
       if (enrollment.school.schoolNumber !== teachingGroupAccess.schoolNumber) {
         return false

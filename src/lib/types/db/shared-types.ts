@@ -146,7 +146,6 @@ export type ProgramAreaManualAccessEntryInput = {
   type: "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG"
 }
 
-
 export type ProgramAreaManualAccessEntry = AccessEntryBase & ProgramAreaManualAccessEntryInput
 
 export type StudentManualAccessEntryInput = {
@@ -352,12 +351,13 @@ export type DocumentInput = {
   */
 }
 
-export type NewStudentDocument = DocumentBase & DocumentInput & {
-  messages: DocumentMessage[]
-  student: {
-    _id: string
+export type NewStudentDocument = DocumentBase &
+  DocumentInput & {
+    messages: DocumentMessage[]
+    student: {
+      _id: string
+    }
   }
-}
 
 export type StudentDocument = NewStudentDocument & {
   _id: string
@@ -432,10 +432,11 @@ export type StudentImportantStuffInput = {
   facilitation: string[]
 }
 
-export type NewStudentImportantStuff = ImportantStuffBase & StudentImportantStuffInput & {
-  type: "STUDENT"
-  lastActivityTimestamp: Date
-}
+export type NewStudentImportantStuff = ImportantStuffBase &
+  StudentImportantStuffInput & {
+    type: "STUDENT"
+    lastActivityTimestamp: Date
+  }
 
 export type StudentImportantStuff = NewStudentImportantStuff & {
   _id: string
@@ -477,15 +478,17 @@ export type StudentDataSharingConsent = NewStudentDataSharingConsent & {
   }
 }
 
-export type NewDbStudentDataSharingConsent = StudentDataSharingConsentBase & StudentDataSharingConsentInput & {
-  student: {
-    _id: ObjectId
+export type NewDbStudentDataSharingConsent = StudentDataSharingConsentBase &
+  StudentDataSharingConsentInput & {
+    student: {
+      _id: ObjectId
+    }
   }
-}
 
-export type DbStudentDataSharingConsent = StudentDataSharingConsentBase & StudentDataSharingConsentInput & {
-  _id: ObjectId
-  student: {
+export type DbStudentDataSharingConsent = StudentDataSharingConsentBase &
+  StudentDataSharingConsentInput & {
     _id: ObjectId
+    student: {
+      _id: ObjectId
+    }
   }
-}

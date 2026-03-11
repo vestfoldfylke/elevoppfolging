@@ -1,4 +1,4 @@
-import type { DocumentContentTemplate, ManualAccessEntryInput, NewSchool, StudentDataSharingConsentInput, DocumentInput, DocumentMessageInput, StudentCheckBoxInput } from "../db/shared-types"
+import type { DocumentContentTemplate, DocumentInput, DocumentMessageInput, ManualAccessEntryInput, NewSchool, StudentCheckBoxInput, StudentDataSharingConsentInput } from "../db/shared-types"
 
 type ApiDocumentsIdMessages = {
   POST: { req: DocumentMessageInput; res: { messageId: string } }
@@ -29,7 +29,7 @@ type ApiStudentsIdConsent = {
 /**
  * Define a mapping of API routes to their expected request and response types. This will be used to provide type safety for api routes and the apiFetch function, ensuring that the correct request body is provided for each route and that the response is correctly typed.
  */
-export interface ApiRouteMap {  
+export interface ApiRouteMap {
   "/api/templates": {
     POST: { req: DocumentContentTemplate; res: { templateId: string } }
   }

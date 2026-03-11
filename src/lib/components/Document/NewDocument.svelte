@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { DocumentContentTemplate, SchoolInfo, DocumentInput } from "$lib/types/db/shared-types"
+  import type { DocumentContentTemplate, DocumentInput, SchoolInfo } from "$lib/types/db/shared-types"
   import DocumentEditor from "./DocumentEditor.svelte"
 
   type PageProps = {

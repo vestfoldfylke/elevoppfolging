@@ -1,11 +1,11 @@
 import type { RequestHandler } from "@sveltejs/kit"
+import { logger } from "@vestfoldfylke/loglady"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import type { ApiRouteMap } from "$lib/types/api/api-route-map"
 import type { EditorData, NewStudentDocument } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
-import { logger } from "@vestfoldfylke/loglady"
 
 type AddDocumentResponse = ApiRouteMap[`/api/students/${string}/documents`]["POST"]["res"]
 type AddDocumentBody = ApiRouteMap[`/api/students/${string}/documents`]["POST"]["req"]
@@ -15,7 +15,7 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
   if (!studentId) {
     throw new HTTPError(400, "Student ID is missing in request parameters")
   }
-  
+
   const newDocumentData: AddDocumentBody = body
   // TODO validate body
 

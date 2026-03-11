@@ -1,4 +1,5 @@
 import type { RequestHandler } from "@sveltejs/kit"
+import { validateStudentCheckBox } from "$lib/data-validation/student-check-box"
 import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
@@ -7,7 +8,6 @@ import { isSystemAdmin } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap } from "$lib/types/api/api-route-map"
 import type { EditorData, NewStudentCheckBox } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
-import { validateStudentCheckBox } from "$lib/data-validation/student-check-box"
 
 type AddStudentCheckBoxResponse = ApiRouteMap["/api/studentcheckboxes"]["POST"]["res"]
 type AddStudentCheckBoxBody = ApiRouteMap["/api/studentcheckboxes"]["POST"]["req"]

@@ -4,9 +4,9 @@
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import AsyncButton from "$lib/components/AsyncButton.svelte"
   import PageHeader from "$lib/components/PageHeader.svelte"
-  import type { AccessEntry } from "$lib/types/app-types";
+  import type { AccessEntry } from "$lib/types/app-types"
   import type { ClassManualAccessEntry, EditorData, ManualAccessEntryInput, NewSchool, Period, ProgramAreaManualAccessEntry, SchoolManualAccessEntry } from "$lib/types/db/shared-types"
-  import { getClassesFromStudents } from "$lib/utils/classes-from-students";
+  import { getClassesFromStudents } from "$lib/utils/classes-from-students"
   import type { PageProps } from "./$types"
 
   let { data }: PageProps = $props()
@@ -31,26 +31,37 @@
   })
 
   let studentAccessEntries = $derived.by(() => {
-    const studentsWithAccess = new Map<string, { name: string, appUsers: ({ entraUserId: string, name: string, accessEntry: ManualAccessEntryInput })[] }>()
+    const studentsWithAccess = new Map<string, { name: string; appUsers: { entraUserId: string; name: string; accessEntry: ManualAccessEntryInput }[] }>()
     for (const access of data.manualAccessForSchool) {
       for (const studentAccess of access.students) {
         if (!studentsWithAccess.has(studentAccess._id)) {
-          studentsWithAccess.set(studentAccess._id, { name: schoolStudents.find(student => student._id === studentAccess._id)?.name || `Inaktiv elev (${studentAccess._id})`, appUsers: [] })
+          studentsWithAccess.set(studentAccess._id, { name: schoolStudents.find((student) => student._id === studentAccess._id)?.name || `Inaktiv elev (${studentAccess._id})`, appUsers: [] })
         }
-        studentsWithAccess.get(studentAccess._id)?.appUsers.push({ entraUserId: access.entraUserId, name: access.name, accessEntry: { type: "MANUELL-ELEV-TILGANG", schoolNumber: studentAccess.schoolNumber, _id: studentAccess._id } })
+        studentsWithAccess
+          .get(studentAccess._id)
+          ?.appUsers.push({ entraUserId: access.entraUserId, name: access.name, accessEntry: { type: "MANUELL-ELEV-TILGANG", schoolNumber: studentAccess.schoolNumber, _id: studentAccess._id } })
       }
     }
     return Array.from(studentsWithAccess.values())
   })
 
   let classAccessEntries = $derived.by(() => {
-    const classesWithAccess = new Map<string, { name: string, appUsers: ({ entraUserId: string, name: string, accessEntry: ManualAccessEntryInput })[] }>()
+    const classesWithAccess = new Map<string, { name: string; appUsers: { entraUserId: string; name: string; accessEntry: ManualAccessEntryInput }[] }>()
     for (const access of data.manualAccessForSchool) {
       for (const classAccess of access.classes) {
         if (!classesWithAccess.has(classAccess.systemId)) {
-          classesWithAccess.set(classAccess.systemId, { name: schoolClasses.find(classGroup => classGroup.systemId === classAccess.systemId)?.name || `Inaktiv klasse (${classAccess.systemId})`, appUsers: [] })
+          classesWithAccess.set(classAccess.systemId, {
+            name: schoolClasses.find((classGroup) => classGroup.systemId === classAccess.systemId)?.name || `Inaktiv klasse (${classAccess.systemId})`,
+            appUsers: []
+          })
         }
-        classesWithAccess.get(classAccess.systemId)?.appUsers.push({ entraUserId: access.entraUserId, name: access.name, accessEntry: { type: "MANUELL-KLASSE-TILGANG", schoolNumber: classAccess.schoolNumber, systemId: classAccess.systemId } })
+        classesWithAccess
+          .get(classAccess.systemId)
+          ?.appUsers.push({
+            entraUserId: access.entraUserId,
+            name: access.name,
+            accessEntry: { type: "MANUELL-KLASSE-TILGANG", schoolNumber: classAccess.schoolNumber, systemId: classAccess.systemId }
+          })
       }
     }
     return Array.from(classesWithAccess.values())

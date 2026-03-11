@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { apiFetch } from "$lib/api-fetch/api-fetch";
-  import type { StudentCheckBox, StudentCheckBoxInput } from "$lib/types/db/shared-types";
-  import AsyncButton from "./AsyncButton.svelte";
+  import { apiFetch } from "$lib/api-fetch/api-fetch"
+  import type { StudentCheckBox, StudentCheckBoxInput } from "$lib/types/db/shared-types"
+  import AsyncButton from "./AsyncButton.svelte"
 
   type StudentCheckBoxProps = {
     checkBox: StudentCheckBox

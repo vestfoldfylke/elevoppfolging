@@ -2,7 +2,7 @@
   import { slide } from "svelte/transition"
   import { page } from "$app/state"
   import { canEditDocument } from "$lib/shared-authorization/authorization"
-  import type { StudentDocument, SchoolInfo, DocumentInput } from "$lib/types/db/shared-types"
+  import type { DocumentInput, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
   import DocumentContent from "./DocumentContentItem.svelte"
   import DocumentEditor from "./DocumentEditor.svelte"
   import Message from "./Message.svelte"
@@ -16,12 +16,14 @@
   let { document, accessSchools }: PageProps = $props()
 
   const editableDocumentFromDocument = () => {
-    return JSON.parse(JSON.stringify({
-      content: document.content,
-      school: document.school,
-      template: document.template,
-      title: document.title
-    } as DocumentInput))
+    return JSON.parse(
+      JSON.stringify({
+        content: document.content,
+        school: document.school,
+        template: document.template,
+        title: document.title
+      } as DocumentInput)
+    )
   }
 
   // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounter ved endring av document (ha en key på document i parent)

@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { apiFetch } from "$lib/api-fetch/api-fetch";
-  import type { FrontendStudent, StudentUnavailableSchoolDocuments } from "$lib/types/app-types";
-  import type { StudentDataSharingConsent } from "$lib/types/db/shared-types";
-  import AsyncButton from "../AsyncButton.svelte";
+  import { apiFetch } from "$lib/api-fetch/api-fetch"
+  import type { FrontendStudent, StudentUnavailableSchoolDocuments } from "$lib/types/app-types"
+  import type { StudentDataSharingConsent } from "$lib/types/db/shared-types"
+  import AsyncButton from "../AsyncButton.svelte"
 
   type DataSharingConsentProps = {
     canEdit: boolean
@@ -40,7 +40,6 @@
       }
     })
   }
-
 </script>
 
 <div class="student-section">

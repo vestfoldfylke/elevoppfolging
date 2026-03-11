@@ -3,7 +3,7 @@ import type { SchoolInfo } from "$lib/types/db/shared-types"
 import { getPeriodDetails } from "./period"
 
 export const getFrontendStudentDetails = (student: FrontendStudent, APP_INFO: ApplicationInfo): FrontendStudentDetails => {
-  const mainEnrollment = student.studentEnrollments.find(enrollment => enrollment.mainSchool)
+  const mainEnrollment = student.studentEnrollments.find((enrollment) => enrollment.mainSchool)
 
   if (!mainEnrollment) {
     return {
@@ -21,8 +21,8 @@ export const getFrontendStudentDetails = (student: FrontendStudent, APP_INFO: Ap
   const mainContactTeacherGroupMembership = mainEnrollment.contactTeacherGroupMemberships
     .map((membership) => ({ ...membership, period: getPeriodDetails(membership.period, APP_INFO) }))
     .find((membership) => membership.period.active || membership.period.withinViewAccessWindow)
-  
-    const additionalSchools: SchoolInfo[] = []
+
+  const additionalSchools: SchoolInfo[] = []
   for (const enrollment of student.studentEnrollments || []) {
     if (enrollment.school.schoolNumber === mainSchool?.schoolNumber) {
       continue

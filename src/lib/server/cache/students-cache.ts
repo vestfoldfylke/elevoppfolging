@@ -1,10 +1,10 @@
-import type { CachedFrontendStudent, CachedFrontendStudentWithAccessInfo } from "$lib/types/app-types";
-import type { Access } from "$lib/types/db/shared-types";
-import { logger } from "@vestfoldfylke/loglady";
-import { getStudentAccessInfo } from "../authorization/student-access";
-import { getDbClient } from "../db/get-db-client";
-import { APP_INFO } from "../app-info";
-import { getFrontendStudentDetails } from "$lib/utils/frontend-student-details";
+import { logger } from "@vestfoldfylke/loglady"
+import type { CachedFrontendStudent, CachedFrontendStudentWithAccessInfo } from "$lib/types/app-types"
+import type { Access } from "$lib/types/db/shared-types"
+import { getFrontendStudentDetails } from "$lib/utils/frontend-student-details"
+import { APP_INFO } from "../app-info"
+import { getStudentAccessInfo } from "../authorization/student-access"
+import { getDbClient } from "../db/get-db-client"
 
 type StudentsCache = {
   updateInProgress: boolean
@@ -41,10 +41,10 @@ export const updateStudentsCache = async () => {
 }
 
 /**
- * 
+ *
  * returns student available based on the access parameter
  * If cache is empty, it will populate the cache before returning students
- * If cache is too old, it will update the cache in the background but return the old cache for now, to avoid making users wait for the cache to update. 
+ * If cache is too old, it will update the cache in the background but return the old cache for now, to avoid making users wait for the cache to update.
  */
 export const getStudentsFromCache = async (access: Access): Promise<CachedFrontendStudentWithAccessInfo[]> => {
   const studentsWithAccessInfo: CachedFrontendStudentWithAccessInfo[] = []

@@ -10,35 +10,35 @@ import type {
   AvailableForDocumentType,
   DbAccess,
   DbAppStudent,
-  DbStudentDocument,
   DbDocumentContentTemplate,
   DbProgramArea,
   DbSchool,
+  DbStudentCheckBox,
   DbStudentDataSharingConsent,
+  DbStudentDocument,
   DbStudentImportantStuff,
-  StudentDocument,
   DocumentContentTemplate,
   DocumentMessage,
   EditorData,
   ManualAccessEntryInput,
   NewAccess,
-  NewDbStudentDocument,
   NewDbStudentDataSharingConsent,
+  NewDbStudentDocument,
   NewDbStudentImportantStuff,
-  NewStudentDocument,
   NewDocumentContentTemplate,
   NewDocumentMessage,
   NewSchool,
+  NewStudentCheckBox,
   NewStudentDataSharingConsent,
+  NewStudentDocument,
   NewStudentImportantStuff,
   ProgramArea,
   School,
   SchoolInfo,
-  StudentDataSharingConsent,
-  StudentImportantStuff,
   StudentCheckBox,
-  DbStudentCheckBox,
-  NewStudentCheckBox
+  StudentDataSharingConsent,
+  StudentDocument,
+  StudentImportantStuff
 } from "$lib/types/db/shared-types"
 
 export class MongoDbClient implements IDbClient {
@@ -288,7 +288,7 @@ export class MongoDbClient implements IDbClient {
   async getAllStudents(): Promise<FrontendStudent[]> {
     const db = await this.getDb()
     const studentsCollection = db.collection<DbAppStudent>(this.studentsCollectionName)
-    
+
     const projection: KeysToNumber<WithId<FrontendStudent>> = {
       _id: 1,
       feideName: 1,
@@ -298,11 +298,11 @@ export class MongoDbClient implements IDbClient {
       created: 1,
       modified: 1,
       source: 1,
-      studentEnrollments: 1,
+      studentEnrollments: 1
     }
 
     const students = await studentsCollection.find<FrontendStudent>({}, { projection }).toArray()
-    
+
     return students.map((student) => ({
       ...student,
       _id: student._id.toString()
@@ -321,7 +321,7 @@ export class MongoDbClient implements IDbClient {
     }
 
     const accessEntryNotInSchoolsAccess = (accessEntry: AccessEntry): boolean => {
-      return !access.schools.some(school => school.schoolNumber === accessEntry.schoolNumber)
+      return !access.schools.some((school) => school.schoolNumber === accessEntry.schoolNumber)
     }
 
     const studentAccessEntries = access.students.filter(accessEntryNotInSchoolsAccess)
@@ -330,35 +330,41 @@ export class MongoDbClient implements IDbClient {
     const classAccessEntries = access.classes.filter(accessEntryNotInSchoolsAccess)
     const teachingGroupAccessEntries = access.teachingGroups.filter(accessEntryNotInSchoolsAccess)
 
-    const schoolsToAddToQuery = [...new Set<string>([
-      ...programAreaAccessEntries.map(programArea => programArea.schoolNumber),
-      ...studentAccessEntries.map(student => student.schoolNumber),
-      ...classAccessEntries.map(classAccess => classAccess.schoolNumber),
-      ...contactTeacherGroupAccessEntries.map(contactTeacherGroupAccess => contactTeacherGroupAccess.schoolNumber),
-      ...teachingGroupAccessEntries.map(teachingGroupAccess => teachingGroupAccess.schoolNumber)
-    ])]
+    const schoolsToAddToQuery = [
+      ...new Set<string>([
+        ...programAreaAccessEntries.map((programArea) => programArea.schoolNumber),
+        ...studentAccessEntries.map((student) => student.schoolNumber),
+        ...classAccessEntries.map((classAccess) => classAccess.schoolNumber),
+        ...contactTeacherGroupAccessEntries.map((contactTeacherGroupAccess) => contactTeacherGroupAccess.schoolNumber),
+        ...teachingGroupAccessEntries.map((teachingGroupAccess) => teachingGroupAccess.schoolNumber)
+      ])
+    ]
 
     // Expand programareas right here, and cache it (add them to classSystemIds) - get it from function that has caching (or get them once somewhere else and pass them in)
 
     for (const schoolNumber of schoolsToAddToQuery) {
       const schoolQuery: Filter<DbAppStudent> = { "studentEnrollments.school.schoolNumber": schoolNumber, $or: [] }
-      
-      const studentIds = studentAccessEntries.filter(studentAccess => studentAccess.schoolNumber === schoolNumber).map(studentAccess => studentAccess._id)
+
+      const studentIds = studentAccessEntries.filter((studentAccess) => studentAccess.schoolNumber === schoolNumber).map((studentAccess) => studentAccess._id)
       if (studentIds.length > 0) {
-        schoolQuery.$or?.push({ _id: { $in: studentIds.map(id => new ObjectId(id)) } })
+        schoolQuery.$or?.push({ _id: { $in: studentIds.map((id) => new ObjectId(id)) } })
       }
 
-      const contactTeacherGroupSystemIds = contactTeacherGroupAccessEntries.filter(contactTeacherGroupAccess => contactTeacherGroupAccess.schoolNumber === schoolNumber).map(contactTeacherGroupAccess => contactTeacherGroupAccess.systemId)
+      const contactTeacherGroupSystemIds = contactTeacherGroupAccessEntries
+        .filter((contactTeacherGroupAccess) => contactTeacherGroupAccess.schoolNumber === schoolNumber)
+        .map((contactTeacherGroupAccess) => contactTeacherGroupAccess.systemId)
       if (contactTeacherGroupSystemIds.length > 0) {
         schoolQuery.$or?.push({ "studentEnrollments.contactTeacherGroupMemberships.contactTeacherGroup.systemId": { $in: contactTeacherGroupSystemIds } })
       }
 
-      const classSystemIds = classAccessEntries.filter(classAccess => classAccess.schoolNumber === schoolNumber).map(classAccess => classAccess.systemId)
+      const classSystemIds = classAccessEntries.filter((classAccess) => classAccess.schoolNumber === schoolNumber).map((classAccess) => classAccess.systemId)
       if (classSystemIds.length > 0) {
         schoolQuery.$or?.push({ "studentEnrollments.classMemberships.classGroup.systemId": { $in: classSystemIds } })
       }
 
-      const teachingGroupSystemIds = teachingGroupAccessEntries.filter(teachingGroupAccess => teachingGroupAccess.schoolNumber === schoolNumber).map(teachingGroupAccess => teachingGroupAccess.systemId)
+      const teachingGroupSystemIds = teachingGroupAccessEntries
+        .filter((teachingGroupAccess) => teachingGroupAccess.schoolNumber === schoolNumber)
+        .map((teachingGroupAccess) => teachingGroupAccess.systemId)
       if (teachingGroupSystemIds.length > 0) {
         schoolQuery.$or?.push({ "studentEnrollments.teachingGroupMemberships.teachingGroup.systemId": { $in: teachingGroupSystemIds } })
       }
@@ -375,7 +381,7 @@ export class MongoDbClient implements IDbClient {
       created: 1,
       modified: 1,
       source: 1,
-      studentEnrollments: 1,
+      studentEnrollments: 1
     }
 
     const superAllStudent = await studentsCollection.find<FrontendStudent>(query, { projection }).toArray()

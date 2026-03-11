@@ -1,13 +1,13 @@
 import { logger } from "@vestfoldfylke/loglady"
+import { getStudentsFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
+import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
+import type { CachedFrontendStudentWithAccessInfo, FrontendOverviewStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { StudentDataSharingConsent, StudentImportantStuff } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
 import type { LayoutServerLoad } from "./$types"
-import { HTTPError } from "$lib/server/middleware/http-error"
-import { getStudentsFromCache } from "$lib/server/cache/students-cache"
-import type { CachedFrontendStudentWithAccessInfo, FrontendOverviewStudent } from "$lib/types/app-types"
 
 type StudentsPageData = {
   students: FrontendOverviewStudent[]

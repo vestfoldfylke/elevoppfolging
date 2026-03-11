@@ -23,7 +23,7 @@ const getSchoolAccessAdministrationData: ServerLoadNextFunction<SchoolAccessAdmi
     throw new HTTPError(404, "No access found for principal")
   }
 
-  if (!access.schools.some(schoolAccess => schoolAccess.schoolNumber === schoolNumber)) {
+  if (!access.schools.some((schoolAccess) => schoolAccess.schoolNumber === schoolNumber)) {
     throw new HTTPError(403, "No access to this administrate access for this school")
   }
 

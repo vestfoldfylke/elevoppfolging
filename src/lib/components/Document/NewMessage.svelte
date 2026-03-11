@@ -3,8 +3,8 @@
   import Message from "./Message.svelte"
 
   type PageProps = {
-    documentId: string,
-    groupId?: string,
+    documentId: string
+    groupId?: string
     studentId?: string
   }
 
@@ -19,7 +19,7 @@
     },
     at: new Date()
   }
-  
+
   const newComment: DocumentMessage = {
     messageId: "",
     type: "comment",

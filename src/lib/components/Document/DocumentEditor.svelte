@@ -1,6 +1,6 @@
 <script lang="ts">
   import { apiFetch } from "$lib/api-fetch/api-fetch"
-  import type { SchoolInfo, DocumentInput } from "$lib/types/db/shared-types"
+  import type { DocumentInput, SchoolInfo } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
   import DocumentContentItem from "./DocumentContentItem.svelte"
 

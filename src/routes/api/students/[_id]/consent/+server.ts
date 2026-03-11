@@ -1,13 +1,13 @@
 import type { RequestHandler } from "@sveltejs/kit"
+import { validateStudentDataSharingConsentData } from "$lib/data-validation/student-consent"
+import { getStudentAccessInfo } from "$lib/server/authorization/student-access"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
+import { canEditStudentDataSharingConsent } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap } from "$lib/types/api/api-route-map"
 import type { NewStudentDataSharingConsent } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
-import { validateStudentDataSharingConsentData } from "$lib/data-validation/student-consent"
-import { getStudentAccessInfo } from "$lib/server/authorization/student-access"
-import { canEditStudentDataSharingConsent } from "$lib/shared-authorization/authorization"
 
 type PatchConsentResponse = ApiRouteMap[`/api/students/${string}/consent`]["PATCH"]["res"]
 type PatchConsentBody = ApiRouteMap[`/api/students/${string}/consent`]["PATCH"]["req"]

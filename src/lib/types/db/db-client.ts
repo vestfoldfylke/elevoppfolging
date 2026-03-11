@@ -3,24 +3,24 @@ import type {
   Access,
   AppUser,
   AvailableForDocumentType,
-  StudentDocument,
   DocumentContentTemplate,
   DocumentMessage,
   ManualAccessEntryInput,
   NewAccess,
-  NewStudentDocument,
   NewDocumentContentTemplate,
   NewDocumentMessage,
   NewSchool,
+  NewStudentCheckBox,
   NewStudentDataSharingConsent,
+  NewStudentDocument,
   NewStudentImportantStuff,
   ProgramArea,
   School,
   SchoolInfo,
-  StudentDataSharingConsent,
-  StudentImportantStuff,
   StudentCheckBox,
-  NewStudentCheckBox
+  StudentDataSharingConsent,
+  StudentDocument,
+  StudentImportantStuff
 } from "./shared-types.js"
 
 export interface IDbClient {
@@ -48,7 +48,7 @@ export interface IDbClient {
   getStudentDocuments(studentId: string): Promise<StudentDocument[]>
   getStudentDocumentById(documentId: string): Promise<StudentDocument | null>
   createStudentDocument(document: NewStudentDocument): Promise<string>
-  
+
   addDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<DocumentMessage>
 
   getStudentsImportantStuff(studentIds: string[]): Promise<Record<string, Record<string, StudentImportantStuff>>>
