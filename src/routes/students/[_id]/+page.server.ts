@@ -4,7 +4,7 @@ import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
 import type { AccessEntry, FrontendStudent, StudentUnavailableSchoolDocuments } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { Access, Document, DocumentContentTemplate, SchoolInfo, StudentDataSharingConsent, StudentImportantStuff } from "$lib/types/db/shared-types"
+import type { Access, StudentDocument, DocumentContentTemplate, SchoolInfo, StudentDataSharingConsent, StudentImportantStuff } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
 import type { PageServerLoad } from "./$types"
 
@@ -13,7 +13,7 @@ type StudentPageData = {
   studentDataSharingConsent: StudentDataSharingConsent | null
   importantStuff: StudentImportantStuff | null
   studentAccessInfo: AccessEntry[]
-  documents: Document[]
+  documents: StudentDocument[]
   unavailableSchoolDocuments: StudentUnavailableSchoolDocuments[]
   documentContentTemplates: DocumentContentTemplate[]
 }
@@ -54,7 +54,7 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 
   const studentImportantStuff: StudentImportantStuff | null = await dbClient.getStudentImportantStuff(studentId, schoolNumberToGetImportantStuffFor) // Vi henter kun important stuff for første skolen de har eleven tilgjengelig på
 
-  const allStudentDocuments: Document[] = await dbClient.getStudentDocuments(studentId)
+  const allStudentDocuments: StudentDocument[] = await dbClient.getStudentDocuments(studentId)
 
   const studentDataSharingConsent: StudentDataSharingConsent | null = await dbClient.getStudentDataSharingConsent(studentId)
 

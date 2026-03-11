@@ -3,10 +3,12 @@
   import Message from "./Message.svelte"
 
   type PageProps = {
-    documentId: string
+    documentId: string,
+    groupId?: string,
+    studentId?: string
   }
 
-  let { documentId }: PageProps = $props()
+  let { documentId, groupId, studentId }: PageProps = $props()
 
   let messageType: "comment" | null = $state(null)
 
@@ -15,8 +17,9 @@
       entraUserId: "Blabla",
       fallbackName: "Du"
     },
-    at: ""
+    at: new Date()
   }
+  
   const newComment: DocumentMessage = {
     messageId: "",
     type: "comment",
@@ -35,7 +38,7 @@
 {#if messageType === null}
   <button onclick={() => messageType = "comment"}><span class="material-symbols-outlined">add_comment</span>Ny kommentar</button>
 {:else if messageType === "comment"}
-  <Message editMode={true} {documentId} message={newComment} callback={onNewMessageCreated} />
+  <Message {studentId} {groupId} editMode={true} {documentId} message={newComment} callback={onNewMessageCreated} />
 {/if}
 
 <style>

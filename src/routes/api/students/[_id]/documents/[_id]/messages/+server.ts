@@ -3,19 +3,23 @@ import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import type { ApiRouteMap } from "$lib/types/api/api-route-map"
-import type { DocumentMessage, EditorData, NewDocumentMessage } from "$lib/types/db/shared-types"
+import type { DocumentMessage, DocumentMessageInput, EditorData, NewDocumentMessage } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
-type AddDocumentMessageResponse = ApiRouteMap[`/api/documents/${string}/messages`]["POST"]["res"]
-type AddDocumentMessageBody = ApiRouteMap[`/api/documents/${string}/messages`]["POST"]["req"]
+type AddDocumentMessageResponse = ApiRouteMap[`/api/students/${string}/documents/${string}/messages`]["POST"]["res"]
+type AddDocumentMessageBody = ApiRouteMap[`/api/students/${string}/documents/${string}/messages`]["POST"]["req"]
 
 const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumentMessageBody> = async ({ requestEvent, principal, body }) => {
+  const studentId = requestEvent.params._id
+  if (!studentId) {
+    throw new HTTPError(400, "Student ID is missing in request parameters")
+  }
   const documentId = requestEvent.params._id
   if (!documentId || typeof documentId !== "string") {
     throw new HTTPError(400, "Document ID is missing in request parameters")
   }
 
-  const newMessageData: DocumentMessage = body
+  const newMessageData: DocumentMessageInput = body
   // TODO validate body
 
   const editorData: EditorData = {
@@ -53,12 +57,14 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
   const dbClient = getDbClient()
 
   // TODO authorization check if principal has access to the document
-  const currentDocument = await dbClient.getDocumentById(documentId)
+  const currentDocument = await dbClient.getStudentDocumentById(documentId)
   if (!currentDocument) {
     throw new HTTPError(404, "Document not found, cannot add message to non-existing document...")
   }
 
-  const createdMessage = await dbClient.addDocumentMessage(documentId, newMessage, currentDocument.student?._id)
+  const createdMessage = await dbClient.addDocumentMessage(documentId, newMessage)
+
+  // TODO update lastActivityTimestamp for the student
 
   return {
     messageId: createdMessage.messageId

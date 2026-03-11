@@ -1,21 +1,35 @@
 <script lang="ts">
   import { apiFetch } from "$lib/api-fetch/api-fetch"
-  import type { DocumentMessage } from "$lib/types/db/shared-types"
+  import type { DocumentMessage, DocumentMessageInput } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
 
   type PageProps = {
     documentId: string
     message: DocumentMessage
     editMode: boolean
+    studentId?: string
+    groupId?: string
     callback?: () => void
   }
 
-  let { documentId, message, editMode, callback }: PageProps = $props()
+  let { documentId, message, editMode, studentId, groupId, callback }: PageProps = $props()
 
   // svelte-ignore state_referenced_locally (we dont want to modify the original)
-  let editableMessage: DocumentMessage = $state(message)
+  let editableMessage: DocumentMessageInput  = $state({
+    type: message.type,
+    content: {
+      text: message.content.text
+    }
+  })
 
   let messageForm: HTMLFormElement | undefined = $state()
+
+  const callBackOnSuccess = () => {
+    if (callback) {
+      callback()
+    }
+    editMode = false
+  }
 
   const newMessage = async (): Promise<void> => {
     if (!messageForm) {
@@ -26,18 +40,22 @@
       throw new Error("Mangler påkrevd felt")
     }
 
-    await apiFetch(`/api/documents/${documentId}/messages`, {
+    if (groupId) {
+      throw new Error("Creating messages for groups is not supported yet")
+    }
+    if (!groupId && !studentId) {
+      throw new Error("studentId or groupId must be provided")
+    }
+
+    const createMessageRoute = `/api/students/${studentId}/documents/${documentId}/messages` as const
+
+    await apiFetch(createMessageRoute, {
       method: "POST",
       body: editableMessage,
       headers: {
         "Content-Type": "application/json"
       }
     })
-
-    editMode = false
-    if (callback) {
-      callback()
-    }
   }
 </script>
 
@@ -60,7 +78,7 @@
     
     <div class="message-actions">
       {#if editMode}
-        <AsyncButton buttonText="LAGRE" onClick={newMessage} reloadPageDataOnSuccess={true} />
+        <AsyncButton buttonText="LAGRE" onClick={newMessage} reloadPageDataOnSuccess={true} callBackAfterReloadPageData={callBackOnSuccess} />
       {/if}
     </div>
   </div>

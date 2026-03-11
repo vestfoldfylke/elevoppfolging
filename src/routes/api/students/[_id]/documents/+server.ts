@@ -3,14 +3,19 @@ import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import type { ApiRouteMap } from "$lib/types/api/api-route-map"
-import type { EditorData, NewDocument } from "$lib/types/db/shared-types"
+import type { EditorData, NewStudentDocument } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 import { logger } from "@vestfoldfylke/loglady"
 
-type AddDocumentResponse = ApiRouteMap["/api/documents"]["POST"]["res"]
-type AddDocumentBody = ApiRouteMap["/api/documents"]["POST"]["req"]
+type AddDocumentResponse = ApiRouteMap[`/api/students/${string}/documents`]["POST"]["res"]
+type AddDocumentBody = ApiRouteMap[`/api/students/${string}/documents`]["POST"]["req"]
 
-const addDocumentMessage: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async ({ principal, body }) => {
+const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async ({ requestEvent, principal, body }) => {
+  const studentId = requestEvent.params._id
+  if (!studentId) {
+    throw new HTTPError(400, "Student ID is missing in request parameters")
+  }
+  
   const newDocumentData: AddDocumentBody = body
   // TODO validate body
 
@@ -25,30 +30,17 @@ const addDocumentMessage: ApiNextFunction<AddDocumentResponse, AddDocumentBody> 
     at: new Date()
   }
 
-  if (newDocumentData.student?._id && newDocumentData.group?.systemId) {
-    throw new HTTPError(400, "A document cannot be associated with both a student and a group.")
-  }
-
-  const newDocument: NewDocument = {
+  const newDocument: NewStudentDocument = {
     title: newDocumentData.title,
     school: newDocumentData.school,
     template: newDocumentData.template,
     content: newDocumentData.content,
-    messages: newDocumentData.messages,
+    messages: [],
+    student: {
+      _id: studentId
+    },
     created: editorData,
     modified: editorData
-  }
-
-  if (newDocumentData.student?._id) {
-    newDocument.student = {
-      _id: newDocumentData.student._id
-    }
-  }
-
-  if (newDocumentData.group?.systemId) {
-    newDocument.group = {
-      systemId: newDocumentData.group.systemId
-    }
   }
 
   const dbClient = getDbClient()
@@ -60,9 +52,11 @@ const addDocumentMessage: ApiNextFunction<AddDocumentResponse, AddDocumentBody> 
     }
   }
 
-  const documentId = await dbClient.createDocument(newDocument)
+  const documentId = await dbClient.createStudentDocument(newDocument)
 
   logger.info(`Document created with ID ${documentId} by user ${principal.displayName} (${principal.id})`)
+
+  // TODO update lastActivityTimestamp for the student
 
   return {
     documentId
@@ -70,5 +64,5 @@ const addDocumentMessage: ApiNextFunction<AddDocumentResponse, AddDocumentBody> 
 }
 
 export const POST: RequestHandler = async (requestEvent) => {
-  return apiRequestMiddleware<AddDocumentResponse, AddDocumentBody>(requestEvent, addDocumentMessage)
+  return apiRequestMiddleware<AddDocumentResponse, AddDocumentBody>(requestEvent, addDocument)
 }

@@ -2,21 +2,30 @@
   import { slide } from "svelte/transition"
   import { page } from "$app/state"
   import { canEditDocument } from "$lib/shared-authorization/authorization"
-  import type { Document, SchoolInfo } from "$lib/types/db/shared-types"
+  import type { StudentDocument, SchoolInfo, DocumentInput } from "$lib/types/db/shared-types"
   import DocumentContent from "./DocumentContentItem.svelte"
   import DocumentEditor from "./DocumentEditor.svelte"
   import Message from "./Message.svelte"
   import NewMessage from "./NewMessage.svelte"
 
   type PageProps = {
-    document: Document
+    document: StudentDocument // Add GroupDocument union when needed
     accessSchools: SchoolInfo[]
   }
 
   let { document, accessSchools }: PageProps = $props()
 
-  // svelte-ignore state_referenced_locally - we don't want to mutate the original document prop, but we want to be able to edit the document in the editor, so we create a local copy of the document that we can mutate
-  let editableDocument = $state(JSON.parse(JSON.stringify(document)))
+  const editableDocumentFromDocument = () => {
+    return JSON.parse(JSON.stringify({
+      content: document.content,
+      school: document.school,
+      template: document.template,
+      title: document.title
+    } as DocumentInput))
+  }
+
+  // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounter ved endring av document (ha en key på document i parent)
+  let editableDocument: DocumentInput = $state(editableDocumentFromDocument())
 
   let documentOpen = $state(false)
   let editMode = $state(false)
@@ -39,7 +48,8 @@
             <DocumentContent {contentItem} editMode={false} {index} previewMode={true} />
           {/each}
         {:else}
-          <DocumentEditor bind:currentDocument={editableDocument} accessSchools={accessSchools} closeEditor={() => { editMode = false; editableDocument = JSON.parse(JSON.stringify(document)); }} />
+          <!-- Add groupId when needed -->
+          <DocumentEditor documentId={document._id} studentId={document.student._id} bind:currentDocument={editableDocument} accessSchools={accessSchools} closeEditor={() => { editMode = false; editableDocument = editableDocumentFromDocument(); }} />
         {/if}
         <div class="document-actions">
           {#if !editMode && canEditDocument(page.data.authenticatedPrincipal, document)}
@@ -52,12 +62,12 @@
       {#if document.messages.length > 0}
         <div class="document-messages">
           {#each document.messages as message (message.messageId)}
-            <Message {message} editMode={false} documentId={document._id} />
+            <Message {message} editMode={false} documentId={document._id} studentId={document.student._id} />
           {/each}
         </div>
       {/if}
       <div class="message-actions">
-        <NewMessage documentId={document._id} />
+        <NewMessage documentId={document._id} studentId={document.student._id} />
       </div>
     </div>
   {/if}

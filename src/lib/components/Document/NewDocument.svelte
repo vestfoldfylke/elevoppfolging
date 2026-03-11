@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte"
-  import type { Document, DocumentContentTemplate, EditorData, SchoolInfo } from "$lib/types/db/shared-types"
+  import type { DocumentContentTemplate, SchoolInfo, DocumentInput } from "$lib/types/db/shared-types"
   import DocumentEditor from "./DocumentEditor.svelte"
 
   type PageProps = {
@@ -14,35 +13,25 @@
 
   let creatorOpen = $state(false)
 
-  $effect(() => {
-    if (!studentId && !groupId) {
-      // Legg til sjekk om vi trenger gruppenotater
-      throw new Error("Student ID or Group ID is required to create a new document")
-    }
-    if (studentId && groupId) {
-      throw new Error("Both Student ID and Group ID provided, only one should be provided")
-    }
-
-    if (accessSchools.length === 0) {
-      throw new Error("At least one access school is required to create a new document")
-    }
-
-    if (documentContentTemplates.length === 0) {
-      throw new Error("At least one document content template is required to create a new document")
-    }
-  })
-
-  const mockEditor: EditorData = {
-    at: "samma det",
-    by: {
-      entraUserId: "samma det",
-      fallbackName: "Samma det"
-    }
+  // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounter ved endring av studentId/groupId
+  if (!studentId && !groupId) {
+    throw new Error("Student ID or Group ID is required to create a new document")
+  }
+  // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounter ved endring av studentId/groupId
+  if (studentId && groupId) {
+    throw new Error("Both Student ID and Group ID provided, only one should be provided")
+  }
+  // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounter ved endring av studentId/groupId
+  if (accessSchools.length === 0) {
+    throw new Error("At least one access school is required to create a new document")
+  }
+  // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounter ved endring av studentId/groupId
+  if (documentContentTemplates.length === 0) {
+    throw new Error("At least one document content template is required to create a new document")
   }
 
-  const newDocumentTemplate = (template: DocumentContentTemplate): Document => {
-    const newDocumentFromTemplate: Document = {
-      _id: "",
+  const newDocumentTemplate = (template: DocumentContentTemplate): DocumentInput => {
+    const newDocumentFromTemplate: DocumentInput = {
       title: "",
       content: template.content,
       template: {
@@ -50,20 +39,15 @@
         name: template.name,
         version: template.version
       },
-      created: mockEditor,
-      modified: mockEditor,
-      messages: [],
-      school: accessSchools[0],
-      student: studentId ? { _id: studentId } : undefined,
-      group: groupId ? { systemId: groupId } : undefined
+      school: accessSchools[0]
     }
     return newDocumentFromTemplate
   }
 
-  // svelte-ignore state_referenced_locally det går bra
+  // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounter ved endring av studentId/groupId TODO - sjekk om det skal være derived
   const newDocumentTemplates = documentContentTemplates.map((template) => newDocumentTemplate(template))
 
-  let newDocument: Document = $state(newDocumentTemplates[0])
+  let newDocument: DocumentInput = $state(newDocumentTemplates[0])
 
   const changeDocumentTemplate = (templateId: string) => {
     // TODO - add check to see if there are unsaved changes and warn the user before changing the template
@@ -97,7 +81,7 @@
       <h2>{newDocument.template.name}: {newDocument.title}</h2>
       <div>{newDocument.school.name}</div>
     </div>
-    <DocumentEditor {accessSchools} bind:currentDocument={newDocument} closeEditor={() => creatorOpen = false} />
+    <DocumentEditor {studentId} {groupId} {accessSchools} bind:currentDocument={newDocument} closeEditor={() => creatorOpen = false} />
   </div>
 {/if}
 

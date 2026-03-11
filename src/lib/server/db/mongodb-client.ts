@@ -10,22 +10,22 @@ import type {
   AvailableForDocumentType,
   DbAccess,
   DbAppStudent,
-  DbDocument,
+  DbStudentDocument,
   DbDocumentContentTemplate,
   DbProgramArea,
   DbSchool,
   DbStudentDataSharingConsent,
   DbStudentImportantStuff,
-  Document,
+  StudentDocument,
   DocumentContentTemplate,
   DocumentMessage,
   EditorData,
   ManualAccessEntryInput,
   NewAccess,
-  NewDbDocument,
+  NewDbStudentDocument,
   NewDbStudentDataSharingConsent,
   NewDbStudentImportantStuff,
-  NewDocument,
+  NewStudentDocument,
   NewDocumentContentTemplate,
   NewDocumentMessage,
   NewSchool,
@@ -420,11 +420,11 @@ export class MongoDbClient implements IDbClient {
     }
   }
 
-  async getStudentDocuments(studentId: string): Promise<Document[]> {
+  async getStudentDocuments(studentId: string): Promise<StudentDocument[]> {
     const db = await this.getDb()
-    const documentsCollection = db.collection<DbDocument>(this.documentsCollectionName)
+    const documentsCollection = db.collection<DbStudentDocument>(this.documentsCollectionName)
 
-    type DocumentWithCreator = DbDocument & {
+    type DocumentWithCreator = DbStudentDocument & {
       tyler_the_creator?: {
         entra: {
           displayName: string
@@ -463,13 +463,13 @@ export class MongoDbClient implements IDbClient {
     // await new Promise((resolve) => setTimeout(resolve, 2500))
 
     return documents
-      .map((document: DocumentWithCreator): Document => {
+      .map((document: DocumentWithCreator): StudentDocument => {
         const createdByDisplayName = document.tyler_the_creator && document.tyler_the_creator.length > 0 ? document.tyler_the_creator[0].entra.displayName : undefined
         delete document.tyler_the_creator
 
-        const studentDocument: Document = {
+        const studentDocument: StudentDocument = {
           ...document,
-          student: document.student ? { _id: document.student._id.toString() } : undefined,
+          student: { _id: document.student._id.toString() },
           _id: document._id.toString()
         }
         if (createdByDisplayName) {
@@ -480,9 +480,9 @@ export class MongoDbClient implements IDbClient {
       .sort((a, b) => new Date(b.created.at).getTime() - new Date(a.created.at).getTime()) // Sort by created date descending
   }
 
-  async getDocumentById(documentId: string): Promise<Document | null> {
+  async getStudentDocumentById(documentId: string): Promise<StudentDocument | null> {
     const db = await this.getDb()
-    const documentsCollection = db.collection<DbDocument>(this.documentsCollectionName)
+    const documentsCollection = db.collection<DbStudentDocument>(this.documentsCollectionName)
 
     const document = await documentsCollection.findOne({ _id: new ObjectId(documentId) })
 
@@ -492,18 +492,18 @@ export class MongoDbClient implements IDbClient {
 
     return {
       ...document,
-      student: document.student ? { _id: document.student._id.toString() } : undefined,
+      student: { _id: document.student._id.toString() },
       _id: document._id.toString()
     }
   }
 
-  async createDocument(document: NewDocument): Promise<string> {
+  async createStudentDocument(document: NewStudentDocument): Promise<string> {
     const db = await this.getDb()
-    const documentsCollection = db.collection<NewDbDocument>(this.documentsCollectionName)
+    const documentsCollection = db.collection<NewDbStudentDocument>(this.documentsCollectionName)
 
-    const documentToInsert: NewDbDocument = {
+    const documentToInsert: NewDbStudentDocument = {
       ...document,
-      student: document.student ? { _id: new ObjectId(document.student._id) } : undefined
+      student: { _id: new ObjectId(document.student._id) }
     }
 
     const result = await documentsCollection.insertOne(documentToInsert)
@@ -525,7 +525,7 @@ export class MongoDbClient implements IDbClient {
 
   async addDocumentMessage(documentId: string, message: NewDocumentMessage, studentId?: string): Promise<DocumentMessage> {
     const db = await this.getDb()
-    const documentsCollection = db.collection<DbDocument>(this.documentsCollectionName)
+    const documentsCollection = db.collection<DbStudentDocument>(this.documentsCollectionName)
 
     const messageWithId = {
       ...message,

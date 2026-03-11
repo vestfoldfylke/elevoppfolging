@@ -1,16 +1,19 @@
 <script lang="ts">
   import { apiFetch } from "$lib/api-fetch/api-fetch"
-  import type { Document, SchoolInfo } from "$lib/types/db/shared-types"
+  import type { SchoolInfo, DocumentInput } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
   import DocumentContentItem from "./DocumentContentItem.svelte"
 
   type EditorProps = {
-    currentDocument: Document
+    documentId?: string
+    studentId?: string
+    groupId?: string
+    currentDocument: DocumentInput
     accessSchools: SchoolInfo[]
     closeEditor: () => void
   }
 
-  let { accessSchools, currentDocument = $bindable(), closeEditor }: EditorProps = $props()
+  let { documentId, studentId, groupId, accessSchools, currentDocument = $bindable(), closeEditor }: EditorProps = $props()
 
   let documentEditorForm: HTMLFormElement | undefined = $state()
 
@@ -23,7 +26,13 @@
       throw new Error("Mangler påkrevd felt")
     }
 
-    await apiFetch(`/api/documents`, {
+    if (groupId) {
+      throw new Error("Creating documents for groups is not supported yet")
+    }
+
+    const createDocumentRoute = `/api/students/${studentId}/documents` as const
+
+    await apiFetch(createDocumentRoute, {
       method: "POST",
       body: currentDocument,
       headers: {
@@ -35,7 +44,7 @@
 
 <div class="document-content">
   <form bind:this={documentEditorForm}>
-    {#if accessSchools.length > 1 && !currentDocument._id}
+    {#if accessSchools.length > 1 && !documentId} <!-- Only show school selector when creating a new document and there are multiple access schools -->
       <div class="document-content-item">
         <label for="schoolNumber">
           Skole
@@ -60,7 +69,7 @@
   </form>
 </div>
 <div class="document-actions">
-  {#if !currentDocument._id}
+  {#if !documentId}
     <AsyncButton buttonText="Lagre notat" onClick={newDocument} reloadPageDataOnSuccess={true} callBackAfterReloadPageData={closeEditor} iconName="save" classList={["filled"]} />
   {/if}
   <button class="filled danger" onclick={closeEditor}><span class="material-symbols-outlined">close</span>Avbryt</button>

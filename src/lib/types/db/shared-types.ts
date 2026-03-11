@@ -323,6 +323,8 @@ export type DocumentCommentInput = {
   }
 }
 
+export type DocumentMessageInput = DocumentCommentInput
+
 export type DocumentComment = DocumentMessageBase & DocumentCommentInput
 
 export type NewDocumentMessage = DocumentComment
@@ -345,31 +347,29 @@ export type DocumentInput = {
     version: number
   }
   content: DocumentContentItem[]
-  messages: DocumentMessage[]
-  group?: {
-    systemId: string
-  },
-  student?: {
-    _id: string
-  }
   /*
   accessTypes: AccessEntry["type"][]
   */
 }
 
-export type NewDocument = DocumentBase & DocumentInput
+export type NewStudentDocument = DocumentBase & DocumentInput & {
+  messages: DocumentMessage[]
+  student: {
+    _id: string
+  }
+}
 
-export type Document = NewDocument & {
+export type StudentDocument = NewStudentDocument & {
   _id: string
 }
 
-export type NewDbDocument = Omit<NewDocument, "student"> & {
-  student?: {
+export type NewDbStudentDocument = Omit<NewStudentDocument, "student"> & {
+  student: {
     _id: ObjectId
   }
 }
 
-export type DbDocument = NewDbDocument & {
+export type DbStudentDocument = NewDbStudentDocument & {
   _id: ObjectId
 }
 

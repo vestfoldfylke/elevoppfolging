@@ -3,12 +3,12 @@ import type {
   Access,
   AppUser,
   AvailableForDocumentType,
-  Document,
+  StudentDocument,
   DocumentContentTemplate,
   DocumentMessage,
   ManualAccessEntryInput,
   NewAccess,
-  NewDocument,
+  NewStudentDocument,
   NewDocumentContentTemplate,
   NewDocumentMessage,
   NewSchool,
@@ -43,10 +43,11 @@ export interface IDbClient {
   getStudents(access: Access): Promise<FrontendStudent[]>
   getStudentById(studentId: string): Promise<FrontendStudent | null>
 
-  getStudentDocuments(studentId: string): Promise<Document[]>
-  getDocumentById(documentId: string): Promise<Document | null>
-  createDocument(document: NewDocument): Promise<string>
-  addDocumentMessage(documentId: string, message: NewDocumentMessage, studentId?: string): Promise<DocumentMessage> // TODO - lag egne metoder for createStudentDocument osv
+  getStudentDocuments(studentId: string): Promise<StudentDocument[]>
+  getStudentDocumentById(documentId: string): Promise<StudentDocument | null>
+  createStudentDocument(document: NewStudentDocument): Promise<string>
+  
+  addDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<DocumentMessage>
 
   getStudentsImportantStuff(studentIds: string[]): Promise<Record<string, Record<string, StudentImportantStuff>>>
   getStudentImportantStuff(studentId: string, schoolNumber: string): Promise<StudentImportantStuff | null>
