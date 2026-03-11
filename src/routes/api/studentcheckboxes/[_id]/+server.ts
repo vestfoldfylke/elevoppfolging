@@ -71,6 +71,7 @@ const updateStudentCheckBox: ApiNextFunction<UpdateStudentCheckBoxResponse, Upda
     type: updatedStudentCheckBoxData.type,
     value: updatedStudentCheckBoxData.value,
     enabled: updatedStudentCheckBoxData.enabled,
+    sort: updatedStudentCheckBoxData.sort,
     modified: {
       by: {
         entraUserId: principal.id,

@@ -23,7 +23,8 @@
     value: "",
     enabled: true,
     created: mockEditor,
-    modified: mockEditor
+    modified: mockEditor,
+    sort: 10
   }
 
   const newStudentFacilitationCheckBox: StudentCheckBox = {
@@ -39,7 +40,7 @@
   {#if data.checkBoxes.filter(checkBox => checkBox.type === "FOLLOW_UP").length === 0}
     <p>Ingen oppfølgings-sjekkbokser er lagt til enda</p>
   {/if}
-  {#each data.checkBoxes.filter(checkBox => checkBox.type === "FOLLOW_UP") as checkBox}
+  {#each data.checkBoxes.filter(checkBox => checkBox.type === "FOLLOW_UP") as checkBox (checkBox._id)}
     <StudentCheckBoxComponent {checkBox} editMode={false} />
   {/each}
   <div class="add-student-checkbox">
@@ -56,7 +57,7 @@
   {#if data.checkBoxes.filter(checkBox => checkBox.type === "FACILITATION").length === 0}
     <p>Ingen tilretteleggings-sjekkbokser er lagt til enda</p>
   {/if}
-  {#each data.checkBoxes.filter(checkBox => checkBox.type === "FACILITATION") as checkBox}
+  {#each data.checkBoxes.filter(checkBox => checkBox.type === "FACILITATION") as checkBox (checkBox._id)}
     <StudentCheckBoxComponent {checkBox} editMode={false} />
   {/each}
   <div class="add-student-checkbox">

@@ -42,6 +42,7 @@ const addStudentCheckBox: ApiNextFunction<AddStudentCheckBoxResponse, AddStudent
     type: newStudentCheckBoxData.type,
     value: newStudentCheckBoxData.value,
     enabled: newStudentCheckBoxData.enabled,
+    sort: newStudentCheckBoxData.sort,
     created: editorData,
     modified: editorData
   }

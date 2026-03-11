@@ -401,6 +401,7 @@ export type StudentCheckBoxInput = {
   type: "FACILITATION" | "FOLLOW_UP"
   value: string
   enabled: boolean
+  sort: number
 }
 
 export type NewStudentCheckBox = StudentCheckBoxInput & {

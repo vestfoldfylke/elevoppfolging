@@ -18,7 +18,9 @@
     // svelte-ignore state_referenced_locally - we want a local copy
     type: checkBox.type,
     // svelte-ignore state_referenced_locally - we want a local copy
-    value: checkBox.value
+    value: checkBox.value,
+    // svelte-ignore state_referenced_locally - we want a local copy
+    sort: checkBox.sort
   } as StudentCheckBoxInput)
 
   let studentCheckBoxForm: HTMLFormElement | undefined = $state()
@@ -91,6 +93,10 @@
       <label>
         <input type="checkbox" bind:checked={editableCheckBox.enabled} />
         Aktiv
+      </label>
+      <label>
+        Sortering
+        <input type="number" bind:value={editableCheckBox.sort} required />
       </label>
     </form>
     {#if !checkBox._id}

@@ -22,7 +22,7 @@ const getStudentCheckBoxes: ServerLoadNextFunction<StudentCheckBoxesPageData> = 
 
   return {
     data: {
-      checkBoxes
+      checkBoxes: checkBoxes.sort((a, b) => a.sort - b.sort)
     },
     isAuthorized: true
   }

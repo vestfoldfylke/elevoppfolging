@@ -22,5 +22,9 @@ export const validateStudentCheckBox = (checkBoxData: StudentCheckBoxInput): Val
     return { valid: false, message: "'enabled' must be a boolean" }
   }
 
+  if (typeof checkBoxData.sort !== "number" || !Number.isInteger(checkBoxData.sort) || checkBoxData.sort < 0) {
+    return { valid: false, message: "'sort' must be a non-negative integer" }
+  }
+
   return { valid: true, message: "" }
 }
