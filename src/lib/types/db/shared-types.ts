@@ -396,6 +396,26 @@ export type DbDocumentContentTemplate = NewDocumentContentTemplate & {
   _id: ObjectId
 }
 
+// Student Check boxes
+export type StudentCheckBoxInput = {
+  type: "FACILITATION" | "FOLLOW_UP"
+  value: string
+  enabled: boolean
+}
+
+export type NewStudentCheckBox = StudentCheckBoxInput & {
+  modified: EditorData
+  created: EditorData
+}
+
+export type StudentCheckBox = NewStudentCheckBox & {
+  _id: string
+}
+
+export type DbStudentCheckBox = NewStudentCheckBox & {
+  _id: ObjectId
+}
+
 // Important Stuff
 
 export type ImportantStuffBase = {
@@ -406,7 +426,9 @@ export type ImportantStuffBase = {
 export type StudentImportantStuffInput = {
   school: SchoolInfo
   importantInfo: string
+  /** list of _ids corresponding to entries in student check boxes */
   followUp: string[]
+  /** list of _ids corresponding to entries in student check boxes */
   facilitation: string[]
 }
 

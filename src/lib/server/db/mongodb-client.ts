@@ -35,7 +35,10 @@ import type {
   School,
   SchoolInfo,
   StudentDataSharingConsent,
-  StudentImportantStuff
+  StudentImportantStuff,
+  StudentCheckBox,
+  DbStudentCheckBox,
+  NewStudentCheckBox
 } from "$lib/types/db/shared-types"
 
 export class MongoDbClient implements IDbClient {
@@ -50,6 +53,7 @@ export class MongoDbClient implements IDbClient {
   private readonly documentsCollectionName = "documents"
   private readonly documentContentTemplatesCollectionName = "document-content-templates"
   private readonly studentDataSharingConsentsCollectionName = "student-data-sharing-consents"
+  private readonly studentCheckBoxesCollectionName = "student-checkboxes"
 
   constructor() {
     if (!env.MONGODB_CONNECTION_STRING) {
@@ -797,5 +801,41 @@ export class MongoDbClient implements IDbClient {
     }
 
     return result._id.toString()
+  }
+
+  async getStudentCheckBoxes(): Promise<StudentCheckBox[]> {
+    const db = await this.getDb()
+    const studentCheckBoxesCollection = db.collection<DbStudentCheckBox>(this.studentCheckBoxesCollectionName)
+    const checkBoxes = await studentCheckBoxesCollection.find().toArray()
+    return checkBoxes.map((checkBox) => ({
+      ...checkBox,
+      _id: checkBox._id.toString()
+    }))
+  }
+
+  async createStudentCheckBox(studentCheckBox: NewStudentCheckBox): Promise<string> {
+    const db = await this.getDb()
+    const studentCheckBoxesCollection = db.collection<NewStudentCheckBox>(this.studentCheckBoxesCollectionName)
+    const result = await studentCheckBoxesCollection.insertOne(studentCheckBox)
+    return result.insertedId.toString()
+  }
+
+  async updateStudentCheckBox(studentCheckBoxId: string, studentCheckBox: NewStudentCheckBox): Promise<string> {
+    const db = await this.getDb()
+    const studentCheckBoxesCollection = db.collection<NewStudentCheckBox>(this.studentCheckBoxesCollectionName)
+    const result = await studentCheckBoxesCollection.updateOne({ _id: new ObjectId(studentCheckBoxId) }, { $set: studentCheckBox })
+    if (result.matchedCount === 0) {
+      throw new Error("Failed to update student check box")
+    }
+    return studentCheckBoxId
+  }
+
+  async deleteStudentCheckBox(studentCheckBoxId: string): Promise<void> {
+    const db = await this.getDb()
+    const studentCheckBoxesCollection = db.collection<NewStudentCheckBox>(this.studentCheckBoxesCollectionName)
+    const result = await studentCheckBoxesCollection.deleteOne({ _id: new ObjectId(studentCheckBoxId) })
+    if (result.deletedCount === 0) {
+      throw new Error("Failed to delete student check box")
+    }
   }
 }

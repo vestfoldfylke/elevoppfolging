@@ -18,7 +18,9 @@ import type {
   School,
   SchoolInfo,
   StudentDataSharingConsent,
-  StudentImportantStuff
+  StudentImportantStuff,
+  StudentCheckBox,
+  NewStudentCheckBox
 } from "./shared-types.js"
 
 export interface IDbClient {
@@ -63,4 +65,9 @@ export interface IDbClient {
   getStudentDataSharingConsent(studentId: string): Promise<StudentDataSharingConsent | null>
   getStudentsDataSharingConsent(studentIds: string[]): Promise<Record<string, StudentDataSharingConsent>>
   upsertStudentDataSharingConsent(studentId: string, consent: NewStudentDataSharingConsent): Promise<string>
+
+  getStudentCheckBoxes(): Promise<StudentCheckBox[]>
+  createStudentCheckBox(studentCheckBox: NewStudentCheckBox): Promise<string>
+  deleteStudentCheckBox(studentCheckBoxId: string): Promise<void>
+  updateStudentCheckBox(studentCheckBoxId: string, studentCheckBox: NewStudentCheckBox): Promise<string>
 }
