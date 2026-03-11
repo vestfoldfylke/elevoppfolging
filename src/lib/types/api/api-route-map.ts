@@ -1,4 +1,4 @@
-import type { DocumentContentTemplate, ManualAccessEntryInput, NewSchool, StudentDataSharingConsentInput, DocumentInput, DocumentMessageInput } from "../db/shared-types"
+import type { DocumentContentTemplate, ManualAccessEntryInput, NewSchool, StudentDataSharingConsentInput, DocumentInput, DocumentMessageInput, StudentCheckBoxInput } from "../db/shared-types"
 
 type ApiDocumentsIdMessages = {
   POST: { req: DocumentMessageInput; res: { messageId: string } }
@@ -51,4 +51,13 @@ export interface ApiRouteMap {
   }
 
   [key: `/api/students/${string}/documents/${string}/messages`]: ApiDocumentsIdMessages
+
+  "/api/studentcheckboxes": {
+    POST: { req: StudentCheckBoxInput; res: { checkBoxId: string } }
+  }
+
+  [key: `/api/studentcheckboxes/${string}`]: {
+    DELETE: { res: { deletedCheckBoxId: string } }
+    PATCH: { req: StudentCheckBoxInput; res: { updatedCheckBoxId: string } }
+  }
 }
