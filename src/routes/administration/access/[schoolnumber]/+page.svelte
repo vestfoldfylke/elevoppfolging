@@ -55,13 +55,11 @@
             appUsers: []
           })
         }
-        classesWithAccess
-          .get(classAccess.systemId)
-          ?.appUsers.push({
-            entraUserId: access.entraUserId,
-            name: access.name,
-            accessEntry: { type: "MANUELL-KLASSE-TILGANG", schoolNumber: classAccess.schoolNumber, systemId: classAccess.systemId }
-          })
+        classesWithAccess.get(classAccess.systemId)?.appUsers.push({
+          entraUserId: access.entraUserId,
+          name: access.name,
+          accessEntry: { type: "MANUELL-KLASSE-TILGANG", schoolNumber: classAccess.schoolNumber, systemId: classAccess.systemId }
+        })
       }
     }
     return Array.from(classesWithAccess.values())
