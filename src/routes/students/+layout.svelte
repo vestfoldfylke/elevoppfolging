@@ -170,16 +170,25 @@ Hvis på /students/:id, så viser vi en sticky liste (egen scroll) med alle elev
 				<div class="student-info-cell desktop-only">
 					<button onclick={() => sortBy === "class" ? sortDirection = sortDirection === "asc" ? "desc" : "asc" : sortBy = "class"}>
 						Klasse
+					{#if sortBy === "class"}
+						<span class="material-symbols-outlined">{sortDirection === "asc" ? "arrow_upward" : "arrow_downward"}</span>
+					{/if}
 					</button>
 				</div>
 				<div class="student-info-cell desktop-only">
 					<button onclick={() => sortBy === "teacher" ? sortDirection = sortDirection === "asc" ? "desc" : "asc" : sortBy = "teacher"}>
 						Kontaktlærer
+					{#if sortBy === "teacher"}
+						<span class="material-symbols-outlined">{sortDirection === "asc" ? "arrow_upward" : "arrow_downward"}</span>
+					{/if}
 					</button>
 				</div>
 				<div class="student-info-cell desktop-only">
 					<button onclick={() => sortBy === "lastActivity" ? sortDirection = sortDirection === "asc" ? "desc" : "asc" : sortBy = "lastActivity"}>
 						Siste aktivitet
+					{#if sortBy === "lastActivity"}
+						<span class="material-symbols-outlined">{sortDirection === "asc" ? "arrow_upward" : "arrow_downward"}</span>
+					{/if}
 					</button>
 				</div>
 			</div>
