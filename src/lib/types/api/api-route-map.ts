@@ -1,4 +1,13 @@
-import type { DocumentContentTemplate, DocumentInput, DocumentMessageInput, ManualAccessEntryInput, NewSchool, StudentCheckBoxInput, StudentDataSharingConsentInput, StudentImportantStuffInput } from "../db/shared-types"
+import type {
+  DocumentContentTemplate,
+  DocumentInput,
+  DocumentMessageInput,
+  ManualAccessEntryInput,
+  NewSchool,
+  StudentCheckBoxInput,
+  StudentDataSharingConsentInput,
+  StudentImportantStuffInput
+} from "../db/shared-types"
 
 type ApiDocumentsIdMessages = {
   POST: { req: DocumentMessageInput; res: { messageId: string } }

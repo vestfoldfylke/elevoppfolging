@@ -1,4 +1,5 @@
 import type { RequestHandler } from "@sveltejs/kit"
+import { validateStudentImportantStuffData } from "$lib/data-validation/student-important-stuff"
 import { getStudentAccessInfo } from "$lib/server/authorization/student-access"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
@@ -7,7 +8,6 @@ import { canEditStudentImportantStuff } from "$lib/shared-authorization/authoriz
 import type { ApiRouteMap } from "$lib/types/api/api-route-map"
 import type { EditorData, NewStudentImportantStuff, StudentImportantStuffInput } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
-import { validateStudentImportantStuffData } from "$lib/data-validation/student-important-stuff"
 
 type PatchImportantStuffResponse = ApiRouteMap[`/api/students/${string}/importantstuff`]["PATCH"]["res"]
 type PatchImportantStuffBody = ApiRouteMap[`/api/students/${string}/importantstuff`]["PATCH"]["req"]
@@ -52,13 +52,13 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
   const allStudentCheckBoxes = await dbClient.getStudentCheckBoxes()
 
   for (const checkBoxId of studentImportantStuffData.followUp) {
-    if (!allStudentCheckBoxes.some(checkBox => checkBox._id === checkBoxId)) {
+    if (!allStudentCheckBoxes.some((checkBox) => checkBox._id === checkBoxId)) {
       throw new HTTPError(400, `Invalid follow-up checkbox ID: ${checkBoxId} - not found in student checkboxes`)
     }
   }
 
   for (const checkBoxId of studentImportantStuffData.facilitation) {
-    if (!allStudentCheckBoxes.some(checkBox => checkBox._id === checkBoxId)) {
+    if (!allStudentCheckBoxes.some((checkBox) => checkBox._id === checkBoxId)) {
       throw new HTTPError(400, `Invalid facilitation checkbox ID: ${checkBoxId} - not found in student checkboxes`)
     }
   }

@@ -15,19 +15,19 @@
     teacher: ""
   })
 
-	// svelte-ignore state_referenced_locally - det går bra så lenge ikke system admin kødder med checkboxene, da kan de bare refreshe sida
-	const enabledStudentCheckBoxes = data.studentCheckBoxes.filter(checkbox => checkbox.enabled)
+  // svelte-ignore state_referenced_locally - det går bra så lenge ikke system admin kødder med checkboxene, da kan de bare refreshe sida
+  const enabledStudentCheckBoxes = data.studentCheckBoxes.filter((checkbox) => checkbox.enabled)
 
-	const studentCheckBoxFilters: Record<string, boolean> = enabledStudentCheckBoxes.reduce((acc: Record<string, boolean>, checkbox) => {
-		acc[checkbox._id] = false
-		return acc
-	}, {})
+  const studentCheckBoxFilters: Record<string, boolean> = enabledStudentCheckBoxes.reduce((acc: Record<string, boolean>, checkbox) => {
+    acc[checkbox._id] = false
+    return acc
+  }, {})
 
   let filters: Record<string, boolean> = $state({
     importantInfo: false,
     followUp: false,
     facilitation: false,
-		...studentCheckBoxFilters
+    ...studentCheckBoxFilters
   })
 
   let sortBy = $state<"name" | "school" | "class" | "teacher" | "lastActivity">("name")
@@ -49,11 +49,12 @@
     return data.students
       .filter((student) => {
         const searchFilters: Record<string, boolean> = {
-          matchesImportantInfo: !filters.importantInfo || student.importantStuff.some(importantStuff => importantStuff.importantInfo && importantStuff.importantInfo.trim() !== ""),
+          matchesImportantInfo: !filters.importantInfo || student.importantStuff.some((importantStuff) => importantStuff.importantInfo && importantStuff.importantInfo.trim() !== "")
         }
-				Object.keys(studentCheckBoxFilters).forEach((checkboxId: string) => {
-					searchFilters[`matchesCheckbox_${checkboxId}`] = !filters[checkboxId] || student.importantStuff.some(importantStuff => importantStuff.followUp.includes(checkboxId) || importantStuff.facilitation.includes(checkboxId))
-				})
+        Object.keys(studentCheckBoxFilters).forEach((checkboxId: string) => {
+          searchFilters[`matchesCheckbox_${checkboxId}`] =
+            !filters[checkboxId] || student.importantStuff.some((importantStuff) => importantStuff.followUp.includes(checkboxId) || importantStuff.facilitation.includes(checkboxId))
+        })
 
         const matchesName = !searchTerms.name || student.name.toLowerCase().includes(searchTerms.name.toLowerCase())
         const matchesClass = !searchTerms.class || student.mainClassMembership?.classGroup?.name.toLowerCase().includes(searchTerms.class.toLowerCase()) || false

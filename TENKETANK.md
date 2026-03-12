@@ -137,3 +137,18 @@ Hvis noen har byttet elevnummer - så kan vi kjøre et api-kall som bytter elevn
  *
  * - Skal vi ha en slett alle notater for en elev? for en skole?
  * */
+
+
+## Når man oppretter manuell elev på en gitt skole
+- Skriv inn fnr + navn og etternavn
+- send til backend
+
+BACKEND
+- Finnes eleven?
+  - Du får opprette manuelt elevforhold dersom du har super-tilgang (skoleleder)
+  - Hvis ikke => no-go (ta kontakt med skoleleder dersom dette er super-nødvendig)
+- Finnes ikke eleven
+  - Noen flere får lov å opprette
+
+I frontend kan skoleleder få lov til å se elever med inaktive elevforhold ved sin skole?
+Kanskje reaktivere manuelle elevforhold hvis det trengs?

@@ -3,7 +3,7 @@
   import NewDocument from "$lib/components/Document/NewDocument.svelte"
   import PageHeader from "$lib/components/PageHeader.svelte"
   import DataSharingConsent from "$lib/components/StudentBoxes/DataSharingConsent.svelte"
-  import ImportantStuff from "$lib/components/StudentBoxes/ImportantStuff.svelte";
+  import ImportantStuff from "$lib/components/StudentBoxes/ImportantStuff.svelte"
   import { canEditStudentDataSharingConsent, canEditStudentImportantStuff } from "$lib/shared-authorization/authorization"
   import type { SchoolInfo } from "$lib/types/db/shared-types"
   import { getFrontendStudentDetails } from "$lib/utils/frontend-student-details"

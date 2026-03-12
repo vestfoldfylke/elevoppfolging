@@ -23,9 +23,9 @@
     // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounter ved endring av student
     importantInfo: importantStuff?.importantInfo || "",
     // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounter ved endring av student
-    facilitation: importantStuff?.facilitation.filter(facilitationId => studentCheckBoxes.find(checkbox => checkbox._id === facilitationId && checkbox.enabled)) || [],
+    facilitation: importantStuff?.facilitation.filter((facilitationId) => studentCheckBoxes.find((checkbox) => checkbox._id === facilitationId && checkbox.enabled)) || [],
     // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounter ved endring av student
-    followUp: importantStuff?.followUp.filter(followUpId => studentCheckBoxes.find(checkbox => checkbox._id === followUpId && checkbox.enabled)) || []
+    followUp: importantStuff?.followUp.filter((followUpId) => studentCheckBoxes.find((checkbox) => checkbox._id === followUpId && checkbox.enabled)) || []
   } as StudentImportantStuffInput)
 
   const updateStudentImportantStuff = async (): Promise<void> => {
