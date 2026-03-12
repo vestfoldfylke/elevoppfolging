@@ -122,6 +122,7 @@ button:disabled,
 button.icon-button:disabled,
 button.filled:disabled {
   background-color: var(--color-primary-10);
+  border-color: var(--color-primary-30);
   color: gray;
   cursor: not-allowed;
 }
@@ -134,6 +135,19 @@ label,
 .required-indicator {
   color: var(--color-danger);
   margin-left: 0.1rem;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select,
+textarea {
+  font-family: var(--font-family);
+  font-size: 1rem;
+  padding: 0.5rem;
+  border: 1px solid var(--color-primary-30);
+  border-radius: 4px;
+  box-sizing: border-box;
 }
 
 .box-container {

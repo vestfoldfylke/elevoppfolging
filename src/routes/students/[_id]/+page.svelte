@@ -120,4 +120,11 @@
   .new-document {
     margin-bottom: 1rem;
   }
+
+  @media (min-width: 50rem) {
+		.student-page {
+      padding-left: 3rem;
+      padding-right: 2rem;
+    }
+	}
 </style>

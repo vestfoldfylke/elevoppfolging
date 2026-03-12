@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from "$app/state"
   import PageHeader from "$lib/components/PageHeader.svelte"
+  import { slide } from "svelte/transition";
   import type { LayoutProps } from "./$types"
 
   let { data, children }: LayoutProps = $props()
@@ -8,6 +9,7 @@
   let onStudentsOverviewPage = $derived(page.route.id === "/students")
 
   let studentsQuickView = $state(true)
+	let showFilters = $state(false)
 
   let searchTerms = $state({
     name: "",
@@ -29,6 +31,12 @@
     facilitation: false,
     ...studentCheckBoxFilters
   })
+
+	let searchOrFiltersActive = $derived.by(() => {
+		const searchTermsActive = Object.values(searchTerms).some((term) => term.trim() !== "")
+		const filtersActive = Object.values(filters).some((filter) => filter)
+		return searchTermsActive || filtersActive
+	})
 
   let sortBy = $state<"name" | "school" | "class" | "teacher" | "lastActivity">("name")
   let sortDirection = $state<"asc" | "desc">("asc")
@@ -69,8 +77,6 @@
         switch (sortBy) {
           case "name":
             return sortDirection === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
-          case "school":
-            return sortDirection === "asc" ? (a.mainSchool?.name || "").localeCompare(b.mainSchool?.name || "") : (b.mainSchool?.name || "").localeCompare(a.mainSchool?.name || "")
           case "class":
             return sortDirection === "asc"
               ? (a.mainClassMembership?.classGroup?.name || "").localeCompare(b.mainClassMembership?.classGroup?.name || "")
@@ -115,55 +121,67 @@ Hvis på /students/:id, så viser vi en sticky liste (egen scroll) med alle elev
 					<input id="student-teacher-search" type="text" placeholder="Søk etter kontaktlærere..." bind:value={searchTerms.teacher} />
 				</div>
 			</div>
-			<div class="filter-boxes">
-				<div class="filter-box">
-						<label for="important-info-checkbox">Har viktig informasjon</label>
-						<input type="checkbox" id="important-info-checkbox" bind:checked={filters.importantInfo} />
+			{#if showFilters}
+				<div class="filter-boxes" transition:slide>
+					<!--
+					<div class="filter-box">
+							<label for="important-info-checkbox">Har viktig informasjon</label>
+							<input type="checkbox" id="important-info-checkbox" bind:checked={filters.importantInfo} />
+					</div>
+					-->
+					<div class="filter-header">Oppfølging</div>
+					{#each enabledStudentCheckBoxes.filter(checkbox => checkbox.type === "FOLLOW_UP") as followUpCheckbox}
+						<div class="filter-box">
+							<label>
+								<input type="checkbox" id={followUpCheckbox._id} bind:checked={filters[followUpCheckbox._id]} />
+								{followUpCheckbox.value}
+							</label>
+						</div>
+					{/each}
+					<div class="filter-header">Tilrettelegging</div>
+					{#each enabledStudentCheckBoxes.filter(checkbox => checkbox.type === "FACILITATION") as facilitationCheckbox}
+						<div class="filter-box">
+							<label>
+								<input type="checkbox" id={facilitationCheckbox._id} bind:checked={filters[facilitationCheckbox._id]} />
+								{facilitationCheckbox.value}
+							</label>
+						</div>
+					{/each}
 				</div>
-				<h4>Oppfølging</h4>
-				{#each enabledStudentCheckBoxes.filter(checkbox => checkbox.type === "FOLLOW_UP") as followUpCheckbox}
-					<div class="filter-box">
-						<label for={followUpCheckbox._id}>{followUpCheckbox.value}</label>
-						<input type="checkbox" id={followUpCheckbox._id} bind:checked={filters[followUpCheckbox._id]} />
-					</div>
-				{/each}
-				<h4>Tilrettelegging</h4>
-				{#each enabledStudentCheckBoxes.filter(checkbox => checkbox.type === "FACILITATION") as facilitationCheckbox}
-					<div class="filter-box">
-						<label for={facilitationCheckbox._id}>{facilitationCheckbox.value}</label>
-						<input type="checkbox" id={facilitationCheckbox._id} bind:checked={filters[facilitationCheckbox._id]} />
-					</div>
-				{/each}
-			</div>
+			{/if}
 			<div class="filter-actions">
-				<button onclick={resetFilters}>Tilbakestill filtre og søk</button>
+				<button onclick={() => showFilters = !showFilters}><span class="material-symbols-outlined">{showFilters ? "filter_alt_off" : "filter_alt"}</span>{showFilters ? "Skjul filter" : "Vis filter"}</button>
+				<button disabled={!searchOrFiltersActive} onclick={resetFilters}><span class="material-symbols-outlined">refresh</span>Tilbakestill filtre og søk</button>
 			</div>
 		</div>
 
-		<p>{filteredStudents.length} elever her nu gitt</p>
+		<div class="search-metadata">Viser {filteredStudents.length} av {data.students.length} elever</div>
 
 		<div class="students-container">
-			<!--
 			<div class="student-row header">
-				<div class="student-info-cell">
-					<button onclick={() => sortBy === "name" ? sortDirection = sortDirection === "asc" ? "desc" : "asc" : sortBy = "name"}>Navn</button>
+				<div class="student-info-cell first">
+					<button onclick={() => sortBy === "name" ? sortDirection = sortDirection === "asc" ? "desc" : "asc" : sortBy = "name"}>
+						Navn
+					{#if sortBy === "name"}
+						<span class="material-symbols-outlined">{sortDirection === "asc" ? "arrow_upward" : "arrow_downward"}</span>
+					{/if}
+					</button>
 				</div>
-				<div class="student-info-cell">
-					<button onclick={() => sortBy === "class" ? sortDirection = sortDirection === "asc" ? "desc" : "asc" : sortBy = "class"}>Klasse</button>
+				<div class="student-info-cell desktop-only">
+					<button onclick={() => sortBy === "class" ? sortDirection = sortDirection === "asc" ? "desc" : "asc" : sortBy = "class"}>
+						Klasse
+					</button>
 				</div>
-				<div class="student-info-cell">
-					<button onclick={() => sortBy === "school" ? sortDirection = sortDirection === "asc" ? "desc" : "asc" : sortBy = "school"}>Skole</button>
+				<div class="student-info-cell desktop-only">
+					<button onclick={() => sortBy === "teacher" ? sortDirection = sortDirection === "asc" ? "desc" : "asc" : sortBy = "teacher"}>
+						Kontaktlærer
+					</button>
 				</div>
-				<div class="student-info-cell">
-					<button onclick={() => sortBy === "teacher" ? sortDirection = sortDirection === "asc" ? "desc" : "asc" : sortBy = "teacher"}>Kontaktlærer</button>
+				<div class="student-info-cell desktop-only">
+					<button onclick={() => sortBy === "lastActivity" ? sortDirection = sortDirection === "asc" ? "desc" : "asc" : sortBy = "lastActivity"}>
+						Siste aktivitet
+					</button>
 				</div>
-				<div class="student-info-cell">
-					<button onclick={() => sortBy === "lastActivity" ? sortDirection = sortDirection === "asc" ? "desc" : "asc" : sortBy = "lastActivity"}>Siste aktivitet</button>
-				</div>
-			</div>
-			-->
-			<div>
-				Elever
 			</div>
 			{#each filteredStudents as student}
 				<div class="student-row">
@@ -185,28 +203,28 @@ Hvis på /students/:id, så viser vi en sticky liste (egen scroll) med alle elev
 {#if !onStudentsOverviewPage}
 	<div class="students-and-details">
 		{#if studentsQuickView}
-		<div class="students-quick-view desktop-only" style="visibility: hidden;">
-			<div class="student-row">
-				<div class="student-info-cell first">
-					&nbsp;
-				</div>
-			</div>
-		</div>
-		<div class="students-quick-view fixed desktop-only">
-			<div class="students-quick-view-header">
-				Hurtigtilgang
-			</div>
-			<div class="students-quick-view-actions">
-				<a href="/students"><span class="material-symbols-outlined">arrow_back</span>Rediger filter</a>
-			</div>
-			{#each filteredStudents as student}
-				<div class="student-row" class:active={page.url.pathname === `/students/${student._id}`}>
+			<div class="students-quick-view desktop-only" style="visibility: hidden;">
+				<div class="student-row">
 					<div class="student-info-cell first">
-						<a href={`/students/${student._id}`}>{student.name}</a>
+						&nbsp;
 					</div>
 				</div>
-			{/each}
-		</div>
+			</div>
+			<div class="students-quick-view fixed desktop-only">
+				<div class="students-quick-view-header">
+					Hurtigtilgang
+				</div>
+				<div class="students-quick-view-actions">
+					<a href="/students"><span class="material-symbols-outlined">arrow_back</span>Rediger filter</a>
+				</div>
+				{#each filteredStudents as student}
+					<div class="student-row" class:active={page.url.pathname === `/students/${student._id}`}>
+						<div class="student-info-cell first">
+							<a href={`/students/${student._id}`}>{student.name}</a>
+						</div>
+					</div>
+				{/each}
+			</div>
 		{/if}
 		<div class="student-details" class:hidden={page.route.id === "/students"}>
 			{#if children}
@@ -222,16 +240,34 @@ Hvis på /students/:id, så viser vi en sticky liste (egen scroll) med alle elev
 	.student-filter-container {
 		display: flex;
 		flex-direction: column;
-		gap: 1rem;
 		margin-bottom: 1rem;
+	}
+	.student-filter-container > div {
+		margin: 0.5rem 0;
 	}
 	.search-boxes {
 		display: flex;
 		gap: 1rem;
+		flex-wrap: wrap;
 	}
 	.search-box {
 		display: flex;
 		flex-direction: column;
+	}
+
+	.filter-header {
+		font-weight: bold;
+		margin: 0.5rem 0;
+	}
+	.filter-actions {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+	}
+
+	.search-metadata {
+		text-align: right;
+		font-size: 0.875rem;
 	}
 
 	.students-and-details {
@@ -279,22 +315,35 @@ Hvis på /students/:id, så viser vi en sticky liste (egen scroll) med alle elev
 		padding: 0.5rem 0rem;
 		align-items: center;
 	}
-	.students-container .student-row:nth-child(odd) {
+
+	.students-container .student-row:nth-child(even) {
 		background-color: var(--color-primary-10);
 	}
 	.student-row.active {
 		border: 2px solid var(--color-secondary);
 	}
 	.student-row.header {
+		padding: 0;
 		font-weight: bold;
-		border-bottom: 2px solid #000;
+		border-top: 2px solid var(--color-primary-30);
+		border-bottom: 2px solid var(--color-primary-30);
+	}
+	.student-row.header button {
+		width: 100%;
+		border: none;
+	}
+	.student-row.header button span {
+		font-size: 1rem;
 	}
 	.student-info-cell {
 		width: 12rem;
 		flex-shrink: 0;
 		display: flex;
 		flex-direction: column;
-		padding: 0rem 0.25rem;
+	}
+	.student-row.header .student-info-cell.first {
+		width: 13rem;
+		padding-left: 0;
 	}
 	.student-info-cell.first {
 		padding-left: 1rem;
