@@ -40,7 +40,7 @@ export type CachedFrontendStudentWithAccessInfo = CachedFrontendStudent & {
 }
 
 export type FrontendOverviewStudent = Omit<CachedFrontendStudentWithAccessInfo, "studentEnrollments"> & {
-  importantStuff: StudentImportantStuff | null
+  importantStuff: StudentImportantStuff[]
   lastActivityTimestamp: Date | null
   dataSharingConsent: boolean
 }

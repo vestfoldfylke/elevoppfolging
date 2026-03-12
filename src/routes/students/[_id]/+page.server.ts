@@ -11,7 +11,7 @@ import type { PageServerLoad } from "./$types"
 type StudentPageData = {
   student: FrontendStudent
   studentDataSharingConsent: StudentDataSharingConsent | null
-  importantStuff: StudentImportantStuff | null
+  importantStuff: StudentImportantStuff[]
   studentAccessInfo: AccessEntry[]
   documents: StudentDocument[]
   unavailableSchoolDocuments: StudentUnavailableSchoolDocuments[]
@@ -48,12 +48,8 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
     throw new HTTPError(403, "No access to this student")
   }
 
-  const studentMainSchool = student.studentEnrollments.find((enrollment) => enrollment.mainSchool)?.school
-
-  const schoolNumberToGetImportantStuffFor =
-    studentMainSchool && studentAccessInfo.some((accessEntry) => accessEntry.schoolNumber === studentMainSchool.schoolNumber) ? studentMainSchool.schoolNumber : studentAccessInfo[0].schoolNumber // Main school if access or first in access
-
-  const studentImportantStuff: StudentImportantStuff | null = await dbClient.getStudentImportantStuff(studentId, schoolNumberToGetImportantStuffFor) // Vi henter kun important stuff for første skolen de har eleven tilgjengelig på
+  const accessSchoolsForStudent = studentAccessInfo.map((accessEntry) => accessEntry.schoolNumber)
+  const studentImportantStuff: StudentImportantStuff[] = await dbClient.getStudentImportantStuff(studentId, accessSchoolsForStudent) // Vi henter kun important stuff for skolene brukeren har tilgang til eleven på
 
   const allStudentDocuments: StudentDocument[] = await dbClient.getStudentDocuments(studentId)
 

@@ -44,7 +44,7 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
     throw new HTTPError(400, "Invalid request body", { details: validationResult.message })
   }
 
-  const canEditImportantStuff = canEditStudentImportantStuff(studentImportantStuffData, accessInfo)
+  const canEditImportantStuff = canEditStudentImportantStuff(studentImportantStuffData.school.schoolNumber, accessInfo)
   if (!canEditImportantStuff) {
     throw new HTTPError(403, "Access denied: Insufficient access level to edit student important stuff")
   }

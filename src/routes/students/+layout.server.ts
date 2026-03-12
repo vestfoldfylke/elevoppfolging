@@ -5,12 +5,13 @@ import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
 import type { CachedFrontendStudentWithAccessInfo, FrontendOverviewStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { StudentDataSharingConsent, StudentImportantStuff } from "$lib/types/db/shared-types"
+import type { StudentCheckBox, StudentDataSharingConsent, StudentImportantStuff } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
 import type { LayoutServerLoad } from "./$types"
 
 type StudentsPageData = {
   students: FrontendOverviewStudent[]
+  studentCheckBoxes: StudentCheckBox[]
 }
 
 const getStudents: ServerLoadNextFunction<StudentsPageData> = async ({ principal }) => {
@@ -100,8 +101,16 @@ const getStudents: ServerLoadNextFunction<StudentsPageData> = async ({ principal
       additionalSchools: student.additionalSchools,
       source: student.source,
       dataSharingConsent: sharingConsentByStudentId[student._id]?.consent || false,
-      importantStuff: importantStuffByStudentId[student._id]?.[accessSchoolsForStudent[0]] || null,
+      importantStuff: [],
       lastActivityTimestamp
+    }
+
+    // Add important stuff for schools the user has access to
+    for (const schoolNumber of accessSchoolsForStudent) {
+      const importantStuffForSchool = importantStuffByStudentId[student._id]?.[schoolNumber]
+      if (importantStuffForSchool) {
+        overviewStudent.importantStuff.push(importantStuffForSchool)
+      }
     }
 
     overviewStudents.push(overviewStudent)
@@ -111,9 +120,14 @@ const getStudents: ServerLoadNextFunction<StudentsPageData> = async ({ principal
   logger.info(`Sjekket siste aktivitetstidspunkt og mappet important stuff for ${overviewStudents.length} elever - brukte ${timeTaken4 / 1000} sekunder`)
   logger.info(`Totalt tid brukt på å hente og mappe elever: ${(timeTaken + timeTaken2 + timeTaken3 + timeTaken4) / 1000} sekunder`)
 
+  logger.info("Fetching student check boxes")
+  const studentCheckBoxes = await dbClient.getStudentCheckBoxes()
+  logger.info(`Found ${studentCheckBoxes.length} student check boxes`)
+
   return {
     data: {
-      students: overviewStudents
+      students: overviewStudents,
+      studentCheckBoxes
     },
     isAuthorized: true
   }

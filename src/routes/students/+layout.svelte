@@ -15,10 +15,19 @@
     teacher: ""
   })
 
-  let filters = $state({
+	// svelte-ignore state_referenced_locally - det går bra så lenge ikke system admin kødder med checkboxene, da kan de bare refreshe sida
+	const enabledStudentCheckBoxes = data.studentCheckBoxes.filter(checkbox => checkbox.enabled)
+
+	const studentCheckBoxFilters: Record<string, boolean> = enabledStudentCheckBoxes.reduce((acc: Record<string, boolean>, checkbox) => {
+		acc[checkbox._id] = false
+		return acc
+	}, {})
+
+  let filters: Record<string, boolean> = $state({
     importantInfo: false,
     followUp: false,
-    facilitation: false
+    facilitation: false,
+		...studentCheckBoxFilters
   })
 
   let sortBy = $state<"name" | "school" | "class" | "teacher" | "lastActivity">("name")
@@ -31,16 +40,20 @@
     filters.importantInfo = false
     filters.followUp = false
     filters.facilitation = false
+    enabledStudentCheckBoxes.forEach((checkbox) => {
+      filters[checkbox._id] = false
+    })
   }
 
   let filteredStudents = $derived.by(() => {
     return data.students
       .filter((student) => {
-        const searchFilters = {
-          matchesImportantInfo: !filters.importantInfo || student.importantStuff?.importantInfo,
-          matchesFollowUp: !filters.followUp || (student.importantStuff?.followUp && student.importantStuff.followUp.length > 0),
-          matchesFacilitation: !filters.facilitation || (student.importantStuff?.facilitation && student.importantStuff.facilitation.length > 0)
+        const searchFilters: Record<string, boolean> = {
+          matchesImportantInfo: !filters.importantInfo || student.importantStuff.some(importantStuff => importantStuff.importantInfo && importantStuff.importantInfo.trim() !== ""),
         }
+				Object.keys(studentCheckBoxFilters).forEach((checkboxId: string) => {
+					searchFilters[`matchesCheckbox_${checkboxId}`] = !filters[checkboxId] || student.importantStuff.some(importantStuff => importantStuff.followUp.includes(checkboxId) || importantStuff.facilitation.includes(checkboxId))
+				})
 
         const matchesName = !searchTerms.name || student.name.toLowerCase().includes(searchTerms.name.toLowerCase())
         const matchesClass = !searchTerms.class || student.mainClassMembership?.classGroup?.name.toLowerCase().includes(searchTerms.class.toLowerCase()) || false
@@ -67,8 +80,8 @@
             return sortDirection === "asc" ? aTeachers.localeCompare(bTeachers) : bTeachers.localeCompare(aTeachers)
           }
           case "lastActivity": {
-            const aTimestamp = a.importantStuff?.lastActivityTimestamp ? a.importantStuff.lastActivityTimestamp.getTime() : 0
-            const bTimestamp = b.importantStuff?.lastActivityTimestamp ? b.importantStuff.lastActivityTimestamp.getTime() : 0
+            const aTimestamp = a.lastActivityTimestamp ? a.lastActivityTimestamp.getTime() : 0
+            const bTimestamp = b.lastActivityTimestamp ? b.lastActivityTimestamp.getTime() : 0
             return sortDirection === "asc" ? aTimestamp - bTimestamp : bTimestamp - aTimestamp
           }
           default:
@@ -106,18 +119,20 @@ Hvis på /students/:id, så viser vi en sticky liste (egen scroll) med alle elev
 						<label for="important-info-checkbox">Har viktig informasjon</label>
 						<input type="checkbox" id="important-info-checkbox" bind:checked={filters.importantInfo} />
 				</div>
-				<div class="filter-box">
-						<label for="follow-up-checkbox">Oppfølging</label>
-						<input type="checkbox" id="follow-up-checkbox" bind:checked={filters.followUp} />
-				</div>
-				<div class="filter-box">
-						<label for="facilitation-checkbox">Tilrettelegging</label>
-						<input type="checkbox" id="facilitation-checkbox" bind:checked={filters.facilitation} />
-				</div>
-				<div class="filter-box">
-						<label for="noe">Hva mer trengs her?</label>
-						<input disabled type="checkbox" id="noe" />
-				</div>
+				<h4>Oppfølging</h4>
+				{#each enabledStudentCheckBoxes.filter(checkbox => checkbox.type === "FOLLOW_UP") as followUpCheckbox}
+					<div class="filter-box">
+						<label for={followUpCheckbox._id}>{followUpCheckbox.value}</label>
+						<input type="checkbox" id={followUpCheckbox._id} bind:checked={filters[followUpCheckbox._id]} />
+					</div>
+				{/each}
+				<h4>Tilrettelegging</h4>
+				{#each enabledStudentCheckBoxes.filter(checkbox => checkbox.type === "FACILITATION") as facilitationCheckbox}
+					<div class="filter-box">
+						<label for={facilitationCheckbox._id}>{facilitationCheckbox.value}</label>
+						<input type="checkbox" id={facilitationCheckbox._id} bind:checked={filters[facilitationCheckbox._id]} />
+					</div>
+				{/each}
 			</div>
 			<div class="filter-actions">
 				<button onclick={resetFilters}>Tilbakestill filtre og søk</button>

@@ -589,26 +589,26 @@ export class MongoDbClient implements IDbClient {
     }, {})
   }
 
-  async getStudentImportantStuff(studentId: string, schoolNumber: string): Promise<StudentImportantStuff | null> {
+  async getStudentImportantStuff(studentId: string, schoolNumbers: string[]): Promise<StudentImportantStuff[]> {
     const db = await this.getDb()
 
     const importantStuffCollection = db.collection<DbStudentImportantStuff>(this.importantStuffCollectionName)
-    logger.info("Getting important stuff for student with _id {studentId} and schoolNumber {schoolNumber}", studentId, schoolNumber)
+    logger.info("Getting important stuff for student with _id {studentId} and schoolNumbers {schoolNumbers}", studentId, schoolNumbers.join(", "))
 
-    const importantStuffForStudent = await importantStuffCollection.findOne({ "student._id": new ObjectId(studentId), "school.schoolNumber": schoolNumber })
-    logger.info("Important stuff for student with _id {studentId} exists: {importantStuffExists}", studentId, importantStuffForStudent !== null)
+    const importantStuffForStudent = await importantStuffCollection.find({ "student._id": new ObjectId(studentId), "school.schoolNumber": { $in: schoolNumbers } }).toArray()
+    logger.info("Important stuff for student with _id {studentId} exists: {importantStuffExists}", studentId, importantStuffForStudent.length > 0)
 
-    if (!importantStuffForStudent) {
-      return null
+    if (importantStuffForStudent.length === 0) {
+      return []
     }
 
-    return {
-      ...importantStuffForStudent,
-      _id: importantStuffForStudent._id.toString(),
+    return importantStuffForStudent.map((importantStuff) => ({
+      ...importantStuff,
+      _id: importantStuff._id.toString(),
       student: {
-        _id: importantStuffForStudent.student._id.toString()
+        _id: importantStuff.student._id.toString()
       }
-    }
+    }))
   }
 
   async upsertStudentImportantStuff(studentId: string, importantStuff: NewStudentImportantStuff): Promise<string> {
@@ -616,7 +616,7 @@ export class MongoDbClient implements IDbClient {
     const importantStuffCollection = db.collection<DbStudentImportantStuff>(this.importantStuffCollectionName)
 
     const result = await importantStuffCollection.findOneAndUpdate(
-      { "student._id": new ObjectId(studentId) },
+      { "student._id": new ObjectId(studentId), "school.schoolNumber": importantStuff.school.schoolNumber },
       {
         $set: {
           ...importantStuff,

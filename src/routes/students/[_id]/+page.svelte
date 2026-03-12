@@ -3,7 +3,8 @@
   import NewDocument from "$lib/components/Document/NewDocument.svelte"
   import PageHeader from "$lib/components/PageHeader.svelte"
   import DataSharingConsent from "$lib/components/StudentBoxes/DataSharingConsent.svelte"
-  import { canEditStudentDataSharingConsent } from "$lib/shared-authorization/authorization"
+  import ImportantStuff from "$lib/components/StudentBoxes/ImportantStuff.svelte";
+  import { canEditStudentDataSharingConsent, canEditStudentImportantStuff } from "$lib/shared-authorization/authorization"
   import type { SchoolInfo } from "$lib/types/db/shared-types"
   import { getFrontendStudentDetails } from "$lib/utils/frontend-student-details"
   import type { PageProps } from "./$types"
@@ -33,7 +34,7 @@
   })
 </script>
 
-{#key data.student._id} <!-- Re-render student page when student-id change -->
+{#key data.student._id} <!-- Re-render entire student page when student-id change -->
   <div class="student-page page-content">
     <div class="student-header">
       <!--
@@ -53,33 +54,9 @@
       </div>
     </div>
 
-    <div class="student-section">
-      <div class="student-section-header">
-        <div>&nbsp;</div>
-        <button>Rediger</button>
-      </div>
-      <div class="student-section-content student-information">
-        <div class="student-important-info">
-          <h4>Viktig informasjon</h4>
-          <p>{data.importantStuff?.importantInfo || "Skylder meg en hundrings"}</p>
-        </div>
-        <div>
-          <h4>Oppfølging</h4>
-          <ul>
-            <li>PPT</li>
-            <li>Elevtjenesten</li>
-          </ul>
-        </div>
-        <div>
-          <h4>Tilrettelegging</h4>
-          <ul>
-            <li>Tilrettelegging på eksamen</li>
-            <li>IOP</li>
-            <li>Dysleksi</li>
-          </ul>
-        </div>
-      </div>
-    </div>
+    {#each accessSchools as accessSchool}
+      <ImportantStuff canEdit={canEditStudentImportantStuff(accessSchool.schoolNumber, data.studentAccessInfo)} importantStuff={data.importantStuff.find(importantStuff => importantStuff.school.schoolNumber === accessSchool.schoolNumber) || null} school={accessSchool} studentCheckBoxes={data.studentCheckBoxes} student={data.student} />
+    {/each}
 
     <DataSharingConsent canEdit={canEditStudentDataSharingConsent(data.studentAccessInfo)} student={data.student} studentDataSharingConsent={data.studentDataSharingConsent} unavailableSchoolDocuments={data.unavailableSchoolDocuments} />
 
@@ -134,22 +111,6 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-  }
-  .student-section-content.student-information {
-    display: flex;
-    gap: 1rem;
-    padding: 0.5rem;
-    flex-wrap: wrap;
-    justify-content: space-between;
-  }
-  .student-important-info {
-    flex: 1;
-    min-width: 18rem;
-  }
-  .student-information {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 1rem;
   }
   .documents {
     display: flex;

@@ -22,6 +22,6 @@ export const canEditStudentDataSharingConsent = (accessToStudent: AccessEntry[])
   return accessToStudent.some((accessEntry) => accessEntry.type !== "AUTOMATISK-UNDERVISNINGSGRUPPE-TILGANG" && accessEntry.type !== "AUTOMATISK-KLASSE-TILGANG")
 }
 
-export const canEditStudentImportantStuff = (importantStuffInput: StudentImportantStuffInput, accessToStudent: AccessEntry[]): boolean => {
-  return accessToStudent.some((accessEntry) => accessEntry.type !== "AUTOMATISK-UNDERVISNINGSGRUPPE-TILGANG" && accessEntry.type !== "AUTOMATISK-KLASSE-TILGANG" && accessEntry.schoolNumber === importantStuffInput.school.schoolNumber)
+export const canEditStudentImportantStuff = (importantStuffSchoolNumber: string, accessToStudent: AccessEntry[]): boolean => {
+  return accessToStudent.some((accessEntry) => accessEntry.type !== "AUTOMATISK-UNDERVISNINGSGRUPPE-TILGANG" && accessEntry.type !== "AUTOMATISK-KLASSE-TILGANG" && accessEntry.schoolNumber === importantStuffSchoolNumber)
 }
