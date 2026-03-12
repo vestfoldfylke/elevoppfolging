@@ -52,7 +52,7 @@ export interface IDbClient {
   addDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<DocumentMessage>
 
   getStudentsImportantStuff(studentIds: string[]): Promise<Record<string, Record<string, StudentImportantStuff>>>
-  getStudentImportantStuff(studentId: string, schoolNumber: string): Promise<StudentImportantStuff | null>
+  getStudentImportantStuff(studentId: string, schoolNumbers: string[]): Promise<StudentImportantStuff[]>
   upsertStudentImportantStuff(studentId: string, importantStuff: NewStudentImportantStuff): Promise<string>
   updateStudentLastActivityTimestamp(studentId: string, school: SchoolInfo): Promise<string>
 
