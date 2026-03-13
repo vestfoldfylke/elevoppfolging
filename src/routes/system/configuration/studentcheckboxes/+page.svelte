@@ -34,7 +34,7 @@
 </script>
 
 <div class="page-content">
-  <PageHeader title="Konfigurasjon av oppfølging- og tilrettelegging-sjekkbokser" />
+  <PageHeader title="Konfigurasjon av oppfølging/tilrettelegging-sjekkbokser (K.A.O.S)" />
   <p>De som er i viktig informasjonsboksen på elevsiden</p>
   <h3>Oppfølging</h3>
   {#if data.checkBoxes.filter(checkBox => checkBox.type === "FOLLOW_UP").length === 0}
