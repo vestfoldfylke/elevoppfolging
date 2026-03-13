@@ -1,5 +1,6 @@
 <script lang="ts">
   import { apiFetch } from "$lib/api-fetch/api-fetch"
+    import { INVALID_FORM_MESSAGE } from "$lib/data-validation/constants";
   import type { FrontendStudent } from "$lib/types/app-types"
   import type { SchoolInfo, StudentCheckBox, StudentImportantStuff, StudentImportantStuffInput } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
@@ -16,15 +17,12 @@
 
   let editMode = $state(false)
   let importantStuffForm: HTMLFormElement | undefined = $state()
-
+  
+  // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounter ved endring av student
   let editableImportantStuff: StudentImportantStuffInput = $state({
-    // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounter ved endring av student
     school: school,
-    // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounter ved endring av student
     importantInfo: importantStuff?.importantInfo || "",
-    // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounter ved endring av student
     facilitation: importantStuff?.facilitation.filter((facilitationId) => studentCheckBoxes.find((checkbox) => checkbox._id === facilitationId && checkbox.enabled)) || [],
-    // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounter ved endring av student
     followUp: importantStuff?.followUp.filter((followUpId) => studentCheckBoxes.find((checkbox) => checkbox._id === followUpId && checkbox.enabled)) || []
   } as StudentImportantStuffInput)
 
@@ -34,7 +32,7 @@
     }
     const valid = importantStuffForm.reportValidity()
     if (!valid) {
-      throw new Error("Vennligst fyll ut alle påkrevde felt før du lagrer")
+      throw new Error(INVALID_FORM_MESSAGE)
     }
 
     await apiFetch(`/api/students/${student._id}/importantstuff`, {

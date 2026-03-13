@@ -2,6 +2,8 @@
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import AsyncButton from "$lib/components/AsyncButton.svelte"
   import PageHeader from "$lib/components/PageHeader.svelte"
+    import { INVALID_FORM_MESSAGE } from "$lib/data-validation/constants";
+    import { schoolNameValidation, schoolNumberValidation } from "$lib/data-validation/school";
   import type { EditorData, NewSchool } from "$lib/types/db/shared-types"
   import type { PageProps } from "./$types"
 
@@ -33,7 +35,7 @@
     }
     const formIsValid = newSchoolForm.reportValidity()
     if (!formIsValid) {
-      throw new Error("Mangler påkrevd felt")
+      throw new Error(INVALID_FORM_MESSAGE)
     }
 
     await apiFetch("/api/schools", {
@@ -58,11 +60,11 @@
       <form bind:this={newSchoolForm}>
         <div class="form-group">
           <label for="schoolName">Skolenavn (minst 4 tegn, kun bokstaver)</label>
-          <input id="schoolName" name="schoolName" type="text" bind:value={newSchoolData.name} required minlength="4" maxlength="256" pattern="^[A-Za-zÆØÅæøå-\s]+$">
+          <input id="schoolName" name="schoolName" type="text" bind:value={newSchoolData.name} required pattern={schoolNameValidation.pattern.source} minlength={schoolNameValidation.minLength} maxlength={schoolNameValidation.maxLength}>
         </div>
         <div class="form-group">
           <label for="schoolNumber">Skolenummer (minst 4 siffer, ingen bokstaver)</label>
-          <input id="schoolNumber" name="schoolNumber" type="text" bind:value={newSchoolData.schoolNumber} required minlength="4" maxlength="20" pattern="^[0-9]+$">
+          <input id="schoolNumber" name="schoolNumber" type="text" bind:value={newSchoolData.schoolNumber} required pattern={schoolNumberValidation.pattern.source} minlength={schoolNumberValidation.minLength} maxlength={schoolNumberValidation.maxLength}>
         </div>
       </form>
       <div class="new-school-actions">
@@ -76,7 +78,7 @@
 
   {#each data.schools as school}
     <div class="school">
-      <a href={`/admin/schools/${school.schoolNumber}`}><h3>{school.name}</h3></a>
+      <a href={`/system/schools/${school.schoolNumber}`}><h3>{school.name}</h3></a>
       <p>Skolenummer: {school.schoolNumber}</p>
       <p>Kilde: {school.source}</p>
     </div>

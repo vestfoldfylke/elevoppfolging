@@ -34,7 +34,7 @@
     })
 
     // redirect to schools admin page and reload dependent data
-    goto("/admin/schools", { invalidateAll: true })
+    goto("/system/schools", { invalidateAll: true })
   }
 
   let schoolLeaderForm: HTMLFormElement | undefined = $state()

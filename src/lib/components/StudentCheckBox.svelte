@@ -1,5 +1,7 @@
 <script lang="ts">
   import { apiFetch } from "$lib/api-fetch/api-fetch"
+    import { INVALID_FORM_MESSAGE } from "$lib/data-validation/constants";
+    import { studentCheckBoxValueValidation } from "$lib/data-validation/student-check-box";
   import type { StudentCheckBox, StudentCheckBoxInput } from "$lib/types/db/shared-types"
   import AsyncButton from "./AsyncButton.svelte"
 
@@ -12,14 +14,11 @@
 
   let { checkBox, editMode, callBackOnCreate, callBackOnCancel }: StudentCheckBoxProps = $props()
 
+  // svelte-ignore state_referenced_locally - we want a local copy
   let editableCheckBox: StudentCheckBoxInput = $state({
-    // svelte-ignore state_referenced_locally - we want a local copy
     enabled: checkBox.enabled,
-    // svelte-ignore state_referenced_locally - we want a local copy
     type: checkBox.type,
-    // svelte-ignore state_referenced_locally - we want a local copy
     value: checkBox.value,
-    // svelte-ignore state_referenced_locally - we want a local copy
     sort: checkBox.sort
   } as StudentCheckBoxInput)
 
@@ -31,7 +30,7 @@
     }
     const formIsValid = studentCheckBoxForm.reportValidity()
     if (!formIsValid) {
-      throw new Error("Mangler påkrevd felt")
+      throw new Error(INVALID_FORM_MESSAGE)
     }
 
     await apiFetch("/api/studentcheckboxes", {
@@ -66,7 +65,7 @@
     }
     const formIsValid = studentCheckBoxForm.reportValidity()
     if (!formIsValid) {
-      throw new Error("Mangler påkrevd felt")
+      throw new Error(INVALID_FORM_MESSAGE)
     }
 
     await apiFetch(`/api/studentcheckboxes/${checkBox._id}`, {
@@ -89,7 +88,7 @@
 <div class="student-check-box">
   {#if editMode}
     <form bind:this={studentCheckBoxForm}>
-      <input type="text" bind:value={editableCheckBox.value} required />
+      <input type="text" bind:value={editableCheckBox.value} required minlength={studentCheckBoxValueValidation.minLength} maxlength={studentCheckBoxValueValidation.maxLength} />
       <label>
         <input type="checkbox" bind:checked={editableCheckBox.enabled} />
         Aktiv

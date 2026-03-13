@@ -1,6 +1,11 @@
 import type { ValidationResult } from "$lib/types/data-validation"
 import type { StudentCheckBoxInput } from "$lib/types/db/shared-types"
 
+export const studentCheckBoxValueValidation = {
+  minLength: 2,
+  maxLength: 256,
+}
+
 export const validateStudentCheckBox = (checkBoxData: StudentCheckBoxInput): ValidationResult => {
   if (!checkBoxData.type || !checkBoxData.value) {
     return { valid: false, message: "Both 'type' and 'value' are required" }
@@ -14,8 +19,8 @@ export const validateStudentCheckBox = (checkBoxData: StudentCheckBoxInput): Val
     return { valid: false, message: "'type' must be either 'FACILITATION' or 'FOLLOW_UP'" }
   }
 
-  if (checkBoxData.value.length < 1 || checkBoxData.value.length > 256) {
-    return { valid: false, message: "'value' must be between 1 and 256 characters" }
+  if (checkBoxData.value.length < studentCheckBoxValueValidation.minLength || checkBoxData.value.length > studentCheckBoxValueValidation.maxLength) {
+    return { valid: false, message: `'value' must be between ${studentCheckBoxValueValidation.minLength} and ${studentCheckBoxValueValidation.maxLength} characters` }
   }
 
   if (typeof checkBoxData.enabled !== "boolean") {

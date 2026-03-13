@@ -3,7 +3,7 @@
 </script>
 
 <PageHeader title="Administrator" />
-<a href="/admin/templates">Templates</a>
+<a href="/system/templates">Templates</a>
 
 <style>
 </style>

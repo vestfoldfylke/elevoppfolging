@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation"
   import { apiFetch } from "$lib/api-fetch/api-fetch"
+    import { INVALID_FORM_MESSAGE } from "$lib/data-validation/constants";
   import type { DocumentContentItem, DocumentContentTemplate, DocumentRadioGroupItem } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
   import DocumentContentItemComponent from "../Document/DocumentContentItem.svelte"
@@ -104,7 +105,7 @@
   const newTemplate = async (): Promise<void> => {
     const formIsValid = validateTemplate()
     if (!formIsValid) {
-      throw new Error("Mangler påkrevd felt")
+      throw new Error(INVALID_FORM_MESSAGE)
     }
 
     const { templateId } = await apiFetch(`/api/templates`, {
@@ -117,13 +118,13 @@
 
     previewMode = true
     // redirect and reload page data
-    goto(`/admin/templates/${templateId}`, { invalidateAll: true })
+    goto(`/system/templates/${templateId}`, { invalidateAll: true })
   }
 
   const updateTemplate = async (): Promise<void> => {
     const formIsValid = validateTemplate()
     if (!formIsValid) {
-      throw new Error("Mangler påkrevd felt")
+      throw new Error(INVALID_FORM_MESSAGE)
     }
 
     await apiFetch(`/api/templates/${editableTemplate._id}`, {
@@ -147,7 +148,7 @@
       method: "DELETE"
     })
     // redirect and reload page data
-    goto(`/admin/templates`, { invalidateAll: true })
+    goto(`/system/templates`, { invalidateAll: true })
   }
 </script>
 

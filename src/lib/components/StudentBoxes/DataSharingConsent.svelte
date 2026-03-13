@@ -1,5 +1,7 @@
 <script lang="ts">
   import { apiFetch } from "$lib/api-fetch/api-fetch"
+    import { INVALID_FORM_MESSAGE } from "$lib/data-validation/constants";
+    import { studentDataSharingConsentMessageValidation } from "$lib/data-validation/student-consent";
   import type { FrontendStudent, StudentUnavailableSchoolDocuments } from "$lib/types/app-types"
   import type { StudentDataSharingConsent } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
@@ -26,7 +28,7 @@
     }
     const valid = consentForm.reportValidity()
     if (!valid) {
-      throw new Error("Vennligst fyll ut alle påkrevde felt før du lagrer")
+      throw new Error(INVALID_FORM_MESSAGE)
     }
 
     await apiFetch(`/api/students/${student._id}/consent`, {
@@ -60,7 +62,7 @@
         <label>
           Samtykkemelding:
           <br>
-          <textarea bind:value={consentMessage} placeholder="Skriv en melding som forklarer hvorfor samtykke er gitt eller trukket tilbake" required></textarea>
+          <textarea bind:value={consentMessage} placeholder="Skriv en melding som forklarer hvorfor samtykke er gitt eller trukket tilbake" required minlength={studentDataSharingConsentMessageValidation.minLength} maxlength={studentDataSharingConsentMessageValidation.maxLength}></textarea>
         </label>
       </form>
       <AsyncButton onClick={() => updateStudentDataSharingConsent()} reloadPageDataOnSuccess={true} buttonText="Lagre" classList={["filled"]} iconName="save" callBackAfterReloadPageData={() => { editMode = false }} />

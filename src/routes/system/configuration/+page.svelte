@@ -4,7 +4,7 @@
 
 <div class="page-content">
   <PageHeader title="Konfigurasjon" />
-  <a href={`/admin/configuration/studentcheckboxes`}>Oppfølging og tilretteleggings-sjekkbokser</a>
+  <a href={`/system/configuration/studentcheckboxes`}>Oppfølging og tilretteleggings-sjekkbokser</a>
 </div>
 
 

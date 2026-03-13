@@ -77,9 +77,9 @@
 				</div>
 				{#if true} <!-- TODO - add check for if user has any access here -->
 					<div class="menu-section">
-						<div class="menu-section-title">Administrasjon</div>
+						<div class="menu-section-title">Skole-administrasjon</div>
 						<div class="menu-items">
-							<a class="menu-item" class:active={page.url.pathname === "/administration/access"} href="/administration/access">
+							<a class="menu-item" class:active={page.url.pathname === "/schooladministration/access"} href="/schooladministration/access">
 								<span class="material-symbols-outlined">lock_open</span>Tilgangsstyring
 							</a>
 						</div>
@@ -89,13 +89,13 @@
 					<div class="menu-section">
 						<div class="menu-section-title">System-admin</div>
 						<div class="menu-items">
-							<a class="menu-item" class:active={page.url.pathname === "/admin/schools"} href="/admin/schools">
-								<span class="material-symbols-outlined">lock_open</span>Skoleadministrasjon
+							<a class="menu-item" class:active={page.url.pathname === "/system/schools"} href="/system/schools">
+								<span class="material-symbols-outlined">school</span>Skoler
 							</a>
-							<a class="menu-item" class:active={page.url.pathname === "/admin/templates"} href="/admin/templates">
+							<a class="menu-item" class:active={page.url.pathname === "/system/templates"} href="/system/templates">
 								<span class="material-symbols-outlined">add_notes</span>Notatmaler
 							</a>
-							<a class="menu-item" class:active={page.url.pathname === "/admin/configuration"} href="/admin/configuration">
+							<a class="menu-item" class:active={page.url.pathname === "/system/configuration"} href="/system/configuration">
 								<span class="material-symbols-outlined">settings</span>Konfigurasjon
 							</a>
 						</div>	

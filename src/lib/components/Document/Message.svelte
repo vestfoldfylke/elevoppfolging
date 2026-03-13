@@ -1,5 +1,6 @@
 <script lang="ts">
   import { apiFetch } from "$lib/api-fetch/api-fetch"
+    import { INVALID_FORM_MESSAGE } from "$lib/data-validation/constants";
   import type { DocumentMessage, DocumentMessageInput } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
 
@@ -37,7 +38,7 @@
     }
     const formIsValid = messageForm.reportValidity()
     if (!formIsValid) {
-      throw new Error("Mangler påkrevd felt")
+      throw new Error(INVALID_FORM_MESSAGE)
     }
 
     if (groupId) {

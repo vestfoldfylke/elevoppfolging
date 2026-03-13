@@ -7,12 +7,12 @@
 
 <PageHeader title="Notat-maler" />
 
-<a href="/admin/templates/new">Ny notat-mal</a>
+<a href="/system/templates/new">Ny notat-mal</a>
 
 <h2>Eksisterende maler</h2>
 {#each data.templates as template}
   <div class="template">
-    <a href={`/admin/templates/${template._id}`}>{template.name}</a>
+    <a href={`/system/templates/${template._id}`}>{template.name}</a>
   </div>
 {/each}
 

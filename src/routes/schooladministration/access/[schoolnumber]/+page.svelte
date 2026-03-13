@@ -4,6 +4,7 @@
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import AsyncButton from "$lib/components/AsyncButton.svelte"
   import PageHeader from "$lib/components/PageHeader.svelte"
+    import { INVALID_FORM_MESSAGE } from "$lib/data-validation/constants";
   import type { AccessEntry } from "$lib/types/app-types"
   import type { ClassManualAccessEntry, EditorData, ManualAccessEntryInput, NewSchool, Period, ProgramAreaManualAccessEntry, SchoolManualAccessEntry } from "$lib/types/db/shared-types"
   import { getClassesFromStudents } from "$lib/utils/classes-from-students"
@@ -75,7 +76,7 @@
   const addManualAccessEntry = async (): Promise<void> => {
     const validForm = addAccessForm?.reportValidity()
     if (!validForm) {
-      throw new Error("Vennligs fyll ut alle påkrevde felt")
+      throw new Error(INVALID_FORM_MESSAGE)
     }
 
     if (!selectedType) {

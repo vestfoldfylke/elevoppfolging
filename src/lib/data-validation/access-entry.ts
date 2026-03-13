@@ -22,7 +22,7 @@ export const validateAccessEntryInput = (accessEntry: ManualAccessEntryInput): V
       break
     case "MANUELL-KLASSE-TILGANG":
       if (!accessEntry.systemId || typeof accessEntry.systemId !== "string") {
-        return { valid: false, message: "'systemId' is required for KLASSE-TILGANG" }
+        return { valid: false, message: "'systemId' is required for MANUELL-KLASSE-TILGANG" }
       }
       break
     default:
