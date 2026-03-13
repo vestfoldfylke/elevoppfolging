@@ -3,6 +3,7 @@
     import { INVALID_FORM_MESSAGE } from "$lib/data-validation/constants";
   import type { FrontendStudent } from "$lib/types/app-types"
   import type { SchoolInfo, StudentCheckBox, StudentImportantStuff, StudentImportantStuffInput } from "$lib/types/db/shared-types"
+    import { prettifyDate } from "$lib/utils/prettify-date";
   import AsyncButton from "../AsyncButton.svelte"
 
   type ImportantStuffProps = {
@@ -17,14 +18,20 @@
 
   let editMode = $state(false)
   let importantStuffForm: HTMLFormElement | undefined = $state()
-  
+
   // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounter ved endring av student
-  let editableImportantStuff: StudentImportantStuffInput = $state({
+  const initialEditableImportantStuff: StudentImportantStuffInput = {
     school: school,
     importantInfo: importantStuff?.importantInfo || "",
     facilitation: importantStuff?.facilitation.filter((facilitationId) => studentCheckBoxes.find((checkbox) => checkbox._id === facilitationId && checkbox.enabled)) || [],
     followUp: importantStuff?.followUp.filter((followUpId) => studentCheckBoxes.find((checkbox) => checkbox._id === followUpId && checkbox.enabled)) || []
-  } as StudentImportantStuffInput)
+  }
+  
+  let editableImportantStuff: StudentImportantStuffInput = $state(initialEditableImportantStuff)
+
+  let hasMadeChanges = $derived.by(() => {
+    return JSON.stringify(initialEditableImportantStuff) !== JSON.stringify(editableImportantStuff)
+  })
 
   const updateStudentImportantStuff = async (): Promise<void> => {
     if (!importantStuffForm) {
@@ -45,57 +52,129 @@
   }
 </script>
 
-<div class="student-section">
-  <div class="student-section-header">
-    <h3>{school.name}</h3>
-    {#if canEdit && !editMode}
-      <button onclick={() => editMode = true}>Rediger</button>
-    {/if}
+<div class="section-box">
+  <div class="section-box-header">
+    <div class="section-box-header-title">
+      <span class="material-symbols-outlined">star</span>
+      <h3>Viktig informasjon ved {school.name}</h3>
+    </div>
+    <div class="section-box-header-actions">
+      {#if canEdit && !editMode}
+        <button onclick={() => editMode = true}><span class="material-symbols-outlined">edit</span>Rediger</button>
+      {/if}
+    </div>
   </div>
-  <div class="student-section-content">
-    {#if editMode}
-      <form bind:this={importantStuffForm}>
-        <textarea bind:value={editableImportantStuff.importantInfo} placeholder="Skriv viktig informasjon om eleven som er relevant for skolen"></textarea>
-        <br />
-        <h4>Oppfølging</h4>
-        {#each studentCheckBoxes.filter(checkbox => checkbox.enabled && checkbox.type === "FOLLOW_UP") as followUpCheckbox}
-          <label>{followUpCheckbox.value}
-            <input type="checkbox" id={followUpCheckbox._id} bind:group={editableImportantStuff.followUp} value={followUpCheckbox._id} />
-          </label>
-        {/each}
-        <br />
-        <h4>Tilrettelegging</h4>
-        {#each studentCheckBoxes.filter(checkbox => checkbox.enabled && checkbox.type === "FACILITATION") as facilitationCheckbox}
-          <label>{facilitationCheckbox.value}
-            <input type="checkbox" id={facilitationCheckbox._id} bind:group={editableImportantStuff.facilitation} value={facilitationCheckbox._id} />
-          </label>
-        {/each}
-      </form>
-      <AsyncButton onClick={() => updateStudentImportantStuff()} reloadPageDataOnSuccess={true} buttonText="Lagre" classList={["filled"]} iconName="save" callBackAfterReloadPageData={() => { editMode = false }} />
-      <button type="button" onclick={() => editMode = false}>Avbryt</button>
-    {:else}
-      <p>Redigert av: {importantStuff?.modified.by.fallbackName}</p>
-      <p>Viktig informasjon: {importantStuff?.importantInfo || "Ingen viktig informasjon lagt til"}</p>
-      <div>
-        <h4>Oppfølging</h4>
-        <ul>
-          {#each importantStuff?.followUp.filter(followUpId => studentCheckBoxes.find(checkbox => checkbox._id === followUpId && checkbox.enabled)) || [] as followUpId}
-            <li>{studentCheckBoxes.find(checkbox => checkbox._id === followUpId)?.value}</li>
-          {/each}
-        </ul>
+
+  <div class="section-box-content">
+    <form bind:this={importantStuffForm}>
+      <div class="important-stuff-content">
+        <div class="important-info">
+          <h4>Informasjon</h4>
+          {#if editMode}
+            <textarea rows="4" style="width: 100%" bind:value={editableImportantStuff.importantInfo} placeholder="Skriv viktig informasjon om eleven som er relevant for skolen"></textarea>
+          {:else}
+            <div class="important-info-text">
+              {importantStuff?.importantInfo || "Ingen informasjon lagt til"}
+            </div>
+          {/if}
+        </div>
+
+        <div class="checkboxes-container">
+          <div class="checkboxes">
+            <h4 class="checkbox-header">Oppfølging</h4>
+            {#if editMode}
+              <ul class="edit-checkbox-list">
+                {#each studentCheckBoxes.filter(checkbox => checkbox.enabled && checkbox.type === "FOLLOW_UP") as followUpCheckbox}
+                    <li>
+                      <label>
+                        <input type="checkbox" id={followUpCheckbox._id} bind:group={editableImportantStuff.followUp} value={followUpCheckbox._id} />
+                        {followUpCheckbox.value}
+                      </label>
+                    </li>
+                {/each}
+              </ul>
+            {:else}
+              <ul>
+                {#each importantStuff?.followUp.filter(followUpId => studentCheckBoxes.find(checkbox => checkbox._id === followUpId && checkbox.enabled)) || [] as followUpId}
+                  <li>{studentCheckBoxes.find(checkbox => checkbox._id === followUpId)?.value}</li>
+                {/each}
+              </ul>
+            {/if}
+          </div>
+
+          <div class="checkboxes">
+            <h4>Tilrettelegging</h4>
+            {#if editMode}
+              <ul class="edit-checkbox-list">
+                {#each studentCheckBoxes.filter(checkbox => checkbox.enabled && checkbox.type === "FACILITATION") as facilitationCheckbox}
+                    <li>  
+                      <label>
+                        <input type="checkbox" id={facilitationCheckbox._id} bind:group={editableImportantStuff.facilitation} value={facilitationCheckbox._id} />
+                        {facilitationCheckbox.value}
+                      </label>
+                    </li>
+                {/each}
+              </ul>
+            {:else}
+              <ul>
+                {#each importantStuff?.facilitation.filter(facilitationId => studentCheckBoxes.find(checkbox => checkbox._id === facilitationId && checkbox.enabled)) || [] as facilitationId}
+                  <li>{studentCheckBoxes.find(checkbox => checkbox._id === facilitationId)?.value}</li>
+                {/each}
+              </ul>
+            {/if}
+          </div>
+        </div>
       </div>
-      <div>
-        <h4>Tilrettelegging</h4>
-        <ul>
-          {#each importantStuff?.facilitation.filter(facilitationId => studentCheckBoxes.find(checkbox => checkbox._id === facilitationId && checkbox.enabled)) || [] as facilitationId}
-            <li>{studentCheckBoxes.find(checkbox => checkbox._id === facilitationId)?.value}</li>
-          {/each}
-        </ul>
+    </form>
+  </div>
+  {#if editMode}
+    <div class="section-box-footer">
+      <AsyncButton disabled={!hasMadeChanges} onClick={() => updateStudentImportantStuff()} reloadPageDataOnSuccess={true} buttonText="Lagre" classList={["filled"]} iconName="save" callBackAfterReloadPageData={() => { editMode = false }} />
+      <button type="button" onclick={() => { editMode = false; editableImportantStuff = structuredClone(initialEditableImportantStuff); }}><span class="material-symbols-outlined">close</span>Avbryt</button>
+    </div>
+  {:else}
+    {#if importantStuff?.modified && !editMode}
+      <div class="section-box-footer">
+        <span>{prettifyDate(importantStuff.modified.at)} av {importantStuff.modified.by.fallbackName}</span>
       </div>
     {/if}
-  </div>
+  {/if}
 </div>
 
 <style>
+  .important-stuff-content {
+    display: flex;
+    column-gap: 2rem;
+    row-gap: 1rem;
+  }
 
+  .important-info {
+    flex: 1.2;
+  }
+
+  .important-info-text {
+    white-space: pre-wrap;
+  }
+
+  .checkboxes-container {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .checkboxes {
+    min-width: 12rem;
+    flex: 1;
+  }
+  .edit-checkbox-list {
+    padding-left: 0;
+  }
+  .edit-checkbox-list > li {
+    list-style-type: none;
+  }
+
+  @media (max-width: 60rem) {
+    .important-stuff-content {
+      flex-direction: column;
+    }
+  }
 </style>

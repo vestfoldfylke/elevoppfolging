@@ -37,36 +37,33 @@
 {#key data.student._id} <!-- Re-render entire student page when student-id change -->
   <div class="student-page page-content">
     <div class="student-header">
-      <!--
-      <div class="student-badge">
-        {getInitialsFromName(data.student.name)}
-      </div>
-      -->
       <div class="student-essentials">
         <PageHeader title={data.student.name} />
-        <p>{studentDetails.mainSchool?.name ?? "Ukjent skole?"} - {studentDetails.mainClassMembership?.classGroup.name || "Ingen aktiv klasse ved hovedskole"}</p>
-        <p><strong>Kontaktlærer{studentDetails.mainContactTeacherGroupMembership?.contactTeacherGroup.teachers.length !== 1 ? "e" : ""}:</strong> {(studentDetails.mainContactTeacherGroupMembership?.contactTeacherGroup.teachers || [{ name: "Ingen kontaktlærer ved hovedskole" }]).map(teacher => teacher.name).join(", ")}</p>
-        <p>
-          {#each data.studentAccessInfo as accessType}
-            {accessType.type} ved {data.student.studentEnrollments.find(enrollment => enrollment.school.schoolNumber === accessType.schoolNumber)?.school.name} <br>
-          {/each}
-        </p>
+        <p class="student-essential-info">{studentDetails.mainSchool?.name ?? "Ukjent skole?"} - {studentDetails.mainClassMembership?.classGroup.name || "Ingen aktiv klasse ved hovedskole"}</p>
+        <p class="student-essential-info"><strong>Kontaktlærer{studentDetails.mainContactTeacherGroupMembership?.contactTeacherGroup.teachers.length !== 1 ? "e" : ""}:</strong> {(studentDetails.mainContactTeacherGroupMembership?.contactTeacherGroup.teachers || [{ name: "Ingen kontaktlærer ved hovedskole" }]).map(teacher => teacher.name).join(", ")}</p>
       </div>
+    </div>
+
+    <div class="student-tabs">
+      <button class="student-tab">Elevinformasjon</button>
+      <button class="student-tab">Notater</button>
     </div>
 
     {#each accessSchools as accessSchool}
       <ImportantStuff canEdit={canEditStudentImportantStuff(accessSchool.schoolNumber, data.studentAccessInfo)} importantStuff={data.importantStuff.find(importantStuff => importantStuff.school.schoolNumber === accessSchool.schoolNumber) || null} school={accessSchool} studentCheckBoxes={data.studentCheckBoxes} student={data.student} />
     {/each}
 
-    <DataSharingConsent canEdit={canEditStudentDataSharingConsent(data.studentAccessInfo)} student={data.student} studentDataSharingConsent={data.studentDataSharingConsent} unavailableSchoolDocuments={data.unavailableSchoolDocuments} />
-
-    <div class="student-section">
-      <div class="student-section-header">
-        <h3>Personer med tilgang til eleven</h3>
-      </div>
-      <div class="student-section-content">
-        Kommer etterhvert
-        <button>Send en epost til alle disse ellerno</button>
+    <div class="consent-and-access-container">
+      <DataSharingConsent canEdit={canEditStudentDataSharingConsent(data.studentAccessInfo)} student={data.student} studentDataSharingConsent={data.studentDataSharingConsent} unavailableSchoolDocuments={data.unavailableSchoolDocuments} />
+      
+      <div class="section-box" style="min-width: 20rem;">
+        <div class="section-box-header">
+          <h3>Personer med tilgang til eleven</h3>
+        </div>
+        <div class="section-box-content">
+          Kommer etterhvert
+          <button>Send en epost til alle disse ellerno</button>
+        </div>
       </div>
     </div>
 
@@ -103,14 +100,21 @@
     align-items: center;
     gap: 1rem;
   }
-  .student-section {
-    border: 1px solid #ccc;
-    border-radius: 4px;
+  .student-essential-info {
+    margin: 0;
   }
-  .student-section-header {
+
+  .student-tabs {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+  }
+  .student-tab {
+    flex: 1;
+  }
+
+  .consent-and-access-container {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
   }
   .documents {
     display: flex;

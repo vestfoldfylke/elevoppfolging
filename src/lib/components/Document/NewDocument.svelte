@@ -76,7 +76,7 @@
     </select>
   </div>
 
-  <div class="document-container box-container">
+  <div class="document-container section-box">
     <div class="document-header">
       <h2>{newDocument.template.name}: {newDocument.title}</h2>
       <div>{newDocument.school.name}</div>
