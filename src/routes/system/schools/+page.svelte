@@ -59,11 +59,11 @@
       <h2>Legg til ny skole</h2>
       <form bind:this={newSchoolForm}>
         <div class="form-group">
-          <label for="schoolName">Skolenavn (minst 4 tegn, kun bokstaver)</label>
+          <label for="schoolName">Skolenavn</label>
           <input id="schoolName" name="schoolName" type="text" bind:value={newSchoolData.name} required pattern={schoolNameValidation.pattern.source} minlength={schoolNameValidation.minLength} maxlength={schoolNameValidation.maxLength}>
         </div>
         <div class="form-group">
-          <label for="schoolNumber">Skolenummer (minst 4 siffer, ingen bokstaver)</label>
+          <label for="schoolNumber">Skolenummer</label>
           <input id="schoolNumber" name="schoolNumber" type="text" bind:value={newSchoolData.schoolNumber} required pattern={schoolNumberValidation.pattern.source} minlength={schoolNumberValidation.minLength} maxlength={schoolNumberValidation.maxLength}>
         </div>
       </form>
