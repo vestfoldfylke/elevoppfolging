@@ -24,7 +24,7 @@ const getSchoolAccessAdministrationData: ServerLoadNextFunction<SchoolAccessAdmi
   }
 
   if (!access.schools.some((schoolAccess) => schoolAccess.schoolNumber === schoolNumber)) {
-    throw new HTTPError(403, "No access to this administrate access for this school")
+    throw new HTTPError(403, "No access to administrate access for this school")
   }
 
   const manualAccessForSchool: Access[] = await dbClient.getManualAccess(schoolNumber)
