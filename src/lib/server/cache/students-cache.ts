@@ -23,18 +23,22 @@ export const updateStudentsCache = async () => {
     logger.info("Update of students cache already in progress, skipping")
     return
   }
+
   logger.info("Updating students cache")
   studentsCache.updateInProgress = true
   const dbClient = getDbClient()
+
   logger.info("Fetching all students from database to update cache")
-  const startTime = Date.now()
+  const startTime = Date.now() // TODO remove datestuff when we know its ok
   const students = await dbClient.getAllStudents()
   const endTime = Date.now()
   logger.info(`Fetched ${students.length} students from database in ${(endTime - startTime) / 1000}s, updating cache`)
+
   studentsCache.students = students.map((student) => ({
     ...student,
     ...getFrontendStudentDetails(student, APP_INFO)
   }))
+
   studentsCache.updated = new Date()
   studentsCache.updateInProgress = false
   console.log("memory used", process.memoryUsage().heapUsed / 1024 / 1024, "MB")
@@ -48,10 +52,12 @@ export const updateStudentsCache = async () => {
  */
 export const getStudentsFromCache = async (access: Access): Promise<CachedFrontendStudentWithAccessInfo[]> => {
   const studentsWithAccessInfo: CachedFrontendStudentWithAccessInfo[] = []
+
   // If first time or cache is empty, populate cache before returning students
   if (!studentsCache.updated || studentsCache.students.length === 0) {
     logger.info("Students cache is empty, populating cache before returning students, user will have to wait...")
     await updateStudentsCache()
+
     for (const student of studentsCache.students) {
       const studentAccessInfo = getStudentAccessInfo(student, access)
       if (studentAccessInfo.length > 0) {
