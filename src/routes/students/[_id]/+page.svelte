@@ -1,20 +1,68 @@
 <script lang="ts">
   import DocumentComponent from "$lib/components/Document/Document.svelte"
   import NewDocument from "$lib/components/Document/NewDocument.svelte"
-  import PageHeader from "$lib/components/PageHeader.svelte"
   import DataSharingConsent from "$lib/components/StudentBoxes/DataSharingConsent.svelte"
   import ImportantStuff from "$lib/components/StudentBoxes/ImportantStuff.svelte"
   import { canEditStudentDataSharingConsent, canEditStudentImportantStuff } from "$lib/shared-authorization/authorization"
   import type { SchoolInfo } from "$lib/types/db/shared-types"
   import { getFrontendStudentDetails } from "$lib/utils/frontend-student-details"
+  import { slide } from "svelte/transition";
   import type { PageProps } from "./$types"
+    import { tick } from "svelte";
 
   let { data }: PageProps = $props()
 
-  let showAllStudentContacts = $state(false)
+  let expandedStudentDetails = $state(false)
+  let documentCreatorOpen = $state(false)
 
+  const openDocumentCreator = async () => {
+    documentCreatorOpen = true
+    await tick()
+    const documentsHeader = document.getElementById("documents")
+    if (documentsHeader) {
+      documentsHeader.scrollIntoView({ behavior: "smooth" })
+    }
+  } 
   let studentDetails = $derived.by(() => {
     return getFrontendStudentDetails(data.student, data.APP_INFO)
+  })
+
+  type StudentSummaryDetails = {
+    importantInfo: string | null
+    facilitation: string[]
+    followUp: string[]
+  } | undefined
+
+  let studentSummaryDetails: StudentSummaryDetails = $derived.by(() => {
+    const importantStuffToUse = data.importantStuff.find(importantStuff => importantStuff.school.schoolNumber === studentDetails.mainSchool?.schoolNumber) || data.importantStuff[0] || null
+    if (!importantStuffToUse) {
+      return undefined
+    }
+    const importantInfo = importantStuffToUse.importantInfo || null
+    const followUp: string[] = []
+    const facilitation: string[] = []
+    importantStuffToUse.followUp.forEach((followUpId) => {
+      const followUpCheckBox = data.studentCheckBoxes.find((checkbox) => checkbox._id === followUpId)
+      if (followUpCheckBox) {
+        followUp.push(followUpCheckBox.value)
+      }
+    })
+    importantStuffToUse.facilitation.forEach((facilitationId) => {
+      const facilitationCheckBox = data.studentCheckBoxes.find((checkbox) => checkbox._id === facilitationId)
+      if (facilitationCheckBox) {
+        facilitation.push(facilitationCheckBox.value)
+      }
+    })
+
+    if (!importantInfo && followUp.length === 0 && facilitation.length === 0) {
+      return undefined
+    }
+
+    return { importantInfo, facilitation, followUp }
+  })
+
+  let hasOtherSchoolInfoAndNotConsent = $derived.by(() => {
+    return (data.unavailableSchoolDocuments.length > 0 || studentDetails.additionalSchools.length > 0) && !data.studentDataSharingConsent?.consent
   })
 
   let accessSchools: SchoolInfo[] = $derived.by(() => {
@@ -36,44 +84,93 @@
 
 {#key data.student._id} <!-- Re-render entire student page when student-id change -->
   <div class="student-page page-content">
-    <div class="student-header">
-      <div class="student-essentials">
-        <PageHeader title={data.student.name} />
-        <p class="student-essential-info">{studentDetails.mainSchool?.name ?? "Ukjent skole?"} - {studentDetails.mainClassMembership?.classGroup.name || "Ingen aktiv klasse ved hovedskole"}</p>
-        <p class="student-essential-info"><strong>Kontaktlærer{studentDetails.mainContactTeacherGroupMembership?.contactTeacherGroup.teachers.length !== 1 ? "e" : ""}:</strong> {(studentDetails.mainContactTeacherGroupMembership?.contactTeacherGroup.teachers || [{ name: "Ingen kontaktlærer ved hovedskole" }]).map(teacher => teacher.name).join(", ")}</p>
-      </div>
-    </div>
-
-    <div class="student-tabs">
-      <button class="student-tab">Elevinformasjon</button>
-      <button class="student-tab">Notater</button>
-    </div>
-
-    {#each accessSchools as accessSchool}
-      <ImportantStuff canEdit={canEditStudentImportantStuff(accessSchool.schoolNumber, data.studentAccessInfo)} importantStuff={data.importantStuff.find(importantStuff => importantStuff.school.schoolNumber === accessSchool.schoolNumber) || null} school={accessSchool} studentCheckBoxes={data.studentCheckBoxes} student={data.student} />
-    {/each}
-
-    <div class="consent-and-access-container">
-      <DataSharingConsent canEdit={canEditStudentDataSharingConsent(data.studentAccessInfo)} student={data.student} studentDataSharingConsent={data.studentDataSharingConsent} unavailableSchoolDocuments={data.unavailableSchoolDocuments} />
+    <div class="section-box">
       
-      <div class="section-box" style="min-width: 20rem;">
-        <div class="section-box-header">
-          <h3>Personer med tilgang til eleven</h3>
+      <div class="section-box-header">
+        <div>
+          <h1>{data.student.name}</h1>
+          <span class="student-subtitle">{studentDetails.mainSchool?.name ?? "Ingen hovedskole"} - {studentDetails.mainClassMembership?.classGroup.name || "Ingen aktiv klasse ved hovedskole"}</span>
         </div>
+        <button class="toggle-student-details-button" onclick={() => expandedStudentDetails = !expandedStudentDetails}>
+          <span class="material-symbols-outlined">{expandedStudentDetails ? "expand_circle_up" : "expand_circle_down"}</span>
+          {expandedStudentDetails ? "Skjul detaljer" : "Vis detaljer"}
+        </button>
+      </div>
+
+      {#if !expandedStudentDetails && (studentSummaryDetails || hasOtherSchoolInfoAndNotConsent)}
         <div class="section-box-content">
-          Kommer etterhvert
-          <button>Send en epost til alle disse ellerno</button>
+          <div class="student-details-preview">
+            {#if studentSummaryDetails}
+              {#if studentSummaryDetails.importantInfo}
+                <div class="main-important-stuff">
+                  <p>{studentSummaryDetails.importantInfo}</p>
+                </div>
+              {/if}
+              {#if studentSummaryDetails.followUp.length > 0}
+                <div>
+                  <strong>Oppfølging: </strong> {studentSummaryDetails.followUp.join(", ")}
+                </div>
+              {/if}
+              {#if studentSummaryDetails.facilitation.length > 0}
+                <div>
+                  <strong>Tilrettelegging:</strong> {studentSummaryDetails.facilitation.join(", ")}
+                </div>
+              {/if}
+            {/if}
+            {#if hasOtherSchoolInfoAndNotConsent}
+              <div>
+                <p>
+                  Eleven har ikke gitt samtykke til deling av data på tvers av skoler. 
+                  {#if studentDetails.additionalSchools.length > 0}
+                    Eleven har også elevforhold ved {studentDetails.additionalSchools.map(school => school.name).join(", ")}.
+                  {/if}
+                  {#if data.unavailableSchoolDocuments.length > 0}
+                    Det finnes notater fra andre skoler som ikke er tilgjengelig for deg.
+                  {/if}
+                </p>
+            </div>
+            {/if}
+          </div>
+        </div>
+      {/if}
+    </div>
+
+    {#if expandedStudentDetails}
+      <div class="student-details" transition:slide>
+        {#each accessSchools as accessSchool}
+          <ImportantStuff canEdit={canEditStudentImportantStuff(accessSchool.schoolNumber, data.studentAccessInfo)} importantStuff={data.importantStuff.find(importantStuff => importantStuff.school.schoolNumber === accessSchool.schoolNumber) || null} school={accessSchool} studentCheckBoxes={data.studentCheckBoxes} student={data.student} />
+        {/each}
+
+        <div class="consent-and-access-container">
+          <DataSharingConsent canEdit={canEditStudentDataSharingConsent(data.studentAccessInfo)} student={data.student} studentDataSharingConsent={data.studentDataSharingConsent} unavailableSchoolDocuments={data.unavailableSchoolDocuments} />
+          
+          <div class="section-box" style="min-width: 20rem;">
+            <div class="section-box-header">
+              <h3>Personer med tilgang til eleven</h3>
+            </div>
+            <div class="section-box-content">
+              Kommer etterhvert
+              <button>Send en epost til alle disse ellerno</button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    {/if}
 
     <div class="documents">
-      <div class="document-header">
-        <h2>Tidslinje</h2>
+      <div class="documents-header">
+        {#if !documentCreatorOpen}
+          <h2 id="documents">Notater</h2>
+          <button class="filled" onclick={openDocumentCreator}><span class="material-symbols-outlined">note_add</span>Nytt notat</button>
+        {:else}
+          <h2 id="documents">Nytt notat</h2>
+        {/if}
       </div>
 
       <div class="new-document">
-        <NewDocument {accessSchools} documentContentTemplates={data.documentContentTemplates} studentId={data.student._id} />
+        {#if documentCreatorOpen}
+          <NewDocument {accessSchools} documentContentTemplates={data.documentContentTemplates} bind:creatorOpen={documentCreatorOpen} studentId={data.student._id} />
+        {/if}
       </div>
 
       {#if data.documents.length === 0}
@@ -95,26 +192,26 @@
     flex-direction: column;
     gap: 1rem;
   }
-  .student-header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-  .student-essential-info {
-    margin: 0;
+  .student-subtitle {
+    font-size: smaller;
   }
 
-  .student-tabs {
+  .student-details {
     display: flex;
-  }
-  .student-tab {
-    flex: 1;
+    flex-direction: column;
+    gap: 1rem;
   }
 
   .consent-and-access-container {
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
+  }
+
+  .documents-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
   .documents {
     display: flex;

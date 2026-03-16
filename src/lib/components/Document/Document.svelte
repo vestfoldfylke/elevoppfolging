@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { slide } from "svelte/transition"
   import { page } from "$app/state"
   import { canEditDocument } from "$lib/shared-authorization/authorization"
   import type { DocumentInput, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
@@ -7,6 +6,7 @@
   import DocumentEditor from "./DocumentEditor.svelte"
   import Message from "./Message.svelte"
   import NewMessage from "./NewMessage.svelte"
+  import { tick } from "svelte";
 
   type PageProps = {
     document: StudentDocument // Add GroupDocument union when needed
@@ -14,6 +14,17 @@
   }
 
   let { document, accessSchools }: PageProps = $props()
+
+  const toggleDocument = async () => {
+    documentOpen = !documentOpen
+    if (documentOpen) {
+      await tick()
+      const documentElement = window.document.getElementById(`document-${document._id}`)
+      if (documentElement) {
+        documentElement.scrollIntoView({ behavior: "smooth" })
+      }
+    }
+  }
 
   const editableDocumentFromDocument = () => {
     return JSON.parse(
@@ -33,17 +44,19 @@
   let editMode = $state(false)
 </script>
 
-<div class="document" class:open={documentOpen}>
-  <button class="document-title" class:open={documentOpen} onclick={() => documentOpen = !documentOpen}>
-    <h2>{document.template.name}: {editableDocument.title}</h2>
-    <div class="document-title-metadata">
+<div id="document-{document._id}" class="document" class:open={documentOpen}>
+  <button class="document-header" class:open={documentOpen} onclick={toggleDocument}>
+    <div class="document-header-left">
+      <h2>{document.template.name}: {editableDocument.title}</h2>
+      <div>{document.school.name}</div>
+    </div>
+    <div class="document-header-right">
       <div><strong>{document.created.by.displayName}</strong></div>
       <div>{new Date(document.modified.at).toLocaleString('nb-NO', { dateStyle: 'short', timeStyle: 'short' })}</div>
-      <div>{document.school.name}</div>
     </div>
   </button>
   {#if documentOpen}
-    <div class="collapsible-content" transition:slide={{ duration: 200 }}>
+    <div class="collapsible-content">
       <div class="document-content">
         {#if !editMode}
           {#each document.content as contentItem, index}
@@ -79,29 +92,35 @@
   .document {
     display: flex;
     flex-direction: column;
-    border: 1px solid var(--color-primary);
+    border: 1px solid var(--color-primary-30);
     border-radius: 0.5rem;
-  }
-  .document.open {
     margin-bottom: 1rem;
   }
 
-  .document-title {
+  .document-header {
     flex: 1;
     display: flex;
     justify-content: space-between;
     border: none;
     border-radius: 0.5rem;
+    padding: 1rem;
   }
-  .document-title.open {
-    border-bottom: 1px solid var(--color-primary);
+  .document-header-left {
+    text-align: left;
+  }
+  .document-header-right {
+    text-align: right;
+  }
+
+  .document-header.open {
+    border-bottom: 1px solid var(--color-primary-30);
     border-radius: 0.5rem 0.5rem 0rem 0rem;
     background-color: var(--color-primary-10);
   }
-  .document-title.open:hover {
+  .document-header.open:hover {
     background-color: var(--color-primary-20);
   }
-  .document-title.open:active {
+  .document-header.open:active {
     background-color: var(--color-primary-30);
   }
 
@@ -110,6 +129,6 @@
   }
 
   .document-content {
-    border-bottom: 1px solid var(--color-primary);
+    border-bottom: 1px solid var(--color-primary-30);
   }
 </style>

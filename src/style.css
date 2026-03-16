@@ -173,9 +173,13 @@ ul, ol {
 }
 
 .section-box {
+  display: flex;
+  flex-direction: column;
   background-color: var(--color-primary-10);
   border-radius: 0.5rem;
   flex: 1;
+  padding: 1.5rem;
+  row-gap: 1.5rem;
 }
 
 .section-box-header {
@@ -190,10 +194,6 @@ ul, ol {
   gap: 0.5rem;
 }
 
-.section-box-header, .section-box-content, .section-box-footer {
-  margin: 1.5rem;
-}
-
 .section-box-header-actions {
   display: flex;
   align-items: center;
@@ -204,7 +204,6 @@ ul, ol {
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
-  margin-top: 1rem;
 }
 
 .section-box-footer > span {

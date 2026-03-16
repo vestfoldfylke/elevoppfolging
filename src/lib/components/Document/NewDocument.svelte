@@ -5,13 +5,12 @@
   type PageProps = {
     documentContentTemplates: DocumentContentTemplate[]
     accessSchools: SchoolInfo[]
+    creatorOpen: boolean
     studentId?: string
     groupId?: string
   }
 
-  let { documentContentTemplates, accessSchools, studentId, groupId }: PageProps = $props()
-
-  let creatorOpen = $state(false)
+  let { documentContentTemplates, accessSchools, creatorOpen = $bindable(), studentId, groupId }: PageProps = $props()
 
   // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounter ved endring av studentId/groupId
   if (!studentId && !groupId) {
@@ -59,41 +58,38 @@
   }
 </script>
 
-{#if !creatorOpen}
-  <div>
-    <button class="filled" onclick={() => creatorOpen = true}><span class="material-symbols-outlined">note_add</span>Nytt notat</button>
-  </div>
-{:else}
-  <div class="template-selector">
-    <label for="type">
-      Type notat
-    </label>
-    <br />
-    <select id="type" name="documentContentTemplateId" onchange={(event) => changeDocumentTemplate((event.target as HTMLSelectElement).value)}>
-      {#each newDocumentTemplates as documentTemplate}
-        <option value={documentTemplate.template._id}>{documentTemplate.template.name}</option>
-      {/each}
-    </select>
-  </div>
+<div class="template-selector">
+  <label for="type">
+    Type notat
+  </label>
+  <br />
+  <select id="type" name="documentContentTemplateId" onchange={(event) => changeDocumentTemplate((event.target as HTMLSelectElement).value)}>
+    {#each newDocumentTemplates as documentTemplate}
+      <option value={documentTemplate.template._id}>{documentTemplate.template.name}</option>
+    {/each}
+  </select>
+</div>
 
-  <div class="document-container section-box">
-    <div class="document-header">
+<div class="document">
+  <div class="document-header">
+    <div>
       <h2>{newDocument.template.name}: {newDocument.title}</h2>
-      <div>{newDocument.school.name}</div>
+      <div style="font-size: smaller;">{newDocument.school.name}</div>
     </div>
+  </div>
+  <div class="document-content">
     <DocumentEditor {studentId} {groupId} {accessSchools} bind:currentDocument={newDocument} closeEditor={() => creatorOpen = false} />
   </div>
-{/if}
+</div>
 
 <style>
-  .template-selector {
+  .document {
+    border: 1px solid var(--color-primary-30);
+    border-radius: 0.5rem;
+    padding: 1rem;
     margin-bottom: 1rem;
   }
-  .document-container {
-    display: flex;
-    flex-direction: column;
-  }
-  h2 {
-    margin: 0rem;
+  .template-selector {
+    margin-bottom: 1rem;
   }
 </style>
