@@ -20,15 +20,18 @@
   let consentForm: HTMLFormElement | undefined = $state()
 
   // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounter ved endring av student
-  const initialEditableSharingConsent: StudentDataSharingConsentInput = {
-    consent: studentDataSharingConsent?.consent ?? false,
-    message: studentDataSharingConsent?.message ?? ""
-  }
+  const savedEditableSharingConsent: StudentDataSharingConsentInput = $derived.by(() => {
+    return {
+      consent: studentDataSharingConsent?.consent ?? false,
+      message: studentDataSharingConsent?.message ?? ""
+    }
+  })
 
-  let editableSharingConsent: StudentDataSharingConsentInput = $state(initialEditableSharingConsent)
+  // svelte-ignore state_referenced_locally - det går bra, vi ønsker en lokal kopi
+  let editableSharingConsent: StudentDataSharingConsentInput = $state(savedEditableSharingConsent)
 
   let hasMadeChanges = $derived.by(() => {
-    return JSON.stringify(initialEditableSharingConsent) !== JSON.stringify(editableSharingConsent)
+    return JSON.stringify(savedEditableSharingConsent) !== JSON.stringify(editableSharingConsent)
   })
 
   const updateStudentDataSharingConsent = async (): Promise<void> => {
@@ -77,10 +80,10 @@
         </label>
         </form>
     {:else}
-      <p>Eleven har {studentDataSharingConsent?.consent ? "samtykket til deling av data" : "ikke samtykket til deling av data"}</p>
-      {#if studentDataSharingConsent?.message}
+      <p>Eleven har {savedEditableSharingConsent.consent ? "samtykket til deling av data" : "ikke samtykket til deling av data"}</p>
+      {#if savedEditableSharingConsent.message}
         <h4>Melding</h4>
-        <div>{studentDataSharingConsent?.message}</div>
+        <div>{savedEditableSharingConsent.message}</div>
       {/if}
       {#if unavailableSchoolDocuments.length > 0}
         <p>Det finnes dokumenter fra følgende skoler som ikke er tilgjengelige for deg:</p>
@@ -94,8 +97,8 @@
   </div>
   {#if editMode}
     <div class="section-box-footer">
-      <AsyncButton onClick={() => updateStudentDataSharingConsent()} reloadPageDataOnSuccess={true} buttonText="Lagre" classList={["filled"]} iconName="save" callBackAfterReloadPageData={() => { editMode = false }} />
-      <button type="button" onclick={() => editMode = false}>Avbryt</button>
+      <AsyncButton disabled={!hasMadeChanges} onClick={() => updateStudentDataSharingConsent()} reloadPageDataOnSuccess={true} buttonText="Lagre" classList={["filled"]} iconName="save" callBackAfterReloadPageData={() => { editMode = false }} />
+      <button type="button" onclick={() => { editMode = false; editableSharingConsent = $state.snapshot(savedEditableSharingConsent); }}><span class="material-symbols-outlined">close</span>Avbryt</button>
     </div>
   {:else}
     {#if studentDataSharingConsent?.modified && !editMode}
