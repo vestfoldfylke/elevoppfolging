@@ -19,18 +19,20 @@
   let editMode = $state(false)
   let importantStuffForm: HTMLFormElement | undefined = $state()
 
-  // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounter ved endring av student
-  const initialEditableImportantStuff: StudentImportantStuffInput = {
-    school: school,
-    importantInfo: importantStuff?.importantInfo || "",
-    facilitation: importantStuff?.facilitation.filter((facilitationId) => studentCheckBoxes.find((checkbox) => checkbox._id === facilitationId && checkbox.enabled)) || [],
-    followUp: importantStuff?.followUp.filter((followUpId) => studentCheckBoxes.find((checkbox) => checkbox._id === followUpId && checkbox.enabled)) || []
-  }
-  
-  let editableImportantStuff: StudentImportantStuffInput = $state(initialEditableImportantStuff)
+  let savedEditableImportantStuff: StudentImportantStuffInput = $derived.by(() => {
+    return {
+      school: school,
+      importantInfo: importantStuff?.importantInfo || "",
+      facilitation: importantStuff?.facilitation.filter((facilitationId) => studentCheckBoxes.find((checkbox) => checkbox._id === facilitationId && checkbox.enabled)) || [],
+      followUp: importantStuff?.followUp.filter((followUpId) => studentCheckBoxes.find((checkbox) => checkbox._id === followUpId && checkbox.enabled)) || []
+    }
+  })
+
+  // svelte-ignore state_referenced_locally - det går bra, vi håndterer intern state i klassen EditableImportantStuffHandler
+  let editableImportantStuff: StudentImportantStuffInput = $state(savedEditableImportantStuff)
 
   let hasMadeChanges = $derived.by(() => {
-    return JSON.stringify(initialEditableImportantStuff) !== JSON.stringify(editableImportantStuff)
+    return JSON.stringify(savedEditableImportantStuff) !== JSON.stringify(editableImportantStuff)
   })
 
   const updateStudentImportantStuff = async (): Promise<void> => {
@@ -74,7 +76,7 @@
             <textarea rows="4" style="width: 100%" bind:value={editableImportantStuff.importantInfo} placeholder="Skriv viktig informasjon om eleven som er relevant for skolen"></textarea>
           {:else}
             <div class="important-info-text">
-              {importantStuff?.importantInfo || "Ingen informasjon lagt til"}
+              {savedEditableImportantStuff.importantInfo || "Ingen informasjon lagt til"}
             </div>
           {/if}
         </div>
@@ -94,18 +96,22 @@
                 {/each}
               </ul>
             {:else}
-              <ul>
-                {#each importantStuff?.followUp.filter(followUpId => studentCheckBoxes.find(checkbox => checkbox._id === followUpId && checkbox.enabled)) || [] as followUpId}
-                  <li>{studentCheckBoxes.find(checkbox => checkbox._id === followUpId)?.value}</li>
-                {/each}
-              </ul>
+              {#if savedEditableImportantStuff.followUp.length === 0}
+                Ingen oppfølging
+              {:else}
+                <ul>
+                  {#each savedEditableImportantStuff.followUp || [] as followUpId}
+                    <li>{studentCheckBoxes.find(checkbox => checkbox._id === followUpId)?.value}</li>
+                  {/each}
+                </ul>
+              {/if}
             {/if}
           </div>
 
           <div class="checkboxes">
             <h4>Tilrettelegging</h4>
             {#if editMode}
-              <ul class="edit-checkbox-list">
+              <ul class="edit-checkbox-list"> 
                 {#each studentCheckBoxes.filter(checkbox => checkbox.enabled && checkbox.type === "FACILITATION") as facilitationCheckbox}
                     <li>  
                       <label>
@@ -116,11 +122,15 @@
                 {/each}
               </ul>
             {:else}
-              <ul>
-                {#each importantStuff?.facilitation.filter(facilitationId => studentCheckBoxes.find(checkbox => checkbox._id === facilitationId && checkbox.enabled)) || [] as facilitationId}
-                  <li>{studentCheckBoxes.find(checkbox => checkbox._id === facilitationId)?.value}</li>
-                {/each}
-              </ul>
+              {#if savedEditableImportantStuff.facilitation.length === 0}
+                Ingen tilrettelegging
+              {:else}
+                <ul>
+                  {#each savedEditableImportantStuff.facilitation || [] as facilitationId}
+                    <li>{studentCheckBoxes.find(checkbox => checkbox._id === facilitationId)?.value}</li>
+                  {/each}
+                </ul>
+              {/if}
             {/if}
           </div>
         </div>
@@ -130,7 +140,7 @@
   {#if editMode}
     <div class="section-box-footer">
       <AsyncButton disabled={!hasMadeChanges} onClick={() => updateStudentImportantStuff()} reloadPageDataOnSuccess={true} buttonText="Lagre" classList={["filled"]} iconName="save" callBackAfterReloadPageData={() => { editMode = false }} />
-      <button type="button" onclick={() => { editMode = false; editableImportantStuff = structuredClone(initialEditableImportantStuff); }}><span class="material-symbols-outlined">close</span>Avbryt</button>
+      <button type="button" onclick={() => { editMode = false; editableImportantStuff = $state.snapshot(savedEditableImportantStuff); }}><span class="material-symbols-outlined">close</span>Avbryt</button>
     </div>
   {:else}
     {#if importantStuff?.modified && !editMode}
