@@ -1,15 +1,74 @@
 <script lang="ts">
+  import { tick } from "svelte"
+  import { slide } from "svelte/transition"
   import DocumentComponent from "$lib/components/Document/Document.svelte"
   import NewDocument from "$lib/components/Document/NewDocument.svelte"
-  import type { School } from "$lib/types/db/shared-types"
+  import DataSharingConsent from "$lib/components/StudentBoxes/DataSharingConsent.svelte"
+  import ImportantStuff from "$lib/components/StudentBoxes/ImportantStuff.svelte"
+  import { canEditStudentDataSharingConsent, canEditStudentImportantStuff } from "$lib/shared-authorization/authorization"
+  import type { SchoolInfo } from "$lib/types/db/shared-types"
+  import { getFrontendStudentDetails } from "$lib/utils/frontend-student-details"
   import type { PageProps } from "./$types"
 
   let { data }: PageProps = $props()
 
-  let showAllStudentContacts = $state(false)
+  let expandedStudentDetails = $state(false)
+  let documentCreatorOpen = $state(false)
 
-  let accessSchools: School[] = $derived.by(() => {
-    const accessSchools = data.accessTypes.map((access) => {
+  const openDocumentCreator = async () => {
+    documentCreatorOpen = true
+    await tick()
+    const documentsHeader = document.getElementById("documents")
+    if (documentsHeader) {
+      documentsHeader.scrollIntoView({ behavior: "smooth" })
+    }
+  }
+  let studentDetails = $derived.by(() => {
+    return getFrontendStudentDetails(data.student, data.APP_INFO)
+  })
+
+  type StudentSummaryDetails =
+    | {
+        importantInfo: string | null
+        facilitation: string[]
+        followUp: string[]
+      }
+    | undefined
+
+  let studentSummaryDetails: StudentSummaryDetails = $derived.by(() => {
+    const importantStuffToUse = data.importantStuff.find((importantStuff) => importantStuff.school.schoolNumber === studentDetails.mainSchool?.schoolNumber) || data.importantStuff[0] || null
+    if (!importantStuffToUse) {
+      return undefined
+    }
+    const importantInfo = importantStuffToUse.importantInfo || null
+    const followUp: string[] = []
+    const facilitation: string[] = []
+    importantStuffToUse.followUp.forEach((followUpId) => {
+      const followUpCheckBox = data.studentCheckBoxes.find((checkbox) => checkbox._id === followUpId)
+      if (followUpCheckBox) {
+        followUp.push(followUpCheckBox.value)
+      }
+    })
+    importantStuffToUse.facilitation.forEach((facilitationId) => {
+      const facilitationCheckBox = data.studentCheckBoxes.find((checkbox) => checkbox._id === facilitationId)
+      if (facilitationCheckBox) {
+        facilitation.push(facilitationCheckBox.value)
+      }
+    })
+
+    if (!importantInfo && followUp.length === 0 && facilitation.length === 0) {
+      return undefined
+    }
+
+    return { importantInfo, facilitation, followUp }
+  })
+
+  let hasOtherSchoolInfoAndNotConsent = $derived.by(() => {
+    return (data.unavailableSchoolDocuments.length > 0 || studentDetails.additionalSchools.length > 0) && !data.studentDataSharingConsent?.consent
+  })
+
+  let accessSchools: SchoolInfo[] = $derived.by(() => {
+    const accessSchools = data.studentAccessInfo.map((access) => {
       const school = data.student.studentEnrollments.find((enrollment) => enrollment.school.schoolNumber === access.schoolNumber)?.school
       if (!school) {
         throw new Error(`School not found for access with school number ${access.schoolNumber}, something wrong here gitt`)
@@ -23,169 +82,110 @@
 
     return accessSchools
   })
-
-  type StudentContactPerson = {
-    name: string
-    type: "Kontaktlærer" | "Klasselærer" | "Faglærer" | "Noe"
-  }
-
-  type SchoolContacts = {
-    [schoolNumber: string]: {
-      mainSchool: boolean
-      schoolNumber: string
-      name: string
-      contactPersons: StudentContactPerson[]
-    }
-  }
-  let schoolContacts = $derived.by(() => {
-    const schoolContacts: SchoolContacts = {}
-
-    data.student.studentEnrollments.forEach((enrollment) => {
-      const schoolNumber = enrollment.school.schoolNumber
-      if (!schoolContacts[schoolNumber]) {
-        schoolContacts[schoolNumber] = { mainSchool: enrollment.mainSchool, schoolNumber, name: enrollment.school.name, contactPersons: [] }
-      }
-
-      enrollment.contactTeacherGroupMemberships.forEach((membership) => {
-        if (!membership.period.active) {
-          return
-        }
-        membership.contactTeacherGroup.teachers.forEach((teacher) => {
-          if (!schoolContacts[schoolNumber].contactPersons.some((contact) => contact.name === teacher.name)) {
-            schoolContacts[schoolNumber].contactPersons.push({ name: teacher.name, type: "Kontaktlærer" })
-          }
-        })
-      })
-
-      enrollment.classMemberships.forEach((membership) => {
-        if (!membership.period.active) {
-          return
-        }
-        membership.classGroup.teachers.forEach((teacher) => {
-          if (!schoolContacts[schoolNumber].contactPersons.some((contact) => contact.name === teacher.name)) {
-            schoolContacts[schoolNumber].contactPersons.push({ name: teacher.name, type: "Klasselærer" })
-          }
-        })
-      })
-
-      enrollment.teachingGroupMemberships.forEach((membership) => {
-        if (!membership.period.active) {
-          return
-        }
-        membership.teachingGroup.teachers.forEach((teacher) => {
-          if (!schoolContacts[schoolNumber].contactPersons.some((contact) => contact.name === teacher.name)) {
-            schoolContacts[schoolNumber].contactPersons.push({ name: teacher.name, type: "Faglærer" })
-          }
-        })
-      })
-    })
-
-    return Object.values(schoolContacts).sort((a, b) => Number(b.mainSchool) - Number(a.mainSchool))
-  })
 </script>
 
-<div class="student-page">
-  <div class="student-header">
-    <!--
-    <div class="student-badge">
-      {getInitialsFromName(data.student.name)}
-    </div>
-    -->
-    <div class="student-essentials">
-      <h2>{data.student.name}</h2>
-      <p>{data.student.mainSchool?.name ?? "Ukjent skole?"} - {data.student.mainClass?.name || "Ingen aktiv klasse ved hovedskole"}</p>
-      <p><strong>Kontaktlærer{data.student.mainContactTeacherGroup?.teachers.length !== 1 ? "e" : ""}:</strong> {(data.student.mainContactTeacherGroup?.teachers || [{ name: "Ingen kontaktlærer ved hovedskole" }]).map(teacher => teacher.name).join(", ")}</p>
-      <p>
-        {#each data.accessTypes as accessTypes}
-          {accessTypes.type} ved {data.student.studentEnrollments.find(enrollment => enrollment.school.schoolNumber === accessTypes.schoolNumber)?.school.name} <br>
-        {/each}
-      </p>
-    </div>
-  </div>
+{#key data.student._id} <!-- Re-render entire student page when student-id change -->
+  <div class="student-page page-content">
+    <div class="section-box">
+      
+      <div class="section-box-header">
+        <div>
+          <h1>{data.student.name}</h1>
+          <span class="student-subtitle">{studentDetails.mainSchool?.name ?? "Ingen hovedskole"} - {studentDetails.mainClassMembership?.classGroup.name || "Ingen aktiv klasse ved hovedskole"}</span>
+        </div>
+        <button class="toggle-student-details-button" onclick={() => expandedStudentDetails = !expandedStudentDetails}>
+          <span class="material-symbols-outlined">{expandedStudentDetails ? "expand_circle_up" : "expand_circle_down"}</span>
+          {expandedStudentDetails ? "Skjul detaljer" : "Vis detaljer"}
+        </button>
+      </div>
 
-  <div class="student-section">
-    <div class="student-section-header">
-      <div>&nbsp;</div>
-      <button>Rediger</button>
-    </div>
-    <div class="student-section-content student-information">
-      <div class="student-important-info">
-        <h4>Viktig informasjon</h4>
-        <p>{data.importantStuff?.importantInfo || "Skylder meg en hundrings"}</p>
-      </div>
-      <div>
-        <h4>Oppfølging</h4>
-        <ul>
-          <li>PPT</li>
-          <li>Elevtjenesten</li>
-        </ul>
-      </div>
-      <div>
-        <h4>Tilrettelegging</h4>
-        <ul>
-          <li>Tilrettelegging på eksamen</li>
-          <li>IOP</li>
-          <li>Dysleksi</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <div class="student-section">
-    <div class="student-section-header">
-      <h3>Tilknyttede personer</h3>
-    </div>
-    <div class="student-section-content">
-      {#if schoolContacts.length > 1}
-        <p><strong>OBS!</strong> Har også elevforhold ved <strong>{schoolContacts.filter(school => school.schoolNumber !== data.student.mainSchool?.schoolNumber).map(school => school.name).join(", ")}</strong></p>
-      {/if}
-      {#each schoolContacts as schoolContact}
-        <div class="school-contact">
-          <h4>{schoolContact.name}</h4>
-          <ul>
-            {#each showAllStudentContacts ? schoolContact.contactPersons : schoolContact.contactPersons.slice(0, 3) as contactPerson}
-              <li>{contactPerson.name} - {contactPerson.type}</li>
-            {/each}
-            {#if schoolContact.contactPersons.length > 3}
-              {#if !showAllStudentContacts}
-                <li>... og {schoolContact.contactPersons.length} flere kontaktpersoner</li>
+      {#if !expandedStudentDetails && (studentSummaryDetails || hasOtherSchoolInfoAndNotConsent)}
+        <div class="section-box-content">
+          <div class="student-details-preview">
+            {#if studentSummaryDetails}
+              {#if studentSummaryDetails.importantInfo}
+                <div class="main-important-stuff">
+                  <p>{studentSummaryDetails.importantInfo}</p>
+                </div>
+              {/if}
+              {#if studentSummaryDetails.followUp.length > 0}
+                <div>
+                  <strong>Oppfølging: </strong> {studentSummaryDetails.followUp.join(", ")}
+                </div>
+              {/if}
+              {#if studentSummaryDetails.facilitation.length > 0}
+                <div>
+                  <strong>Tilrettelegging:</strong> {studentSummaryDetails.facilitation.join(", ")}
+                </div>
               {/if}
             {/if}
-          </ul>
+            {#if hasOtherSchoolInfoAndNotConsent}
+              <div>
+                <p>
+                  Eleven har ikke gitt samtykke til deling av data på tvers av skoler. 
+                  {#if studentDetails.additionalSchools.length > 0}
+                    Eleven har også elevforhold ved {studentDetails.additionalSchools.map(school => school.name).join(", ")}.
+                  {/if}
+                  {#if data.unavailableSchoolDocuments.length > 0}
+                    Det finnes notater fra andre skoler som ikke er tilgjengelig for deg.
+                  {/if}
+                </p>
+            </div>
+            {/if}
+          </div>
         </div>
-      {/each}
-      {#if schoolContacts.some(schoolContactList => schoolContactList.contactPersons.length > 3)}
-        {#if !showAllStudentContacts}
-          <button onclick={() => showAllStudentContacts = true}>Vis alle kontaktpersoner</button>
-        {:else}
-          <button onclick={() => showAllStudentContacts = false}>Vis færre kontaktpersoner</button>
-        {/if}
       {/if}
-      <button>Send en epost til alle disse ellerno</button>
-    </div>
-  </div>
-
-  <div class="documents">
-    <div class="document-header">
-      <h2>Tidslinje</h2>
     </div>
 
-    <div class="new-document">
-      <NewDocument {accessSchools} documentContentTemplates={data.documentContentTemplates} studentId={data.student._id} />
-    </div>
+    {#if expandedStudentDetails}
+      <div class="student-details" transition:slide>
+        {#each accessSchools as accessSchool}
+          <ImportantStuff canEdit={canEditStudentImportantStuff(accessSchool.schoolNumber, data.studentAccessInfo)} importantStuff={data.importantStuff.find(importantStuff => importantStuff.school.schoolNumber === accessSchool.schoolNumber) || null} school={accessSchool} studentCheckBoxes={data.studentCheckBoxes} student={data.student} />
+        {/each}
 
-    {#if data.documents.length === 0}
-      <p>Ingen notater her</p>
-    {:else}
-      {#key data.student._id} <!-- Re-render document components when student-id change -->
+        <div class="consent-and-access-container">
+          <DataSharingConsent canEdit={canEditStudentDataSharingConsent(data.studentAccessInfo)} student={data.student} studentDataSharingConsent={data.studentDataSharingConsent} unavailableSchoolDocuments={data.unavailableSchoolDocuments} />
+          
+          <div class="section-box" style="min-width: 20rem;">
+            <div class="section-box-header">
+              <h3>Personer med tilgang til eleven</h3>
+            </div>
+            <div class="section-box-content">
+              Kommer etterhvert
+              <button>Send en epost til alle disse ellerno</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    {/if}
+
+    <div class="documents">
+      <div class="documents-header">
+        {#if !documentCreatorOpen}
+          <h2 id="documents">Notater</h2>
+          <button class="filled" onclick={openDocumentCreator}><span class="material-symbols-outlined">note_add</span>Nytt notat</button>
+        {:else}
+          <h2 id="documents">Nytt notat</h2>
+        {/if}
+      </div>
+
+      <div class="new-document">
+        {#if documentCreatorOpen}
+          <NewDocument {accessSchools} documentContentTemplates={data.documentContentTemplates} bind:creatorOpen={documentCreatorOpen} studentId={data.student._id} />
+        {/if}
+      </div>
+
+      {#if data.documents.length === 0}
+        <p>Ingen notater her</p>
+      {:else}
         {#each data.documents as document (document._id)}
           <DocumentComponent {document} {accessSchools} />
         {/each}
-      {/key}
-    {/if}
+      {/if}
 
+    </div>
   </div>
-</div>
+{/key}
 
 
 <style>
@@ -194,35 +194,26 @@
     flex-direction: column;
     gap: 1rem;
   }
-  .student-header {
+  .student-subtitle {
+    font-size: smaller;
+  }
+
+  .student-details {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 1rem;
   }
-  .student-section {
-    border: 1px solid #ccc;
-    border-radius: 4px;
-  }
-  .student-section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .student-section-content.student-information {
+
+  .consent-and-access-container {
     display: flex;
     gap: 1rem;
-    padding: 0.5rem;
     flex-wrap: wrap;
-    justify-content: space-between;
   }
-  .student-important-info {
-    flex: 1;
-    min-width: 18rem;
-  }
-  .student-information {
+
+  .documents-header {
     display: flex;
-    gap: 1rem;
-    margin-bottom: 1rem;
+    justify-content: space-between;
+    align-items: center;
   }
   .documents {
     display: flex;
@@ -232,4 +223,11 @@
   .new-document {
     margin-bottom: 1rem;
   }
+
+  @media (min-width: 50rem) {
+		.student-page {
+      padding-left: 3rem;
+      padding-right: 2rem;
+    }
+	}
 </style>

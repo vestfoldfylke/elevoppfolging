@@ -20,7 +20,9 @@
 {/snippet}
 
 {#if contentItem.type === "header"}
-  <div class="document-content-item-header">{contentItem.value}</div>
+  <div class="document-content-item-header">
+    <h3>{contentItem.value}</h3>
+  </div>
 {/if}
 
 {#if contentItem.type === "paragraph"}
@@ -28,7 +30,7 @@
 {/if}
 
 {#if contentItem.type === "inputText"}
-  <div class="document-content-item">
+  <div class="input-item">
     {@render helpText(contentItem)}
     <label for={contentItem.label}>{contentItem.label}<span class="required-indicator">{contentItem.required ? "*" : ""}</span></label>
     {#if previewMode}
@@ -40,7 +42,7 @@
 {/if}
 
 {#if contentItem.type === "textarea"}
-  <div class="document-content-item">
+  <div class="input-item">
     {@render helpText(contentItem)}
     <label for={contentItem.label}>{contentItem.label}<span class="required-indicator">{contentItem.required ? "*" : ""}</span></label>
     {#if previewMode}
@@ -52,16 +54,16 @@
 {/if}
 
 {#if contentItem.type === "radioGroup"}
-  <div class="document-content-item">
+  <div class="input-item">
     {@render helpText(contentItem)}
-    <div class="label">{contentItem.header}<span class="required-indicator">{contentItem.required ? "*" : ""}</span></div>
+    <div class="label">{contentItem.header}<span class="required-indicator">{"*"}</span></div>
     <div class="radio-group-options">
       {#each contentItem.items as item, itemIndex}
         <label>
           {#if previewMode}
-            <input disabled={!editMode} type="radio" id={`contentItem-${index}-radio-${itemIndex}`} name={`contentItem-${index}`} value={item.value} required={contentItem.required} checked={contentItem.selectedValue === item.value} />
+            <input disabled={!editMode} type="radio" id={`contentItem-${index}-radio-${itemIndex}`} name={`contentItem-${index}`} value={item.value} required={true} checked={contentItem.selectedValue === item.value} />
           {:else}
-             <input disabled={!editMode} type="radio" id={`contentItem-${index}-radio-${itemIndex}`} name={`contentItem-${index}`} bind:group={contentItem.selectedValue} value={item.value} required={contentItem.required} />
+             <input disabled={!editMode} type="radio" id={`contentItem-${index}-radio-${itemIndex}`} name={`contentItem-${index}`} bind:group={contentItem.selectedValue} value={item.value} required={true} />
           {/if}
           {item.label}
         </label>
@@ -71,16 +73,7 @@
 {/if}
 
 <style>
-  .document-content-item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    margin: 1rem 0rem;
-  }
-
   .document-content-item-header {
-    font-weight: bold;
-    font-size: 1.1rem;
     margin: 1rem 0rem;
   }
 

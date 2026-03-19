@@ -1,37 +1,51 @@
 import { logger } from "@vestfoldfylke/loglady"
 import { type Db, type Filter, MongoClient, ObjectId, type WithId } from "mongodb"
 import { env } from "$env/dynamic/private"
-import type { FrontendOverviewStudent, FrontendStudent } from "$lib/types/app-types"
-import type { AuthenticatedPrincipal } from "$lib/types/authentication"
+import type { AccessEntry, FrontendStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { KeysToNumber } from "$lib/types/db/db-helpers"
 import type {
   Access,
+  AppUser,
   AvailableForDocumentType,
   DbAccess,
   DbAppStudent,
-  DbDocument,
   DbDocumentContentTemplate,
+  DbProgramArea,
+  DbSchool,
+  DbStudentCheckBox,
+  DbStudentDataSharingConsent,
+  DbStudentDocument,
   DbStudentImportantStuff,
-  Document,
   DocumentContentTemplate,
   DocumentMessage,
   EditorData,
-  ImportantStuffBase,
-  NewDbDocument,
+  ManualAccessEntryInput,
+  NewAccess,
+  NewDbStudentDataSharingConsent,
+  NewDbStudentDocument,
   NewDbStudentImportantStuff,
-  NewDocument,
   NewDocumentContentTemplate,
   NewDocumentMessage,
+  NewSchool,
+  NewStudentCheckBox,
+  NewStudentDataSharingConsent,
+  NewStudentDocument,
   NewStudentImportantStuff,
   ProgramArea,
+  School,
+  SchoolInfo,
+  StudentCheckBox,
+  StudentDataSharingConsent,
+  StudentDocument,
+  StudentDocumentUpdate,
   StudentImportantStuff
 } from "$lib/types/db/shared-types"
-import type { DbProgramArea } from "$lib/types/program-area"
 
 export class MongoDbClient implements IDbClient {
   private readonly mongoClient: MongoClient
   private db: Db | null = null
+  private readonly schoolsCollectionName = "schools"
   private readonly accessCollectionName = "access"
   private readonly studentsCollectionName = "students"
   private readonly usersCollectionName = "users"
@@ -39,6 +53,8 @@ export class MongoDbClient implements IDbClient {
   private readonly programAreasCollectionName = "program-areas"
   private readonly documentsCollectionName = "documents"
   private readonly documentContentTemplatesCollectionName = "document-content-templates"
+  private readonly studentDataSharingConsentsCollectionName = "student-data-sharing-consents"
+  private readonly studentCheckBoxesCollectionName = "student-checkboxes"
 
   constructor() {
     if (!env.MONGODB_CONNECTION_STRING) {
@@ -61,10 +77,85 @@ export class MongoDbClient implements IDbClient {
     }
   }
 
-  async getAccess(principal: AuthenticatedPrincipal): Promise<Access | null> {
+  async getAllAppUsers(): Promise<AppUser[]> {
+    const db = await this.getDb()
+    const usersCollection = db.collection<AppUser>(this.usersCollectionName)
+    const appUsers = await usersCollection.find({}).toArray()
+    return appUsers.map((appUser) => {
+      return {
+        ...appUser,
+        _id: appUser._id.toString()
+      }
+    })
+  }
+
+  async getAppUser(entraUserId: string): Promise<AppUser | null> {
+    const db = await this.getDb()
+    const usersCollection = db.collection<AppUser>(this.usersCollectionName)
+    const appUser = await usersCollection.findOne({ entraUserId })
+    if (!appUser) {
+      return null
+    }
+    return {
+      ...appUser,
+      _id: appUser._id.toString()
+    }
+  }
+
+  async getSchools(): Promise<School[]> {
+    const db = await this.getDb()
+    const schoolsCollection = db.collection<School>(this.schoolsCollectionName)
+    const schools = await schoolsCollection.find({}).toArray()
+    return schools.map((school) => {
+      return {
+        ...school,
+        _id: school._id.toString()
+      }
+    })
+  }
+
+  async createSchool(newSchool: NewSchool): Promise<string> {
+    const db = await this.getDb()
+
+    const existingSchool = await db.collection<DbSchool>(this.schoolsCollectionName).find({ schoolNumber: newSchool.schoolNumber }).toArray()
+    if (existingSchool.length > 0) {
+      throw new Error(`School with schoolNumber: ${newSchool.schoolNumber} already exists`)
+    }
+
+    const schoolsCollection = db.collection<NewSchool>(this.schoolsCollectionName)
+    const result = await schoolsCollection.insertOne(newSchool)
+    if (!result.insertedId) {
+      throw new Error("Failed to create school")
+    }
+    return result.insertedId.toString()
+  }
+
+  async updateSchool(schoolNumber: string, schoolData: NewSchool): Promise<string> {
+    const db = await this.getDb()
+    const schoolsCollection = db.collection<DbSchool>(this.schoolsCollectionName)
+    const result = await schoolsCollection.updateOne({ schoolNumber }, { $set: schoolData })
+    if (result.matchedCount === 0) {
+      throw new Error(`School with schoolNumber: ${schoolNumber} not found`)
+    }
+    if (result.modifiedCount === 0) {
+      throw new Error(`Failed to update school with schoolNumber: ${schoolNumber}`)
+    }
+    return schoolNumber
+  }
+
+  async deleteSchool(schoolNumber: string): Promise<void> {
+    const db = await this.getDb()
+    const schoolsCollection = db.collection<DbSchool>(this.schoolsCollectionName)
+    const result = await schoolsCollection.deleteOne({ schoolNumber })
+    if (result.deletedCount === 0) {
+      throw new Error(`Failed to delete school with schoolNumber: ${schoolNumber}`)
+    }
+  }
+
+  async getPrincipalAccess(entraUserId: string): Promise<Access | null> {
     const db = await this.getDb()
     const accessCollection = db.collection<DbAccess>(this.accessCollectionName)
-    const access = await accessCollection.findOne({ entraUserId: principal.id })
+    const access = await accessCollection.findOne({ entraUserId })
     if (!access) {
       return null
     }
@@ -73,6 +164,111 @@ export class MongoDbClient implements IDbClient {
       ...access,
       _id: access._id.toString()
     }
+  }
+
+  async getSchoolLeaderAccess(): Promise<Access[]> {
+    const db = await this.getDb()
+    const accessCollection = db.collection<DbAccess>(this.accessCollectionName)
+    const accessList = await accessCollection.find({ schools: { $exists: true, $ne: [] } }).toArray()
+    return accessList.map((access) => {
+      return {
+        ...access,
+        _id: access._id.toString()
+      }
+    })
+  }
+
+  async createAccess(access: NewAccess): Promise<string> {
+    const db = await this.getDb()
+    const accessCollection = db.collection<NewAccess>(this.accessCollectionName)
+    const result = await accessCollection.insertOne(access)
+    if (!result.insertedId) {
+      throw new Error("Failed to create access")
+    }
+    return result.insertedId.toString()
+  }
+
+  async addAccessEntry(entraUserId: string, accessEntry: AccessEntry): Promise<string> {
+    const db = await this.getDb()
+    const accessCollection = db.collection<DbAccess>(this.accessCollectionName)
+    let updateResult: DbAccess | null
+    switch (accessEntry.type) {
+      case "MANUELL-SKOLELEDER-TILGANG":
+        updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { schools: accessEntry } })
+        break
+      case "MANUELL-ELEV-TILGANG":
+        updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { students: accessEntry } })
+        break
+      case "MANUELL-KLASSE-TILGANG":
+        updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { classes: accessEntry } })
+        break
+      case "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG":
+        updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { programAreas: accessEntry } })
+        break
+      default:
+        throw new Error(`Invalid access entry type: ${accessEntry.type}`)
+    }
+    if (!updateResult || !updateResult._id) {
+      throw new Error("Failed to add access entry")
+    }
+    return updateResult._id.toString()
+  }
+
+  async removeAccessEntry(entraUserId: string, accessEntry: ManualAccessEntryInput): Promise<string> {
+    const db = await this.getDb()
+    const accessCollection = db.collection<DbAccess>(this.accessCollectionName)
+    let updatedAccess: DbAccess | null
+    switch (accessEntry.type) {
+      case "MANUELL-SKOLELEDER-TILGANG":
+        updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { schools: { schoolNumber: accessEntry.schoolNumber } } })
+        break
+      case "MANUELL-ELEV-TILGANG":
+        updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { students: { _id: accessEntry._id, schoolNumber: accessEntry.schoolNumber } } })
+        break
+      case "MANUELL-KLASSE-TILGANG":
+        updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { classes: { systemId: accessEntry.systemId, schoolNumber: accessEntry.schoolNumber } } })
+        break
+      case "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG":
+        updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { programAreas: { _id: accessEntry._id, schoolNumber: accessEntry.schoolNumber } } })
+        break
+    }
+    if (!updatedAccess || !updatedAccess._id) {
+      throw new Error("Failed to remove access entry")
+    }
+    return updatedAccess._id.toString()
+  }
+
+  async getManualAccess(schoolNumber: string): Promise<Access[]> {
+    const db = await this.getDb()
+    const accessCollection = db.collection<DbAccess>(this.accessCollectionName)
+    const accessList = await accessCollection
+      .find({
+        $or: [
+          {
+            programAreas: { $exists: true, $ne: [], $elemMatch: { schoolNumber } }
+          },
+          {
+            classes: { $exists: true, $ne: [], $elemMatch: { schoolNumber, type: "MANUELL-KLASSE-TILGANG" } }
+          },
+          {
+            students: { $exists: true, $ne: [], $elemMatch: { schoolNumber } }
+          }
+        ]
+      })
+      .toArray()
+    return accessList.map((access) => {
+      return {
+        _id: access._id.toString(),
+        entraUserId: access.entraUserId,
+        name: access.name,
+        schools: [],
+        programAreas: access.programAreas.filter((programArea) => programArea.schoolNumber === schoolNumber),
+        classes: access.classes.filter((classAccess) => classAccess.type === "MANUELL-KLASSE-TILGANG" && classAccess.schoolNumber === schoolNumber),
+        students: access.students.filter((studentAccess) => studentAccess.schoolNumber === schoolNumber),
+        contactTeacherGroups: [],
+        teachingGroups: []
+      }
+    })
   }
 
   async getProgramArea(_id: string): Promise<ProgramArea | null> {
@@ -90,147 +286,156 @@ export class MongoDbClient implements IDbClient {
     }
   }
 
-  async getStudents(access: Access): Promise<FrontendOverviewStudent[]> {
+  async getAllStudents(): Promise<FrontendStudent[]> {
     const db = await this.getDb()
     const studentsCollection = db.collection<DbAppStudent>(this.studentsCollectionName)
 
-    const schoolNumbers: string[] = access.schools.map((entry) => {
-      return entry.schoolNumber
-    })
-
-    const classSystemIds: string[] = access.classes.map((entry) => {
-      return entry.systemId
-    })
-    const teachingGroupSystemIds: string[] = access.teachingGroups.map((entry) => {
-      return entry.systemId
-    })
-    const contactTeacherGroupSystemIds: string[] = access.contactTeacherGroups.map((entry) => {
-      return entry.systemId
-    })
-
-    const query: Filter<DbAppStudent> = {
-      $or: [
-        {
-          "studentEnrollments.school.schoolNumber": { $in: schoolNumbers }
-        },
-        {
-          "studentEnrollments.classMemberships": {
-            $elemMatch: {
-              "classGroup.systemId": { $in: classSystemIds },
-              "period.active": true
-            }
-          }
-        },
-        {
-          "studentEnrollments.teachingGroupMemberships": {
-            $elemMatch: {
-              "teachingGroup.systemId": { $in: teachingGroupSystemIds },
-              "period.active": true
-            }
-          }
-        },
-        {
-          "studentEnrollments.contactTeacherGroupMemberships": {
-            $elemMatch: {
-              "contactTeacherGroup.systemId": { $in: contactTeacherGroupSystemIds },
-              "period.active": true
-            }
-          }
-        }
-      ]
-    }
-
-    type StudentWithImportantStuff = DbAppStudent & {
-      importantStuff?: StudentImportantStuff[]
-    }
-
-    const projection: KeysToNumber<WithId<FrontendOverviewStudent>> = {
+    const projection: KeysToNumber<WithId<FrontendStudent>> = {
       _id: 1,
-      active: 1,
       feideName: 1,
       name: 1,
       studentNumber: 1,
       systemId: 1,
-      mainSchool: 1,
-      mainClass: 1,
-      mainContactTeacherGroup: 1,
-      importantStuff: 1
+      created: 1,
+      modified: 1,
+      source: 1,
+      studentEnrollments: 1
     }
 
-    const superAllStudent = await studentsCollection
-      .aggregate<StudentWithImportantStuff>([
-        {
-          $match: query
-        },
-        {
-          $lookup: {
-            from: this.importantStuffCollectionName,
-            localField: "_id",
-            foreignField: "student._id",
-            as: "importantStuff"
-          }
-        }
+    const students = await studentsCollection.find<FrontendStudent>({}, { projection }).toArray()
+
+    return students.map((student) => ({
+      ...student,
+      _id: student._id.toString()
+    }))
+  }
+
+  async getStudents(access: Access): Promise<FrontendStudent[]> {
+    const db = await this.getDb()
+    const studentsCollection = db.collection<DbAppStudent>(this.studentsCollectionName)
+
+    const query: Filter<DbAppStudent> = {}
+    query.$or = [] // ts doesn't understand that this is defined, if defined in the object above
+
+    for (const schoolAccessEntry of access.schools) {
+      query.$or.push({ "studentEnrollments.school.schoolNumber": schoolAccessEntry.schoolNumber })
+    }
+
+    const accessEntryNotInSchoolsAccess = (accessEntry: AccessEntry): boolean => {
+      return !access.schools.some((school) => school.schoolNumber === accessEntry.schoolNumber)
+    }
+
+    const studentAccessEntries = access.students.filter(accessEntryNotInSchoolsAccess)
+    const programAreaAccessEntries = access.programAreas.filter(accessEntryNotInSchoolsAccess)
+    const contactTeacherGroupAccessEntries = access.contactTeacherGroups.filter(accessEntryNotInSchoolsAccess)
+    const classAccessEntries = access.classes.filter(accessEntryNotInSchoolsAccess)
+    const teachingGroupAccessEntries = access.teachingGroups.filter(accessEntryNotInSchoolsAccess)
+
+    const schoolsToAddToQuery = [
+      ...new Set<string>([
+        ...programAreaAccessEntries.map((programArea) => programArea.schoolNumber),
+        ...studentAccessEntries.map((student) => student.schoolNumber),
+        ...classAccessEntries.map((classAccess) => classAccess.schoolNumber),
+        ...contactTeacherGroupAccessEntries.map((contactTeacherGroupAccess) => contactTeacherGroupAccess.schoolNumber),
+        ...teachingGroupAccessEntries.map((teachingGroupAccess) => teachingGroupAccess.schoolNumber)
       ])
-      .project<FrontendOverviewStudent & { importantStuff: StudentImportantStuff[] }>(projection)
-      .toArray()
+    ]
+
+    // Expand programareas right here, and cache it (add them to classSystemIds) - get it from function that has caching (or get them once somewhere else and pass them in)
+
+    for (const schoolNumber of schoolsToAddToQuery) {
+      const schoolQuery: Filter<DbAppStudent> = { "studentEnrollments.school.schoolNumber": schoolNumber, $or: [] }
+
+      const studentIds = studentAccessEntries.filter((studentAccess) => studentAccess.schoolNumber === schoolNumber).map((studentAccess) => studentAccess._id)
+      if (studentIds.length > 0) {
+        schoolQuery.$or?.push({ _id: { $in: studentIds.map((id) => new ObjectId(id)) } })
+      }
+
+      const contactTeacherGroupSystemIds = contactTeacherGroupAccessEntries
+        .filter((contactTeacherGroupAccess) => contactTeacherGroupAccess.schoolNumber === schoolNumber)
+        .map((contactTeacherGroupAccess) => contactTeacherGroupAccess.systemId)
+      if (contactTeacherGroupSystemIds.length > 0) {
+        schoolQuery.$or?.push({ "studentEnrollments.contactTeacherGroupMemberships.contactTeacherGroup.systemId": { $in: contactTeacherGroupSystemIds } })
+      }
+
+      const classSystemIds = classAccessEntries.filter((classAccess) => classAccess.schoolNumber === schoolNumber).map((classAccess) => classAccess.systemId)
+      if (classSystemIds.length > 0) {
+        schoolQuery.$or?.push({ "studentEnrollments.classMemberships.classGroup.systemId": { $in: classSystemIds } })
+      }
+
+      const teachingGroupSystemIds = teachingGroupAccessEntries
+        .filter((teachingGroupAccess) => teachingGroupAccess.schoolNumber === schoolNumber)
+        .map((teachingGroupAccess) => teachingGroupAccess.systemId)
+      if (teachingGroupSystemIds.length > 0) {
+        schoolQuery.$or?.push({ "studentEnrollments.teachingGroupMemberships.teachingGroup.systemId": { $in: teachingGroupSystemIds } })
+      }
+
+      query.$or.push(schoolQuery)
+    }
+
+    const projection: KeysToNumber<WithId<FrontendStudent>> = {
+      _id: 1,
+      feideName: 1,
+      name: 1,
+      studentNumber: 1,
+      systemId: 1,
+      created: 1,
+      modified: 1,
+      source: 1,
+      studentEnrollments: 1
+    }
+
+    const superAllStudent = await studentsCollection.find<FrontendStudent>(query, { projection }).toArray()
 
     return superAllStudent.map((student) => {
-      const importantStuffForStudent: StudentImportantStuff | null = student.importantStuff && student.importantStuff.length > 0 ? student.importantStuff[0] : null
-      if (importantStuffForStudent) {
-        importantStuffForStudent._id = importantStuffForStudent._id.toString()
-        importantStuffForStudent.student._id = importantStuffForStudent.student._id.toString()
-      }
       return {
         ...student,
-        _id: student._id.toString(),
-        importantStuff: importantStuffForStudent
+        _id: student._id.toString()
       }
     })
   }
 
-  async getStudentById(studentDbId: string): Promise<FrontendStudent | null> {
+  async getStudentById(studentId: string): Promise<FrontendStudent | null> {
     const db = await this.getDb()
     const studentsCollection = db.collection<DbAppStudent>(this.studentsCollectionName)
-    logger.info("Getting student by _id {studentDbId}", studentDbId)
+    logger.info("Getting student by _id {studentId}", studentId)
 
     const projection: KeysToNumber<WithId<FrontendStudent>> = {
       _id: 1,
-      active: 1,
       feideName: 1,
       name: 1,
       studentEnrollments: 1,
       studentNumber: 1,
       systemId: 1,
-      mainSchool: 1,
-      mainClass: 1,
-      mainContactTeacherGroup: 1
+      created: 1,
+      modified: 1,
+      source: 1
     }
 
-    const student = await studentsCollection.findOne({ _id: new ObjectId(studentDbId) }, { projection })
+    const student = await studentsCollection.findOne({ _id: new ObjectId(studentId) }, { projection })
     if (!student) {
       return null
     }
-    logger.info("Student with _id {studentDbId} found: {feideName}", studentDbId, student.feideName)
+    logger.info("Student with _id {studentId} found: {feideName}", studentId, student.feideName)
 
     return {
       _id: student._id.toString(),
-      active: student.active,
       feideName: student.feideName,
       name: student.name,
       studentEnrollments: student.studentEnrollments,
       studentNumber: student.studentNumber,
       systemId: student.systemId,
-      mainClass: student.mainClass,
-      mainContactTeacherGroup: student.mainContactTeacherGroup,
-      mainSchool: student.mainSchool
+      created: student.created,
+      modified: student.modified,
+      source: student.source
     }
   }
 
-  async getStudentDocuments(studentDbId: string): Promise<Document[]> {
+  async getStudentDocuments(studentId: string): Promise<StudentDocument[]> {
     const db = await this.getDb()
-    const documentsCollection = db.collection<DbDocument>(this.documentsCollectionName)
+    const documentsCollection = db.collection<DbStudentDocument>(this.documentsCollectionName)
 
-    type DocumentWithCreator = DbDocument & {
+    type DocumentWithCreator = DbStudentDocument & {
       tyler_the_creator?: {
         entra: {
           displayName: string
@@ -242,7 +447,7 @@ export class MongoDbClient implements IDbClient {
       .aggregate<DocumentWithCreator>([
         {
           $match: {
-            "student._id": new ObjectId(studentDbId)
+            "student._id": new ObjectId(studentId)
           }
         },
         {
@@ -269,13 +474,13 @@ export class MongoDbClient implements IDbClient {
     // await new Promise((resolve) => setTimeout(resolve, 2500))
 
     return documents
-      .map((document: DocumentWithCreator): Document => {
+      .map((document: DocumentWithCreator): StudentDocument => {
         const createdByDisplayName = document.tyler_the_creator && document.tyler_the_creator.length > 0 ? document.tyler_the_creator[0].entra.displayName : undefined
         delete document.tyler_the_creator
 
-        const studentDocument: Document = {
+        const studentDocument: StudentDocument = {
           ...document,
-          student: document.student ? { _id: document.student._id.toString() } : undefined,
+          student: { _id: document.student._id.toString() },
           _id: document._id.toString()
         }
         if (createdByDisplayName) {
@@ -286,9 +491,9 @@ export class MongoDbClient implements IDbClient {
       .sort((a, b) => new Date(b.created.at).getTime() - new Date(a.created.at).getTime()) // Sort by created date descending
   }
 
-  async getDocumentById(documentId: string): Promise<Document | null> {
+  async getStudentDocumentById(documentId: string): Promise<StudentDocument | null> {
     const db = await this.getDb()
-    const documentsCollection = db.collection<DbDocument>(this.documentsCollectionName)
+    const documentsCollection = db.collection<DbStudentDocument>(this.documentsCollectionName)
 
     const document = await documentsCollection.findOne({ _id: new ObjectId(documentId) })
 
@@ -298,25 +503,25 @@ export class MongoDbClient implements IDbClient {
 
     return {
       ...document,
-      student: document.student ? { _id: document.student._id.toString() } : undefined,
+      student: { _id: document.student._id.toString() },
       _id: document._id.toString()
     }
   }
 
-  async createDocument(document: NewDocument): Promise<string> {
+  async createStudentDocument(document: NewStudentDocument): Promise<string> {
     const db = await this.getDb()
-    const documentsCollection = db.collection<NewDbDocument>(this.documentsCollectionName)
+    const documentsCollection = db.collection<NewDbStudentDocument>(this.documentsCollectionName)
 
-    const documentToInsert: NewDbDocument = {
+    const documentToInsert: NewDbStudentDocument = {
       ...document,
-      student: document.student ? { _id: new ObjectId(document.student._id) } : undefined
+      student: { _id: new ObjectId(document.student._id) }
     }
 
     const result = await documentsCollection.insertOne(documentToInsert)
 
     if (document.student?._id) {
       try {
-        await this.updateStudentLatestActivityTimestamp(document.student._id)
+        await this.updateStudentLastActivityTimestamp(document.student._id, document.school)
       } catch (error) {
         logger.errorException(
           error,
@@ -329,24 +534,37 @@ export class MongoDbClient implements IDbClient {
     return result.insertedId.toString()
   }
 
+  async updateStudentDocument(documentId: string, documentUpdate: StudentDocumentUpdate): Promise<string> {
+    const db = await this.getDb()
+    const documentsCollection = db.collection<DbStudentDocument>(this.documentsCollectionName)
+
+    const updatedDocument: DbStudentDocument | null = await documentsCollection.findOneAndUpdate({ _id: new ObjectId(documentId) }, { $set: documentUpdate })
+    if (!updatedDocument?._id) {
+      throw new Error("Failed to update student document")
+    }
+
+    return updatedDocument._id.toString()
+  }
+
   async addDocumentMessage(documentId: string, message: NewDocumentMessage, studentId?: string): Promise<DocumentMessage> {
     const db = await this.getDb()
-    const documentsCollection = db.collection<DbDocument>(this.documentsCollectionName)
+    const documentsCollection = db.collection<DbStudentDocument>(this.documentsCollectionName)
 
     const messageWithId = {
       ...message,
       messageId: new ObjectId().toString()
     }
 
-    const result = await documentsCollection.updateOne({ _id: new ObjectId(documentId) }, { $push: { messages: messageWithId } })
+    const document = await documentsCollection.findOneAndUpdate({ _id: new ObjectId(documentId) }, { $push: { messages: messageWithId } })
 
-    if (result.modifiedCount === 0) {
+    if (!document?._id) {
       throw new Error("Failed to add message to document")
     }
 
+    // TODO - flytt denne ut, den hører ikke hjemme her - men der den blir påkalt fra
     if (studentId) {
       try {
-        await this.updateStudentLatestActivityTimestamp(studentId)
+        await this.updateStudentLastActivityTimestamp(studentId, document.school)
       } catch (error) {
         logger.errorException(error, "Failed to update student's latest activity timestamp after adding document message. Document ID: {documentId}. OBS, returning message anyway", documentId)
       }
@@ -355,34 +573,63 @@ export class MongoDbClient implements IDbClient {
     return messageWithId
   }
 
-  async getStudentImportantStuff(studentId: string): Promise<StudentImportantStuff | null> {
+  async getStudentsImportantStuff(studentIds: string[]): Promise<Record<string, Record<string, StudentImportantStuff>>> {
     const db = await this.getDb()
 
     const importantStuffCollection = db.collection<DbStudentImportantStuff>(this.importantStuffCollectionName)
-    logger.info("Getting important stuff for student with _id {studentId}", studentId)
+    const importantStuffList = await importantStuffCollection.find({ "student._id": { $in: studentIds.map((id) => new ObjectId(id)) } }).toArray()
 
-    const importantStuffForStudent = await importantStuffCollection.findOne({ "student._id": new ObjectId(studentId) })
-    logger.info("Important stuff for student with _id {studentId} exists: {importantStuffExists}", studentId, importantStuffForStudent !== null)
+    /*
+    - Skal hente important stuff for alle elever brukeren har tilgang på - og important stuff skal være knyttet til skolene brukeren har tilgang på.
+    - Hvis vi har liste med
 
-    if (!importantStuffForStudent) {
-      return null
-    }
+    */
 
-    return {
-      ...importantStuffForStudent,
-      _id: importantStuffForStudent._id.toString(),
-      student: {
-        _id: importantStuffForStudent.student._id.toString()
+    return importantStuffList.reduce((acc: Record<string, Record<string, StudentImportantStuff>>, importantStuff: DbStudentImportantStuff) => {
+      const studentId = importantStuff.student._id.toString()
+      const schoolNumber = importantStuff.school.schoolNumber
+      acc[studentId] = {
+        ...acc[studentId],
+        [schoolNumber]: {
+          ...importantStuff,
+          _id: importantStuff._id.toString(),
+          student: {
+            _id: studentId
+          }
+        }
       }
-    }
+      return acc
+    }, {})
   }
 
-  async upsertStudentImportantStuff(studentId: string, importantStuff: NewStudentImportantStuff): Promise<void> {
+  async getStudentImportantStuff(studentId: string, schoolNumbers: string[]): Promise<StudentImportantStuff[]> {
+    const db = await this.getDb()
+
+    const importantStuffCollection = db.collection<DbStudentImportantStuff>(this.importantStuffCollectionName)
+    logger.info("Getting important stuff for student with _id {studentId} and schoolNumbers {schoolNumbers}", studentId, schoolNumbers.join(", "))
+
+    const importantStuffForStudent = await importantStuffCollection.find({ "student._id": new ObjectId(studentId), "school.schoolNumber": { $in: schoolNumbers } }).toArray()
+    logger.info("Important stuff for student with _id {studentId} exists: {importantStuffExists}", studentId, importantStuffForStudent.length > 0)
+
+    if (importantStuffForStudent.length === 0) {
+      return []
+    }
+
+    return importantStuffForStudent.map((importantStuff) => ({
+      ...importantStuff,
+      _id: importantStuff._id.toString(),
+      student: {
+        _id: importantStuff.student._id.toString()
+      }
+    }))
+  }
+
+  async upsertStudentImportantStuff(studentId: string, importantStuff: NewStudentImportantStuff): Promise<string> {
     const db = await this.getDb()
     const importantStuffCollection = db.collection<DbStudentImportantStuff>(this.importantStuffCollectionName)
 
-    await importantStuffCollection.updateOne(
-      { "student._id": new ObjectId(studentId) },
+    const result = await importantStuffCollection.findOneAndUpdate(
+      { "student._id": new ObjectId(studentId), "school.schoolNumber": importantStuff.school.schoolNumber },
       {
         $set: {
           ...importantStuff,
@@ -391,19 +638,25 @@ export class MongoDbClient implements IDbClient {
           }
         }
       },
-      { upsert: true }
+      { upsert: true, returnDocument: "after" }
     )
+
+    if (!result?._id) {
+      throw new Error("Failed to upsert student important stuff")
+    }
+
+    return result._id.toString()
   }
 
-  async updateStudentLatestActivityTimestamp(studentId: string): Promise<void> {
+  async updateStudentLastActivityTimestamp(studentId: string, school: SchoolInfo): Promise<string> {
     const db = await this.getDb()
-    const importantStuffCollection = db.collection<ImportantStuffBase>(this.importantStuffCollectionName)
+    const importantStuffCollection = db.collection<NewDbStudentImportantStuff>(this.importantStuffCollectionName)
 
-    const existingImportantStuff = await importantStuffCollection.findOne({ "student._id": new ObjectId(studentId) })
+    const existingImportantStuff = await importantStuffCollection.findOne({ "student._id": new ObjectId(studentId), "school.schoolNumber": school.schoolNumber })
 
     if (!existingImportantStuff) {
       const editor: EditorData = {
-        at: new Date().toISOString(),
+        at: new Date(),
         by: {
           entraUserId: "SYSTEM",
           fallbackName: "SYSTEM"
@@ -412,30 +665,42 @@ export class MongoDbClient implements IDbClient {
       const newImportantStuff: NewStudentImportantStuff = {
         type: "STUDENT",
         created: editor,
+        school,
         modified: editor,
         facilitation: [],
         followUp: [],
         importantInfo: "",
-        lastActivityTimestamp: new Date().toISOString()
+        lastActivityTimestamp: new Date()
       }
 
-      await importantStuffCollection.insertOne({
+      const result = await importantStuffCollection.insertOne({
         ...newImportantStuff,
         student: {
           _id: new ObjectId(studentId)
         }
-      } as NewDbStudentImportantStuff)
-      return
+      })
+
+      if (!result.insertedId) {
+        throw new Error("Failed to insert new student important stuff")
+      }
+
+      return result.insertedId.toString()
     }
 
-    await importantStuffCollection.updateOne(
-      { "student._id": new ObjectId(studentId) },
+    const result = await importantStuffCollection.updateOne(
+      { "student._id": new ObjectId(studentId), "school.schoolNumber": school.schoolNumber },
       {
         $set: {
-          lastActivityTimestamp: new Date().toISOString()
+          lastActivityTimestamp: new Date()
         }
       }
     )
+
+    if (!result.modifiedCount) {
+      throw new Error("Failed to update student's latest activity timestamp")
+    }
+
+    return existingImportantStuff._id.toString()
   }
 
   async getDocumentContentTemplates(availableFor?: AvailableForDocumentType): Promise<DocumentContentTemplate[]> {
@@ -497,6 +762,99 @@ export class MongoDbClient implements IDbClient {
 
     if (result.deletedCount === 0) {
       throw new Error("Failed to delete document content template")
+    }
+  }
+
+  async getStudentDataSharingConsent(studentId: string): Promise<StudentDataSharingConsent | null> {
+    const db = await this.getDb()
+    const studentDataSharingConsentsCollection = db.collection<DbStudentDataSharingConsent>(this.studentDataSharingConsentsCollectionName)
+
+    const consent = await studentDataSharingConsentsCollection.findOne({ "student._id": new ObjectId(studentId) })
+
+    if (!consent) {
+      return null
+    }
+
+    return {
+      ...consent,
+      _id: consent._id.toString(),
+      student: {
+        _id: consent.student._id.toString()
+      }
+    }
+  }
+
+  async getStudentsDataSharingConsent(studentIds: string[]): Promise<Record<string, StudentDataSharingConsent>> {
+    const db = await this.getDb()
+    const studentDataSharingConsentsCollection = db.collection<DbStudentDataSharingConsent>(this.studentDataSharingConsentsCollectionName)
+    const consentsList = await studentDataSharingConsentsCollection.find({ "student._id": { $in: studentIds.map((id) => new ObjectId(id)) } }).toArray()
+
+    return consentsList.reduce((acc: Record<string, StudentDataSharingConsent>, consent: DbStudentDataSharingConsent) => {
+      const studentId = consent.student._id.toString()
+      acc[studentId] = {
+        ...consent,
+        _id: consent._id.toString(),
+        student: {
+          _id: studentId
+        }
+      }
+      return acc
+    }, {})
+  }
+
+  async upsertStudentDataSharingConsent(studentId: string, consent: NewStudentDataSharingConsent): Promise<string> {
+    const db = await this.getDb()
+    const studentDataSharingConsentsCollection = db.collection<NewDbStudentDataSharingConsent>(this.studentDataSharingConsentsCollectionName)
+
+    const updatedConsent: NewDbStudentDataSharingConsent = {
+      ...consent,
+      student: {
+        _id: new ObjectId(studentId)
+      }
+    }
+
+    const result = await studentDataSharingConsentsCollection.findOneAndUpdate({ "student._id": new ObjectId(studentId) }, { $set: updatedConsent }, { upsert: true, returnDocument: "after" })
+
+    if (!result?._id) {
+      throw new Error("Failed to upsert student data sharing consent")
+    }
+
+    return result._id.toString()
+  }
+
+  async getStudentCheckBoxes(): Promise<StudentCheckBox[]> {
+    const db = await this.getDb()
+    const studentCheckBoxesCollection = db.collection<DbStudentCheckBox>(this.studentCheckBoxesCollectionName)
+    const checkBoxes = await studentCheckBoxesCollection.find().toArray()
+    return checkBoxes.map((checkBox) => ({
+      ...checkBox,
+      _id: checkBox._id.toString()
+    }))
+  }
+
+  async createStudentCheckBox(studentCheckBox: NewStudentCheckBox): Promise<string> {
+    const db = await this.getDb()
+    const studentCheckBoxesCollection = db.collection<NewStudentCheckBox>(this.studentCheckBoxesCollectionName)
+    const result = await studentCheckBoxesCollection.insertOne(studentCheckBox)
+    return result.insertedId.toString()
+  }
+
+  async updateStudentCheckBox(studentCheckBoxId: string, studentCheckBox: NewStudentCheckBox): Promise<string> {
+    const db = await this.getDb()
+    const studentCheckBoxesCollection = db.collection<NewStudentCheckBox>(this.studentCheckBoxesCollectionName)
+    const result = await studentCheckBoxesCollection.updateOne({ _id: new ObjectId(studentCheckBoxId) }, { $set: studentCheckBox })
+    if (result.matchedCount === 0) {
+      throw new Error("Failed to update student check box")
+    }
+    return studentCheckBoxId
+  }
+
+  async deleteStudentCheckBox(studentCheckBoxId: string): Promise<void> {
+    const db = await this.getDb()
+    const studentCheckBoxesCollection = db.collection<NewStudentCheckBox>(this.studentCheckBoxesCollectionName)
+    const result = await studentCheckBoxesCollection.deleteOne({ _id: new ObjectId(studentCheckBoxId) })
+    if (result.deletedCount === 0) {
+      throw new Error("Failed to delete student check box")
     }
   }
 }

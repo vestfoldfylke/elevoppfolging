@@ -1,22 +1,50 @@
 import type { AuthenticatedPrincipal } from "./authentication"
 import type {
   AppStudent,
+  AppUser,
   ClassAutoAccessEntry,
+  ClassManualAccessEntry,
+  ClassMembership,
   ContactTeacherGroupAutoAccessEntry,
+  ContactTeacherGroupMembership,
+  Period,
   ProgramAreaManualAccessEntry,
+  SchoolInfo,
   SchoolManualAccessEntry,
   StudentImportantStuff,
   StudentManualAccessEntry,
   TeachingGroupAutoAccessEntry
 } from "./db/shared-types"
 
-export type FrontendStudent = Omit<AppStudent, "lastSynced" | "ssn">
+export type FrontendStudent = Omit<AppStudent, "ssn">
 
-export type FrontendOverviewStudent = Omit<FrontendStudent, "studentEnrollments"> & {
-  importantStuff: StudentImportantStuff | null
+export type FrontendStudentDetails = {
+  mainSchool: SchoolInfo | null
+  mainClassMembership: ClassMembership | null
+  mainContactTeacherGroupMembership: ContactTeacherGroupMembership | null
+  additionalSchools: SchoolInfo[]
 }
 
-export type AccessType = SchoolManualAccessEntry | ProgramAreaManualAccessEntry | StudentManualAccessEntry | ClassAutoAccessEntry | ContactTeacherGroupAutoAccessEntry | TeachingGroupAutoAccessEntry
+export type CachedFrontendStudent = FrontendStudent & FrontendStudentDetails
+
+export type AccessEntry =
+  | SchoolManualAccessEntry
+  | ProgramAreaManualAccessEntry
+  | StudentManualAccessEntry
+  | ClassAutoAccessEntry
+  | ClassManualAccessEntry
+  | ContactTeacherGroupAutoAccessEntry
+  | TeachingGroupAutoAccessEntry
+
+export type CachedFrontendStudentWithAccessInfo = CachedFrontendStudent & {
+  accessTypes: AccessEntry[]
+}
+
+export type FrontendOverviewStudent = Omit<CachedFrontendStudentWithAccessInfo, "studentEnrollments"> & {
+  importantStuff: StudentImportantStuff[]
+  lastActivityTimestamp: Date | null
+  dataSharingConsent: boolean
+}
 
 export type ApplicationInfo = {
   NAME: string
@@ -26,9 +54,36 @@ export type ApplicationInfo = {
     EMPLOYEE: string
     ADMIN: string
   }
+  STUDENT_ACCESS_BEFORE_ACTIVE_DAYS: number
+  STUDENT_ACCESS_AFTER_EXPIRE_DAYS: number
+  STUDENT_CACHE_MAX_AGE_MINUTES: number
+  APP_USER_CACHE_MAX_AGE_MINUTES: number
 }
 
 export type RootLayoutData = {
   APP_INFO: ApplicationInfo
   authenticatedPrincipal: AuthenticatedPrincipal
+}
+
+export type PeriodDetails = Period & {
+  active: boolean
+  daysUntilExpire: number | null
+  daysUntilActive: number | null
+  withinViewAccessWindow: boolean
+}
+
+export type StudentUnavailableSchoolDocuments = {
+  school: SchoolInfo
+  numberOfDocuments: number
+}
+
+export type CachedAppUser = AppUser
+
+export type StudentAccess = {
+  accessTypes: AccessEntry[]
+  entra: {
+    id: string
+    userPrincipalName: string
+    displayName: string
+  }
 }

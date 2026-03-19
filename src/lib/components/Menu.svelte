@@ -5,12 +5,6 @@
   import favicon32 from "$lib/assets/favicon-32x32.png"
   import { isSystemAdmin } from "$lib/shared-authorization/authorization"
 
-  type Props = {
-    appName: string
-  }
-
-  let { appName }: Props = $props()
-
   let menuOpen = $state(true)
 
   const smallScreenWidth = 1120
@@ -59,7 +53,7 @@
 	<div class ="menu large-screen-space-stealer" transition:slide={{ axis: 'x', duration: 100 }}></div> 
 	<div class="menu" transition:slide={{ axis: 'x', duration: 100 }}>
 		<div class="menu-header">
-			<div class="app-title"><img src={favicon32} alt="{appName} logo" /> {appName}</div>
+			<div class="app-title"><img src={favicon32} alt="{page.data.APP_INFO.NAME} logo" /> {page.data.APP_INFO.NAME}</div>
 			<button class="icon-button" onclick={toggleMenu} title="Lukk meny">
 				<span class="material-symbols-rounded">left_panel_close</span>
 			</button>
@@ -76,20 +70,33 @@
 				<div class="menu-section">
 					<div class="menu-section-title">Oppfølging</div>
 					<div class="menu-items">
-						<a class="menu-item" class:active={page.url.pathname === "/students"} href="/students">
+						<a class="menu-item" class:active={page.url.pathname.startsWith("/students")} href="/students">
 							<span class="material-symbols-outlined">person</span>Elever
 						</a>
 					</div>
 				</div>
+				{#if true} <!-- TODO - add check for if user has any access here -->
+					<div class="menu-section">
+						<div class="menu-section-title">Skole-administrasjon</div>
+						<div class="menu-items">
+							<a class="menu-item" class:active={page.url.pathname === "/schooladministration/access"} href="/schooladministration/access">
+								<span class="material-symbols-outlined">lock_open</span>Tilgangsstyring
+							</a>
+						</div>
+					</div>
+				{/if}
 				{#if isSystemAdmin(page.data.authenticatedPrincipal, page.data.APP_INFO)}
 					<div class="menu-section">
 						<div class="menu-section-title">System-admin</div>
 						<div class="menu-items">
-							<a class="menu-item" class:active={page.url.pathname === "/admin"} href="/admin">
-								<span class="material-symbols-outlined">settings</span>Admin
+							<a class="menu-item" class:active={page.url.pathname === "/system/schools"} href="/system/schools">
+								<span class="material-symbols-outlined">school</span>Skoler
 							</a>
-							<a class="menu-item" class:active={page.url.pathname === "/admin/templates"} href="/admin/templates">
+							<a class="menu-item" class:active={page.url.pathname === "/system/templates"} href="/system/templates">
 								<span class="material-symbols-outlined">add_notes</span>Notatmaler
+							</a>
+							<a class="menu-item" class:active={page.url.pathname === "/system/configuration"} href="/system/configuration">
+								<span class="material-symbols-outlined">settings</span>Konfigurasjon
 							</a>
 						</div>	
 					</div>

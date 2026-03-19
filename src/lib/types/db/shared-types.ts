@@ -12,6 +12,7 @@ export type Teacher = {
 export type Group = {
   systemId: string
   name: string
+  source: Source
 }
 
 export type GroupMembership = {
@@ -49,15 +50,37 @@ export type ContactTeacherGroupMembership = GroupMembership & {
   contactTeacherGroup: ContactTeacherGroup
 }
 
-export type School = {
+export type EditorData = {
+  by: {
+    entraUserId: string
+    fallbackName: string
+    displayName?: string
+  }
+  at: Date
+}
+
+export type SchoolInfo = {
   name: string
   schoolNumber: string
 }
 
+export type NewSchool = SchoolInfo & {
+  created: EditorData
+  modified: EditorData
+  source: Source
+}
+
+export type School = NewSchool & {
+  _id: string
+}
+
+export type DbSchool = NewSchool & {
+  _id: ObjectId
+}
+
 export type Period = {
-  start: string | null
-  end: string | null
-  active: boolean
+  start: Date | null
+  end: Date | null
 }
 
 /** Elevforhold */
@@ -67,29 +90,30 @@ export type StudentEnrollment = {
   teachingGroupMemberships: TeachingGroupMembership[]
   contactTeacherGroupMemberships: ContactTeacherGroupMembership[]
   period: Period
-  school: School
+  school: SchoolInfo
   mainSchool: boolean
+  source: Source
 }
 
-export type MainSchool = School & {
+export type MainSchool = SchoolInfo & {
   enrollmentSystemId: string
 }
+
+export type Source = "AUTO" | "MANUAL"
 
 /** En elev i db for denne appen */
 export type NewAppStudent = {
   /** FINT system-id for eleven */
   systemId: string
-  /** Om eleven har et aktivt elevforhold */
-  active: boolean
   studentNumber: string
   ssn: string
   name: string
   feideName: string
+  /** Alle FINT elevforholdene til eleven */
   studentEnrollments: StudentEnrollment[]
-  mainSchool: MainSchool | null
-  mainClass: Group | null
-  mainContactTeacherGroup: ContactTeacherGroup | null
-  lastSynced: string
+  created: EditorData
+  modified: EditorData
+  source: Source
 }
 
 export type AppStudent = NewAppStudent & {
@@ -101,47 +125,70 @@ export type DbAppStudent = NewAppStudent & {
 }
 
 export type AccessEntryBase = {
-  /** Hvilken skole gjelder tilgangen for */
-  schoolNumber: string
   /** Hvem har gitt tilgangen */
-  granted: {
-    by: {
-      _id: string
-      name: string
-    }
-    at: string
-  }
+  granted: EditorData
+  source: Source
 }
 
-export type SchoolManualAccessEntry = AccessEntryBase & {
+export type SchoolManualAccessEntryInput = {
+  /** Hvilken skole gjelder tilgangen for */
+  schoolNumber: string
   type: "MANUELL-SKOLELEDER-TILGANG"
 }
 
-export type ProgramAreaManualAccessEntry = AccessEntryBase & {
+export type SchoolManualAccessEntry = AccessEntryBase & SchoolManualAccessEntryInput
+
+export type ProgramAreaManualAccessEntryInput = {
+  /** Hvilken skole gjelder tilgangen for */
+  schoolNumber: string
   /** Entydig identifikator (db _id) for hvilket undervisningsområde det er gitt tilgang til */
   _id: string
   type: "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG"
 }
 
-export type StudentManualAccessEntry = AccessEntryBase & {
-  /** FINT system-id for eleven det er gitt tilgang til */
-  systemId: string
+export type ProgramAreaManualAccessEntry = AccessEntryBase & ProgramAreaManualAccessEntryInput
+
+export type StudentManualAccessEntryInput = {
+  /** Hvilken skole gjelder tilgangen for */
+  schoolNumber: string
+  /** Entydig identifikator (db _id) for hvilken elev det er gitt tilgang til */
+  _id: string
   type: "MANUELL-ELEV-TILGANG"
 }
 
+export type StudentManualAccessEntry = AccessEntryBase & StudentManualAccessEntryInput
+
+export type ClassManualAccessEntryInput = {
+  /** Hvilken skole gjelder tilgangen for */
+  schoolNumber: string
+  /** Entydig identifikator (db _id) for hvilken klasse det er gitt tilgang til */
+  systemId: string
+  type: "MANUELL-KLASSE-TILGANG"
+}
+
+export type ClassManualAccessEntry = AccessEntryBase & ClassManualAccessEntryInput
+
+export type ManualAccessEntryInput = SchoolManualAccessEntryInput | ProgramAreaManualAccessEntryInput | StudentManualAccessEntryInput | ClassManualAccessEntryInput
+
 export type ClassAutoAccessEntry = AccessEntryBase & {
+  /** Hvilken skole gjelder tilgangen for */
+  schoolNumber: string
   /** FINT system-id for klassen det er gitt tilgang til */
   systemId: string
   type: "AUTOMATISK-KLASSE-TILGANG"
 }
 
 export type ContactTeacherGroupAutoAccessEntry = AccessEntryBase & {
+  /** Hvilken skole gjelder tilgangen for */
+  schoolNumber: string
   /** FINT system-id for undervisningsgruppen det er gitt tilgang til */
   systemId: string
   type: "AUTOMATISK-KONTAKTLÆRERGRUPPE-TILGANG"
 }
 
 export type TeachingGroupAutoAccessEntry = AccessEntryBase & {
+  /** Hvilken skole gjelder tilgangen for */
+  schoolNumber: string
   /** FINT system-id for undervisningsgruppen det er gitt tilgang til */
   systemId: string
   type: "AUTOMATISK-UNDERVISNINGSGRUPPE-TILGANG"
@@ -152,7 +199,7 @@ export type NewAccess = {
   name: string
   schools: SchoolManualAccessEntry[]
   programAreas: ProgramAreaManualAccessEntry[]
-  classes: ClassAutoAccessEntry[]
+  classes: (ClassAutoAccessEntry | ClassManualAccessEntry)[]
   contactTeacherGroups: ContactTeacherGroupAutoAccessEntry[]
   teachingGroups: TeachingGroupAutoAccessEntry[]
   students: StudentManualAccessEntry[]
@@ -166,6 +213,8 @@ export type DbAccess = NewAccess & {
   _id: ObjectId
 }
 
+// APP USER
+
 export type NewAppUser = {
   active: boolean
   feideName: string
@@ -176,6 +225,9 @@ export type NewAppUser = {
     companyName: string
     department: string
   }
+  created: EditorData
+  modified: EditorData
+  source: Source
 }
 
 export type AppUser = NewAppUser & {
@@ -187,12 +239,18 @@ export type DbAppUser = NewAppUser & {
 }
 
 // PROGRAM AREA
-export type NewProgramArea = {
+export type ProgramAreaInput = {
   name: string
   classes: {
     systemId: string
     name: string
   }[]
+}
+
+export type NewProgramArea = ProgramAreaInput & {
+  created: EditorData
+  modified: EditorData
+  source: Source
 }
 
 export type ProgramArea = NewProgramArea & {
@@ -244,7 +302,6 @@ export type DocumentRadioGroupItem = {
   header: string
   items: DocumentRadioButtonItem[]
   selectedValue: string
-  required: boolean
   helpText?: string
 }
 
@@ -252,67 +309,78 @@ export type DocumentInputItem = DocumentTextInputItem | DocumentTextAreaItem | D
 
 export type DocumentContentItem = DocumentHeaderItem | DocumentParagraphItem | DocumentInputItem
 
-export type EditorData = {
-  by: {
-    entraUserId: string
-    fallbackName: string
-    displayName?: string
-  }
-  at: string
-}
-
 export type DocumentMessageBase = {
   created: EditorData
   modified: EditorData
 }
 
-export type DocumentComment = DocumentMessageBase & {
+export type DocumentCommentInput = {
   type: "comment"
   content: {
     text: string
   }
 }
 
-export type NewDocumentMessage = DocumentComment
+export type DocumentUpdateInput = {
+  type: "update"
+  content: {
+    title: string
+    text: string
+  }
+}
+
+export type DocumentMessageInput = DocumentCommentInput | DocumentUpdateInput
+
+export type DocumentComment = DocumentMessageBase & DocumentCommentInput
+
+export type DocumentUpdate = DocumentMessageBase & DocumentUpdateInput
+
+export type NewDocumentMessage = DocumentComment | DocumentUpdate
 
 export type DocumentMessage = NewDocumentMessage & {
   messageId: string
 }
 
 export type DocumentBase = {
-  school: School
-  title: string
   created: EditorData
   modified: EditorData
+}
+
+export type DocumentInput = {
+  school: SchoolInfo
+  title: string
   template: {
     _id: string
     name: string
     version: number
   }
   content: DocumentContentItem[]
-  messages: DocumentMessage[]
-  group?: {
-    systemId: string
-  }
+  /*
+  accessTypes: AccessEntry["type"][]
+  */
 }
 
-export type NewDocument = DocumentBase & {
-  student?: {
-    _id: string
+export type NewStudentDocument = DocumentBase &
+  DocumentInput & {
+    messages: DocumentMessage[]
+    student: {
+      _id: string
+    }
   }
-}
 
-export type Document = NewDocument & {
+export type StudentDocumentUpdate = DocumentBase & DocumentInput
+
+export type StudentDocument = NewStudentDocument & {
   _id: string
 }
 
-export type NewDbDocument = DocumentBase & {
-  student?: {
+export type NewDbStudentDocument = Omit<NewStudentDocument, "student"> & {
+  student: {
     _id: ObjectId
   }
 }
 
-export type DbDocument = NewDbDocument & {
+export type DbStudentDocument = NewDbStudentDocument & {
   _id: ObjectId
 }
 
@@ -325,7 +393,7 @@ export type AvailableForDocumentType = {
 export type NewDocumentContentTemplate = {
   name: string
   version: number
-  availableForDocumentType: AvailableForDocumentType
+  availableForDocumentType: AvailableForDocumentType // Hmm might need explicit difference here if we add specific types for student documents (like fag-selector and so on)
   created: EditorData
   modified: EditorData
   content: DocumentContentItem[]
@@ -339,20 +407,48 @@ export type DbDocumentContentTemplate = NewDocumentContentTemplate & {
   _id: ObjectId
 }
 
+// Student Check boxes
+export type StudentCheckBoxInput = {
+  type: "FACILITATION" | "FOLLOW_UP"
+  value: string
+  enabled: boolean
+  sort: number
+}
+
+export type NewStudentCheckBox = StudentCheckBoxInput & {
+  modified: EditorData
+  created: EditorData
+}
+
+export type StudentCheckBox = NewStudentCheckBox & {
+  _id: string
+}
+
+export type DbStudentCheckBox = NewStudentCheckBox & {
+  _id: ObjectId
+}
+
 // Important Stuff
 
 export type ImportantStuffBase = {
   created: EditorData
   modified: EditorData
-  importantInfo: string
 }
 
-export type NewStudentImportantStuff = ImportantStuffBase & {
-  type: "STUDENT"
+export type StudentImportantStuffInput = {
+  school: SchoolInfo
+  importantInfo: string
+  /** list of _ids corresponding to entries in student check boxes */
   followUp: string[]
+  /** list of _ids corresponding to entries in student check boxes */
   facilitation: string[]
-  lastActivityTimestamp: string
 }
+
+export type NewStudentImportantStuff = ImportantStuffBase &
+  StudentImportantStuffInput & {
+    type: "STUDENT"
+    lastActivityTimestamp: Date
+  }
 
 export type StudentImportantStuff = NewStudentImportantStuff & {
   _id: string
@@ -373,3 +469,38 @@ export type DbStudentImportantStuff = NewStudentImportantStuff & {
     _id: ObjectId
   }
 }
+
+// StudentDataSharingConsent
+
+export type StudentDataSharingConsentBase = {
+  modified: EditorData
+}
+
+export type StudentDataSharingConsentInput = {
+  consent: boolean
+  message: string
+}
+
+export type NewStudentDataSharingConsent = StudentDataSharingConsentBase & StudentDataSharingConsentInput
+
+export type StudentDataSharingConsent = NewStudentDataSharingConsent & {
+  _id: string
+  student: {
+    _id: string
+  }
+}
+
+export type NewDbStudentDataSharingConsent = StudentDataSharingConsentBase &
+  StudentDataSharingConsentInput & {
+    student: {
+      _id: ObjectId
+    }
+  }
+
+export type DbStudentDataSharingConsent = StudentDataSharingConsentBase &
+  StudentDataSharingConsentInput & {
+    _id: ObjectId
+    student: {
+      _id: ObjectId
+    }
+  }

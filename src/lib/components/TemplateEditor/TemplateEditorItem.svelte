@@ -103,10 +103,6 @@
       {/if}
 
       {#if contentItem.type === "radioGroup"}
-        <div class="input-item checkbox">
-          <label for="radioGroup-required-{index}">Obligatorisk</label>
-          <input id="radioGroup-required-{index}" type="checkbox" bind:checked={contentItem.required} />
-        </div>
         <div class="input-item">
           <label for="radioGroup-helpText-{index}">Informasjonstekst (valgfri)</label>
           <input id="radioGroup-helpText-{index}" type="text" bind:value={contentItem.helpText} />

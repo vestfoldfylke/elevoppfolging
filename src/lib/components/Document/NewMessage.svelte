@@ -4,19 +4,22 @@
 
   type PageProps = {
     documentId: string
+    groupId?: string
+    studentId?: string
   }
 
-  let { documentId }: PageProps = $props()
+  let { documentId, groupId, studentId }: PageProps = $props()
 
-  let messageType: "comment" | null = $state(null)
+  let messageType: "comment" | "update" | null = $state(null)
 
   const mockEditor: EditorData = {
     by: {
       entraUserId: "Blabla",
       fallbackName: "Du"
     },
-    at: ""
+    at: new Date()
   }
+
   const newComment: DocumentMessage = {
     messageId: "",
     type: "comment",
@@ -27,17 +30,37 @@
     modified: mockEditor
   }
 
-  const onNewMessageCreated = () => {
+  const newUpdate: DocumentMessage = {
+    messageId: "",
+    type: "update",
+    content: {
+      title: "",
+      text: ""
+    },
+    created: mockEditor,
+    modified: mockEditor
+  }
+
+  const onNewMessageCreatedOrCancel = () => {
     messageType = null
   }
 </script>
 
 {#if messageType === null}
-  <button onclick={() => messageType = "comment"}><span class="material-symbols-outlined">add_comment</span>Ny kommentar</button>
+  <div class="new-message-actions">
+    <button onclick={() => messageType = "comment"}><span class="material-symbols-outlined">add_comment</span>Ny kommentar</button>
+    <button onclick={() => messageType = "update"}><span class="material-symbols-outlined">info</span>Ny oppdatering</button>
+  </div>
 {:else if messageType === "comment"}
-  <Message editMode={true} {documentId} message={newComment} callback={onNewMessageCreated} />
+  <Message {studentId} {groupId} editMode={true} {documentId} message={newComment} callback={onNewMessageCreatedOrCancel} />
+{:else if messageType === "update"}
+  <Message {studentId} {groupId} editMode={true} {documentId} message={newUpdate} callback={onNewMessageCreatedOrCancel} />
 {/if}
 
 <style>
-
+  .new-message-actions {
+    padding: 1rem;
+    display: flex;
+    gap: 0.5rem;
+  }
 </style>

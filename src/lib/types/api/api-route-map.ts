@@ -1,7 +1,16 @@
-import type { Document, DocumentContentTemplate, DocumentMessage } from "../db/shared-types"
+import type {
+  DocumentContentTemplate,
+  DocumentInput,
+  DocumentMessageInput,
+  ManualAccessEntryInput,
+  NewSchool,
+  StudentCheckBoxInput,
+  StudentDataSharingConsentInput,
+  StudentImportantStuffInput
+} from "../db/shared-types"
 
 type ApiDocumentsIdMessages = {
-  POST: { req: DocumentMessage; res: { messageId: string } }
+  POST: { req: DocumentMessageInput; res: { messageId: string } }
 }
 
 type ApiTemplatesId = {
@@ -9,21 +18,65 @@ type ApiTemplatesId = {
   DELETE: { res: { deletedTemplateId: string } }
 }
 
+type ApiSchoolsId = {
+  DELETE: { res: { deletedSchoolNumber: string } }
+  PUT: { req: NewSchool; res: { updatedSchoolId: string } }
+}
+
+type ApiAccessEntraUserIdAdd = {
+  POST: { req: ManualAccessEntryInput; res: { updatedAccessId: string } }
+}
+
+type ApiAccessEntraUserIdRemove = {
+  POST: { req: ManualAccessEntryInput; res: { updatedAccessId: string } }
+}
+
+type ApiStudentsIdConsent = {
+  PATCH: { req: StudentDataSharingConsentInput; res: { consentId: string } }
+}
+
+export type NoSlashString = string & { __noSlash?: true }
+
 /**
  * Define a mapping of API routes to their expected request and response types. This will be used to provide type safety for api routes and the apiFetch function, ensuring that the correct request body is provided for each route and that the response is correctly typed.
  */
 export interface ApiRouteMap {
-  "/api/documents": {
-    POST: { req: Document; res: { documentId: string } }
-  }
-
-  [key: `/api/documents/${string}/messages`]: ApiDocumentsIdMessages
-  "/api/documents/${string}/messages": ApiDocumentsIdMessages
-
   "/api/templates": {
     POST: { req: DocumentContentTemplate; res: { templateId: string } }
   }
+  [key: `/api/templates/${NoSlashString}`]: ApiTemplatesId
 
-  [key: `/api/templates/${string}`]: ApiTemplatesId
-  "/api/templates/${string}": ApiTemplatesId
+  [key: `/api/schools/${NoSlashString}`]: ApiSchoolsId
+  "/api/schools": {
+    POST: { req: NewSchool; res: { schoolId: string } }
+  }
+
+  [key: `/api/access/${NoSlashString}/add`]: ApiAccessEntraUserIdAdd
+
+  [key: `/api/access/${NoSlashString}/remove`]: ApiAccessEntraUserIdRemove
+
+  [key: `/api/students/${NoSlashString}/consent`]: ApiStudentsIdConsent
+
+  [key: `/api/students/${NoSlashString}/importantstuff`]: {
+    PATCH: { req: StudentImportantStuffInput; res: { importantStuffId: string } }
+  }
+
+  [key: `/api/students/${NoSlashString}/documents`]: {
+    POST: { req: DocumentInput; res: { documentId: string } }
+  }
+
+  [key: `/api/students/${NoSlashString}/documents/${NoSlashString}`]: {
+    PATCH: { req: DocumentInput; res: { documentId: string } }
+  }
+
+  [key: `/api/students/${NoSlashString}/documents/${NoSlashString}/messages`]: ApiDocumentsIdMessages
+
+  "/api/studentcheckboxes": {
+    POST: { req: StudentCheckBoxInput; res: { checkBoxId: string } }
+  }
+
+  [key: `/api/studentcheckboxes/${NoSlashString}`]: {
+    DELETE: { res: { deletedCheckBoxId: string } }
+    PATCH: { req: StudentCheckBoxInput; res: { updatedCheckBoxId: string } }
+  }
 }
