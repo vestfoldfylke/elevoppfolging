@@ -60,17 +60,10 @@
 		</div>
 		<div class="menu-content">
 			<div class="menu-section">
-				<div class="menu-items">
-					<a class="menu-item" class:active={page.url.pathname === "/"} href="/">
-						<span class="material-symbols-outlined">home</span>Hjem
-					</a>
-				</div>
-			</div>
-			<div class="menu-section">
 				<div class="menu-section">
 					<div class="menu-section-title">Oppfølging</div>
 					<div class="menu-items">
-						<a class="menu-item" class:active={page.url.pathname.startsWith("/students")} href="/students">
+						<a class="menu-item" class:active={page.url.pathname === "/" || page.url.pathname.startsWith("/students")} href="/">
 							<span class="material-symbols-outlined">person</span>Elever
 						</a>
 					</div>

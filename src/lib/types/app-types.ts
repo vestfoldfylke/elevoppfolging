@@ -12,6 +12,7 @@ import type {
   ProgramAreaManualAccessEntry,
   SchoolInfo,
   SchoolManualAccessEntry,
+  StudentCheckBox,
   StudentImportantStuff,
   StudentManualAccessEntry,
   TeachingGroupAutoAccessEntry
@@ -65,6 +66,8 @@ export type RootLayoutData = {
   APP_INFO: ApplicationInfo
   authenticatedPrincipal: AuthenticatedPrincipal
   principalAccess: Access | null
+  students: FrontendOverviewStudent[]
+  studentCheckBoxes: StudentCheckBox[]
 }
 
 export type PeriodDetails = Period & {
