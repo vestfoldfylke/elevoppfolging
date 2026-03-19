@@ -32,10 +32,10 @@ export const validateDocument = (documentData: DocumentInput): ValidationResult 
     switch (contentItem.type) {
       case "textarea":
       case "inputText": {
-        if (contentItem.value !== undefined && typeof contentItem.value !== "string") {
-          return { valid: false, message: `Content item of type ${contentItem.type} has an invalid value: must be a string if defined.` }
+        if (typeof contentItem.value !== "string") {
+          return { valid: false, message: `Content item of type ${contentItem.type} has an invalid value: must be a string.` }
         }
-        if (contentItem.required && (contentItem.value === undefined || contentItem.value === "")) {
+        if (contentItem.required && !contentItem.value) {
           return { valid: false, message: `Content item of type ${contentItem.type} is required but has no value.` }
         }
         break
