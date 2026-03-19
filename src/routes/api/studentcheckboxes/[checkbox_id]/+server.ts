@@ -48,7 +48,7 @@ const updateStudentCheckBox: ApiNextFunction<UpdateStudentCheckBoxResponse, Upda
     throw new HTTPError(403, "Forbidden: No access")
   }
 
-  const checkBoxId = requestEvent.params._id
+  const checkBoxId = requestEvent.params.checkbox_id
   if (!checkBoxId) {
     throw new HTTPError(400, "Check box ID is missing in request parameters")
   }

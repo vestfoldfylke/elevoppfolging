@@ -12,7 +12,7 @@ type TemplatePageData = {
 
 const getTemplate: ServerLoadNextFunction<TemplatePageData> = async ({ requestEvent }) => {
   // TODO validate admin access
-  const templateId = requestEvent.params._id
+  const templateId = requestEvent.params.template_id
   if (!templateId) {
     throw new HTTPError(400, "Missing template id")
   }

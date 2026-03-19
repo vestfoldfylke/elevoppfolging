@@ -19,7 +19,7 @@ type StudentPageData = {
 }
 
 const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, requestEvent }) => {
-  const studentId = requestEvent.params._id
+  const studentId = requestEvent.params.student_id
   if (!studentId) {
     throw new Error("Student ID is missing in request parameters")
   }
