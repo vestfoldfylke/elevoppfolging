@@ -35,6 +35,9 @@ type ApiStudentsIdConsent = {
   PATCH: { req: StudentDataSharingConsentInput; res: { consentId: string } }
 }
 
+
+export type NoSlashString = string & { __noSlash?: true }
+
 /**
  * Define a mapping of API routes to their expected request and response types. This will be used to provide type safety for api routes and the apiFetch function, ensuring that the correct request body is provided for each route and that the response is correctly typed.
  */
@@ -42,34 +45,38 @@ export interface ApiRouteMap {
   "/api/templates": {
     POST: { req: DocumentContentTemplate; res: { templateId: string } }
   }
-  [key: `/api/templates/${string}`]: ApiTemplatesId
+  [key: `/api/templates/${NoSlashString}`]: ApiTemplatesId
 
-  [key: `/api/schools/${string}`]: ApiSchoolsId
+  [key: `/api/schools/${NoSlashString}`]: ApiSchoolsId
   "/api/schools": {
     POST: { req: NewSchool; res: { schoolId: string } }
   }
 
-  [key: `/api/access/${string}/add`]: ApiAccessEntraUserIdAdd
+  [key: `/api/access/${NoSlashString}/add`]: ApiAccessEntraUserIdAdd
 
-  [key: `/api/access/${string}/remove`]: ApiAccessEntraUserIdRemove
+  [key: `/api/access/${NoSlashString}/remove`]: ApiAccessEntraUserIdRemove
 
-  [key: `/api/students/${string}/consent`]: ApiStudentsIdConsent
+  [key: `/api/students/${NoSlashString}/consent`]: ApiStudentsIdConsent
 
-  [key: `/api/students/${string}/importantstuff`]: {
+  [key: `/api/students/${NoSlashString}/importantstuff`]: {
     PATCH: { req: StudentImportantStuffInput; res: { importantStuffId: string } }
   }
 
-  [key: `/api/students/${string}/documents`]: {
+  [key: `/api/students/${NoSlashString}/documents`]: {
     POST: { req: DocumentInput; res: { documentId: string } }
   }
 
-  [key: `/api/students/${string}/documents/${string}/messages`]: ApiDocumentsIdMessages
+  [key: `/api/students/${NoSlashString}/documents/${NoSlashString}`]: {
+    PATCH: { req: DocumentInput; res: { documentId: string } }
+  }
+
+  [key: `/api/students/${NoSlashString}/documents/${NoSlashString}/messages`]: ApiDocumentsIdMessages
 
   "/api/studentcheckboxes": {
     POST: { req: StudentCheckBoxInput; res: { checkBoxId: string } }
   }
 
-  [key: `/api/studentcheckboxes/${string}`]: {
+  [key: `/api/studentcheckboxes/${NoSlashString}`]: {
     DELETE: { res: { deletedCheckBoxId: string } }
     PATCH: { req: StudentCheckBoxInput; res: { updatedCheckBoxId: string } }
   }

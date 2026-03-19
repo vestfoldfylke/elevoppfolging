@@ -209,3 +209,10 @@ ul, ol {
 .section-box-footer > span {
   font-size: smaller;
 }
+
+.input-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin: 1rem 0rem;
+}

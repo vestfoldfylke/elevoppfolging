@@ -1,19 +1,19 @@
 import type { RequestHandler } from "@sveltejs/kit"
-import { validateAccessEntryInput } from "$lib/data-validation/access-entry"
+import { validateAccessEntryInput } from "$lib/data-validation/access-entry-validation"
 import { APP_INFO } from "$lib/server/app-info"
 import { getStudentsFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canGrantAndRemoveAccessForSchool, isSystemAdmin } from "$lib/shared-authorization/authorization"
-import type { ApiRouteMap } from "$lib/types/api/api-route-map"
+import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { AccessEntry, CachedFrontendStudentWithAccessInfo } from "$lib/types/app-types"
 import type { ClassGroup, NewAccess } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 import { getClassesFromStudents } from "$lib/utils/classes-from-students"
 
-type GrantAccessResponse = ApiRouteMap[`/api/access/${string}/add`]["POST"]["res"]
-type GrantAccessBody = ApiRouteMap[`/api/access/${string}/add`]["POST"]["req"]
+type GrantAccessResponse = ApiRouteMap[`/api/access/${NoSlashString}/add`]["POST"]["res"]
+type GrantAccessBody = ApiRouteMap[`/api/access/${NoSlashString}/add`]["POST"]["req"]
 
 const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async ({ principal, requestEvent, body }) => {
   const entraUserId = requestEvent.params.entrauserid

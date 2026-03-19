@@ -1,19 +1,19 @@
 import type { RequestHandler } from "@sveltejs/kit"
-import { validateStudentImportantStuffData } from "$lib/data-validation/student-important-stuff"
+import { validateStudentImportantStuffData } from "$lib/data-validation/student-important-stuff-validation"
 import { getStudentAccessInfo } from "$lib/server/authorization/student-access"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canEditStudentImportantStuff } from "$lib/shared-authorization/authorization"
-import type { ApiRouteMap } from "$lib/types/api/api-route-map"
+import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { EditorData, NewStudentImportantStuff, StudentImportantStuffInput } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
-type PatchImportantStuffResponse = ApiRouteMap[`/api/students/${string}/importantstuff`]["PATCH"]["res"]
-type PatchImportantStuffBody = ApiRouteMap[`/api/students/${string}/importantstuff`]["PATCH"]["req"]
+type PatchImportantStuffResponse = ApiRouteMap[`/api/students/${NoSlashString}/importantstuff`]["PATCH"]["res"]
+type PatchImportantStuffBody = ApiRouteMap[`/api/students/${NoSlashString}/importantstuff`]["PATCH"]["req"]
 
 const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, PatchImportantStuffBody> = async ({ requestEvent, principal, body }) => {
-  const studentId = requestEvent.params._id
+  const studentId = requestEvent.params.student_id
   if (!studentId || typeof studentId !== "string") {
     throw new HTTPError(400, "Student ID is missing in request parameters")
   }

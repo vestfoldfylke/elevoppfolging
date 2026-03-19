@@ -2,15 +2,15 @@ import type { RequestHandler } from "@sveltejs/kit"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import type { ApiRouteMap } from "$lib/types/api/api-route-map"
+import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { EditorData, NewDocumentContentTemplate } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
-type UpdateDocumentContentTemplateResponse = ApiRouteMap["/api/templates/[_id]"]["PUT"]["res"]
-type UpdateDocumentContentTemplateBody = ApiRouteMap["/api/templates/[_id]"]["PUT"]["req"]
+type UpdateDocumentContentTemplateResponse = ApiRouteMap[`/api/templates/${NoSlashString}`]["PUT"]["res"]
+type UpdateDocumentContentTemplateBody = ApiRouteMap[`/api/templates/${NoSlashString}`]["PUT"]["req"]
 
 const updateDocumentContentTemplate: ApiNextFunction<UpdateDocumentContentTemplateResponse, UpdateDocumentContentTemplateBody> = async ({ requestEvent, principal, body }) => {
-  const templateId = requestEvent.params._id
+  const templateId = requestEvent.params.template_id
 
   if (!templateId) {
     throw new HTTPError(400, "template id from url params is missing?")
@@ -56,10 +56,10 @@ export const PUT: RequestHandler = async (requestEvent) => {
   return apiRequestMiddleware<UpdateDocumentContentTemplateResponse, UpdateDocumentContentTemplateBody>(requestEvent, updateDocumentContentTemplate)
 }
 
-type DeleteDocumentContentTemplateResponse = ApiRouteMap["/api/templates/[_id]"]["DELETE"]["res"]
+type DeleteDocumentContentTemplateResponse = ApiRouteMap[`/api/templates/${NoSlashString}`]["DELETE"]["res"]
 
 const deleteDocumentContentTemplate: ApiNextFunction<DeleteDocumentContentTemplateResponse> = async ({ requestEvent }) => {
-  const templateId = requestEvent.params._id
+  const templateId = requestEvent.params.template_id
 
   if (!templateId) {
     throw new HTTPError(400, "template id from url params is missing?")

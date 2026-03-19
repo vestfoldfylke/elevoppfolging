@@ -1,7 +1,8 @@
 <script lang="ts">
   import { apiFetch } from "$lib/api-fetch/api-fetch"
-    import { INVALID_FORM_MESSAGE } from "$lib/data-validation/constants";
-    import { studentCheckBoxValueValidation } from "$lib/data-validation/student-check-box";
+    import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants";
+    import { studentCheckBoxValueValidation } from "$lib/data-validation/student-check-box-validation";
+    import type { NoSlashString } from "$lib/types/api/api-route-map";
   import type { StudentCheckBox, StudentCheckBoxInput } from "$lib/types/db/shared-types"
   import AsyncButton from "./AsyncButton.svelte"
 
@@ -51,7 +52,7 @@
       return
     }
 
-    await apiFetch(`/api/studentcheckboxes/${checkBox._id}`, {
+    await apiFetch(`/api/studentcheckboxes/${(checkBox._id as NoSlashString)}`, {
       method: "DELETE"
     })
   }
@@ -68,7 +69,7 @@
       throw new Error(INVALID_FORM_MESSAGE)
     }
 
-    await apiFetch(`/api/studentcheckboxes/${checkBox._id}`, {
+    await apiFetch(`/api/studentcheckboxes/${(checkBox._id as NoSlashString)}`, {
       method: "PATCH",
       body: editableCheckBox,
       headers: {

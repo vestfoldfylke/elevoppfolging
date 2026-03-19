@@ -20,6 +20,7 @@ import type {
   StudentCheckBox,
   StudentDataSharingConsent,
   StudentDocument,
+  StudentDocumentUpdate,
   StudentImportantStuff
 } from "./shared-types.js"
 
@@ -48,6 +49,7 @@ export interface IDbClient {
   getStudentDocuments(studentId: string): Promise<StudentDocument[]>
   getStudentDocumentById(documentId: string): Promise<StudentDocument | null>
   createStudentDocument(document: NewStudentDocument): Promise<string>
+  updateStudentDocument(documentId: string, documentUpdate: StudentDocumentUpdate): Promise<string>
 
   addDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<DocumentMessage>
 

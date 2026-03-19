@@ -1,19 +1,19 @@
 import type { RequestHandler } from "@sveltejs/kit"
-import { validateStudentDataSharingConsentData } from "$lib/data-validation/student-consent"
+import { validateStudentDataSharingConsentData } from "$lib/data-validation/student-consent-validation"
 import { getStudentAccessInfo } from "$lib/server/authorization/student-access"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canEditStudentDataSharingConsent } from "$lib/shared-authorization/authorization"
-import type { ApiRouteMap } from "$lib/types/api/api-route-map"
+import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { NewStudentDataSharingConsent } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
-type PatchConsentResponse = ApiRouteMap[`/api/students/${string}/consent`]["PATCH"]["res"]
-type PatchConsentBody = ApiRouteMap[`/api/students/${string}/consent`]["PATCH"]["req"]
+type PatchConsentResponse = ApiRouteMap[`/api/students/${NoSlashString}/consent`]["PATCH"]["res"]
+type PatchConsentBody = ApiRouteMap[`/api/students/${NoSlashString}/consent`]["PATCH"]["req"]
 
 const updateStudentDataSharingConsent: ApiNextFunction<PatchConsentResponse, PatchConsentBody> = async ({ requestEvent, principal, body }) => {
-  const studentId = requestEvent.params._id
+  const studentId = requestEvent.params.student_id
   if (!studentId || typeof studentId !== "string") {
     throw new HTTPError(400, "Student ID is missing in request parameters")
   }

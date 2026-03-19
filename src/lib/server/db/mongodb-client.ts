@@ -38,6 +38,7 @@ import type {
   StudentCheckBox,
   StudentDataSharingConsent,
   StudentDocument,
+  StudentDocumentUpdate,
   StudentImportantStuff
 } from "$lib/types/db/shared-types"
 
@@ -531,6 +532,18 @@ export class MongoDbClient implements IDbClient {
     }
 
     return result.insertedId.toString()
+  }
+
+  async updateStudentDocument(documentId: string, documentUpdate: StudentDocumentUpdate): Promise<string> {
+    const db = await this.getDb()
+    const documentsCollection = db.collection<DbStudentDocument>(this.documentsCollectionName)
+
+    const updatedDocument: DbStudentDocument | null = await documentsCollection.findOneAndUpdate({ _id: new ObjectId(documentId) }, { $set: documentUpdate })
+    if (!updatedDocument?._id) {
+      throw new Error("Failed to update student document")
+    }
+
+    return updatedDocument._id.toString()
   }
 
   async addDocumentMessage(documentId: string, message: NewDocumentMessage, studentId?: string): Promise<DocumentMessage> {

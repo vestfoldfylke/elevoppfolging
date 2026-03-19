@@ -1,6 +1,7 @@
 import type { AuthenticatedPrincipal } from "./authentication"
 import type {
   AppStudent,
+  AppUser,
   ClassAutoAccessEntry,
   ClassManualAccessEntry,
   ClassMembership,
@@ -56,6 +57,7 @@ export type ApplicationInfo = {
   STUDENT_ACCESS_BEFORE_ACTIVE_DAYS: number
   STUDENT_ACCESS_AFTER_EXPIRE_DAYS: number
   STUDENT_CACHE_MAX_AGE_MINUTES: number
+  APP_USER_CACHE_MAX_AGE_MINUTES: number
 }
 
 export type RootLayoutData = {
@@ -74,3 +76,15 @@ export type StudentUnavailableSchoolDocuments = {
   school: SchoolInfo
   numberOfDocuments: number
 }
+
+export type CachedAppUser = AppUser
+
+export type StudentAccess = {
+  accessTypes: AccessEntry[]
+  entra: {
+    id: string
+    userPrincipalName: string
+    displayName: string
+  }
+}
+

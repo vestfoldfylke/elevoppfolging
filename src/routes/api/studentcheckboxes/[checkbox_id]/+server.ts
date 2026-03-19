@@ -1,22 +1,22 @@
 import type { RequestHandler } from "@sveltejs/kit"
-import { validateStudentCheckBox } from "$lib/data-validation/student-check-box"
+import { validateStudentCheckBox } from "$lib/data-validation/student-check-box-validation"
 import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { isSystemAdmin } from "$lib/shared-authorization/authorization"
-import type { ApiRouteMap } from "$lib/types/api/api-route-map"
+import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { NewStudentCheckBox } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
-type DeleteStudentCheckBoxResponse = ApiRouteMap[`/api/studentcheckboxes/${string}`]["DELETE"]["res"]
+type DeleteStudentCheckBoxResponse = ApiRouteMap[`/api/studentcheckboxes/${NoSlashString}`]["DELETE"]["res"]
 
 const deleteStudentCheckBox: ApiNextFunction<DeleteStudentCheckBoxResponse> = async ({ principal, requestEvent }) => {
   if (!isSystemAdmin(principal, APP_INFO)) {
     throw new HTTPError(403, "Forbidden: No access")
   }
 
-  const checkBoxId = requestEvent.params._id
+  const checkBoxId = requestEvent.params.checkbox_id
   if (!checkBoxId) {
     throw new HTTPError(400, "Check box ID is missing in request parameters")
   }
@@ -40,8 +40,8 @@ export const DELETE: RequestHandler = async (requestEvent) => {
   return apiRequestMiddleware<DeleteStudentCheckBoxResponse>(requestEvent, deleteStudentCheckBox)
 }
 
-type UpdateStudentCheckBoxResponse = ApiRouteMap[`/api/studentcheckboxes/${string}`]["PATCH"]["res"]
-type UpdateStudentCheckBoxBody = ApiRouteMap[`/api/studentcheckboxes/${string}`]["PATCH"]["req"]
+type UpdateStudentCheckBoxResponse = ApiRouteMap[`/api/studentcheckboxes/${NoSlashString}`]["PATCH"]["res"]
+type UpdateStudentCheckBoxBody = ApiRouteMap[`/api/studentcheckboxes/${NoSlashString}`]["PATCH"]["req"]
 
 const updateStudentCheckBox: ApiNextFunction<UpdateStudentCheckBoxResponse, UpdateStudentCheckBoxBody> = async ({ principal, requestEvent, body }) => {
   if (!isSystemAdmin(principal, APP_INFO)) {

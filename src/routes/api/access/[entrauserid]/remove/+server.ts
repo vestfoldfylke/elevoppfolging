@@ -1,15 +1,15 @@
 import type { RequestHandler } from "@sveltejs/kit"
-import { validateAccessEntryInput } from "$lib/data-validation/access-entry"
+import { validateAccessEntryInput } from "$lib/data-validation/access-entry-validation"
 import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canGrantAndRemoveAccessForSchool, isSystemAdmin } from "$lib/shared-authorization/authorization"
-import type { ApiRouteMap } from "$lib/types/api/api-route-map"
+import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
-type RemoveAccessResponse = ApiRouteMap[`/api/access/${string}/remove`]["POST"]["res"]
-type RemoveAccessBody = ApiRouteMap[`/api/access/${string}/remove`]["POST"]["req"]
+type RemoveAccessResponse = ApiRouteMap[`/api/access/${NoSlashString}/remove`]["POST"]["res"]
+type RemoveAccessBody = ApiRouteMap[`/api/access/${NoSlashString}/remove`]["POST"]["req"]
 
 const removeAccess: ApiNextFunction<RemoveAccessResponse, RemoveAccessBody> = async ({ principal, requestEvent, body }) => {
   const entraUserId = requestEvent.params.entrauserid

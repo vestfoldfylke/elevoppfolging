@@ -81,9 +81,7 @@
           {/each}
         </div>
       {/if}
-      <div class="message-actions">
-        <NewMessage documentId={document._id} studentId={document.student._id} />
-      </div>
+      <NewMessage documentId={document._id} studentId={document.student._id} />
     </div>
   {/if}
 </div>
@@ -95,6 +93,9 @@
     border: 1px solid var(--color-primary-30);
     border-radius: 0.5rem;
     margin-bottom: 1rem;
+  }
+  .document.open {
+    margin-bottom: 2rem;
   }
 
   .document-header {
@@ -124,11 +125,16 @@
     background-color: var(--color-primary-30);
   }
 
-  .document-content, .document-messages, .message-actions {
+  .document-content {
     padding: 0rem 1rem 1rem 1rem;
   }
 
-  .document-content {
+  .document-content, .document-messages {
     border-bottom: 1px solid var(--color-primary-30);
+  }
+
+  .document-actions {
+    display: flex;
+    justify-content: flex-end;
   }
 </style>

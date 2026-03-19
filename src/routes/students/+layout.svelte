@@ -288,7 +288,7 @@ Hvis på /students/:id, så viser vi en sticky liste (egen scroll) med alle elev
 	}
 
 	.students-quick-view {
-		background-color: var(--color-primary-10);
+		/* background-color: var(--color-primary-10); */
 	}
 
 	.students-quick-view.fixed {

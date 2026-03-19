@@ -302,7 +302,6 @@ export type DocumentRadioGroupItem = {
   header: string
   items: DocumentRadioButtonItem[]
   selectedValue: string
-  required: boolean
   helpText?: string
 }
 
@@ -322,11 +321,21 @@ export type DocumentCommentInput = {
   }
 }
 
-export type DocumentMessageInput = DocumentCommentInput
+export type DocumentUpdateInput = {
+  type: "update"
+  content: {
+    title: string
+    text: string
+  }
+}
+
+export type DocumentMessageInput = DocumentCommentInput | DocumentUpdateInput
 
 export type DocumentComment = DocumentMessageBase & DocumentCommentInput
 
-export type NewDocumentMessage = DocumentComment
+export type DocumentUpdate = DocumentMessageBase & DocumentUpdateInput
+
+export type NewDocumentMessage = DocumentComment | DocumentUpdate
 
 export type DocumentMessage = NewDocumentMessage & {
   messageId: string
@@ -358,6 +367,8 @@ export type NewStudentDocument = DocumentBase &
       _id: string
     }
   }
+
+export type StudentDocumentUpdate = DocumentBase & DocumentInput
 
 export type StudentDocument = NewStudentDocument & {
   _id: string

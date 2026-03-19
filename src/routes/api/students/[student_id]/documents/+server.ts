@@ -3,12 +3,12 @@ import { logger } from "@vestfoldfylke/loglady"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import type { ApiRouteMap } from "$lib/types/api/api-route-map"
+import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { EditorData, NewStudentDocument } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
-type AddDocumentResponse = ApiRouteMap[`/api/students/${string}/documents`]["POST"]["res"]
-type AddDocumentBody = ApiRouteMap[`/api/students/${string}/documents`]["POST"]["req"]
+type AddDocumentResponse = ApiRouteMap[`/api/students/${NoSlashString}/documents`]["POST"]["res"]
+type AddDocumentBody = ApiRouteMap[`/api/students/${NoSlashString}/documents`]["POST"]["req"]
 
 const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async ({ requestEvent, principal, body }) => {
   const studentId = requestEvent.params._id
@@ -45,11 +45,13 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
 
   const dbClient = getDbClient()
 
-  if (newDocument.student?._id) {
-    const student = await dbClient.getStudentById(newDocument.student._id)
-    if (!student) {
-      throw new HTTPError(400, "Student not found. Cannot create document for non-existing student.")
-    }
+  if (!newDocument.student?._id) {
+    throw new HTTPError(400, "Student ID is missing in the document data")
+  }
+
+  const student = await dbClient.getStudentById(newDocument.student._id)
+  if (!student) {
+    throw new HTTPError(400, "Student not found. Cannot create document for non-existing student.")
   }
 
   const documentId = await dbClient.createStudentDocument(newDocument)

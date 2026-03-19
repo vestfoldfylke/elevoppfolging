@@ -1,7 +1,8 @@
 <script lang="ts">
   import { apiFetch } from "$lib/api-fetch/api-fetch"
-    import { INVALID_FORM_MESSAGE } from "$lib/data-validation/constants";
-    import { studentDataSharingConsentMessageValidation } from "$lib/data-validation/student-consent";
+    import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants";
+    import { studentDataSharingConsentMessageValidation } from "$lib/data-validation/student-consent-validation";
+    import type { NoSlashString } from "$lib/types/api/api-route-map";
   import type { FrontendStudent, StudentUnavailableSchoolDocuments } from "$lib/types/app-types"
   import type { StudentDataSharingConsent, StudentDataSharingConsentInput } from "$lib/types/db/shared-types"
     import { prettifyDate } from "$lib/utils/prettify-date";
@@ -43,7 +44,7 @@
       throw new Error(INVALID_FORM_MESSAGE)
     }
 
-    await apiFetch(`/api/students/${student._id}/consent`, {
+    await apiFetch(`/api/students/${(student._id as NoSlashString)}/consent`, {
       method: "PATCH",
       body: editableSharingConsent,
       headers: {

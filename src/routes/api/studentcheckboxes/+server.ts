@@ -1,5 +1,5 @@
 import type { RequestHandler } from "@sveltejs/kit"
-import { validateStudentCheckBox } from "$lib/data-validation/student-check-box"
+import { validateStudentCheckBox } from "$lib/data-validation/student-check-box-validation"
 import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"

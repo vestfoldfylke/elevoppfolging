@@ -2,8 +2,8 @@
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import AsyncButton from "$lib/components/AsyncButton.svelte"
   import PageHeader from "$lib/components/PageHeader.svelte"
-    import { INVALID_FORM_MESSAGE } from "$lib/data-validation/constants";
-    import { schoolNameValidation, schoolNumberValidation } from "$lib/data-validation/school";
+  import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants";
+  import { schoolNameValidation, schoolNumberValidation } from "$lib/data-validation/school-validation";
   import type { EditorData, NewSchool } from "$lib/types/db/shared-types"
   import type { PageProps } from "./$types"
 
