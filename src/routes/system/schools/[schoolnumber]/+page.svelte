@@ -4,7 +4,7 @@
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import AsyncButton from "$lib/components/AsyncButton.svelte"
   import PageHeader from "$lib/components/PageHeader.svelte"
-    import type { NoSlashString } from "$lib/types/api/api-route-map";
+  import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { EditorData, NewSchool, SchoolManualAccessEntry } from "$lib/types/db/shared-types"
   import type { PageProps } from "./$types"
 
@@ -30,7 +30,7 @@
       return
     }
 
-    await apiFetch(`/api/schools/${(currentSchool.schoolNumber as NoSlashString)}`, {
+    await apiFetch(`/api/schools/${currentSchool.schoolNumber as NoSlashString}`, {
       method: "DELETE"
     })
 
@@ -42,7 +42,7 @@
   let selectedEntraUserId = $state("")
 
   const addSchoolLeaderAccess = async (): Promise<void> => {
-    await apiFetch(`/api/access/${(selectedEntraUserId as NoSlashString)}/add`, {
+    await apiFetch(`/api/access/${selectedEntraUserId as NoSlashString}/add`, {
       method: "POST",
       body: {
         type: "MANUELL-SKOLELEDER-TILGANG",
@@ -55,7 +55,7 @@
   }
 
   const removeSchoolLeaderAccess = async (entraUserId: string): Promise<void> => {
-    await apiFetch(`/api/access/${(entraUserId as NoSlashString)}/remove`, {
+    await apiFetch(`/api/access/${entraUserId as NoSlashString}/remove`, {
       method: "POST",
       body: {
         type: "MANUELL-SKOLELEDER-TILGANG",

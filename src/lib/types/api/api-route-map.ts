@@ -35,7 +35,6 @@ type ApiStudentsIdConsent = {
   PATCH: { req: StudentDataSharingConsentInput; res: { consentId: string } }
 }
 
-
 export type NoSlashString = string & { __noSlash?: true }
 
 /**

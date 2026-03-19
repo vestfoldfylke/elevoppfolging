@@ -3,8 +3,8 @@
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import AsyncButton from "$lib/components/AsyncButton.svelte"
   import PageHeader from "$lib/components/PageHeader.svelte"
-  import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants";
-  import type { NoSlashString } from "$lib/types/api/api-route-map";
+  import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
+  import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { ManualAccessEntryInput } from "$lib/types/db/shared-types"
   import { getClassesFromStudents } from "$lib/utils/classes-from-students"
   import type { PageProps } from "./$types"
@@ -104,7 +104,7 @@
         throw new Error(`Invalid access entry type: ${selectedType}`)
     }
 
-    await apiFetch(`/api/access/${(selectedEntraUserId as NoSlashString)}/add`, {
+    await apiFetch(`/api/access/${selectedEntraUserId as NoSlashString}/add`, {
       method: "POST",
       body: accessEntryToAdd,
       headers: {
@@ -114,7 +114,7 @@
   }
 
   const removeManualAccessEntry = async (entraUserId: string, accessEntry: ManualAccessEntryInput): Promise<void> => {
-    await apiFetch(`/api/access/${(entraUserId as NoSlashString)}/remove`, {
+    await apiFetch(`/api/access/${entraUserId as NoSlashString}/remove`, {
       method: "POST",
       body: accessEntry,
       headers: {

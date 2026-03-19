@@ -1,7 +1,7 @@
 <script lang="ts">
+  import { slide } from "svelte/transition"
   import { page } from "$app/state"
   import PageHeader from "$lib/components/PageHeader.svelte"
-  import { slide } from "svelte/transition";
   import type { LayoutProps } from "./$types"
 
   let { data, children }: LayoutProps = $props()
@@ -9,7 +9,7 @@
   let onStudentsOverviewPage = $derived(page.route.id === "/students")
 
   let studentsQuickView = $state(true)
-	let showFilters = $state(false)
+  let showFilters = $state(false)
 
   let searchTerms = $state({
     name: "",
@@ -32,11 +32,11 @@
     ...studentCheckBoxFilters
   })
 
-	let searchOrFiltersActive = $derived.by(() => {
-		const searchTermsActive = Object.values(searchTerms).some((term) => term.trim() !== "")
-		const filtersActive = Object.values(filters).some((filter) => filter)
-		return searchTermsActive || filtersActive
-	})
+  let searchOrFiltersActive = $derived.by(() => {
+    const searchTermsActive = Object.values(searchTerms).some((term) => term.trim() !== "")
+    const filtersActive = Object.values(filters).some((filter) => filter)
+    return searchTermsActive || filtersActive
+  })
 
   let sortBy = $state<"name" | "school" | "class" | "teacher" | "lastActivity">("name")
   let sortDirection = $state<"asc" | "desc">("asc")

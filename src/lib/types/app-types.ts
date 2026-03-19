@@ -87,4 +87,3 @@ export type StudentAccess = {
     displayName: string
   }
 }
-

@@ -1,8 +1,8 @@
 <script lang="ts">
   import { goto } from "$app/navigation"
   import { apiFetch } from "$lib/api-fetch/api-fetch"
-  import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants";
-  import type { NoSlashString } from "$lib/types/api/api-route-map";
+  import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
+  import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { DocumentContentItem, DocumentContentTemplate, DocumentRadioGroupItem } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
   import DocumentContentItemComponent from "../Document/DocumentContentItem.svelte"
@@ -127,7 +127,7 @@
       throw new Error(INVALID_FORM_MESSAGE)
     }
 
-    await apiFetch(`/api/templates/${(editableTemplate._id) as NoSlashString}`, {
+    await apiFetch(`/api/templates/${editableTemplate._id as NoSlashString}`, {
       method: "PUT",
       body: editableTemplate,
       headers: {
@@ -144,7 +144,7 @@
       return
     }
 
-    await apiFetch(`/api/templates/${(editableTemplate._id as NoSlashString)}`, {
+    await apiFetch(`/api/templates/${editableTemplate._id as NoSlashString}`, {
       method: "DELETE"
     })
     // redirect and reload page data

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { tick } from "svelte"
+  import { slide } from "svelte/transition"
   import DocumentComponent from "$lib/components/Document/Document.svelte"
   import NewDocument from "$lib/components/Document/NewDocument.svelte"
   import DataSharingConsent from "$lib/components/StudentBoxes/DataSharingConsent.svelte"
@@ -6,9 +8,7 @@
   import { canEditStudentDataSharingConsent, canEditStudentImportantStuff } from "$lib/shared-authorization/authorization"
   import type { SchoolInfo } from "$lib/types/db/shared-types"
   import { getFrontendStudentDetails } from "$lib/utils/frontend-student-details"
-  import { slide } from "svelte/transition";
   import type { PageProps } from "./$types"
-    import { tick } from "svelte";
 
   let { data }: PageProps = $props()
 
@@ -22,19 +22,21 @@
     if (documentsHeader) {
       documentsHeader.scrollIntoView({ behavior: "smooth" })
     }
-  } 
+  }
   let studentDetails = $derived.by(() => {
     return getFrontendStudentDetails(data.student, data.APP_INFO)
   })
 
-  type StudentSummaryDetails = {
-    importantInfo: string | null
-    facilitation: string[]
-    followUp: string[]
-  } | undefined
+  type StudentSummaryDetails =
+    | {
+        importantInfo: string | null
+        facilitation: string[]
+        followUp: string[]
+      }
+    | undefined
 
   let studentSummaryDetails: StudentSummaryDetails = $derived.by(() => {
-    const importantStuffToUse = data.importantStuff.find(importantStuff => importantStuff.school.schoolNumber === studentDetails.mainSchool?.schoolNumber) || data.importantStuff[0] || null
+    const importantStuffToUse = data.importantStuff.find((importantStuff) => importantStuff.school.schoolNumber === studentDetails.mainSchool?.schoolNumber) || data.importantStuff[0] || null
     if (!importantStuffToUse) {
       return undefined
     }

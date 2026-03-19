@@ -3,7 +3,7 @@ import type { StudentCheckBoxInput } from "$lib/types/db/shared-types"
 
 export const studentCheckBoxValueValidation = {
   minLength: 2,
-  maxLength: 256,
+  maxLength: 256
 }
 
 export const validateStudentCheckBox = (checkBoxData: StudentCheckBoxInput): ValidationResult => {

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { apiFetch } from "$lib/api-fetch/api-fetch"
-    import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants";
-    import type { NoSlashString } from "$lib/types/api/api-route-map";
+  import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
+  import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { DocumentMessage, DocumentMessageInput } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
 
@@ -65,7 +65,7 @@
       throw new Error("studentId or groupId must be provided")
     }
 
-    const createMessageRoute = `/api/students/${(studentId as NoSlashString)}/documents/${(documentId as NoSlashString)}/messages` as const
+    const createMessageRoute = `/api/students/${studentId as NoSlashString}/documents/${documentId as NoSlashString}/messages` as const
 
     await apiFetch(createMessageRoute, {
       method: "POST",

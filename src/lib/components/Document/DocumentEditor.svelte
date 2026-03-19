@@ -1,7 +1,7 @@
 <script lang="ts">
   import { apiFetch } from "$lib/api-fetch/api-fetch"
-    import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants";
-    import type { NoSlashString } from "$lib/types/api/api-route-map";
+  import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
+  import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { DocumentInput, SchoolInfo } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
   import DocumentContentItem from "./DocumentContentItem.svelte"
@@ -36,7 +36,7 @@
       throw new Error("Student ID is required for creating a document")
     }
 
-    const createDocumentRoute = `/api/students/${(studentId as NoSlashString)}/documents` as const
+    const createDocumentRoute = `/api/students/${studentId as NoSlashString}/documents` as const
 
     await apiFetch(createDocumentRoute, {
       method: "POST",
@@ -68,7 +68,7 @@
       throw new Error("Student ID is required for updating a document")
     }
 
-    const updateDocumentRoute = `/api/students/${(studentId as NoSlashString)}/documents/${(documentId as NoSlashString)}` as const
+    const updateDocumentRoute = `/api/students/${studentId as NoSlashString}/documents/${documentId as NoSlashString}` as const
 
     await apiFetch(updateDocumentRoute, {
       method: "PATCH",

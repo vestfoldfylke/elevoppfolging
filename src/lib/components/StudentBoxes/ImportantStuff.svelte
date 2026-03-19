@@ -1,10 +1,10 @@
 <script lang="ts">
   import { apiFetch } from "$lib/api-fetch/api-fetch"
-    import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants";
-    import type { NoSlashString } from "$lib/types/api/api-route-map";
+  import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
+  import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { FrontendStudent } from "$lib/types/app-types"
   import type { SchoolInfo, StudentCheckBox, StudentImportantStuff, StudentImportantStuffInput } from "$lib/types/db/shared-types"
-    import { prettifyDate } from "$lib/utils/prettify-date";
+  import { prettifyDate } from "$lib/utils/prettify-date"
   import AsyncButton from "../AsyncButton.svelte"
 
   type ImportantStuffProps = {
@@ -45,7 +45,7 @@
       throw new Error(INVALID_FORM_MESSAGE)
     }
 
-    await apiFetch(`/api/students/${(student._id as NoSlashString)}/importantstuff`, {
+    await apiFetch(`/api/students/${student._id as NoSlashString}/importantstuff`, {
       method: "PATCH",
       body: editableImportantStuff,
       headers: {

@@ -1,13 +1,13 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
+import { validateDocument } from "$lib/data-validation/document-validation"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
+import { canEditDocument } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { EditorData, StudentDocumentUpdate } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
-import { canEditDocument } from "$lib/shared-authorization/authorization"
-import { validateDocument } from "$lib/data-validation/document-validation"
 
 type UpdateDocumentResponse = ApiRouteMap[`/api/students/${NoSlashString}/documents/${NoSlashString}`]["PATCH"]["res"]
 type UpdateDocumentBody = ApiRouteMap[`/api/students/${NoSlashString}/documents/${NoSlashString}`]["PATCH"]["req"]
@@ -38,7 +38,7 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
   }
 
   const updateDocumentData: UpdateDocumentBody = body
-  
+
   const validationResult = validateDocument(updateDocumentData)
   if (!validationResult.valid) {
     throw new HTTPError(400, `Invalid document data: ${validationResult.message}`)

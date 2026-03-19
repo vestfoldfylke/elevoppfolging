@@ -26,7 +26,11 @@ export const validateSchoolData = (schoolData: NewSchool): ValidationResult => {
     return { valid: false, message: `'name' must be between ${schoolNameValidation.minLength} and ${schoolNameValidation.maxLength} characters and contain only letters and spaces` }
   }
 
-  if (!schoolNumberValidation.pattern.test(schoolData.schoolNumber) || schoolData.schoolNumber.length < schoolNumberValidation.minLength || schoolData.schoolNumber.length > schoolNumberValidation.maxLength) {
+  if (
+    !schoolNumberValidation.pattern.test(schoolData.schoolNumber) ||
+    schoolData.schoolNumber.length < schoolNumberValidation.minLength ||
+    schoolData.schoolNumber.length > schoolNumberValidation.maxLength
+  ) {
     return { valid: false, message: `'schoolNumber' must be between ${schoolNumberValidation.minLength} and ${schoolNumberValidation.maxLength} characters and contain only digits` }
   }
 

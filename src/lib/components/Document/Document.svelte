@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from "svelte"
   import { page } from "$app/state"
   import { canEditDocument } from "$lib/shared-authorization/authorization"
   import type { DocumentInput, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
@@ -6,7 +7,6 @@
   import DocumentEditor from "./DocumentEditor.svelte"
   import Message from "./Message.svelte"
   import NewMessage from "./NewMessage.svelte"
-  import { tick } from "svelte";
 
   type PageProps = {
     document: StudentDocument // Add GroupDocument union when needed
