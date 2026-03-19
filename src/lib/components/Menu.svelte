@@ -75,7 +75,7 @@
 						</a>
 					</div>
 				</div>
-				{#if isSchoolLeader(page.data.principalAccess)} <!-- TODO - add check for if user has any access here -->
+				{#if isSchoolLeader(page.data.principalAccess)}
 					<div class="menu-section">
 						<div class="menu-section-title">Skole-administrasjon</div>
 						<div class="menu-items">
