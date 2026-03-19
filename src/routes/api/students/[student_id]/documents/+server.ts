@@ -11,7 +11,7 @@ type AddDocumentResponse = ApiRouteMap[`/api/students/${NoSlashString}/documents
 type AddDocumentBody = ApiRouteMap[`/api/students/${NoSlashString}/documents`]["POST"]["req"]
 
 const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async ({ requestEvent, principal, body }) => {
-  const studentId = requestEvent.params._id
+  const studentId = requestEvent.params.student_id
   if (!studentId) {
     throw new HTTPError(400, "Student ID is missing in request parameters")
   }

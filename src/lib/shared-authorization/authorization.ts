@@ -14,6 +14,14 @@ export const canEditDocumentMessage = (authenticatedPrincipal: AuthenticatedPrin
   return message.created.by.entraUserId === authenticatedPrincipal.id
 }
 
+export const isSchoolLeader = (principalAccess: Access | null): boolean => {
+  if (!principalAccess) {
+    return false
+  }
+  // TODO - check that the school leader access is for a school that is active
+  return principalAccess.schools.some((schoolAccess) => schoolAccess.type === "MANUELL-SKOLELEDER-TILGANG")
+}
+
 export const canGrantAndRemoveAccessForSchool = (schoolNumber: string, principalAccess: Access): boolean => {
   return principalAccess.schools.some((schoolAccess) => schoolAccess.type === "MANUELL-SKOLELEDER-TILGANG" && schoolAccess.schoolNumber === schoolNumber)
 }

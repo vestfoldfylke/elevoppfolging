@@ -1,5 +1,6 @@
 import type { AuthenticatedPrincipal } from "./authentication"
 import type {
+  Access,
   AppStudent,
   AppUser,
   ClassAutoAccessEntry,
@@ -63,6 +64,7 @@ export type ApplicationInfo = {
 export type RootLayoutData = {
   APP_INFO: ApplicationInfo
   authenticatedPrincipal: AuthenticatedPrincipal
+  principalAccess: Access | null
 }
 
 export type PeriodDetails = Period & {
