@@ -70,6 +70,7 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--ds-size-2);
+  gap: var(--ds-size-2);
 }
 
 .card-title {
