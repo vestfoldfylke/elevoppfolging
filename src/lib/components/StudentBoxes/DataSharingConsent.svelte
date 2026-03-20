@@ -54,7 +54,7 @@
   }
 </script>
 
-<div class="ds-card" data-variant="tinted" data-color="brand2" data-component="data-sharing-consent">
+<div class="ds-card" data-variant="tinted" data-color="brand1">
   <div class="card-header">
     <div class="card-title">
       <span class="material-symbols-outlined">handshake</span>
@@ -67,7 +67,7 @@
     </div>
   </div>
 
-  <div class="card-content">
+  <div>
     {#if editMode}
       <form bind:this={consentForm}>
         <ds-field class="ds-field">
@@ -80,7 +80,7 @@
         <ds-field class="ds-field">
           <label class="ds-label" data-weight="medium" for="sharing-consent-message">Dokumentasjon</label>
           <div data-field="description">
-            Hvor er samtykket dokumentert, eventuelt annen relevant informasjon om samtykket.
+            Hvor er samtykket dokumentert, eventuelt annen relevant informasjon om samtykket
           </div>
           <textarea id="sharing-consent-message" rows="4" bind:value={editableSharingConsent.message} class="ds-input"></textarea>
         </ds-field>
