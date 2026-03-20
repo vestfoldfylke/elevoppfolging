@@ -85,110 +85,114 @@
 </script>
 
 {#key data.student._id} <!-- Re-render entire student page when student-id change -->
-  <div class="student-page page-content">
-    <div class="section-box">
-      
-      <div class="section-box-header">
-        <div>
-          <h1>{data.student.name}</h1>
-          <span class="student-subtitle">{studentDetails.mainSchool?.name ?? "Ingen hovedskole"} - {studentDetails.mainClassMembership?.classGroup.name || "Ingen aktiv klasse ved hovedskole"}</span>
-        </div>
-        <button class="toggle-student-details-button" onclick={() => expandedStudentDetails = !expandedStudentDetails}>
-          <span class="material-symbols-outlined">{expandedStudentDetails ? "expand_circle_up" : "expand_circle_down"}</span>
-          {expandedStudentDetails ? "Skjul detaljer" : "Vis detaljer"}
-        </button>
-      </div>
-
-      {#if !expandedStudentDetails && (studentSummaryDetails || hasOtherSchoolInfoAndNotConsent)}
-        <div class="section-box-content">
-          <div class="student-details-preview">
-            {#if studentSummaryDetails}
-              {#if studentSummaryDetails.importantInfo}
-                <div class="main-important-stuff">
-                  <p>{studentSummaryDetails.importantInfo}</p>
-                </div>
-              {/if}
-              {#if studentSummaryDetails.followUp.length > 0}
-                <div>
-                  <strong>Oppfølging: </strong> {studentSummaryDetails.followUp.join(", ")}
-                </div>
-              {/if}
-              {#if studentSummaryDetails.facilitation.length > 0}
-                <div>
-                  <strong>Tilrettelegging:</strong> {studentSummaryDetails.facilitation.join(", ")}
-                </div>
-              {/if}
-            {/if}
-            {#if hasOtherSchoolInfoAndNotConsent}
-              <div>
-                <p>
-                  Eleven har ikke gitt samtykke til deling av data på tvers av skoler. 
-                  {#if studentDetails.additionalSchools.length > 0}
-                    Eleven har også elevforhold ved {studentDetails.additionalSchools.map(school => school.name).join(", ")}.
-                  {/if}
-                  {#if data.unavailableSchoolDocuments.length > 0}
-                    Det finnes notater fra andre skoler som ikke er tilgjengelig for deg.
-                  {/if}
-                </p>
-            </div>
-            {/if}
+  <h1 class="ds-heading student-name" data-size="lg">{data.student.name}</h1>
+  <span class="ds-paragraph" data-size="sm">{studentDetails.mainSchool?.name ?? "Ingen hovedskole"} - {studentDetails.mainClassMembership?.classGroup.name || "Ingen aktiv klasse ved hovedskole"}</span>
+  
+  {#if !expandedStudentDetails && (studentSummaryDetails || hasOtherSchoolInfoAndNotConsent)}
+    <div class="student-summary">
+      {#if studentSummaryDetails}
+        {#if studentSummaryDetails.importantInfo}
+          <div>
+            <p class="ds-paragraph">{studentSummaryDetails.importantInfo}</p>
           </div>
+        {/if}
+        {#if studentSummaryDetails.followUp.length > 0}
+          <div>
+            <p class="ds-paragraph">
+              <strong>Oppfølging:</strong> {studentSummaryDetails.followUp.join(", ")}              
+            </p>
+          </div>
+        {/if}
+        {#if studentSummaryDetails.facilitation.length > 0}
+          <div>
+            <p class="ds-paragraph">
+              <strong>Tilrettelegging:</strong> {studentSummaryDetails.facilitation.join(", ")}
+            </p>
+          </div>
+        {/if}
+      {/if}
+      {#if hasOtherSchoolInfoAndNotConsent}
+        <div>
+          <p class="ds-paragraph">
+            Eleven har ikke gitt samtykke til deling av data på tvers av skoler. 
+            {#if studentDetails.additionalSchools.length > 0}
+              Eleven har også elevforhold ved {studentDetails.additionalSchools.map(school => school.name).join(", ")}.
+            {/if}
+            {#if data.unavailableSchoolDocuments.length > 0}
+              Det finnes notater fra andre skoler som ikke er tilgjengelig for deg.
+            {/if}
+          </p>
         </div>
       {/if}
     </div>
+  {/if}
+  
+  {#if expandedStudentDetails}
+    <div class="student-details" transition:slide>
+      {#each accessSchools as accessSchool}
+        <ImportantStuff canEdit={canEditStudentImportantStuff(accessSchool.schoolNumber, data.studentAccessInfo)} importantStuff={data.importantStuff.find(importantStuff => importantStuff.school.schoolNumber === accessSchool.schoolNumber) || null} school={accessSchool} studentCheckBoxes={data.studentCheckBoxes} student={data.student} />
+      {/each}
 
-    {#if expandedStudentDetails}
-      <div class="student-details" transition:slide>
-        {#each accessSchools as accessSchool}
-          <ImportantStuff canEdit={canEditStudentImportantStuff(accessSchool.schoolNumber, data.studentAccessInfo)} importantStuff={data.importantStuff.find(importantStuff => importantStuff.school.schoolNumber === accessSchool.schoolNumber) || null} school={accessSchool} studentCheckBoxes={data.studentCheckBoxes} student={data.student} />
-        {/each}
-
-        <div class="consent-and-access-container">
-          <DataSharingConsent canEdit={canEditStudentDataSharingConsent(data.studentAccessInfo)} student={data.student} studentDataSharingConsent={data.studentDataSharingConsent} unavailableSchoolDocuments={data.unavailableSchoolDocuments} />
-          
-          <div class="section-box" style="min-width: 20rem;">
-            <div class="section-box-header">
-              <h3>Personer med tilgang til eleven</h3>
-            </div>
-            <div class="section-box-content">
-              Kommer etterhvert
-              <button>Send en epost til alle disse ellerno</button>
-            </div>
+      <div class="consent-and-access-container">
+        <DataSharingConsent canEdit={canEditStudentDataSharingConsent(data.studentAccessInfo)} student={data.student} studentDataSharingConsent={data.studentDataSharingConsent} unavailableSchoolDocuments={data.unavailableSchoolDocuments} />
+        
+        <div class="section-box" style="min-width: 20rem;">
+          <div class="section-box-header">
+            <h3>Personer med tilgang til eleven</h3>
+          </div>
+          <div class="section-box-content">
+            Kommer etterhvert
+            <button>Send en epost til alle disse ellerno</button>
           </div>
         </div>
       </div>
+    </div>
+  {/if}
+
+  <div class="show-details-container">
+    <button class="ds-button" data-variant="secondary" type="button" data-size="sm" onclick={() => expandedStudentDetails = !expandedStudentDetails}>
+      <span class="material-symbols-outlined">{expandedStudentDetails ? "expand_circle_up" : "expand_circle_down"}</span>
+      {expandedStudentDetails ? "Skjul detaljer" : "Vis detaljer"}
+    </button>
+  </div>
+
+  <div class="documents">
+    <div class="documents-header">
+      {#if !documentCreatorOpen}
+        <h2 id="documents">Notater</h2>
+        <button class="filled" onclick={openDocumentCreator}><span class="material-symbols-outlined">note_add</span>Nytt notat</button>
+      {:else}
+        <h2 id="documents">Nytt notat</h2>
+      {/if}
+    </div>
+
+    <div class="new-document">
+      {#if documentCreatorOpen}
+        <NewDocument {accessSchools} documentContentTemplates={data.documentContentTemplates} bind:creatorOpen={documentCreatorOpen} studentId={data.student._id} />
+      {/if}
+    </div>
+
+    {#if data.documents.length === 0}
+      <p>Ingen notater her</p>
+    {:else}
+      {#each data.documents as document (document._id)}
+        <DocumentComponent {document} {accessSchools} />
+      {/each}
     {/if}
 
-    <div class="documents">
-      <div class="documents-header">
-        {#if !documentCreatorOpen}
-          <h2 id="documents">Notater</h2>
-          <button class="filled" onclick={openDocumentCreator}><span class="material-symbols-outlined">note_add</span>Nytt notat</button>
-        {:else}
-          <h2 id="documents">Nytt notat</h2>
-        {/if}
-      </div>
-
-      <div class="new-document">
-        {#if documentCreatorOpen}
-          <NewDocument {accessSchools} documentContentTemplates={data.documentContentTemplates} bind:creatorOpen={documentCreatorOpen} studentId={data.student._id} />
-        {/if}
-      </div>
-
-      {#if data.documents.length === 0}
-        <p>Ingen notater her</p>
-      {:else}
-        {#each data.documents as document (document._id)}
-          <DocumentComponent {document} {accessSchools} />
-        {/each}
-      {/if}
-
-    </div>
   </div>
 {/key}
 
 
 <style>
+  h1.student-name {
+    margin-bottom: 0;
+  }
+
+  .student-summary > div, .show-details-container, .student-details {
+    margin: var(--ds-size-4) 0;
+  }
+
   .student-page {
     display: flex;
     flex-direction: column;
