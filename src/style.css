@@ -1,6 +1,9 @@
 :root {
+  overscroll-behavior: none;
   --font-family: "Nunito Sans", sans-serif;
   --header-height: 4rem;
+
+  --max-page-width: 120rem;
 
   --color-navigation: rgb(0, 82, 96); /* Vann */
 
@@ -37,7 +40,7 @@ html,
 body {
   margin: 0;
   padding: 0;
-  height: 100%;
+  min-height: 100%;
   font-family: var(--font-family);
   font-optical-sizing: auto;
   font-weight: 300;
@@ -48,11 +51,46 @@ body {
 }
 
 .page-content {
-  max-width: 70rem;
-  padding: 0rem 1rem;
-  margin: 0 auto;
+  margin-top: var(--ds-size-8);
+  flex: 1;
 }
 
+.page-content > h1.ds-heading {
+  margin-bottom: var(--ds-size-2);
+}
+
+@media (min-width: 80rem) {
+  .page-content {
+    padding: 0rem var(--ds-size-4);
+  }
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--ds-size-2);
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-size-2);
+}
+
+.card-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-size-2);
+}
+
+.card-footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--ds-size-2);
+}
+
+/*
 h1,
 h2,
 h3,
@@ -220,3 +258,5 @@ ol {
   gap: 0.2rem;
   margin: 1rem 0rem;
 }
+
+*/
