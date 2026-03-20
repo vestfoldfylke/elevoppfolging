@@ -203,15 +203,6 @@
     margin: var(--ds-size-4) 0;
   }
 
-  .student-page {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-  .student-subtitle {
-    font-size: smaller;
-  }
-
   .student-details {
     display: flex;
     flex-direction: column;
@@ -229,19 +220,14 @@
     justify-content: space-between;
     align-items: center;
   }
+
   .documents {
     display: flex;
     flex-direction: column;
     border-radius: 4px;
   }
-  .new-document {
-    margin-bottom: 1rem;
-  }
 
-  @media (min-width: 50rem) {
-		.student-page {
-      padding-left: 3rem;
-      padding-right: 2rem;
-    }
-	}
+  .new-document {
+    margin-bottom: var(--ds-size-4);
+  }
 </style>
