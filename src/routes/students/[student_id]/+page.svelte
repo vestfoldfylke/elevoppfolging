@@ -93,20 +93,28 @@
       {#if studentSummaryDetails}
         {#if studentSummaryDetails.importantInfo}
           <div>
-            <p class="ds-paragraph">{studentSummaryDetails.importantInfo}</p>
+            <p class="ds-paragraph">
+              <strong>Viktig informasjon</strong>
+              <br />
+              {studentSummaryDetails.importantInfo}
+            </p>
           </div>
         {/if}
         {#if studentSummaryDetails.followUp.length > 0}
           <div>
             <p class="ds-paragraph">
-              <strong>Oppfølging:</strong> {studentSummaryDetails.followUp.join(", ")}              
+              <strong>Oppfølging</strong>
+              <br />
+              {studentSummaryDetails.followUp.join(", ")}              
             </p>
           </div>
         {/if}
         {#if studentSummaryDetails.facilitation.length > 0}
           <div>
             <p class="ds-paragraph">
-              <strong>Tilrettelegging:</strong> {studentSummaryDetails.facilitation.join(", ")}
+              <strong>Tilrettelegging</strong>
+              <br />
+              {studentSummaryDetails.facilitation.join(", ")}
             </p>
           </div>
         {/if}
@@ -136,13 +144,15 @@
       <div class="consent-and-access-container">
         <DataSharingConsent canEdit={canEditStudentDataSharingConsent(data.studentAccessInfo)} student={data.student} studentDataSharingConsent={data.studentDataSharingConsent} unavailableSchoolDocuments={data.unavailableSchoolDocuments} />
         
-        <div class="section-box" style="min-width: 20rem;">
-          <div class="section-box-header">
-            <h3>Personer med tilgang til eleven</h3>
+        <div class="ds-card" data-variant="tinted" data-color="brand2">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="material-symbols-outlined">school</span>
+              <h2 class="ds-heading" data-size="sm">Personer med tilgang til eleven</h2>
+            </div>
           </div>
-          <div class="section-box-content">
+          <div>
             Kommer etterhvert
-            <button>Send en epost til alle disse ellerno</button>
           </div>
         </div>
       </div>
