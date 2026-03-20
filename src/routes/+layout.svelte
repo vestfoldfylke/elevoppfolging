@@ -144,7 +144,7 @@
 				<div class="student-filters-container">
 					<details class="ds-details" data-variant="default">
 						<summary>Filter</summary>
-						<div>
+						<div class="student-filters">
 							<fieldset class="ds-fieldset">
 								<legend class="ds-label" data-weight="semibold">Oppfølging</legend>
 								{#each enabledStudentCheckBoxes.filter(checkbox => checkbox.type === "FOLLOW_UP") as followUpCheckbox}
@@ -155,7 +155,7 @@
 								{/each}
 							</fieldset>
 
-							<fieldset class="ds-fieldset" style="margin-top: var(--ds-size-5);">
+							<fieldset class="ds-fieldset">
 								<legend class="ds-label" data-weight="semibold">Tilrettelegging</legend>
 								{#each enabledStudentCheckBoxes.filter(checkbox => checkbox.type === "FACILITATION") as facilitationCheckbox}
 									<ds-field class="ds-field">
@@ -276,6 +276,12 @@
 
 	.student-filters-container {
 		margin-bottom: var(--ds-size-8);
+	}
+
+	.student-filters {
+		display: flex;
+		gap: var(--ds-size-8);
+		flex-wrap: wrap;
 	}
 
 	.student-table-container {
