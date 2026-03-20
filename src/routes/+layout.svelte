@@ -1,20 +1,20 @@
 <script lang="ts">
   import favicon16 from "$lib/assets/favicon-32x32.png"
   import favicon32 from "$lib/assets/favicon-32x32.png"
+  import "@digdir/designsystemet-web" // For ds to work
+  import "@digdir/designsystemet-css" // for ds css to work and hot reload
+  import "@digdir/designsystemet-css/theme" // defualt theme for now
   import "../style.css" // Add global css (and make it hot reload)
-  import Menu from "$lib/components/Menu.svelte"
-  import type { LayoutProps } from "./$types.js"
-	import { slide } from "svelte/transition"
   import { page } from "$app/state"
-  import PageHeader from "$lib/components/PageHeader.svelte"
+  import AppHeader from "$lib/components/AppHeader.svelte"
+  import type { LayoutProps } from "./$types.js"
 
   let { data, children }: LayoutProps = $props()
 
-	let showStudentOverview = $derived(page.route.id === "/")
-  let studentsQuickViewAvailable = $derived(page.route.id === "/students/[student_id]")
+  let showStudentOverview = $derived(page.route.id === "/")
 
+  let studentsQuickViewAvailable = $derived(page.route.id === "/students/[student_id]")
   let showStudentsQuickView = $state(true)
-  let showFilters = $state(false)
 
   let searchTerms = $state({
     name: "",
@@ -44,7 +44,7 @@
   })
 
   let sortBy = $state<"name" | "school" | "class" | "teacher" | "lastActivity">("name")
-  let sortDirection = $state<"asc" | "desc">("asc")
+  let sortDirection = $state<"ascending" | "descending">("ascending")
 
   const resetFilters = () => {
     searchTerms.name = ""
@@ -57,6 +57,8 @@
       filters[checkbox._id] = false
     })
   }
+
+	// TODO: BEDRE SØK (bare ting som vises takk)
 
   let filteredStudents = $derived.by(() => {
     return data.students
@@ -81,20 +83,20 @@
       .sort((a, b) => {
         switch (sortBy) {
           case "name":
-            return sortDirection === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
+            return sortDirection === "ascending" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
           case "class":
-            return sortDirection === "asc"
+            return sortDirection === "ascending"
               ? (a.mainClassMembership?.classGroup?.name || "").localeCompare(b.mainClassMembership?.classGroup?.name || "")
               : (b.mainClassMembership?.classGroup?.name || "").localeCompare(a.mainClassMembership?.classGroup?.name || "")
           case "teacher": {
             const aTeachers = a.mainContactTeacherGroupMembership?.contactTeacherGroup?.teachers.map((t) => t.name).join(", ") || ""
             const bTeachers = b.mainContactTeacherGroupMembership?.contactTeacherGroup?.teachers.map((t) => t.name).join(", ") || ""
-            return sortDirection === "asc" ? aTeachers.localeCompare(bTeachers) : bTeachers.localeCompare(aTeachers)
+            return sortDirection === "ascending" ? aTeachers.localeCompare(bTeachers) : bTeachers.localeCompare(aTeachers)
           }
           case "lastActivity": {
             const aTimestamp = a.lastActivityTimestamp ? a.lastActivityTimestamp.getTime() : 0
             const bTimestamp = b.lastActivityTimestamp ? b.lastActivityTimestamp.getTime() : 0
-            return sortDirection === "asc" ? aTimestamp - bTimestamp : bTimestamp - aTimestamp
+            return sortDirection === "ascending" ? aTimestamp - bTimestamp : bTimestamp - aTimestamp
           }
           default:
             return 0
@@ -115,157 +117,235 @@
 	</style>
 </svelte:head>
 
-<main>
-	<Menu />
-	<div class="page-content-container">
+
+<div id="svelte-body">
+	<header>
+		<AppHeader />
+	</header>
+	<main>
 		{#if showStudentOverview}
 			<div class="page-content">
-				<PageHeader title="Elever" />
-				<div class="student-filter-container">
-					<div class="search-boxes">
-						<div class="search-box">
-							<label for="student-name-search">Navn</label>
-							<input id="student-name-search" type="text" placeholder="Søk etter elever..." bind:value={searchTerms.name} />
-						</div>
-						<div class="search-box">
-							<label for="student-class-search">Klasse</label>
-							<input id="student-class-search" type="text" placeholder="Søk etter klasser..." bind:value={searchTerms.class} />
-						</div>
-						<div class="search-box">
-							<label for="student-teacher-search">Kontaktlærer</label>
-							<input id="student-teacher-search" type="text" placeholder="Søk etter kontaktlærere..." bind:value={searchTerms.teacher} />
-						</div>
-					</div>
-
-					{#if showFilters}
-						<div class="filter-boxes" transition:slide>
-							<!--
-							<div class="filter-box">
-									<label for="important-info-checkbox">Har viktig informasjon</label>
-									<input type="checkbox" id="important-info-checkbox" bind:checked={filters.importantInfo} />
-							</div>
-							-->
-							<div class="filter-header">Oppfølging</div>
-							{#each enabledStudentCheckBoxes.filter(checkbox => checkbox.type === "FOLLOW_UP") as followUpCheckbox}
-								<div class="filter-box">
-									<label>
-										<input type="checkbox" id={followUpCheckbox._id} bind:checked={filters[followUpCheckbox._id]} />
-										{followUpCheckbox.value}
-									</label>
-								</div>
-							{/each}
-							<div class="filter-header">Tilrettelegging</div>
-							{#each enabledStudentCheckBoxes.filter(checkbox => checkbox.type === "FACILITATION") as facilitationCheckbox}
-								<div class="filter-box">
-									<label>
-										<input type="checkbox" id={facilitationCheckbox._id} bind:checked={filters[facilitationCheckbox._id]} />
-										{facilitationCheckbox.value}
-									</label>
-								</div>
-							{/each}
-						</div>
-					{/if}
-
-					<div class="filter-actions">
-						<button onclick={() => showFilters = !showFilters}><span class="material-symbols-outlined">{showFilters ? "filter_alt_off" : "filter_alt"}</span>{showFilters ? "Skjul filter" : "Vis filter"}</button>
-						<button disabled={!searchOrFiltersActive} onclick={resetFilters}><span class="material-symbols-outlined">refresh</span>Tilbakestill filtre og søk</button>
-					</div>
+				<h1 class="ds-heading" data-size="lg">Elever</h1>
+				<div class="student-search-container">
+					<ds-field class="ds-field">
+						<label for="student-name-search" class="ds-label" data-weight="medium">Navn</label>
+						<input id="student-name-search" class="ds-input" type="text" placeholder="Søk etter elev" bind:value={searchTerms.name} >
+					</ds-field>
+					<ds-field class="ds-field">
+						<label for="student-class-search" class="ds-label" data-weight="medium">Klasse</label>
+						<input id="student-class-search" class="ds-input" placeholder="Søk etter klasse" type="text" bind:value={searchTerms.class} />
+					</ds-field>
+					<ds-field class="ds-field">
+						<label for="student-teacher-search" class="ds-label" data-weight="medium">Kontaktlærer</label>
+						<input id="student-teacher-search" class="ds-input" placeholder="Søk etter kontaktlærer" type="text" bind:value={searchTerms.teacher} />
+					</ds-field>
 				</div>
 
-				<div class="search-metadata">Viser {filteredStudents.length} av {data.students.length} elever</div>
+				<div class="student-filters-container">
+					<details class="ds-details" data-variant="default">
+						<summary>Filter</summary>
+						<div>
+							<fieldset class="ds-fieldset">
+								<legend class="ds-label" data-weight="semibold">Oppfølging</legend>
+								{#each enabledStudentCheckBoxes.filter(checkbox => checkbox.type === "FOLLOW_UP") as followUpCheckbox}
+									<ds-field class="ds-field">
+										<input id={followUpCheckbox._id} class="ds-input" type="checkbox" bind:checked={filters[followUpCheckbox._id]} />
+										<label for={followUpCheckbox._id} class="ds-label" data-weight="regular">{followUpCheckbox.value}</label>
+									</ds-field>
+								{/each}
+							</fieldset>
 
-				<div class="students-container">
-					<div class="student-row header">
-						<div class="student-info-cell first">
-							<button onclick={() => sortBy === "name" ? sortDirection = sortDirection === "asc" ? "desc" : "asc" : sortBy = "name"}>
-								Navn
-							{#if sortBy === "name"}
-								<span class="material-symbols-outlined">{sortDirection === "asc" ? "arrow_upward" : "arrow_downward"}</span>
-							{/if}
-							</button>
+							<fieldset class="ds-fieldset" style="margin-top: var(--ds-size-5);">
+								<legend class="ds-label" data-weight="semibold">Tilrettelegging</legend>
+								{#each enabledStudentCheckBoxes.filter(checkbox => checkbox.type === "FACILITATION") as facilitationCheckbox}
+									<ds-field class="ds-field">
+										<input id={facilitationCheckbox._id} class="ds-input" type="checkbox" bind:checked={filters[facilitationCheckbox._id]} />
+										<label for={facilitationCheckbox._id} class="ds-label" data-weight="regular">{facilitationCheckbox.value}</label>
+									</ds-field>
+								{/each}
+							</fieldset>
 						</div>
-						<div class="student-info-cell desktop-only">
-							<button onclick={() => sortBy === "class" ? sortDirection = sortDirection === "asc" ? "desc" : "asc" : sortBy = "class"}>
-								Klasse
-							{#if sortBy === "class"}
-								<span class="material-symbols-outlined">{sortDirection === "asc" ? "arrow_upward" : "arrow_downward"}</span>
-							{/if}
-							</button>
-						</div>
-						<div class="student-info-cell desktop-only">
-							<button onclick={() => sortBy === "teacher" ? sortDirection = sortDirection === "asc" ? "desc" : "asc" : sortBy = "teacher"}>
-								Kontaktlærer
-							{#if sortBy === "teacher"}
-								<span class="material-symbols-outlined">{sortDirection === "asc" ? "arrow_upward" : "arrow_downward"}</span>
-							{/if}
-							</button>
-						</div>
-						<div class="student-info-cell desktop-only">
-							<button onclick={() => sortBy === "lastActivity" ? sortDirection = sortDirection === "asc" ? "desc" : "asc" : sortBy = "lastActivity"}>
-								Siste aktivitet
-							{#if sortBy === "lastActivity"}
-								<span class="material-symbols-outlined">{sortDirection === "asc" ? "arrow_upward" : "arrow_downward"}</span>
-							{/if}
-							</button>
-						</div>
-					</div>
+					</details>
+				</div>
 
-					{#each filteredStudents as student}
-						<div class="student-row">
-							<div class="student-info-cell first">
-								<a href={`/students/${student._id}`}>{student.name}</a>
-							</div>
-							<div class="student-info-cell desktop-only">
-								<div>{student.mainClassMembership?.classGroup.name || "Ukjent klasse"}</div>
-								<div class="school-name">{student.mainSchool?.name || "N/A"}</div>
-							</div>
-							<div class="student-info-cell desktop-only">{student.mainContactTeacherGroupMembership?.contactTeacherGroup.teachers[0]?.name || "Ingen kontaktlærer"}</div>
-							<div class="student-info-cell desktop-only">{student.lastActivityTimestamp?.toLocaleString("no-NB", { dateStyle: 'short', timeStyle: 'short' }) || "Ingen aktivitet"}</div>
-						</div>
-					{/each}
+				<div class="student-table-container">
+					<table class="ds-table">
+						<thead>
+							<tr>
+								<th aria-sort="{sortBy === "name" ? sortDirection : "none"}">
+									<button type="button" onclick={() => sortBy === "name" ? sortDirection = sortDirection === "ascending" ? "descending" : "ascending" : sortBy = "name"}>Navn</button>
+								</th>
+								<th class="desktop-only" aria-sort="{sortBy === "class" ? sortDirection : "none"}">
+									<button type="button" onclick={() => sortBy === "class" ? sortDirection = sortDirection === "ascending" ? "descending" : "ascending" : sortBy = "class"}>Klasse</button>
+								</th>
+								<th class="desktop-only" aria-sort="{sortBy === "teacher" ? sortDirection : "none"}">
+									<button type="button" onclick={() => sortBy === "teacher" ? sortDirection = sortDirection === "ascending" ? "descending" : "ascending" : sortBy = "teacher"}>Kontaktlærer</button>
+								</th>
+								<th class="desktop-only" aria-sort="{sortBy === "lastActivity" ? sortDirection : "none"}">
+									<button type="button" onclick={() => sortBy === "lastActivity" ? sortDirection = sortDirection === "ascending" ? "descending" : "ascending" : sortBy = "lastActivity"}>Siste aktivitet</button>
+								</th>
+							</tr>
+						</thead>
+						<tbody>
+							{#each filteredStudents.slice(0, 100) as student}
+								<tr>
+									<td><a class="ds-link" href={`/students/${student._id}`}>{student.name}</a></td>
+									<td class="desktop-only">{student.mainClassMembership?.classGroup.name || "Ukjent klasse"}<br/><span class="school-name">{student.mainSchool?.name || "N/A"}</span></td>
+									<td class="desktop-only">{student.mainContactTeacherGroupMembership?.contactTeacherGroup.teachers[0]?.name || "Ingen kontaktlærer"}</td>
+									<td class="desktop-only">{student.lastActivityTimestamp?.toLocaleString("no-NB", { dateStyle: 'short', timeStyle: 'short' }) || "Ingen aktivitet"}</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
 				</div>
 			</div>
 		{/if}
 
+		<!-- Special case for students/id page - we need layout data from parent, so we do some nasty stuff here for side menu (quick view student) -->
 		{#if studentsQuickViewAvailable && showStudentsQuickView}
-			<div class="students-quick-view desktop-only" style="visibility: hidden;">
-				<div class="student-row">
-					<div class="student-info-cell first">
-						&nbsp;
-					</div>
-				</div>
+			<div class="students-side-menu desktop-only">
+				<a class="ds-button" data-size="sm" data-variant="secondary" href="/">
+					<span class="material-symbols-outlined" aria-label="small" data-size="sm">arrow_back</span>
+					<span>Rediger elevsøk</span>
+				</a>
+				<div class="ds-paragraph students-side-menu-heading">Elever</div>
+				<ul class="students-side-menu-list">
+					{#each filteredStudents.slice(0, 100) as student}
+						<li class:active={page.url.pathname === `/students/${student._id}`}>
+							<a data-variant="default" data-size="sm" class="ds-link ds-paragraph students-side-menu-list-item-link" href={`/students/${student._id}`} class:active={page.url.pathname === `/students/${student._id}`}>{student.name}</a>
+						</li>
+					{/each}
+				</ul>
 			</div>
-			<div class="students-quick-view fixed desktop-only">
-				<div class="students-quick-view-header">
-					Hurtigtilgang
-				</div>
-				<div class="students-quick-view-actions">
-					<a href="/students"><span class="material-symbols-outlined">arrow_back</span>Rediger filter</a>
-				</div>
-				{#each filteredStudents as student}
-					<div class="student-row" class:active={page.url.pathname === `/students/${student._id}`}>
-						<div class="student-info-cell first">
-							<a href={`/students/${student._id}`}>{student.name}</a>
-						</div>
-					</div>
-				{/each}
+			<div class="page-content">
+				{@render children()}
 			</div>
-		{/if}
-
-
-		{#if children}
-			{@render children()}
 		{:else}
-			<p>fallback content</p>
+			{@render children()}
 		{/if}
-	</div>
-</main>
+	</main>
+
+	<footer>
+		Hei, jeg er en footer!
+	</footer>
+</div>
 
 <style>
-	main {
+	#svelte-body {
+		display: grid;
+		grid-template-rows: auto 1fr auto;
+		grid-template-areas:
+			"header"
+			"main"
+			"footer";
+		min-height: 100%;
+	}
+
+	#svelte-body > header {
+		grid-area: header;
+		width: 100%;
+    display: flex;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    border-bottom: 1px solid var(--ds-color-neutral-border-subtle);
+    background-color: var(--ds-color-neutral-background-default);
+	}
+
+	#svelte-body > main {
+		grid-area: main;
 		box-sizing: border-box;
 		display: flex;
+		width: 100%;
+		max-width: var(--max-page-width);
+		margin: 0 auto;
+		padding: 0 var(--ds-size-4);
 	}
+
+	#svelte-body > footer {
+		grid-area: footer;
+	}
+
+	.student-search-container {
+		display: flex;
+		gap: var(--ds-size-4);
+		margin-bottom: var(--ds-size-8);
+		flex-wrap: wrap;
+	}
+
+	.student-filters-container {
+		margin-bottom: var(--ds-size-8);
+	}
+
+	.student-table-container {
+		display: flex;
+	}
+
+	.student-table-container table {
+		flex: 1;
+	}
+
+	.students-side-menu {
+		box-sizing: border-box;
+		display: none;
+    flex-direction: column;
+    position: sticky;
+    border-right: 1px solid var(--ds-color-neutral-border-subtle);
+    top: var(--header-height);
+    overflow-y: auto;
+    max-height: calc(100vh - var(--header-height));
+    padding-top: var(--ds-size-7);
+		padding-left: var(--ds-size-4);
+		padding-right: var(--ds-size-4);
+    scrollbar-color: var(--ds-color-neutral-border-subtle) transparent;
+    margin-left: calc(var(--ds-size-4) * -1);
+		margin-right: var(--ds-size-10);
+    overscroll-behavior: contain;
+	}
+
+	.students-side-menu-list {
+		display: flex;
+    flex-direction: column;
+    gap: var(--ds-size-2);
+    padding: 0;
+	}
+
+	.students-side-menu-list > li {
+		list-style: none;
+		padding: 0;
+	}
+
+	.students-side-menu-heading {
+		margin-top: var(--ds-size-4);
+	}
+
+	.students-side-menu-heading, .students-side-menu-list-item-link {
+		padding: var(--ds-size-1) var(--ds-size-4);
+	}
+
+	.students-side-menu-list-item-link {
+		--dsc-link-background--active: var(--ds-color-neutral-surface-tinted);
+    color: inherit;
+    text-decoration: none;
+    display: block;
+    line-height: 1.3em;
+    position: relative;
+    border-radius: var(--ds-border-radius-md);
+    text-wrap: balance;
+	}
+
+	.students-side-menu-list-item-link:hover {
+		background-color: var(--ds-color-neutral-surface-tinted);
+	}
+
+	.students-side-menu-list-item-link.active {
+		color: inherit;
+    font-weight: 500;
+    background-color: var(--ds-color-neutral-background-tinted);
+		border-left: 4px solid var(--ds-color-border-default);
+	}
+
 	.page-content-container {
 		box-sizing: border-box;
 		padding-bottom: 2rem;
@@ -383,8 +463,13 @@
 		font-size: 0.875rem;
 	}
 
-	@media (min-width: 50rem) {
-		.desktop-only {
+	@media (min-width: 64rem) {
+		th.desktop-only, td.desktop-only {
+			display: table-cell;
+		}
+	}
+	@media (min-width: 80rem) {
+		.students-side-menu.desktop-only {
 			display: flex;
 		}
 	}
