@@ -10,7 +10,12 @@
     "skipLibCheck": true,
     "sourceMap": true,
     "strict": true,
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "types": [
+      "@digdir/designsystemet-web",
+      "@digdir/designsystemet-types",
+      "@digdir/designsystemet-css/theme" /* or your theme type file, design-tokens-build/types.d.ts */
+    ]
   }
   // Path aliases are handled by https://svelte.dev/docs/kit/configuration#alias
   // except $lib which is handled by https://svelte.dev/docs/kit/configuration#files
