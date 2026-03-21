@@ -13,82 +13,105 @@
 
 {#snippet helpText(inputItem: DocumentInputItem)}
   {#if inputItem.helpText}
-    <div class="help-text">
+    <div data-field="description">
       {inputItem.helpText}
     </div>
   {/if}
 {/snippet}
 
+{#snippet requiredIndicator(inputItem: DocumentInputItem)}
+  {#if "required" in inputItem && inputItem.required}
+    <span class="ds-tag" data-variant="default" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
+  {:else}
+    <span class="ds-tag" data-variant="default" data-color="subtle" style="margin-inline-start:var(--ds-size-2)">Valgfritt</span>
+  {/if}
+{/snippet}
+
 {#if contentItem.type === "header"}
-  <div class="document-content-item-header">
-    <h3>{contentItem.value}</h3>
-  </div>
+  <p class="ds-heading content-item">{contentItem.value}</p>
 {/if}
 
 {#if contentItem.type === "paragraph"}
-  <pre class="paragraph">{contentItem.value}</pre>
+  <p class="ds-paragraph content-item paragraph-item">{contentItem.value}</p>
 {/if}
 
 {#if contentItem.type === "inputText"}
-  <div class="input-item">
+  <ds-field class="ds-field content-item">
+    <label for={contentItem.label} class="ds-label" data-weight="medium">
+      {contentItem.label}
+      {@render requiredIndicator(contentItem)}
+    </label>
     {@render helpText(contentItem)}
-    <label for={contentItem.label}>{contentItem.label}<span class="required-indicator">{contentItem.required ? "*" : ""}</span></label>
     {#if previewMode}
-      <input disabled={!editMode} type="text" id={contentItem.label} name="contentItem-{index}" placeholder={contentItem.placeholder} value={contentItem.value} required={contentItem.required} />
+      <input autocomplete="off" class="ds-input" type="text" id={contentItem.label} name={`contentItem-${index}`} placeholder={contentItem.placeholder} value={contentItem.value} />
     {:else}
-      <input disabled={!editMode} type="text" id={contentItem.label} name="contentItem-{index}" placeholder={contentItem.placeholder} bind:value={contentItem.value} required={contentItem.required} />
+      <input autocomplete="off" class="ds-input" type="text" id={contentItem.label} name={`contentItem-${index}`} placeholder={contentItem.placeholder} bind:value={contentItem.value} required={contentItem.required} disabled={!editMode} />
     {/if}
-  </div>
+  </ds-field>
 {/if}
 
 {#if contentItem.type === "textarea"}
-  <div class="input-item">
+  <ds-field class="ds-field content-item">
+    <label class="ds-label" data-weight="medium" for={contentItem.label}>
+      {contentItem.label}
+      {@render requiredIndicator(contentItem)}
+    </label>
     {@render helpText(contentItem)}
-    <label for={contentItem.label}>{contentItem.label}<span class="required-indicator">{contentItem.required ? "*" : ""}</span></label>
     {#if previewMode}
-      <textarea disabled={!editMode} id={contentItem.label} name="contentItem-{index}" rows={contentItem.initialRows} placeholder={contentItem.placeholder} required={contentItem.required}>{contentItem.value}</textarea>
+      <textarea class="ds-input" id={contentItem.label} name="contentItem-{index}" rows={contentItem.initialRows} placeholder={contentItem.placeholder}>{contentItem.value}</textarea>
     {:else}
-      <textarea disabled={!editMode} id={contentItem.label} name="contentItem-{index}" rows={contentItem.initialRows} placeholder={contentItem.placeholder} required={contentItem.required} bind:value={contentItem.value}></textarea>
+      <textarea class="ds-input" id={contentItem.label} name="contentItem-{index}" rows={contentItem.initialRows} placeholder={contentItem.placeholder} required={contentItem.required} bind:value={contentItem.value} disabled={!editMode}></textarea>
     {/if}
-  </div>
+  </ds-field>
 {/if}
 
 {#if contentItem.type === "radioGroup"}
-  <div class="input-item">
+  <fieldset class="ds-fieldset content-item">
+    <legend class="ds-label" data-weight="medium">
+      {contentItem.header}
+      <span class="ds-tag" data-variant="default" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
+    </legend>
     {@render helpText(contentItem)}
-    <div class="label">{contentItem.header}<span class="required-indicator">{"*"}</span></div>
-    <div class="radio-group-options">
-      {#each contentItem.items as item, itemIndex}
-        <label>
-          {#if previewMode}
-            <input disabled={!editMode} type="radio" id={`contentItem-${index}-radio-${itemIndex}`} name={`contentItem-${index}`} value={item.value} required={true} checked={contentItem.selectedValue === item.value} />
-          {:else}
-             <input disabled={!editMode} type="radio" id={`contentItem-${index}-radio-${itemIndex}`} name={`contentItem-${index}`} bind:group={contentItem.selectedValue} value={item.value} required={true} />
-          {/if}
-          {item.label}
-        </label>
-      {/each}
-    </div>
-  </div>
+    <!--<p class="ds-paragraph" data-variant="default">Trondheim is divided into four districts</p>-->
+    {#each contentItem.items as item, itemIndex}
+      <ds-field class="ds-field">
+        {#if previewMode}
+          <input class="ds-input" type="radio" id={`contentItem-${index}-radio-${itemIndex}`} name={`contentItem-${index}`} value={item.value} checked={contentItem.selectedValue === item.value} />
+        {:else}
+          <input class="ds-input" disabled={!editMode} type="radio" id={`contentItem-${index}-radio-${itemIndex}`} name={`contentItem-${index}`} bind:group={contentItem.selectedValue} value={item.value} required={true} />
+        {/if}
+        <label class="ds-label" data-weight="regular" for={`contentItem-${index}-radio-${itemIndex}`}>{item.label}</label>
+      </ds-field>
+    {/each}
+  </fieldset>
+{/if}
+
+{#if contentItem.type === "checkboxGroup"}
+  <fieldset class="ds-fieldset content-item">
+    <legend class="ds-label" data-weight="medium">
+      {contentItem.header}
+      <span class="ds-tag" data-variant="default" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Minst et valg</span>
+    </legend>
+    {@render helpText(contentItem)}
+    {#each contentItem.items as item, itemIndex}
+      <ds-field class="ds-field">
+        {#if previewMode}
+          <input class="ds-input" type="checkbox" id={`contentItem-${index}-checkbox-${itemIndex}`} name={`contentItem-${index}-checkbox-${itemIndex}`} value={item.value} />
+        {:else}
+          <input class="ds-input" disabled={!editMode} type="checkbox" id={`contentItem-${index}-checkbox-${itemIndex}`} name={`contentItem-${index}-checkbox-${itemIndex}`} value={item.value} bind:group={contentItem.selectedValues} required={true} />
+        {/if}
+        <label class="ds-label" data-weight="regular" for={`contentItem-${index}-checkbox-${itemIndex}`}>{item.label}</label>
+      </ds-field>
+    {/each}
+  </fieldset>
 {/if}
 
 <style>
-  .document-content-item-header {
-    margin: 1rem 0rem;
+  .content-item {
+    margin: var(--ds-size-6) 0;
   }
 
-  .paragraph {
-    font: inherit;
+  .paragraph-item {
     white-space: pre-wrap;
-  }
-
-  .radio-group-options {
-    display: flex;
-    gap: 0.5rem;
-  }
-
-  .help-text {
-    background-color: var(--color-warning-20);
-    padding: 0.25rem;
   }
 </style>
