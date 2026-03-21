@@ -4,6 +4,8 @@
   type AsyncButtonProps = {
     buttonText: string
     onClick: () => Promise<void>
+    variant?: "primary" | "secondary" | "tertiary"
+    color?: "accent" | "danger"
     iconName?: string
     reloadPageDataOnSuccess?: boolean
     /** If you need anything to trigger after page data is reloaded (requires reloadPageDataOnSuccess to be true) */
@@ -12,7 +14,7 @@
     disabled?: boolean
   }
 
-  let { buttonText, onClick, iconName, reloadPageDataOnSuccess = false, callBackAfterReloadPageData, errorMessage = $bindable(), disabled = false }: AsyncButtonProps = $props()
+  let { buttonText, onClick, iconName, variant = "primary", color = "accent", reloadPageDataOnSuccess = false, callBackAfterReloadPageData, errorMessage = $bindable(), disabled = false }: AsyncButtonProps = $props()
 
   type ButtonState = {
     loading: boolean
@@ -53,7 +55,7 @@
   }
 </script>
 
-<button type="button" onclick={wrappedOnClick} class={["ds-button"].join(" ")} disabled={buttonState.loading || disabled}>
+<button type="button" class="ds-button" data-variant={variant} data-color={color} onclick={wrappedOnClick} disabled={buttonState.loading || disabled}>
   {#if iconName}
     <span class="material-symbols-outlined">{iconName}</span>
   {/if}
