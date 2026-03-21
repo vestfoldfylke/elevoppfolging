@@ -7,7 +7,7 @@
 </script>
 
 <div class="page-content">
-  <PageHeader title={data.template.name || "Ny notat-mal"} />
+  <h1 class="ds-heading" data-size="lg">{data.template.name || "Ny notat-mal"}</h1>
 
   {#key data.template._id} <!-- If new template, new component please -->
     <TemplateEditor template={data.template} />

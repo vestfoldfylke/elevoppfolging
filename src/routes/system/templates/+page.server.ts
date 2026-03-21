@@ -22,7 +22,7 @@ const getTemplates: ServerLoadNextFunction<TemplatePageData> = async ({ principa
 
   return {
     data: {
-      templates
+      templates: templates.sort((a, b) => a.sort - b.sort)
     },
     isAuthorized: true
   }

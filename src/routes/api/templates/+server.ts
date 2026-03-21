@@ -28,7 +28,8 @@ const addDocumentContentTemplate: ApiNextFunction<AddDocumentContentTemplateResp
     availableForDocumentType: newTemplateData.availableForDocumentType,
     content: newTemplateData.content,
     created: editorData,
-    modified: editorData
+    modified: editorData,
+    sort: newTemplateData.sort
   }
 
   const dbClient = getDbClient()

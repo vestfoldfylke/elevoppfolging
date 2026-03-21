@@ -40,7 +40,8 @@ const getTemplate: ServerLoadNextFunction<TemplatePageData> = async ({ requestEv
           fallbackName: "nei"
         }
       },
-      content: []
+      content: [],
+      sort: 20
     }
     return {
       data: {

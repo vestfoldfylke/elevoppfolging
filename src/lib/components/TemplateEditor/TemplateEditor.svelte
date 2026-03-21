@@ -6,6 +6,7 @@
   import type { DocumentContentItem, DocumentContentTemplate, DocumentRadioGroupItem } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
   import DocumentContentItemComponent from "../Document/DocumentContentItem.svelte"
+    import { templateEditorContentItemIcons, templateEditorContentItemNames } from "./template-editor-constants";
   import TemplateEditorItem from "./TemplateEditorItem.svelte"
 
   type TemplateEditorProps = {
@@ -14,30 +15,24 @@
 
   let { template }: TemplateEditorProps = $props()
 
-  // svelte-ignore state_referenced_locally (vi vil ha en kopi her, så kan den resettes hvis det trengs)
+  // svelte-ignore state_referenced_locally (vi vil ha en kopi her, så kan den resettes hvis det trengs via #key)
   let editableTemplate = $state(template)
 
   let previewMode = $state(Boolean(editableTemplate._id))
 
   let templateForm: HTMLFormElement | undefined = $state()
 
-  const templateItems: (DocumentContentItem & { displayName: string; iconName: string })[] = [
+  const templateItems: DocumentContentItem[] = [
     {
-      displayName: "Overskrift",
-      iconName: "title",
       type: "header",
       value: "Dette er en tittel"
     },
     {
-      displayName: "Tekst-avsnitt",
-      iconName: "text_fields",
       type: "paragraph",
       value: "Dette er et avsnitt med litt tekst."
     },
     {
       type: "inputText",
-      iconName: "text_fields_alt",
-      displayName: "Inputfelt (felt brukeren putter inn tekst i)",
       placeholder: "Heisann",
       label: "Beskrivelse av tekstfelt",
       helpText: "",
@@ -46,9 +41,7 @@
     },
     {
       type: "textarea",
-      iconName: "format_align_left",
-      displayName: "Tekstområde (felt brukeren putter inn mye tekst i)",
-      label: "Beskrivelse av tekstfelt",
+      label: "Beskrivelse av tekstområde",
       helpText: "",
       placeholder: "",
       value: "",
@@ -57,17 +50,30 @@
     },
     {
       type: "radioGroup",
-      iconName: "task_alt",
-      displayName: "Valggruppe (brukeren kan velge ett alternativ)",
       selectedValue: "",
       header: "Beskrivelse av valggruppe",
       items: [
         {
-          label: "",
+          label: "Valg 1",
           value: crypto.randomUUID()
         },
         {
-          label: "",
+          label: "Valg 2",
+          value: crypto.randomUUID()
+        }
+      ]
+    },
+    {
+      type: "checkboxGroup",
+      selectedValues: [],
+      header: "Beskrivelse av avkrysningsgruppe",
+      items: [
+        {
+          label: "Valg 1",
+          value: crypto.randomUUID()
+        },
+        {
+          label: "Valg 2",
           value: crypto.randomUUID()
         }
       ]
@@ -154,20 +160,35 @@
 
 <div class="template-editor-container" class:hidden={previewMode}>
   <form bind:this={templateForm}>
+    <ds-field class="ds-field">
+      <label for="template-name" class="ds-label" data-weight="medium">
+        Navn på notat-typen
+      </label>
+      <input required id="template-name" class="ds-input" type="text" bind:value={editableTemplate.name} />
+    </ds-field>
+
+    <ds-field class="ds-field">
+      <label for="template-sort" class="ds-label" data-weight="medium">
+        Sorteringsrekkefølge
+      </label>
+      <input required id="template-sort" class="ds-input" type="number" bind:value={editableTemplate.sort} />
+    </ds-field>
+
     <div class="template-editor">
-      <div class="template-name">
-        <label for="template-name">Navn på notat-typen</label>
-        <input required id="template-name" type="text" bind:value={editableTemplate.name} />
-      </div>
-
       <div class="template-availability-options">
-        <strong>Tilgjengelig som:</strong>
-        <br />
-        <label for="available-for-students">Elevnotat</label>
-        <input id="available-for-students" type="checkbox" bind:checked={editableTemplate.availableForDocumentType.student} />
-
-        <label for="available-for-groups">Klassenotat</label>
-        <input id="available-for-groups" type="checkbox" bind:checked={editableTemplate.availableForDocumentType.group} />
+        <fieldset class="ds-fieldset content-item">
+          <legend class="ds-label" data-weight="medium">
+            Tilgjengelig som
+          </legend>
+          <ds-field class="ds-field">
+            <input class="ds-input" id="available-for-students" type="checkbox" bind:checked={editableTemplate.availableForDocumentType.student} />
+            <label class="ds-label" for="available-for-students">Elevnotat</label>
+          </ds-field>
+          <ds-field class="ds-field">
+            <input class="ds-input" id="available-for-groups" type="checkbox" bind:checked={editableTemplate.availableForDocumentType.group} />
+            <label class="ds-label" for="available-for-groups">Klassenotat</label>
+          </ds-field>
+        </fieldset>
       </div>
 
       <div class="template-content">
@@ -185,7 +206,7 @@
     <strong>Legg til element:</strong>
     <div class="template-editor-actions-buttons">
       {#each templateItems as templateItem}
-        <button type="button" onclick={() => addTemplateItem(templateItem.type)}><span class="material-symbols-outlined">{templateItem.iconName}</span>{templateItem.displayName}</button>
+        <button class="ds-button" data-variant="secondary" type="button" onclick={() => addTemplateItem(templateItem.type)}><span class="material-symbols-outlined">{templateEditorContentItemIcons[templateItem.type]}</span>{templateEditorContentItemNames[templateItem.type]}</button>
       {/each}
     </div>
   </div>
@@ -197,17 +218,22 @@
   {/each}
 </div>
 
+<hr aria-hidden="true" class="ds-divider"/>
+
 <div class="template-actions">
   {#if previewMode}
-    <button type="button" onclick={() => previewMode = false}><span class="material-symbols-outlined">edit</span>Rediger mal</button>
+    <button class="ds-button" data-variant="secondary" type="button" onclick={() => previewMode = false}><span class="material-symbols-outlined">edit</span>Rediger mal</button>
   {:else}
-    <button type="button" onclick={() => previewMode = true}><span class="material-symbols-outlined">visibility</span>Forhåndsvis mal</button>
     {#if !editableTemplate._id}
       <AsyncButton buttonText="Lagre mal" onClick={newTemplate} iconName="save" />
     {:else}
-      <AsyncButton disabled={JSON.stringify(editableTemplate) === JSON.stringify(template)} buttonText="Lagre endringer" onClick={updateTemplate} reloadPageDataOnSuccess={true} iconName="save" classList={["filled"]} />
-      <AsyncButton buttonText="Slett mal" onClick={deleteTemplate} iconName="delete" classList={["filled", "danger"]} />
+      <AsyncButton disabled={JSON.stringify(editableTemplate) === JSON.stringify(template)} buttonText="Lagre endringer" onClick={updateTemplate} reloadPageDataOnSuccess={true} iconName="save" />
     {/if}
+    <button class="ds-button" data-variant="secondary" type="button" onclick={() => previewMode = true}><span class="material-symbols-outlined">visibility</span>Forhåndsvis mal</button>
+  {/if}
+  <a href="/system/templates" class="ds-button" data-variant="secondary"><span class="material-symbols-outlined">arrow_back</span>Tilbake til maler</a>
+  {#if editableTemplate._id}
+    <AsyncButton buttonText="Slett mal" onClick={deleteTemplate} iconName="delete" color="danger" />
   {/if}
 </div>
 
@@ -221,14 +247,6 @@
   }
   .template-editor {
     flex: 1;
-  }
-  .template-name {
-    display: flex;
-    flex-direction: column;
-    margin: 1rem 0rem;
-  }
-  .template-name > input {
-    max-width: 20rem;
   }
   .template-availability-options {
     margin: 1rem 0rem;
@@ -244,9 +262,7 @@
   }
 
   .template-actions {
-    border-top: 1px solid var(--color-primary);
     padding: 1rem 0rem;
-    margin-top: 1rem;
     display: flex;
     gap: 0.5rem;
   }

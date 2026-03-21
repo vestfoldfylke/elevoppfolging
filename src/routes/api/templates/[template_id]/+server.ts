@@ -42,7 +42,8 @@ const updateDocumentContentTemplate: ApiNextFunction<UpdateDocumentContentTempla
     availableForDocumentType: updateTemplateData.availableForDocumentType,
     content: updateTemplateData.content,
     created: currentTemplate.created,
-    modified: editorData
+    modified: editorData,
+    sort: updateTemplateData.sort
   }
 
   const updatedTemplateId = await dbClient.updateDocumentContentTemplate(templateId, documentTemplate)

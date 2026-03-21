@@ -297,6 +297,8 @@ export type DocumentRadioButtonItem = {
   value: string
 }
 
+export type DocumentCheckboxItem = DocumentRadioButtonItem
+
 export type DocumentRadioGroupItem = {
   type: "radioGroup"
   header: string
@@ -305,7 +307,15 @@ export type DocumentRadioGroupItem = {
   helpText?: string
 }
 
-export type DocumentInputItem = DocumentTextInputItem | DocumentTextAreaItem | DocumentRadioGroupItem
+export type DocumentCheckboxGroupItem = {
+  type: "checkboxGroup"
+  header: string
+  items: DocumentCheckboxItem[]
+  selectedValues: string[]
+  helpText?: string
+}
+
+export type DocumentInputItem = DocumentTextInputItem | DocumentTextAreaItem | DocumentRadioGroupItem | DocumentCheckboxGroupItem
 
 export type DocumentContentItem = DocumentHeaderItem | DocumentParagraphItem | DocumentInputItem
 
@@ -397,6 +407,7 @@ export type NewDocumentContentTemplate = {
   created: EditorData
   modified: EditorData
   content: DocumentContentItem[]
+  sort: number
 }
 
 export type DocumentContentTemplate = NewDocumentContentTemplate & {
