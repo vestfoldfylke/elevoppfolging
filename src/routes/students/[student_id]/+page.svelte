@@ -23,6 +23,7 @@
       documentsHeader.scrollIntoView({ behavior: "smooth" })
     }
   }
+
   let studentDetails = $derived.by(() => {
     return getFrontendStudentDetails(data.student, data.APP_INFO)
   })
@@ -166,13 +167,15 @@
     </button>
   </div>
 
+  <hr aria-hidden="true" class="ds-divider"/>
+
   <div class="documents">
     <div class="documents-header">
       {#if !documentCreatorOpen}
-        <h2 id="documents">Notater</h2>
-        <button class="filled" onclick={openDocumentCreator}><span class="material-symbols-outlined">note_add</span>Nytt notat</button>
+        <h2 id="documents" class="ds-heading">Notater</h2>
+        <button class="ds-button" onclick={openDocumentCreator}><span class="material-symbols-outlined">note_add</span>Nytt notat</button>
       {:else}
-        <h2 id="documents">Nytt notat</h2>
+        <h2 id="documents" class="ds-heading">Nytt notat</h2>
       {/if}
     </div>
 
@@ -213,6 +216,10 @@
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
+  }
+
+  #documents {
+    scroll-margin-top: var(--header-height);
   }
 
   .documents-header {

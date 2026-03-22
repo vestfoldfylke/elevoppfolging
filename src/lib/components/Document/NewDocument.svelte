@@ -59,36 +59,24 @@
 </script>
 
 <div class="template-selector">
-  <label for="type">
-    Type notat
-  </label>
-  <br />
-  <select id="type" name="documentContentTemplateId" onchange={(event) => changeDocumentTemplate((event.target as HTMLSelectElement).value)}>
-    {#each newDocumentTemplates as documentTemplate}
-      <option value={documentTemplate.template._id}>{documentTemplate.template.name}</option>
-    {/each}
-  </select>
+  <ds-field class="ds-field">
+    <label for="document-type" class="ds-label" data-weight="medium">Notat-type</label>
+    <select id="document-type" class="ds-input" data-width="auto" onchange={(event) => changeDocumentTemplate((event.target as HTMLSelectElement).value)}>
+      {#each newDocumentTemplates as documentTemplate}
+        <option value={documentTemplate.template._id}>{documentTemplate.template.name}</option>
+      {/each}
+    </select>
+  </ds-field>
 </div>
 
-<div class="document">
-  <div class="document-header">
-    <div>
-      <h2>{newDocument.template.name}: {newDocument.title}</h2>
-      <div style="font-size: smaller;">{newDocument.school.name}</div>
-    </div>
-  </div>
-  <div class="document-content">
-    <DocumentEditor {studentId} {groupId} {accessSchools} bind:currentDocument={newDocument} closeEditor={() => creatorOpen = false} />
-  </div>
+
+<div class="ds-card" data-variant="default" data-color="accent" style="margin-bottom: var(--ds-size-6);">
+  <h2 class="ds-heading">{newDocument.template.name}: {newDocument.title}</h2>
+  <div class="ds-paragraph" data-size="sm">{newDocument.school.name}</div>
+  <DocumentEditor {studentId} {groupId} {accessSchools} bind:currentDocument={newDocument} closeEditor={() => creatorOpen = false} />
 </div>
 
 <style>
-  .document {
-    border: 1px solid var(--color-primary-30);
-    border-radius: 0.5rem;
-    padding: 1rem;
-    margin-bottom: 1rem;
-  }
   .template-selector {
     margin-bottom: 1rem;
   }

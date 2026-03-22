@@ -93,7 +93,7 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
       studentDataSharingConsent,
       documents,
       unavailableSchoolDocuments,
-      documentContentTemplates
+      documentContentTemplates: documentContentTemplates.sort((a, b) => a.sort - b.sort)
     },
     isAuthorized: true
   }

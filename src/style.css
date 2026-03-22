@@ -65,6 +65,10 @@ body {
   }
 }
 
+.content-item {
+  margin: var(--ds-size-6) 0;
+}
+
 .card-header {
   display: flex;
   justify-content: space-between;
