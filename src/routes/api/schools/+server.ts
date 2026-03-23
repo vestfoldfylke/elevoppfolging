@@ -4,7 +4,7 @@ import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { isSystemAdmin } from "$lib/shared-authorization/authorization"
+import { isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap } from "$lib/types/api/api-route-map"
 import type { EditorData, NewSchool } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -14,7 +14,7 @@ type AddSchoolBody = ApiRouteMap["/api/schools"]["POST"]["req"]
 
 const addSchool: ApiNextFunction<AddSchoolResponse, AddSchoolBody> = async ({ principal, body }) => {
   if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, "Forbidden: No access")
+    throw new HTTPError(403, noAccessMessage("No permission to add school"))
   }
 
   const newSchoolData: AddSchoolBody = body

@@ -2,7 +2,7 @@ import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
-import { isSystemAdmin } from "$lib/shared-authorization/authorization"
+import { isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { Access, AppUser, School } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
@@ -16,7 +16,7 @@ type AdminSchoolsLayoutData = {
 
 const getAdminSchoolsData: ServerLoadNextFunction<AdminSchoolsLayoutData> = async ({ principal }) => {
   if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, "Forbidden: No access")
+    throw new HTTPError(403, noAccessMessage("No permission to handle schools"))
   }
 
   const dbClient: IDbClient = getDbClient()

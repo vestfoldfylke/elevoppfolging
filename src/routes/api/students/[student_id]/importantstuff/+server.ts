@@ -4,7 +4,7 @@ import { getStudentAccessInfo } from "$lib/server/authorization/student-access"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canEditStudentImportantStuff } from "$lib/shared-authorization/authorization"
+import { canEditStudentImportantStuff, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { EditorData, NewStudentImportantStuff, StudentImportantStuffInput } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -23,7 +23,7 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
 
   const principalAccess = await dbClient.getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(403, "Access denied: No access found for the principal")
+    throw new HTTPError(403, noAccessMessage("No access found for principal"))
   }
 
   const currentStudent = await dbClient.getStudentById(studentId)
@@ -33,7 +33,7 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
 
   const accessInfo = getStudentAccessInfo(currentStudent, principalAccess)
   if (accessInfo.length === 0) {
-    throw new HTTPError(403, "Access denied: No access to the student")
+    throw new HTTPError(403, noAccessMessage("No permission to student"))
   }
 
   const studentImportantStuffData: StudentImportantStuffInput = body
@@ -46,7 +46,7 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
 
   const canEditImportantStuff = canEditStudentImportantStuff(studentImportantStuffData.school.schoolNumber, accessInfo)
   if (!canEditImportantStuff) {
-    throw new HTTPError(403, "Access denied: Insufficient access level to edit student important stuff")
+    throw new HTTPError(403, noAccessMessage("Insufficient access level to edit student important stuff"))
   }
 
   const allStudentCheckBoxes = await dbClient.getStudentCheckBoxes()

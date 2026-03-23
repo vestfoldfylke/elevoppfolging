@@ -2,6 +2,7 @@ import { getStudentAccessInfo } from "$lib/server/authorization/student-access"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
+import { noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { AccessEntry, FrontendStudent, StudentAccess, StudentUnavailableSchoolDocuments } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { Access, DocumentContentTemplate, SchoolInfo, StudentDataSharingConsent, StudentDocument, StudentImportantStuff } from "$lib/types/db/shared-types"
@@ -35,7 +36,7 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 
   const access: Access | null = await dbClient.getPrincipalAccess(principal.id)
   if (!access) {
-    throw new HTTPError(404, "No access found for principal")
+    throw new HTTPError(403, noAccessMessage("No access found for principal"))
   }
 
   const student: FrontendStudent | null = await dbClient.getStudentById(studentId)
@@ -46,7 +47,7 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
   const principalAccessToStudent: AccessEntry[] = await getStudentAccessInfo(student, access)
 
   if (principalAccessToStudent.length === 0) {
-    throw new HTTPError(403, "No access to this student")
+    throw new HTTPError(403, noAccessMessage("No access to this student"))
   }
 
   const accessSchoolsForStudent = principalAccessToStudent.map((accessEntry) => accessEntry.schoolNumber)

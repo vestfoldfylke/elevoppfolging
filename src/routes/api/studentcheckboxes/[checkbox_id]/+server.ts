@@ -4,7 +4,7 @@ import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { isSystemAdmin } from "$lib/shared-authorization/authorization"
+import { isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { NewStudentCheckBox } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -13,7 +13,7 @@ type DeleteStudentCheckBoxResponse = ApiRouteMap[`/api/studentcheckboxes/${NoSla
 
 const deleteStudentCheckBox: ApiNextFunction<DeleteStudentCheckBoxResponse> = async ({ principal, requestEvent }) => {
   if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, "Forbidden: No access")
+    throw new HTTPError(403, noAccessMessage("No permission to delete student checkbox"))
   }
 
   const checkBoxId = requestEvent.params.checkbox_id
@@ -45,7 +45,7 @@ type UpdateStudentCheckBoxBody = ApiRouteMap[`/api/studentcheckboxes/${NoSlashSt
 
 const updateStudentCheckBox: ApiNextFunction<UpdateStudentCheckBoxResponse, UpdateStudentCheckBoxBody> = async ({ principal, requestEvent, body }) => {
   if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, "Forbidden: No access")
+    throw new HTTPError(403, noAccessMessage("No permission to update student checkbox"))
   }
 
   const checkBoxId = requestEvent.params.checkbox_id

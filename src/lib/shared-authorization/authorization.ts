@@ -35,3 +35,11 @@ export const canEditStudentImportantStuff = (importantStuffSchoolNumber: string,
     (accessEntry) => accessEntry.type !== "AUTOMATISK-UNDERVISNINGSGRUPPE-TILGANG" && accessEntry.type !== "AUTOMATISK-KLASSE-TILGANG" && accessEntry.schoolNumber === importantStuffSchoolNumber
   )
 }
+
+export const noAccessMessage = (message?: string): string => {
+  if (!message) {
+    return "Access denied."
+  }
+
+  return `Access denied: ${message}`
+}

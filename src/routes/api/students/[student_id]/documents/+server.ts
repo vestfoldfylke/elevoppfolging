@@ -1,10 +1,14 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
+import { getStudentAccessInfo } from "$lib/server/authorization/student-access"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
+import { noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { EditorData, NewStudentDocument } from "$lib/types/db/shared-types"
+import type { AccessEntry, FrontendStudent } from "$lib/types/app-types"
+import type { IDbClient } from "$lib/types/db/db-client"
+import type { Access, EditorData, NewStudentDocument } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
 type AddDocumentResponse = ApiRouteMap[`/api/students/${NoSlashString}/documents`]["POST"]["res"]
@@ -19,9 +23,25 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
   const newDocumentData: AddDocumentBody = body
   // TODO validate body
 
-  // TODO authorization check if principal has access to the student or group
-  // Har brukeren tilgang til eleven på DENNE skolen
+  // authorization check if principal has access to the student or group
+  const dbClient: IDbClient = getDbClient()
 
+  const access: Access | null = await dbClient.getPrincipalAccess(principal.id)
+  if (!access) {
+    throw new HTTPError(403, noAccessMessage("No access found for principal"))
+  }
+
+  const student: FrontendStudent | null = await dbClient.getStudentById(studentId)
+  if (!student) {
+    throw new HTTPError(400, "Student not found. Cannot add document for non-existing student.")
+  }
+
+  const accessToStudent: AccessEntry[] = getStudentAccessInfo(student, access)
+  if (accessToStudent.length === 0) {
+    throw new HTTPError(403, noAccessMessage("No permission to add document"))
+  }
+
+  // create document
   const editorData: EditorData = {
     by: {
       entraUserId: principal.id,
@@ -43,15 +63,8 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
     modified: editorData
   }
 
-  const dbClient = getDbClient()
-
   if (!newDocument.student?._id) {
     throw new HTTPError(400, "Student ID is missing in the document data")
-  }
-
-  const student = await dbClient.getStudentById(newDocument.student._id)
-  if (!student) {
-    throw new HTTPError(400, "Student not found. Cannot create document for non-existing student.")
   }
 
   const documentId = await dbClient.createStudentDocument(newDocument)
