@@ -86,7 +86,7 @@
       <ds-field class="ds-field content-item">
         <label for="schoolNumber" class="ds-label" data-weight="medium">
           Skole
-          <span class="ds-tag" data-variant="outline" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må velges</span>
+          <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må velges</span>
         </label>
         <div data-field="description">
           Du har tilgang til denne eleven ved flere skoler, og må velge hvilken skole notatet er knyttet til.
@@ -102,7 +102,7 @@
     <ds-field class="ds-field content-item">
       <label for="documentTitle" class="ds-label" data-weight="medium">
         Tittel
-        <span class="ds-tag" data-variant="outline" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
+        <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
       </label>
       <input autocomplete="off" id="documentTitle" class="ds-input" name="documentTitle" type="text" bind:value={currentDocument.title} required>
     </ds-field>

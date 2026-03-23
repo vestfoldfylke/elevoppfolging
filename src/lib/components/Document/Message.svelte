@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { page } from "$app/state";
+  import { page } from "$app/state"
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
-    import { canEditDocumentMessage } from "$lib/shared-authorization/authorization";
+  import { canEditDocumentMessage } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { DocumentMessage, DocumentMessageInput } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
@@ -89,7 +89,7 @@
         <ds-field class="ds-field content-item">
           <label for="message-title-{message.messageId || documentId}" class="ds-label" data-weight="medium">
             Tittel
-            <span class="ds-tag" data-variant="outline" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
+            <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
           </label>
           <input autocomplete="off" class="ds-input" type="text" id="message-title-{message.messageId || documentId}" name="messageTitle" required bind:value={editableMessage.content.title} placeholder="Tittel på oppfølging" />
         </ds-field>
@@ -97,12 +97,12 @@
         <ds-field class="ds-field content-item">
           <label for="message-content-{message.messageId || documentId}" class="ds-label" data-weight="medium">
             Oppdatering
-            <span class="ds-tag" data-variant="outline" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
+            <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
           </label>
           <textarea required class="ds-input" name="messageContent" id="message-content-{message.messageId || documentId}" rows={5} bind:value={editableMessage.content.text} placeholder="Skriv oppdateringen her..."></textarea>
         </ds-field>
       {/if}
-
+      <!--
       {#if editableMessage.type === "comment"}
         {#if !message.messageId}
           <h2 class="ds-heading">Ny kommentar</h2>
@@ -110,11 +110,12 @@
         <ds-field class="ds-field content-item">
           <label for="message-content-{message.messageId || documentId}" class="ds-label" data-weight="medium">
             Kommentar
-            <span class="ds-tag" data-variant="outline" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
+            <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
           </label>
           <input class="ds-input" required name="messageContent" id="message-content-{message.messageId || documentId}" type="text" bind:value={editableMessage.content.text} placeholder="Skriv kommentaren her..." />
         </ds-field>
       {/if}
+      -->
     </form>
   {:else}
     <p class="ds-paragraph">

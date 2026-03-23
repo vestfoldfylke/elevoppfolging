@@ -1,13 +1,13 @@
+import { logger } from "@vestfoldfylke/loglady"
 import { APP_INFO } from "$lib/server/app-info"
+import { getStudentsFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
+import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
 import type { CachedFrontendStudentWithAccessInfo, FrontendOverviewStudent, RootLayoutData } from "$lib/types/app-types"
 import type { Access, StudentDataSharingConsent, StudentImportantStuff } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
-import { logger } from "@vestfoldfylke/loglady"
 import type { LayoutServerLoad } from "./$types"
-import { getStudentsFromCache } from "$lib/server/cache/students-cache"
-import { HTTPError } from "$lib/server/middleware/http-error"
 
 const layoutLoad: ServerLoadNextFunction<RootLayoutData> = async ({ principal }) => {
   const dbClient = getDbClient()

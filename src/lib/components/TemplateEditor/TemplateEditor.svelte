@@ -6,8 +6,8 @@
   import type { DocumentContentItem, DocumentContentTemplate, DocumentRadioGroupItem } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
   import DocumentContentItemComponent from "../Document/DocumentContentItem.svelte"
-    import { templateEditorContentItemIcons, templateEditorContentItemNames } from "./template-editor-constants";
   import TemplateEditorItem from "./TemplateEditorItem.svelte"
+  import { templateEditorContentItemIcons, templateEditorContentItemNames } from "./template-editor-constants"
 
   type TemplateEditorProps = {
     template: DocumentContentTemplate

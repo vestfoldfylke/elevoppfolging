@@ -3,11 +3,11 @@
   import { page } from "$app/state"
   import { canEditDocument } from "$lib/shared-authorization/authorization"
   import type { DocumentInput, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
+  import { prettifyDateTime } from "$lib/utils/prettify-date"
   import DocumentContent from "./DocumentContentItem.svelte"
   import DocumentEditor from "./DocumentEditor.svelte"
   import Message from "./Message.svelte"
   import NewMessage from "./NewMessage.svelte"
-    import { prettifyDateTime } from "$lib/utils/prettify-date";
 
   type PageProps = {
     document: StudentDocument // Add GroupDocument union when needed
@@ -87,22 +87,24 @@
   </details>
 
   {#each document.messages as message (message.messageId)}
-    <details class="ds-details" data-variant="default">
-      <summary>
-        <div class="message-header">
-          <div class="message-header-left">
-            <div>{message.type === "update" ? `Oppfølging: ${message.content.title}` : "Kommentar"}</div>
+    {#if message.type === "update"}
+      <details class="ds-details" data-variant="default">
+        <summary>
+          <div class="message-header">
+            <div class="message-header-left">
+              <div>{`Oppfølging: ${message.content.title}`}</div>
+            </div>
+            <div class="message-header-right">
+              <div class="ds-paragraph" data-size="xs">{message.modified.by.fallbackName}</div>
+              <div class="ds-paragraph" data-size="xs">{prettifyDateTime(message.modified.at)}</div>
+            </div>
           </div>
-          <div class="message-header-right">
-            <div class="ds-paragraph" data-size="xs">{message.modified.by.fallbackName}</div>
-            <div class="ds-paragraph" data-size="xs">{prettifyDateTime(message.modified.at)}</div>
-          </div>
+        </summary>
+        <div>
+          <Message {message} editMode={false} documentId={document._id} studentId={document.student._id} />
         </div>
-      </summary>
-      <div>
-        <Message {message} editMode={false} documentId={document._id} studentId={document.student._id} />
-      </div>
-    </details>
+      </details>
+    {/if}
   {/each}
   <div class="ds-card__block">
     <NewMessage documentId={document._id} studentId={document.student._id} />

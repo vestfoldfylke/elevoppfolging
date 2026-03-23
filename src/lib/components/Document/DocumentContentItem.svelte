@@ -21,9 +21,9 @@
 
 {#snippet requiredIndicator(inputItem: DocumentInputItem)}
   {#if "required" in inputItem && inputItem.required}
-    <span class="ds-tag" data-variant="outline" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
+    <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
   {:else}
-    <span class="ds-tag" data-variant="outline" data-color="subtle" style="margin-inline-start:var(--ds-size-2)">Valgfritt</span>
+    <span class="ds-tag" data-variant="outline" data-size="sm" data-color="subtle" style="margin-inline-start:var(--ds-size-2)">Valgfritt</span>
   {/if}
 {/snippet}
 
@@ -69,7 +69,7 @@
   <fieldset class="ds-fieldset content-item">
     <legend class="ds-label" data-weight="medium">
       {contentItem.header}
-      <span class="ds-tag" data-variant="outline" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
+      <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
     </legend>
     {@render helpText(contentItem)}
     <!--<p class="ds-paragraph" data-variant="default">Trondheim is divided into four districts</p>-->
@@ -90,7 +90,7 @@
   <fieldset class="ds-fieldset content-item">
     <legend class="ds-label" data-weight="medium">
       {contentItem.header}
-      <span class="ds-tag" data-variant="outline" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Minst et valg</span>
+      <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Minst et valg</span>
     </legend>
     {@render helpText(contentItem)}
     {#each contentItem.items as item, itemIndex}

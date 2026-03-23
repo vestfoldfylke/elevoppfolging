@@ -14,7 +14,17 @@
     disabled?: boolean
   }
 
-  let { buttonText, onClick, iconName, variant = "primary", color = "accent", reloadPageDataOnSuccess = false, callBackAfterReloadPageData, errorMessage = $bindable(), disabled = false }: AsyncButtonProps = $props()
+  let {
+    buttonText,
+    onClick,
+    iconName,
+    variant = "primary",
+    color = "accent",
+    reloadPageDataOnSuccess = false,
+    callBackAfterReloadPageData,
+    errorMessage = $bindable(),
+    disabled = false
+  }: AsyncButtonProps = $props()
 
   type ButtonState = {
     loading: boolean

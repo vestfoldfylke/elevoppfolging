@@ -1,4 +1,4 @@
-import type { DocumentContentItem } from "$lib/types/db/shared-types";
+import type { DocumentContentItem } from "$lib/types/db/shared-types"
 
 export const templateEditorContentItemNames: Record<DocumentContentItem["type"], string> = {
   header: "Overskrift",

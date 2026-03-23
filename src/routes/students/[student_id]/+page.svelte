@@ -6,7 +6,8 @@
   import DataSharingConsent from "$lib/components/StudentBoxes/DataSharingConsent.svelte"
   import ImportantStuff from "$lib/components/StudentBoxes/ImportantStuff.svelte"
   import { canEditStudentDataSharingConsent, canEditStudentImportantStuff } from "$lib/shared-authorization/authorization"
-  import type { SchoolInfo } from "$lib/types/db/shared-types"
+  import type { SchoolInfo, Source } from "$lib/types/db/shared-types"
+  import { ACCESS_TYPE_DISPLAY_NAMES } from "$lib/utils/access-constants"
   import { getFrontendStudentDetails } from "$lib/utils/frontend-student-details"
   import type { PageProps } from "./$types"
 
@@ -26,6 +27,22 @@
 
   let studentDetails = $derived.by(() => {
     return getFrontendStudentDetails(data.student, data.APP_INFO)
+  })
+
+  type AccessInfo = {
+    accessDisplayName: string
+    school: SchoolInfo
+    source: Source
+  }
+
+  let accessInfo: AccessInfo[] = $derived.by(() => {
+    return data.principalAccessToStudent.map((access) => {
+      const school = data.student.studentEnrollments.find((enrollment) => enrollment.school.schoolNumber === access.schoolNumber)?.school
+      if (!school) {
+        throw new Error(`School not found for access with school number ${access.schoolNumber}, something wrong here gitt`)
+      }
+      return { accessDisplayName: ACCESS_TYPE_DISPLAY_NAMES[access.type], school, source: access.source }
+    })
   })
 
   type StudentSummaryDetails =
@@ -69,7 +86,7 @@
   })
 
   let accessSchools: SchoolInfo[] = $derived.by(() => {
-    const accessSchools = data.studentAccessInfo.map((access) => {
+    const accessSchools = data.principalAccessToStudent.map((access) => {
       const school = data.student.studentEnrollments.find((enrollment) => enrollment.school.schoolNumber === access.schoolNumber)?.school
       if (!school) {
         throw new Error(`School not found for access with school number ${access.schoolNumber}, something wrong here gitt`)
@@ -88,6 +105,21 @@
 {#key data.student._id} <!-- Re-render entire student page when student-id change -->
   <h1 class="ds-heading student-name" data-size="lg">{data.student.name}</h1>
   <span class="ds-paragraph" data-size="sm">{studentDetails.mainSchool?.name ?? "Ingen hovedskole"} - {studentDetails.mainClassMembership?.classGroup.name || "Ingen aktiv klasse ved hovedskole"}</span>
+
+  <p class="ds-paragraph" data-size="sm" style="margin-top: var(--ds-size-2);">Din tilgang til eleven</p>
+  <div class="access-info">
+    {#each accessInfo as access}
+      <span
+        class="ds-tag"
+        data-variant="default"
+        data-color={access.source === "AUTO" ? "accent" : "brand1"}
+        data-size="md"
+        style="padding-inline-start:var(--ds-size-1)"
+      >
+        {access.accessDisplayName} ved {access.school.name}
+      </span>
+    {/each}
+  </div>
   
   {#if !expandedStudentDetails && (studentSummaryDetails || hasOtherSchoolInfoAndNotConsent)}
     <div class="student-summary">
@@ -139,11 +171,11 @@
   {#if expandedStudentDetails}
     <div class="student-details" transition:slide>
       {#each accessSchools as accessSchool}
-        <ImportantStuff canEdit={canEditStudentImportantStuff(accessSchool.schoolNumber, data.studentAccessInfo)} importantStuff={data.importantStuff.find(importantStuff => importantStuff.school.schoolNumber === accessSchool.schoolNumber) || null} school={accessSchool} studentCheckBoxes={data.studentCheckBoxes} student={data.student} />
+        <ImportantStuff canEdit={canEditStudentImportantStuff(accessSchool.schoolNumber, data.principalAccessToStudent)} importantStuff={data.importantStuff.find(importantStuff => importantStuff.school.schoolNumber === accessSchool.schoolNumber) || null} school={accessSchool} studentCheckBoxes={data.studentCheckBoxes} student={data.student} />
       {/each}
 
       <div class="consent-and-access-container">
-        <DataSharingConsent canEdit={canEditStudentDataSharingConsent(data.studentAccessInfo)} student={data.student} studentDataSharingConsent={data.studentDataSharingConsent} unavailableSchoolDocuments={data.unavailableSchoolDocuments} />
+        <DataSharingConsent canEdit={canEditStudentDataSharingConsent(data.principalAccessToStudent)} student={data.student} studentDataSharingConsent={data.studentDataSharingConsent} unavailableSchoolDocuments={data.unavailableSchoolDocuments} />
         
         <div class="ds-card" data-variant="tinted" data-color="brand2">
           <div class="card-header">
@@ -200,6 +232,12 @@
 <style>
   h1.student-name {
     margin-bottom: 0;
+  }
+
+  .access-info {
+    display: flex;
+    gap: var(--ds-size-2);
+    flex-wrap: wrap;
   }
 
   .student-summary > div, .show-details-container, .student-details {

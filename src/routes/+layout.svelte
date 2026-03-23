@@ -58,7 +58,7 @@
     })
   }
 
-	// TODO: BEDRE SØK (bare ting som vises takk)
+  // TODO: BEDRE SØK (bare ting som vises takk)
 
   let filteredStudents = $derived.by(() => {
     return data.students

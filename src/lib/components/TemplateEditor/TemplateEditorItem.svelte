@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { DocumentCheckboxGroupItem, DocumentContentItem, DocumentRadioGroupItem } from "$lib/types/db/shared-types"
   import DocumentContentItemComponent from "../Document/DocumentContentItem.svelte"
-    import { templateEditorContentItemNames } from "./template-editor-constants";
+  import { templateEditorContentItemNames } from "./template-editor-constants"
 
   type TemplateEditorElementProps = {
     index: number
@@ -44,7 +44,6 @@
     }
     checkboxGroup.items.splice(optionIndex, 1)
   }
-  
 </script>
 
 <!--
