@@ -5,7 +5,7 @@ import { getStudentAccessInfo } from "$lib/server/authorization/student-access"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canEditDocument, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { canEditStudentDocument, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { AccessEntry, FrontendStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
@@ -48,7 +48,7 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
     throw new HTTPError(404, "Document not found, cannot update non-existing document")
   }
 
-  if (!canEditDocument(principal, accessToStudent, currentDocument)) {
+  if (!canEditStudentDocument(principal, accessToStudent, currentDocument)) {
     throw new HTTPError(403, noAccessMessage("No permission to edit the document"))
   }
 

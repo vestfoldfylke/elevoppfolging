@@ -3,7 +3,7 @@ import { getStudentAccessInfo } from "$lib/server/authorization/student-access"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canAddMessageToDocument, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { canAddMessageToStudentDocument, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { AccessEntry, FrontendStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
@@ -94,7 +94,7 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
     throw new HTTPError(404, "Document not found, cannot add message to non-existing document...")
   }
 
-  if (!canAddMessageToDocument(accessToStudent, currentDocument)) {
+  if (!canAddMessageToStudentDocument(accessToStudent, currentDocument)) {
     throw new HTTPError(403, noAccessMessage("No permission to add message to document"))
   }
 

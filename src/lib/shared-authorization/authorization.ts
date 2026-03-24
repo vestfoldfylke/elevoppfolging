@@ -6,15 +6,15 @@ export const isSystemAdmin = (authenticatedPrincipal: AuthenticatedPrincipal, AP
   return authenticatedPrincipal.roles.includes(APP_INFO.ROLES.ADMIN)
 }
 
-export const canAddMessageToDocument = (accessToStudent: AccessEntry[], document: StudentDocument): boolean => {
+export const canAddMessageToStudentDocument = (accessToStudent: AccessEntry[], document: StudentDocument): boolean => {
   return accessToStudent.some((access: AccessEntry) => access.schoolNumber === document.school.schoolNumber)
 }
 
-export const canCreateDocument = (accessToStudent: AccessEntry[], newDocument: DocumentInput): boolean => {
+export const canCreateStudentDocument = (accessToStudent: AccessEntry[], newDocument: DocumentInput): boolean => {
   return accessToStudent.some((access: AccessEntry) => access.schoolNumber === newDocument.school.schoolNumber)
 }
 
-export const canEditDocument = (authenticatedPrincipal: AuthenticatedPrincipal, accessToStudent: AccessEntry[], document: StudentDocument): boolean => {
+export const canEditStudentDocument = (authenticatedPrincipal: AuthenticatedPrincipal, accessToStudent: AccessEntry[], document: StudentDocument): boolean => {
   return document.created.by.entraUserId === authenticatedPrincipal.id && accessToStudent.some((access: AccessEntry) => access.schoolNumber === document.school.schoolNumber)
 }
 

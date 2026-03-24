@@ -4,7 +4,7 @@ import { getStudentAccessInfo } from "$lib/server/authorization/student-access"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canCreateDocument, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { canCreateStudentDocument, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { AccessEntry, FrontendStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
@@ -41,7 +41,7 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
     throw new HTTPError(403, noAccessMessage("No permission to add document"))
   }
 
-  if (!canCreateDocument(accessToStudent, newDocumentData)) {
+  if (!canCreateStudentDocument(accessToStudent, newDocumentData)) {
     throw new HTTPError(403, noAccessMessage("No permission to add document for the specified school"))
   }
 
