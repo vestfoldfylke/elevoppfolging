@@ -130,13 +130,21 @@ export type AccessEntryBase = {
   source: Source
 }
 
-export type SchoolManualAccessEntryInput = {
+export type SchoolLeaderManualAccessEntryInput = {
   /** Hvilken skole gjelder tilgangen for */
   schoolNumber: string
   type: "MANUELL-SKOLELEDER-TILGANG"
 }
 
-export type SchoolManualAccessEntry = AccessEntryBase & SchoolManualAccessEntryInput
+export type SchoolLeaderManualAccessEntry = AccessEntryBase & SchoolLeaderManualAccessEntryInput
+
+export type ManageManualStudentsManualAccessEntryInput = {
+  /** Hvilken skole gjelder tilgangen for */
+  schoolNumber: string
+  type: "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG"
+}
+
+export type ManageManualStudentsManualAccessEntry = AccessEntryBase & ManageManualStudentsManualAccessEntryInput
 
 export type ProgramAreaManualAccessEntryInput = {
   /** Hvilken skole gjelder tilgangen for */
@@ -168,7 +176,12 @@ export type ClassManualAccessEntryInput = {
 
 export type ClassManualAccessEntry = AccessEntryBase & ClassManualAccessEntryInput
 
-export type ManualAccessEntryInput = SchoolManualAccessEntryInput | ProgramAreaManualAccessEntryInput | StudentManualAccessEntryInput | ClassManualAccessEntryInput
+export type ManualAccessEntryInput =
+  | SchoolLeaderManualAccessEntryInput
+  | ManageManualStudentsManualAccessEntryInput
+  | ProgramAreaManualAccessEntryInput
+  | StudentManualAccessEntryInput
+  | ClassManualAccessEntryInput
 
 export type ClassAutoAccessEntry = AccessEntryBase & {
   /** Hvilken skole gjelder tilgangen for */
@@ -197,7 +210,8 @@ export type TeachingGroupAutoAccessEntry = AccessEntryBase & {
 export type NewAccess = {
   entraUserId: string
   name: string
-  schools: SchoolManualAccessEntry[]
+  leaderForSchools: SchoolLeaderManualAccessEntry[]
+  manageManualStudentsForSchools: ManageManualStudentsManualAccessEntry[]
   programAreas: ProgramAreaManualAccessEntry[]
   classes: (ClassAutoAccessEntry | ClassManualAccessEntry)[]
   contactTeacherGroups: ContactTeacherGroupAutoAccessEntry[]

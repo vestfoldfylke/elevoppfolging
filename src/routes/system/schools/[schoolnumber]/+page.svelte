@@ -5,7 +5,6 @@
   import AsyncButton from "$lib/components/AsyncButton.svelte"
   import PageHeader from "$lib/components/PageHeader.svelte"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
-  import type { EditorData, NewSchool, SchoolManualAccessEntry } from "$lib/types/db/shared-types"
   import type { PageProps } from "./$types"
 
   let { data }: PageProps = $props()
@@ -107,7 +106,7 @@
     {/if}
   </div>
 
-  {#each data.schoolLeaderAccess.filter((access) => access.schools.some((school) => school.schoolNumber === currentSchool.schoolNumber)) as schoolLeaderAccess}
+  {#each data.schoolLeaderAccess.filter((access) => access.leaderForSchools.some((school) => school.schoolNumber === currentSchool.schoolNumber)) as schoolLeaderAccess}
     <div class="school-leader-access-entry">
       <p>Skoleleder: {schoolLeaderAccess.name}</p>
       <AsyncButton onClick={() => removeSchoolLeaderAccess(schoolLeaderAccess.entraUserId)} reloadPageDataOnSuccess={true} buttonText="Fjern skoleleder"  iconName="delete" />

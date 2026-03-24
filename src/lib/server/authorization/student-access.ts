@@ -14,7 +14,7 @@ export const getPrincipalAccessEntriesForStudent = (student: CachedFrontendStude
 
   const accessTypesForCurrentStudent: AccessEntry[] = []
 
-  for (const schoolAccess of access.schools) {
+  for (const schoolAccess of access.leaderForSchools) {
     const schoolAccessForCurrentStudent = enrollmentsToCheck.some((enrollment) => {
       return enrollment.school.schoolNumber === schoolAccess.schoolNumber
     })

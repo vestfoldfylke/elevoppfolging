@@ -170,7 +170,7 @@ export class MongoDbClient implements IDbClient {
   async getSchoolLeaderAccess(): Promise<Access[]> {
     const db = await this.getDb()
     const accessCollection = db.collection<DbAccess>(this.accessCollectionName)
-    const accessList = await accessCollection.find({ schools: { $exists: true, $ne: [] } }).toArray()
+    const accessList = await accessCollection.find({ leaderForSchools: { $exists: true, $ne: [] } }).toArray()
     return accessList.map((access) => {
       return {
         ...access,
@@ -195,7 +195,7 @@ export class MongoDbClient implements IDbClient {
     let updateResult: DbAccess | null
     switch (accessEntry.type) {
       case "MANUELL-SKOLELEDER-TILGANG":
-        updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { schools: accessEntry } })
+        updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { leaderForSchools: accessEntry } })
         break
       case "MANUELL-ELEV-TILGANG":
         updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { students: accessEntry } })
@@ -205,6 +205,9 @@ export class MongoDbClient implements IDbClient {
         break
       case "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG":
         updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { programAreas: accessEntry } })
+        break
+      case "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG":
+        updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { manageManualStudentsForSchools: accessEntry } })
         break
       default:
         throw new Error(`Invalid access entry type: ${accessEntry.type}`)
@@ -221,7 +224,10 @@ export class MongoDbClient implements IDbClient {
     let updatedAccess: DbAccess | null
     switch (accessEntry.type) {
       case "MANUELL-SKOLELEDER-TILGANG":
-        updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { schools: { schoolNumber: accessEntry.schoolNumber } } })
+        updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { leaderForSchools: { schoolNumber: accessEntry.schoolNumber } } })
+        break
+      case "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG":
+        updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { manageManualStudentsForSchools: { schoolNumber: accessEntry.schoolNumber } } })
         break
       case "MANUELL-ELEV-TILGANG":
         updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { students: { _id: accessEntry._id, schoolNumber: accessEntry.schoolNumber } } })
@@ -246,6 +252,9 @@ export class MongoDbClient implements IDbClient {
       .find({
         $or: [
           {
+            manageManualStudentsForSchools: { $exists: true, $ne: [], $elemMatch: { schoolNumber } }
+          },
+          {
             programAreas: { $exists: true, $ne: [], $elemMatch: { schoolNumber } }
           },
           {
@@ -262,7 +271,8 @@ export class MongoDbClient implements IDbClient {
         _id: access._id.toString(),
         entraUserId: access.entraUserId,
         name: access.name,
-        schools: [],
+        leaderForSchools: [],
+        manageManualStudentsForSchools: access.manageManualStudentsForSchools.filter((manageManualStudentAccessEntry) => manageManualStudentAccessEntry.schoolNumber === schoolNumber),
         programAreas: access.programAreas.filter((programArea) => programArea.schoolNumber === schoolNumber),
         classes: access.classes.filter((classAccess) => classAccess.type === "MANUELL-KLASSE-TILGANG" && classAccess.schoolNumber === schoolNumber),
         students: access.students.filter((studentAccess) => studentAccess.schoolNumber === schoolNumber),
@@ -324,12 +334,12 @@ export class MongoDbClient implements IDbClient {
     const query: Filter<DbAppStudent> = {}
     query.$or = [] // ts doesn't understand that this is defined, if defined in the object above
 
-    for (const schoolAccessEntry of access.schools) {
+    for (const schoolAccessEntry of access.leaderForSchools) {
       query.$or.push({ "studentEnrollments.school.schoolNumber": schoolAccessEntry.schoolNumber })
     }
 
     const accessEntryNotInSchoolsAccess = (accessEntry: AccessEntry): boolean => {
-      return !access.schools.some((school) => school.schoolNumber === accessEntry.schoolNumber)
+      return !access.leaderForSchools.some((school) => school.schoolNumber === accessEntry.schoolNumber)
     }
 
     const studentAccessEntries = access.students.filter(accessEntryNotInSchoolsAccess)

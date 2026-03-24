@@ -51,7 +51,7 @@ const removeAccess: ApiNextFunction<RemoveAccessResponse, RemoveAccessBody> = as
   // If the same access entry does not exist, we should not remove it
   switch (accessEntryToRemove.type) {
     case "MANUELL-SKOLELEDER-TILGANG":
-      if (!existingAccess.schools.some((s) => s.schoolNumber === accessEntryToRemove.schoolNumber && s.type === "MANUELL-SKOLELEDER-TILGANG")) {
+      if (!existingAccess.leaderForSchools.some((s) => s.schoolNumber === accessEntryToRemove.schoolNumber && s.type === "MANUELL-SKOLELEDER-TILGANG")) {
         throw new HTTPError(400, "Cannot remove access entry that does not exist")
       }
       break

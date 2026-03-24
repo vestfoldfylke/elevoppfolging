@@ -8,7 +8,7 @@ import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canGrantAndRemoveAccessForSchool, isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { AccessEntry, PrincipalAccessStudent } from "$lib/types/app-types"
-import type { ClassGroup, NewAccess } from "$lib/types/db/shared-types"
+import type { Access, ClassGroup, NewAccess } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 import { getClassesFromStudents } from "$lib/utils/classes-from-students"
 
@@ -66,12 +66,15 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
         }
         break
       }
+      case "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG": {
+        break
+      }
       default:
         throw new Error("PROGRAM-OMRÅDE-TILGANG IKKE IMPLEMENTERT ENDA")
     }
   }
 
-  const existingAccess = await dbClient.getPrincipalAccess(entraUserId)
+  const existingAccess: Access | null = await dbClient.getPrincipalAccess(entraUserId)
 
   if (!existingAccess) {
     // Then we create empty
@@ -82,8 +85,9 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
     const newAccess: NewAccess = {
       entraUserId,
       name: appUser.entra.displayName,
-      schools: [],
+      leaderForSchools: [],
       programAreas: [],
+      manageManualStudentsForSchools: [],
       classes: [],
       contactTeacherGroups: [],
       teachingGroups: [],
@@ -94,10 +98,14 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
     // If the same access entry already exists, we should not add it again
     switch (accessEntryInput.type) {
       case "MANUELL-SKOLELEDER-TILGANG":
-        if (existingAccess.schools.some((s) => s.schoolNumber === accessEntryInput.schoolNumber && s.type === "MANUELL-SKOLELEDER-TILGANG")) {
+        if (existingAccess.leaderForSchools.some((s) => s.schoolNumber === accessEntryInput.schoolNumber && s.type === "MANUELL-SKOLELEDER-TILGANG")) {
           throw new HTTPError(400, "Access entry already exists")
         }
-
+        break
+      case "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG":
+        if (existingAccess.manageManualStudentsForSchools.some((s) => s.schoolNumber === accessEntryInput.schoolNumber && s.type === "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG")) {
+          throw new HTTPError(400, "Access entry already exists")
+        }
         break
       case "MANUELL-ELEV-TILGANG":
         if (existingAccess.students.some((s) => s._id === accessEntryInput._id && s.schoolNumber === accessEntryInput.schoolNumber && s.type === "MANUELL-ELEV-TILGANG")) {

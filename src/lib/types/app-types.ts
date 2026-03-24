@@ -10,10 +10,11 @@ import type {
   ContactTeacherGroup,
   ContactTeacherGroupAutoAccessEntry,
   ContactTeacherGroupMembership,
+  ManageManualStudentsManualAccessEntry,
   Period,
   ProgramAreaManualAccessEntry,
   SchoolInfo,
-  SchoolManualAccessEntry,
+  SchoolLeaderManualAccessEntry,
   StudentCheckBox,
   StudentImportantStuff,
   StudentManualAccessEntry,
@@ -44,7 +45,8 @@ export type CachedFrontendStudent = FrontendStudent & {
 }
 
 export type AccessEntry =
-  | SchoolManualAccessEntry
+  | SchoolLeaderManualAccessEntry
+  | ManageManualStudentsManualAccessEntry
   | ProgramAreaManualAccessEntry
   | StudentManualAccessEntry
   | ClassAutoAccessEntry

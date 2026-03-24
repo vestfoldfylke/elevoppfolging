@@ -8,6 +8,7 @@ export const validateAccessEntryInput = (accessEntry: ManualAccessEntryInput): V
 
   switch (accessEntry.type) {
     case "MANUELL-SKOLELEDER-TILGANG":
+    case "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG":
       // No additional fields to validate for this type
       break
     case "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG":
