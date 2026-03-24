@@ -140,15 +140,27 @@ Hvis noen har byttet elevnummer - så kan vi kjøre et api-kall som bytter elevn
 
 
 ## Når man oppretter manuell elev på en gitt skole
+
+For å opprette en manuell elev må du enten være skoleleder eller ha "opprett manuell elev" tilgangen
+
+ny elev- havner i klassen manuelle elever - og legger til accessentry direkte på den eleven for den som opprettet (MANUELL-ELEVTILGANG)
+
+FORM:
 - Skriv inn fnr + navn og etternavn
+- Gyldig FNR (for å hjelpe de å skrive riktig)
+Hjelpetekst - VÆR HEEEELT SIKKER PÅ AT FNR ER KORREKT (skriver du feil kan dette kobles mot feil elev og du får personvern på nakken)
+Merk at dette ikke sjekkes mot freg, og skriv riktig navn og sånn sjæl!
+(må kanskje ha checkbox for adressesperre)
 - send til backend
 
-BACKEND
-- Finnes eleven?
-  - Du får opprette manuelt elevforhold dersom du har super-tilgang (skoleleder)
-  - Hvis ikke => no-go (ta kontakt med skoleleder dersom dette er super-nødvendig)
-- Finnes ikke eleven
-  - Noen flere får lov å opprette
+BACKEND - vi begynner med dette
+- Finnes eleven med et elevforhold som er aktivt?
+  - Feilmld, eleven finnes allerede ved {skole}
+- Eleven finnes ikke
+  - OK
+
 
 I frontend kan skoleleder få lov til å se elever med inaktive elevforhold ved sin skole?
 Kanskje reaktivere manuelle elevforhold hvis det trengs?
+
+TODO - scroll til elementer etter at man har oppdatert shit, eller lukker greier, eller lager greier... husk scroll-margin-top
