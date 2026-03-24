@@ -1,19 +1,21 @@
-import { getStudentAccessInfo } from "$lib/server/authorization/student-access"
+import { getPrincipalAccessEntriesForStudent } from "$lib/server/authorization/student-access"
+import { getStudentAccessInfoFromCache } from "$lib/server/cache/student-access-cache"
+import { getStudentFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
 import { noAccessMessage } from "$lib/shared-authorization/authorization"
-import type { AccessEntry, FrontendStudent, StudentAccess, StudentUnavailableSchoolDocuments } from "$lib/types/app-types"
+import type { AccessEntry, CachedFrontendStudent, StudentAccess, StudentUnavailableSchoolDocuments } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { Access, DocumentContentTemplate, SchoolInfo, StudentDataSharingConsent, StudentDocument, StudentImportantStuff } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
 import type { PageServerLoad } from "./$types"
 
 type StudentPageData = {
-  student: FrontendStudent
+  student: CachedFrontendStudent
   studentDataSharingConsent: StudentDataSharingConsent | null
   importantStuff: StudentImportantStuff[]
-  principalAccessToStudent: AccessEntry[]
+  principalAccessEntriesForStudent: AccessEntry[]
   studentAccessInfo: StudentAccess[]
   documents: StudentDocument[]
   unavailableSchoolDocuments: StudentUnavailableSchoolDocuments[]
@@ -39,18 +41,19 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
     throw new HTTPError(403, noAccessMessage("No access found for principal"))
   }
 
-  const student: FrontendStudent | null = await dbClient.getStudentById(studentId)
+  const student: CachedFrontendStudent | null = await getStudentFromCache(studentId)
   if (!student) {
     throw new HTTPError(404, "Student not found")
   }
 
-  const principalAccessToStudent: AccessEntry[] = await getStudentAccessInfo(student, access)
+  const principalAccessEntriesForStudent: AccessEntry[] = getPrincipalAccessEntriesForStudent(student, access)
 
-  if (principalAccessToStudent.length === 0) {
+  if (principalAccessEntriesForStudent.length === 0) {
     throw new HTTPError(403, noAccessMessage("No access to this student"))
   }
 
-  const accessSchoolsForStudent = principalAccessToStudent.map((accessEntry) => accessEntry.schoolNumber)
+  const accessSchoolsForStudent = principalAccessEntriesForStudent.map((accessEntry) => accessEntry.schoolNumber)
+
   const studentImportantStuff: StudentImportantStuff[] = await dbClient.getStudentImportantStuff(studentId, accessSchoolsForStudent) // Vi henter kun important stuff for skolene brukeren har tilgang til eleven på
 
   const allStudentDocuments: StudentDocument[] = await dbClient.getStudentDocuments(studentId)
@@ -66,7 +69,7 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 
     // Hvis eleven ikke har samtykket til deling, kan vi kun vise dokumenter knyttet til skoler brukeren har tilgang til eleven på
     // Og vi må etterhvert også sjekke at dokumentet er tilgjengelig for DEN tilgangstypen (for eksempel hvis dokumentet ikke er tilgjengelig for faglærere)
-    return principalAccessToStudent.some((accessType) => accessType.schoolNumber === document.school.schoolNumber)
+    return principalAccessEntriesForStudent.some((accessType) => accessType.schoolNumber === document.school.schoolNumber)
   })
 
   const unavailableDocuments = allStudentDocuments.filter((document) => !documents.some((availableDocument) => availableDocument._id === document._id))
@@ -87,15 +90,18 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 
   const documentContentTemplates: DocumentContentTemplate[] = await dbClient.getDocumentContentTemplates({ student: true, group: false })
 
+  const studentAccessInfo: StudentAccess[] = await getStudentAccessInfoFromCache(studentId)
+
   return {
     data: {
       student,
-      principalAccessToStudent: principalAccessToStudent,
+      principalAccessEntriesForStudent,
       importantStuff: studentImportantStuff,
       studentDataSharingConsent,
       documents,
       unavailableSchoolDocuments,
-      documentContentTemplates: documentContentTemplates.sort((a, b) => a.sort - b.sort)
+      documentContentTemplates: documentContentTemplates.sort((a, b) => a.sort - b.sort),
+      studentAccessInfo
     },
     isAuthorized: true
   }

@@ -3,7 +3,7 @@ import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canGrantAndRemoveAccessForSchool, isSchoolLeader, noAccessMessage } from "$lib/shared-authorization/authorization"
-import type { CachedFrontendStudentWithAccessInfo } from "$lib/types/app-types"
+import type { PrincipalAccessStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { AppUser, School } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
@@ -11,7 +11,7 @@ import type { LayoutServerLoad } from "./$types"
 
 type AdministrationAccessLayoutData = {
   accessSchools: School[]
-  accessStudents: CachedFrontendStudentWithAccessInfo[]
+  accessStudents: PrincipalAccessStudent[]
   appUsers: AppUser[]
 }
 
@@ -34,7 +34,7 @@ const getAdministrationAccessData: ServerLoadNextFunction<AdministrationAccessLa
     throw new HTTPError(403, noAccessMessage("No permission to administrate access at any schools"))
   }
 
-  const principalAccessStudents: CachedFrontendStudentWithAccessInfo[] = await getStudentsFromCache(principalAccess)
+  const principalAccessStudents: PrincipalAccessStudent[] = await getStudentsFromCache(principalAccess)
 
   // Only return students that user have school access for
   const accessStudents = principalAccessStudents.filter((student) => student.accessTypes.some((accessType) => accessType.type === "MANUELL-SKOLELEDER-TILGANG"))

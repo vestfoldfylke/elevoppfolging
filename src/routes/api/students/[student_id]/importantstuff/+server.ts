@@ -1,11 +1,13 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { validateStudentImportantStuffData } from "$lib/data-validation/student-important-stuff-validation"
-import { getStudentAccessInfo } from "$lib/server/authorization/student-access"
+import { getPrincipalAccessEntriesForStudent } from "$lib/server/authorization/student-access"
+import { getStudentFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canEditStudentImportantStuff, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
+import type { CachedFrontendStudent } from "$lib/types/app-types"
 import type { EditorData, NewStudentImportantStuff, StudentImportantStuffInput } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
@@ -26,12 +28,12 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
     throw new HTTPError(403, noAccessMessage("No access found for principal"))
   }
 
-  const currentStudent = await dbClient.getStudentById(studentId)
+  const currentStudent: CachedFrontendStudent | null = await getStudentFromCache(studentId)
   if (!currentStudent) {
     throw new HTTPError(404, "Student not found, cannot consent to non-existing student")
   }
 
-  const accessInfo = getStudentAccessInfo(currentStudent, principalAccess)
+  const accessInfo = getPrincipalAccessEntriesForStudent(currentStudent, principalAccess)
   if (accessInfo.length === 0) {
     throw new HTTPError(403, noAccessMessage("No permission to student"))
   }

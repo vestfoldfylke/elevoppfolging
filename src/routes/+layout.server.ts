@@ -4,8 +4,8 @@ import { getStudentsFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
-import type { CachedFrontendStudentWithAccessInfo, FrontendOverviewStudent, RootLayoutData } from "$lib/types/app-types"
-import type { Access, StudentDataSharingConsent, StudentImportantStuff } from "$lib/types/db/shared-types"
+import type { FrontendOverviewStudent, PrincipalAccessStudent, RootLayoutData } from "$lib/types/app-types"
+import type { Access, SchoolInfo, StudentDataSharingConsent, StudentImportantStuff } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
 import type { LayoutServerLoad } from "./$types"
 
@@ -15,14 +15,15 @@ const layoutLoad: ServerLoadNextFunction<RootLayoutData> = async ({ principal })
   const principalAccess: Access | null = await dbClient.getPrincipalAccess(principal.id)
 
   if (!principalAccess) {
-    logger.warn(`No access entry found for user ${principal.id}, quick return`)
+    logger.info(`No access entry found for user ${principal.id}, but appearantly have access through entra, quick return with no students or schools or anything`)
     return {
       data: {
         authenticatedPrincipal: principal,
         APP_INFO,
         principalAccess,
         studentCheckBoxes: [],
-        students: []
+        students: [],
+        schools: []
       },
       isAuthorized: true
     }
@@ -30,7 +31,7 @@ const layoutLoad: ServerLoadNextFunction<RootLayoutData> = async ({ principal })
 
   logger.info("NÅ HENTER JEG ELEVER") // TODO - indexer på felter, drit i å sjekke date.. Det kan vi ta i egen logikk (getStudentAccessInfo)
   const now = Date.now()
-  const studentsWithAccessInfo: CachedFrontendStudentWithAccessInfo[] = await getStudentsFromCache(principalAccess)
+  const studentsWithAccessInfo: PrincipalAccessStudent[] = await getStudentsFromCache(principalAccess)
   const timeTaken = Date.now() - now
   logger.info(`Fant ${studentsWithAccessInfo.length} elever - brukte ${timeTaken / 1000} sekunder`)
 
@@ -92,15 +93,8 @@ const layoutLoad: ServerLoadNextFunction<RootLayoutData> = async ({ principal })
       _id: student._id,
       feideName: student.feideName,
       name: student.name,
-      created: student.created,
-      modified: student.modified,
-      studentNumber: student.studentNumber,
-      systemId: student.systemId,
-      mainSchool: student.mainSchool,
-      mainClassMembership: student.mainClassMembership,
-      mainContactTeacherGroupMembership: student.mainContactTeacherGroupMembership,
-      additionalSchools: student.additionalSchools,
       source: student.source,
+      enrollmentsWithinViewAccessWindow: student.enrollmentsWithinViewAccessWindow,
       dataSharingConsent: sharingConsentByStudentId[student._id]?.consent || false,
       importantStuff: [],
       lastActivityTimestamp
@@ -125,13 +119,22 @@ const layoutLoad: ServerLoadNextFunction<RootLayoutData> = async ({ principal })
   const studentCheckBoxes = await dbClient.getStudentCheckBoxes()
   logger.info(`Found ${studentCheckBoxes.length} student check boxes`)
 
+  logger.info("Fetching schools")
+  const schoolsFromDb = await dbClient.getSchools()
+  const schoolsInfo: SchoolInfo[] = schoolsFromDb.map((school) => ({
+    name: school.name,
+    schoolNumber: school.schoolNumber
+  }))
+  logger.info(`Found ${schoolsFromDb.length} schools`)
+
   return {
     data: {
       authenticatedPrincipal: principal,
       APP_INFO,
       principalAccess,
       studentCheckBoxes,
-      students: overviewStudents
+      students: overviewStudents,
+      schools: schoolsInfo
     },
     isAuthorized: true
   }

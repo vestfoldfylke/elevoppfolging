@@ -7,6 +7,8 @@
   import "../style.css" // Add global css (and make it hot reload)
   import { page } from "$app/state"
   import AppHeader from "$lib/components/AppHeader.svelte"
+  import type { FrontendOverviewStudent, FrontendStudentMainDetails } from "$lib/types/app-types.js"
+  import { getFrontendStudentMainDetails } from "$lib/utils/frontend-student-details.js"
   import type { LayoutProps } from "./$types.js"
 
   let { data, children }: LayoutProps = $props()
@@ -58,10 +60,17 @@
     })
   }
 
-  // TODO: BEDRE SØK (bare ting som vises takk)
+  let students: (FrontendOverviewStudent & FrontendStudentMainDetails)[] = $derived.by(() =>
+    data.students.map((student) => {
+      return {
+        ...student,
+        ...getFrontendStudentMainDetails(student.enrollmentsWithinViewAccessWindow)
+      }
+    })
+  )
 
   let filteredStudents = $derived.by(() => {
-    return data.students
+    return students
       .filter((student) => {
         const searchFilters: Record<string, boolean> = {
           matchesImportantInfo: !filters.importantInfo || student.importantStuff.some((importantStuff) => importantStuff.importantInfo && importantStuff.importantInfo.trim() !== "")
@@ -72,11 +81,8 @@
         })
 
         const matchesName = !searchTerms.name || student.name.toLowerCase().includes(searchTerms.name.toLowerCase())
-        const matchesClass = !searchTerms.class || student.mainClassMembership?.classGroup?.name.toLowerCase().includes(searchTerms.class.toLowerCase()) || false
-        const matchesTeacher =
-          !searchTerms.teacher ||
-          student.mainContactTeacherGroupMembership?.contactTeacherGroup?.teachers.some((teacher) => teacher.name.toLowerCase().includes(searchTerms.teacher.toLowerCase())) ||
-          false
+        const matchesClass = !searchTerms.class || student.mainClass?.name.toLowerCase().includes(searchTerms.class.toLowerCase()) || false
+        const matchesTeacher = !searchTerms.teacher || student.mainContactTeacherGroup?.teachers.some((teacher) => teacher.name.toLowerCase().includes(searchTerms.teacher.toLowerCase())) || false
 
         return matchesName && matchesClass && matchesTeacher && Object.values(searchFilters).every((filter) => filter)
       })
@@ -85,12 +91,10 @@
           case "name":
             return sortDirection === "ascending" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
           case "class":
-            return sortDirection === "ascending"
-              ? (a.mainClassMembership?.classGroup?.name || "").localeCompare(b.mainClassMembership?.classGroup?.name || "")
-              : (b.mainClassMembership?.classGroup?.name || "").localeCompare(a.mainClassMembership?.classGroup?.name || "")
+            return sortDirection === "ascending" ? (a.mainClass?.name || "").localeCompare(b.mainClass?.name || "") : (b.mainClass?.name || "").localeCompare(a.mainClass?.name || "")
           case "teacher": {
-            const aTeachers = a.mainContactTeacherGroupMembership?.contactTeacherGroup?.teachers.map((t) => t.name).join(", ") || ""
-            const bTeachers = b.mainContactTeacherGroupMembership?.contactTeacherGroup?.teachers.map((t) => t.name).join(", ") || ""
+            const aTeachers = a.mainContactTeacherGroup?.teachers.map((t) => t.name).join(", ") || ""
+            const bTeachers = b.mainContactTeacherGroup?.teachers.map((t) => t.name).join(", ") || ""
             return sortDirection === "ascending" ? aTeachers.localeCompare(bTeachers) : bTeachers.localeCompare(aTeachers)
           }
           case "lastActivity": {
@@ -190,8 +194,8 @@
 							{#each filteredStudents.slice(0, 100) as student}
 								<tr>
 									<td><a class="ds-link" href={`/students/${student._id}`}>{student.name}</a></td>
-									<td class="desktop-only">{student.mainClassMembership?.classGroup.name || "Ukjent klasse"}<br/><span class="school-name">{student.mainSchool?.name || "N/A"}</span></td>
-									<td class="desktop-only">{student.mainContactTeacherGroupMembership?.contactTeacherGroup.teachers[0]?.name || "Ingen kontaktlærer"}</td>
+									<td class="desktop-only">{student.mainClass?.name || "Ukjent klasse"}<br/><span class="school-name">{student.mainSchool?.name || "N/A"}</span></td>
+									<td class="desktop-only">{student.mainContactTeacherGroup?.teachers[0]?.name || "Ingen kontaktlærer"}</td>
 									<td class="desktop-only">{student.lastActivityTimestamp?.toLocaleString("no-NB", { dateStyle: 'short', timeStyle: 'short' }) || "Ingen aktivitet"}</td>
 								</tr>
 							{/each}

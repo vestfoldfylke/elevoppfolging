@@ -138,7 +138,7 @@
         <li>
           {appUser.name} ({appUser.entraUserId})
         </li>
-        <AsyncButton onClick={() => removeManualAccessEntry(appUser.entraUserId, appUser.accessEntry)} reloadPageDataOnSuccess={true} buttonText="Fjern tilgang" classList={["danger", "filled"]} iconName="delete" />
+        <AsyncButton onClick={() => removeManualAccessEntry(appUser.entraUserId, appUser.accessEntry)} reloadPageDataOnSuccess={true} buttonText="Fjern tilgang" iconName="delete" />
       {/each}
     </ul>
   {/each}
@@ -151,7 +151,7 @@
         <li>
           {appUser.name} ({appUser.entraUserId})
         </li>
-        <AsyncButton onClick={() => removeManualAccessEntry(appUser.entraUserId, appUser.accessEntry)} reloadPageDataOnSuccess={true} buttonText="Fjern tilgang" classList={["danger", "filled"]} iconName="delete" />
+        <AsyncButton onClick={() => removeManualAccessEntry(appUser.entraUserId, appUser.accessEntry)} reloadPageDataOnSuccess={true} buttonText="Fjern tilgang" iconName="delete" />
       {/each}
     </ul>
   {/each}
@@ -206,7 +206,7 @@
       {/if}
     </form>
 
-    <AsyncButton onClick={addManualAccessEntry} reloadPageDataOnSuccess={true} buttonText="Legg til tilgang" classList={["filled"]} iconName="add" />
+    <AsyncButton onClick={addManualAccessEntry} reloadPageDataOnSuccess={true} buttonText="Legg til tilgang"  iconName="add" />
 
   </div>
 </div>

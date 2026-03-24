@@ -38,6 +38,18 @@ export const updateAppUserCache = async () => {
   console.log("memory used", process.memoryUsage().heapUsed / 1024 / 1024, "MB")
 }
 
+const updateAppUserCacheInBackgroundIfExpired = () => {
+  // IF cache is too old, update it in the background
+  const now = new Date()
+  const cacheAgeMinutes = appUserCache.updated ? (now.getTime() - appUserCache.updated.getTime()) / 1000 / 60 : null
+  if (!cacheAgeMinutes || cacheAgeMinutes > APP_INFO.APP_USER_CACHE_MAX_AGE_MINUTES) {
+    logger.info(`App users cache is ${cacheAgeMinutes} minutes old, requesting update in background`)
+    updateAppUserCache().catch((error) => {
+      logger.errorException(error, "Error updating app users cache, application is probably unusable until this is fixed")
+    })
+  }
+}
+
 /**
  *
  * returns student available based on the access parameter
@@ -49,23 +61,19 @@ export const getAppUsersFromCache = async (): Promise<CachedAppUser[]> => {
   if (!appUserCache.updated || appUserCache.users.length === 0) {
     logger.info("App users cache is empty, populating cache before returning users, user will have to wait...")
     await updateAppUserCache()
-    return appUserCache.users
-  }
-
-  // IF cache is too old, update it in the background but return the old cache for now
-  const now = new Date()
-  const cacheAgeMinutes = (now.getTime() - appUserCache.updated.getTime()) / 1000 / 60
-  if (cacheAgeMinutes > APP_INFO.APP_USER_CACHE_MAX_AGE_MINUTES) {
-    logger.info(`App users cache is ${cacheAgeMinutes} minutes old, requesting update in background`)
-    updateAppUserCache().catch((error) => {
-      logger.errorException(error, "Error updating app users cache, application is probably unusable until this is fixed")
-    })
+  } else {
+    updateAppUserCacheInBackgroundIfExpired()
   }
 
   return appUserCache.users
 }
 
 export const getAppUserFromCache = async (entraUserId: string): Promise<CachedAppUser | undefined> => {
-  const users = await getAppUsersFromCache()
-  return users.find((user) => user.entra.id === entraUserId)
+  if (!appUserCache.updated || appUserCache.users.length === 0) {
+    logger.info("App users cache is empty, populating cache before returning user, user will have to wait...")
+    await updateAppUserCache()
+  } else {
+    updateAppUserCacheInBackgroundIfExpired()
+  }
+  return appUserCache.users.find((user) => user.entra.id === entraUserId)
 }

@@ -6,9 +6,11 @@
   import DataSharingConsent from "$lib/components/StudentBoxes/DataSharingConsent.svelte"
   import ImportantStuff from "$lib/components/StudentBoxes/ImportantStuff.svelte"
   import { canEditStudentDataSharingConsent, canEditStudentImportantStuff } from "$lib/shared-authorization/authorization"
+  import type { StudentAccess } from "$lib/types/app-types"
   import type { SchoolInfo, Source } from "$lib/types/db/shared-types"
   import { ACCESS_TYPE_DISPLAY_NAMES } from "$lib/utils/access-constants"
-  import { getFrontendStudentDetails } from "$lib/utils/frontend-student-details"
+  import { getFrontendStudentMainDetails } from "$lib/utils/frontend-student-details"
+  import { getPeriodDetails } from "$lib/utils/period"
   import type { PageProps } from "./$types"
 
   let { data }: PageProps = $props()
@@ -25,8 +27,12 @@
     }
   }
 
-  let studentDetails = $derived.by(() => {
-    return getFrontendStudentDetails(data.student, data.APP_INFO)
+  let studentMainDetails = $derived.by(() => {
+    return getFrontendStudentMainDetails(data.student.enrollmentsWithinViewAccessWindow)
+  })
+
+  let additionalSchool: SchoolInfo[] = $derived.by(() => {
+    return data.student.enrollmentsWithinViewAccessWindow.filter((enrollment) => !enrollment.mainSchool).map((enrollment) => enrollment.school)
   })
 
   type AccessInfo = {
@@ -35,13 +41,29 @@
     source: Source
   }
 
-  let accessInfo: AccessInfo[] = $derived.by(() => {
-    return data.principalAccessToStudent.map((access) => {
-      const school = data.student.studentEnrollments.find((enrollment) => enrollment.school.schoolNumber === access.schoolNumber)?.school
+  let principalAccessEntriesForStudent: AccessInfo[] = $derived.by(() => {
+    return data.principalAccessEntriesForStudent.map((access) => {
+      const school = data.student.enrollmentsWithinViewAccessWindow.find((enrollment) => enrollment.school.schoolNumber === access.schoolNumber)?.school
       if (!school) {
         throw new Error(`School not found for access with school number ${access.schoolNumber}, something wrong here gitt`)
       }
       return { accessDisplayName: ACCESS_TYPE_DISPLAY_NAMES[access.type], school, source: access.source }
+    })
+  })
+
+  let studentAccessPersons: (StudentAccess & { accessInfo: AccessInfo[] })[] = $derived.by(() => {
+    return data.studentAccessInfo.map((access) => {
+      const accessInfo = access.accessTypes.map((accessType) => {
+        const school = data.student.enrollmentsWithinViewAccessWindow.find((enrollment) => enrollment.school.schoolNumber === accessType.schoolNumber)?.school
+        if (!school) {
+          throw new Error(`School not found for access with school number ${accessType.schoolNumber}, something wrong here gitt`)
+        }
+        return { accessDisplayName: ACCESS_TYPE_DISPLAY_NAMES[accessType.type], school, source: accessType.source }
+      })
+      return {
+        ...access,
+        accessInfo
+      }
     })
   })
 
@@ -54,7 +76,7 @@
     | undefined
 
   let studentSummaryDetails: StudentSummaryDetails = $derived.by(() => {
-    const importantStuffToUse = data.importantStuff.find((importantStuff) => importantStuff.school.schoolNumber === studentDetails.mainSchool?.schoolNumber) || data.importantStuff[0] || null
+    const importantStuffToUse = data.importantStuff.find((importantStuff) => importantStuff.school.schoolNumber === studentMainDetails.mainSchool?.schoolNumber) || data.importantStuff[0] || null
     if (!importantStuffToUse) {
       return undefined
     }
@@ -81,13 +103,17 @@
     return { importantInfo, facilitation, followUp }
   })
 
+  let additionalSchools: SchoolInfo[] = $derived.by(() => {
+    return data.student.enrollmentsWithinViewAccessWindow.filter((enrollment) => !enrollment.mainSchool).map((enrollment) => enrollment.school)
+  })
+
   let hasOtherSchoolInfoAndNotConsent = $derived.by(() => {
-    return (data.unavailableSchoolDocuments.length > 0 || studentDetails.additionalSchools.length > 0) && !data.studentDataSharingConsent?.consent
+    return (data.unavailableSchoolDocuments.length > 0 || additionalSchools.length > 0) && !data.studentDataSharingConsent?.consent
   })
 
   let accessSchools: SchoolInfo[] = $derived.by(() => {
-    const accessSchools = data.principalAccessToStudent.map((access) => {
-      const school = data.student.studentEnrollments.find((enrollment) => enrollment.school.schoolNumber === access.schoolNumber)?.school
+    const accessSchools = data.principalAccessEntriesForStudent.map((access) => {
+      const school = data.schools.find((school) => school.schoolNumber === access.schoolNumber)
       if (!school) {
         throw new Error(`School not found for access with school number ${access.schoolNumber}, something wrong here gitt`)
       }
@@ -100,15 +126,31 @@
 
     return accessSchools
   })
+
+  let studentEnrollments = $derived.by(() => {
+    const withinViewWindowEnrollments = []
+    for (const studentEnrollment of data.student.studentEnrollments) {
+      const periodDetails = getPeriodDetails(studentEnrollment.period, data.APP_INFO)
+      if (!periodDetails.active && !periodDetails.withinViewAccessWindow) {
+        continue
+      }
+      const enrollment = {
+        school: studentEnrollment.school,
+        period: periodDetails,
+        classes: [],
+        teachingGroups: []
+      }
+    }
+  })
 </script>
 
 {#key data.student._id} <!-- Re-render entire student page when student-id change -->
   <h1 class="ds-heading student-name" data-size="lg">{data.student.name}</h1>
-  <span class="ds-paragraph" data-size="sm">{studentDetails.mainSchool?.name ?? "Ingen hovedskole"} - {studentDetails.mainClassMembership?.classGroup.name || "Ingen aktiv klasse ved hovedskole"}</span>
+  <span class="ds-paragraph" data-size="sm">{studentMainDetails.mainSchool?.name ?? "Ingen hovedskole"} - {studentMainDetails.mainClass?.name || "Ingen aktiv klasse ved hovedskole"}</span>
 
   <p class="ds-paragraph" data-size="sm" style="margin-top: var(--ds-size-2);">Din tilgang til eleven</p>
   <div class="access-info">
-    {#each accessInfo as access}
+    {#each principalAccessEntriesForStudent as access}
       <span
         class="ds-tag"
         data-variant="default"
@@ -156,8 +198,8 @@
         <div>
           <p class="ds-paragraph">
             Eleven har ikke gitt samtykke til deling av data på tvers av skoler. 
-            {#if studentDetails.additionalSchools.length > 0}
-              Eleven har også elevforhold ved {studentDetails.additionalSchools.map(school => school.name).join(", ")}.
+            {#if additionalSchool.length > 0}
+              Eleven har også elevforhold ved {additionalSchool.map(school => school.name).join(", ")}.
             {/if}
             {#if data.unavailableSchoolDocuments.length > 0}
               Det finnes notater fra andre skoler som ikke er tilgjengelig for deg.
@@ -171,11 +213,11 @@
   {#if expandedStudentDetails}
     <div class="student-details" transition:slide>
       {#each accessSchools as accessSchool}
-        <ImportantStuff canEdit={canEditStudentImportantStuff(accessSchool.schoolNumber, data.principalAccessToStudent)} importantStuff={data.importantStuff.find(importantStuff => importantStuff.school.schoolNumber === accessSchool.schoolNumber) || null} school={accessSchool} studentCheckBoxes={data.studentCheckBoxes} student={data.student} />
+        <ImportantStuff canEdit={canEditStudentImportantStuff(accessSchool.schoolNumber, data.principalAccessEntriesForStudent)} importantStuff={data.importantStuff.find(importantStuff => importantStuff.school.schoolNumber === accessSchool.schoolNumber) || null} school={accessSchool} studentCheckBoxes={data.studentCheckBoxes} student={data.student} />
       {/each}
 
       <div class="consent-and-access-container">
-        <DataSharingConsent canEdit={canEditStudentDataSharingConsent(data.principalAccessToStudent)} student={data.student} studentDataSharingConsent={data.studentDataSharingConsent} unavailableSchoolDocuments={data.unavailableSchoolDocuments} />
+        <DataSharingConsent canEdit={canEditStudentDataSharingConsent(data.principalAccessEntriesForStudent)} student={data.student} studentDataSharingConsent={data.studentDataSharingConsent} unavailableSchoolDocuments={data.unavailableSchoolDocuments} />
         
         <div class="ds-card" data-variant="tinted" data-color="brand2">
           <div class="card-header">
@@ -185,10 +227,33 @@
             </div>
           </div>
           <div>
-            Kommer etterhvert
+            <ul class="ds-list">
+              {#each studentAccessPersons as studentAccess}
+                <li>
+                  {studentAccess.entra.displayName}
+                  {#each studentAccess.accessInfo as accessInfo}
+                    <span class="ds-tag" data-variant="outline" data-color={accessInfo.source === "AUTO" ? "accent" : "brand1"} data-size="xs" style="margin-left: var(--ds-size-1)">{accessInfo.accessDisplayName} ved {accessInfo.school.name}</span>
+                  {/each}
+                </li>
+              {/each}
+            </ul>
           </div>
         </div>
       </div>
+
+      {#each data.student.studentEnrollments as enrollment}
+        <div class="ds-card" data-variant="tinted" data-color="brand3">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="material-symbols-outlined">info</span>
+              <h2 class="ds-heading" data-size="sm">Elevforhold ved {enrollment.school.name}</h2>
+            </div>
+          </div>
+          <div>
+
+          </div>
+        </div>
+      {/each}
     </div>
   {/if}
 
@@ -221,7 +286,7 @@
       <p>Ingen notater her</p>
     {:else}
       {#each data.documents as document (document._id)}
-        <DocumentComponent {document} {accessSchools} />
+        <DocumentComponent {document} principalAccessEntriesForStudent={data.principalAccessEntriesForStudent} />
       {/each}
     {/if}
 

@@ -1,7 +1,7 @@
 import { logger } from "@vestfoldfylke/loglady"
 import { type Db, type Filter, MongoClient, ObjectId, type WithId } from "mongodb"
 import { env } from "$env/dynamic/private"
-import type { AccessEntry, FrontendStudent } from "$lib/types/app-types"
+import type { AccessEntry, FrontendStudent, StudentMemberships } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { KeysToNumber } from "$lib/types/db/db-helpers"
 import type {
@@ -41,6 +41,7 @@ import type {
   StudentDocumentUpdate,
   StudentImportantStuff
 } from "$lib/types/db/shared-types"
+import { APP_INFO } from "../app-info"
 
 export class MongoDbClient implements IDbClient {
   private readonly mongoClient: MongoClient
@@ -302,7 +303,13 @@ export class MongoDbClient implements IDbClient {
       studentEnrollments: 1
     }
 
-    const students = await studentsCollection.find<FrontendStudent>({}, { projection }).toArray()
+    const endDateMustBeAfter = new Date()
+    endDateMustBeAfter.setDate(endDateMustBeAfter.getDate() - APP_INFO.STUDENT_ACCESS_AFTER_EXPIRE_DAYS)
+
+    // Get all students that has an enrollment with end date after the today minus STUDENT_ACCESS_AFTER_EXPIRE_DAYS, or no end date at all (active enrollments)
+    const students = await studentsCollection
+      .find<FrontendStudent>({ $or: [{ "studentEnrollments.period.end": { $eq: null } }, { "studentEnrollments.period.end": { $gte: endDateMustBeAfter } }] }, { projection })
+      .toArray()
 
     return students.map((student) => ({
       ...student,
@@ -429,6 +436,38 @@ export class MongoDbClient implements IDbClient {
       modified: student.modified,
       source: student.source
     }
+  }
+
+  async getStudentAccess(studentId: string, studentMemberships: StudentMemberships): Promise<Access[]> {
+    const db = await this.getDb()
+    const accessCollection = db.collection<DbAccess>(this.accessCollectionName)
+
+    const query: Filter<DbAccess> = {
+      $or: [
+        { "schools.schoolNumber": { $in: studentMemberships.schoolNumbers } },
+        { classes: { $elemMatch: { schoolNumber: { $in: studentMemberships.classes.map((c) => c.schoolNumber) }, systemId: { $in: studentMemberships.classes.map((c) => c.systemId) } } } },
+        {
+          contactTeacherGroups: {
+            $elemMatch: { schoolNumber: { $in: studentMemberships.contactTeacherGroups.map((c) => c.schoolNumber) }, systemId: { $in: studentMemberships.contactTeacherGroups.map((c) => c.systemId) } }
+          }
+        },
+        {
+          teachingGroups: {
+            $elemMatch: { schoolNumber: { $in: studentMemberships.teachingGroups.map((c) => c.schoolNumber) }, systemId: { $in: studentMemberships.teachingGroups.map((c) => c.systemId) } }
+          }
+        },
+        { students: { $elemMatch: { _id: new ObjectId(studentId) } } }
+      ]
+    }
+
+    const accessList = await accessCollection.find(query).toArray()
+
+    return accessList.map((access) => {
+      return {
+        ...access,
+        _id: access._id.toString()
+      }
+    })
   }
 
   async getStudentDocuments(studentId: string): Promise<StudentDocument[]> {

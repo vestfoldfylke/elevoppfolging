@@ -1,13 +1,14 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
 import { validateDocument } from "$lib/data-validation/document-validation"
-import { getStudentAccessInfo } from "$lib/server/authorization/student-access"
+import { getPrincipalAccessEntriesForStudent } from "$lib/server/authorization/student-access"
+import { getStudentFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canEditStudentDocument, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { AccessEntry, FrontendStudent } from "$lib/types/app-types"
+import type { AccessEntry, CachedFrontendStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { Access, EditorData, StudentDocumentUpdate } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -33,12 +34,12 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
     throw new HTTPError(403, noAccessMessage("No access found for principal"))
   }
 
-  const student: FrontendStudent | null = await dbClient.getStudentById(studentId)
+  const student: CachedFrontendStudent | null = await getStudentFromCache(studentId)
   if (!student) {
     throw new HTTPError(400, "Student not found. Cannot edit the document for non-existing student.")
   }
 
-  const accessToStudent: AccessEntry[] = getStudentAccessInfo(student, access)
+  const accessToStudent: AccessEntry[] = getPrincipalAccessEntriesForStudent(student, access)
   if (accessToStudent.length === 0) {
     throw new HTTPError(403, noAccessMessage("No permission to edit the document"))
   }

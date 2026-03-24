@@ -7,7 +7,7 @@ import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canGrantAndRemoveAccessForSchool, isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { AccessEntry, CachedFrontendStudentWithAccessInfo } from "$lib/types/app-types"
+import type { AccessEntry, PrincipalAccessStudent } from "$lib/types/app-types"
 import type { ClassGroup, NewAccess } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 import { getClassesFromStudents } from "$lib/utils/classes-from-students"
@@ -45,7 +45,7 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
       throw new HTTPError(403, noAccessMessage("No permission to handle access for this school"))
     }
 
-    const principalAccessStudents: CachedFrontendStudentWithAccessInfo[] = await getStudentsFromCache(principalAccess)
+    const principalAccessStudents: PrincipalAccessStudent[] = await getStudentsFromCache(principalAccess)
     const principalClasses: (ClassGroup & { schoolNumber: string })[] = getClassesFromStudents(principalAccessStudents)
 
     // Check also that the principal has access to the specific program area, class or student if the access entry is for those types

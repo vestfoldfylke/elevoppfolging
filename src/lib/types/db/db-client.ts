@@ -1,4 +1,4 @@
-import type { AccessEntry, FrontendStudent } from "../app-types.js"
+import type { AccessEntry, FrontendStudent, StudentMemberships } from "../app-types.js"
 import type {
   Access,
   AppUser,
@@ -45,6 +45,8 @@ export interface IDbClient {
   getAllStudents(): Promise<FrontendStudent[]>
   getStudents(access: Access): Promise<FrontendStudent[]>
   getStudentById(studentId: string): Promise<FrontendStudent | null>
+
+  getStudentAccess(studentId: string, studentMemberships: StudentMemberships): Promise<Access[]>
 
   getStudentDocuments(studentId: string): Promise<StudentDocument[]>
   getStudentDocumentById(documentId: string): Promise<StudentDocument | null>

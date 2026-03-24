@@ -100,15 +100,15 @@
       </label>
     </form>
     {#if !checkBox._id}
-      <AsyncButton onClick={createStudentCheckBox} buttonText="Opprett" iconName="add" classList={["filled"]} reloadPageDataOnSuccess={true} {callBackAfterReloadPageData} />
+      <AsyncButton onClick={createStudentCheckBox} buttonText="Opprett" iconName="add" reloadPageDataOnSuccess={true} {callBackAfterReloadPageData} />
     {:else}
-      <AsyncButton onClick={updateStudentCheckBox} buttonText="Lagre endringer" iconName="save" classList={["filled"]} reloadPageDataOnSuccess={true} {callBackAfterReloadPageData} />
+      <AsyncButton onClick={updateStudentCheckBox} buttonText="Lagre endringer" iconName="save" reloadPageDataOnSuccess={true} {callBackAfterReloadPageData} />
     {/if}
     <button onclick={() => { editMode = false; if (callBackOnCancel) callBackOnCancel(); }}>Avbryt</button>
   {:else}
     <p><strong>{checkBox.value}</strong>{!checkBox.enabled ? " - Deaktivert (skjult)" : ""}</p>
     <button onclick={() => editMode = true}><span class="material-symbols-outlined">edit</span>Rediger</button>
-    <AsyncButton onClick={deleteStudentCheckBox} buttonText="Slett" iconName="delete" classList={["filled", "danger"]} reloadPageDataOnSuccess={true} {callBackAfterReloadPageData} />
+    <AsyncButton onClick={deleteStudentCheckBox} buttonText="Slett" iconName="delete" reloadPageDataOnSuccess={true} {callBackAfterReloadPageData} />
   {/if}
 </div>
 
