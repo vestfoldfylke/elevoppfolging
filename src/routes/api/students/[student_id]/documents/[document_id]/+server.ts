@@ -48,7 +48,7 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
     throw new HTTPError(404, "Document not found, cannot update non-existing document")
   }
 
-  if (!canEditDocument(principal, currentDocument)) {
+  if (!canEditDocument(principal, accessToStudent, currentDocument)) {
     throw new HTTPError(403, noAccessMessage("No permission to edit the document"))
   }
 
