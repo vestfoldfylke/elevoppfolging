@@ -66,11 +66,13 @@
   })
 
   let manageManualStudentsAccessEntries = $derived.by(() => {
-    return data.manualAccessForSchool.filter(access => access.manageManualStudentsForSchools.some(school => school.schoolNumber === currentSchool.schoolNumber)).map(access => ({
-      entraUserId: access.entraUserId,
-      name: access.name, // TODO - sikkert bedre å hente fra appusers
-      accessEntry: { type: "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG", schoolNumber: currentSchool.schoolNumber }
-    }))
+    return data.manualAccessForSchool
+      .filter((access) => access.manageManualStudentsForSchools.some((school) => school.schoolNumber === currentSchool.schoolNumber))
+      .map((access) => ({
+        entraUserId: access.entraUserId,
+        name: access.name, // TODO - sikkert bedre å hente fra appusers
+        accessEntry: { type: "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG", schoolNumber: currentSchool.schoolNumber }
+      }))
   })
 
   let addAccessOpen = $state(false)
