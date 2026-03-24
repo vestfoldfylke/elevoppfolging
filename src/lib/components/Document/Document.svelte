@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tick } from "svelte"
   import { page } from "$app/state"
-  import { canEditDocument } from "$lib/shared-authorization/authorization"
+  import { canEditStudentDocument } from "$lib/shared-authorization/authorization"
   import type { DocumentInput, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
   import { prettifyDateTime } from "$lib/utils/prettify-date"
   import DocumentContent from "./DocumentContentItem.svelte"
@@ -77,7 +77,7 @@
         <DocumentEditor documentId={document._id} studentId={document.student._id} bind:currentDocument={editableDocument} accessSchools={accessSchools} closeEditor={() => { editMode = false; editableDocument = editableDocumentFromDocument(); }} />
       {/if}
       <div class="document-actions">
-        {#if !editMode && canEditDocument(page.data.authenticatedPrincipal, document)}
+        {#if !editMode && canEditStudentDocument(page.data.authenticatedPrincipal, document)}
           <button class="ds-button" data-variant="secondary" onclick={() => editMode = !editMode}>
             <span class="material-symbols-outlined">{editMode ? "close" : "edit"}</span>{editMode ? "Lukk redigering" : "Rediger"}
           </button>

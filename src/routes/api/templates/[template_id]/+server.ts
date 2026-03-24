@@ -1,7 +1,9 @@
 import type { RequestHandler } from "@sveltejs/kit"
+import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
+import { isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { EditorData, NewDocumentContentTemplate } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -19,7 +21,9 @@ const updateDocumentContentTemplate: ApiNextFunction<UpdateDocumentContentTempla
   const updateTemplateData: UpdateDocumentContentTemplateBody = body
   // TODO validate body
 
-  // TODO authorization check if principal has access to create template
+  if (!isSystemAdmin(principal, APP_INFO)) {
+    throw new HTTPError(403, noAccessMessage("No permission to update template"))
+  }
 
   const dbClient = getDbClient()
   const currentTemplate = await dbClient.getDocumentContentTemplateById(templateId)

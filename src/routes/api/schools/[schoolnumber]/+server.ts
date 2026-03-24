@@ -4,7 +4,7 @@ import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { isSystemAdmin } from "$lib/shared-authorization/authorization"
+import { isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { NewSchool } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -13,7 +13,7 @@ type DeleteSchoolResponse = ApiRouteMap[`/api/schools/${NoSlashString}`]["DELETE
 
 const deleteSchool: ApiNextFunction<DeleteSchoolResponse> = async ({ principal, requestEvent }) => {
   if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, "Forbidden: No access")
+    throw new HTTPError(403, noAccessMessage("No permission to delete school"))
   }
 
   const schoolNumber = requestEvent.params.schoolnumber
@@ -48,7 +48,7 @@ type UpdateSchoolBody = ApiRouteMap[`/api/schools/${NoSlashString}`]["PUT"]["req
 
 const updateSchool: ApiNextFunction<UpdateSchoolResponse, UpdateSchoolBody> = async ({ principal, requestEvent, body }) => {
   if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, "Forbidden: No access")
+    throw new HTTPError(403, noAccessMessage("No permission to update school"))
   }
 
   const schoolNumber = requestEvent.params.schoolnumber

@@ -2,13 +2,13 @@ import type { ValidationResult } from "$lib/types/data-validation"
 import type { NewSchool } from "$lib/types/db/shared-types"
 
 export const schoolNameValidation = {
-  pattern: /^[A-Za-zÆØÅæøå\-\s]$/,
+  pattern: /^[A-Za-zÆØÅæøå\-\s].+$/,
   minLength: 4,
   maxLength: 256
 }
 
 export const schoolNumberValidation = {
-  pattern: /^[0-9]$/,
+  pattern: /^[0-9].+$/,
   minLength: 4,
   maxLength: 20
 }

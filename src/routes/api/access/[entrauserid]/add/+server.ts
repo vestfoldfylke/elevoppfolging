@@ -5,7 +5,7 @@ import { getStudentsFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canGrantAndRemoveAccessForSchool, isSystemAdmin } from "$lib/shared-authorization/authorization"
+import { canGrantAndRemoveAccessForSchool, isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { AccessEntry, CachedFrontendStudentWithAccessInfo } from "$lib/types/app-types"
 import type { ClassGroup, NewAccess } from "$lib/types/db/shared-types"
@@ -32,17 +32,17 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
 
   if (accessEntryInput.type === "MANUELL-SKOLELEDER-TILGANG") {
     if (!isSystemAdmin(principal, APP_INFO)) {
-      throw new HTTPError(403, "Forbidden")
+      throw new HTTPError(403, noAccessMessage("No permission to grant access"))
     }
   } else {
     // Get access for principal to check if they have access to grant access on their school
     const principalAccess = await dbClient.getPrincipalAccess(principal.id)
     if (!principalAccess) {
-      throw new HTTPError(403, "Forbidden")
+      throw new HTTPError(403, noAccessMessage("No access found for principal"))
     }
     const canGrantAccess = canGrantAndRemoveAccessForSchool(accessEntryInput.schoolNumber, principalAccess)
     if (!canGrantAccess) {
-      throw new HTTPError(403, "Forbidden")
+      throw new HTTPError(403, noAccessMessage("No permission to handle access for this school"))
     }
 
     const principalAccessStudents: CachedFrontendStudentWithAccessInfo[] = await getStudentsFromCache(principalAccess)
@@ -56,13 +56,13 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
             (student) => student._id === accessEntryInput._id && student.accessTypes.some((a) => a.type === "MANUELL-SKOLELEDER-TILGANG" && a.schoolNumber === accessEntryInput.schoolNumber)
           )
         ) {
-          throw new HTTPError(403, "Not allowed to grant access to this student")
+          throw new HTTPError(403, noAccessMessage("No permission to grant access to this student"))
         }
         break
       }
       case "MANUELL-KLASSE-TILGANG": {
         if (!principalClasses.some((c) => c.systemId === accessEntryInput.systemId && c.schoolNumber === accessEntryInput.schoolNumber)) {
-          throw new HTTPError(403, "Not allowed to grant access to this class")
+          throw new HTTPError(403, noAccessMessage("No permission to grant grant access to this class"))
         }
         break
       }
