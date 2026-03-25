@@ -43,7 +43,6 @@ export const getEnrollmentDetails = (enrollment: EnrollmentWithinViewAccessWindo
   }
 }
 
-
 export const getFrontendStudentMainDetails = (enrollmentsWithinViewAccessWindow: EnrollmentWithinViewAccessWindow[]): FrontendStudentMainDetails => {
   const mainEnrollment = enrollmentsWithinViewAccessWindow.find((enrollment) => enrollment.mainSchool)
   const mainSchool = mainEnrollment?.school || null

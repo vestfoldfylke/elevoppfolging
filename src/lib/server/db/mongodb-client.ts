@@ -289,15 +289,19 @@ export class MongoDbClient implements IDbClient {
         name: access.name,
         leaderForSchools: [],
         manageManualStudentsForSchools: access.manageManualStudentsForSchools.filter((manageManualStudentAccessEntry) => manageManualStudentAccessEntry.schoolNumber === schoolNumber),
-        programAreas: access.programAreas.filter((programArea) => programArea.schoolNumber === schoolNumber).map((programArea) => ({
-          ...programArea,
-          _id: programArea._id.toString()
-        })),
+        programAreas: access.programAreas
+          .filter((programArea) => programArea.schoolNumber === schoolNumber)
+          .map((programArea) => ({
+            ...programArea,
+            _id: programArea._id.toString()
+          })),
         classes: access.classes.filter((classAccess) => classAccess.type === "MANUELL-KLASSE-TILGANG" && classAccess.schoolNumber === schoolNumber),
-        students: access.students.filter((studentAccess) => studentAccess.schoolNumber === schoolNumber).map((studentAccess) => ({
-          ...studentAccess,
-          _id: studentAccess._id.toString()
-        })),
+        students: access.students
+          .filter((studentAccess) => studentAccess.schoolNumber === schoolNumber)
+          .map((studentAccess) => ({
+            ...studentAccess,
+            _id: studentAccess._id.toString()
+          })),
         contactTeacherGroups: [],
         teachingGroups: []
       }

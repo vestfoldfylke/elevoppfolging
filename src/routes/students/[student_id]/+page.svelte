@@ -10,8 +10,8 @@
   import type { Period, SchoolInfo, Source } from "$lib/types/db/shared-types"
   import { ACCESS_TYPE_DISPLAY_NAMES } from "$lib/utils/access-constants"
   import { getEnrollmentDetails, getFrontendStudentMainDetails } from "$lib/utils/frontend-student-details"
+  import { prettifyDate } from "$lib/utils/prettify-date"
   import type { PageProps } from "./$types"
-  import { prettifyDate } from "$lib/utils/prettify-date";
 
   let { data }: PageProps = $props()
 
@@ -56,19 +56,21 @@
   })
 
   let studentAccessPersons: (StudentAccess & { accessInfo: AccessInfo[] })[] = $derived.by(() => {
-    return data.studentAccessInfo.map((access) => {
-      const accessInfo = access.accessTypes.map((accessType) => {
-        const school = data.student.enrollmentsWithinViewAccessWindow.find((enrollment) => enrollment.school.schoolNumber === accessType.schoolNumber)?.school
-        if (!school) {
-          throw new Error(`School not found for access with school number ${accessType.schoolNumber}, something wrong here gitt`)
+    return data.studentAccessInfo
+      .map((access) => {
+        const accessInfo = access.accessTypes.map((accessType) => {
+          const school = data.student.enrollmentsWithinViewAccessWindow.find((enrollment) => enrollment.school.schoolNumber === accessType.schoolNumber)?.school
+          if (!school) {
+            throw new Error(`School not found for access with school number ${accessType.schoolNumber}, something wrong here gitt`)
+          }
+          return { accessDisplayName: ACCESS_TYPE_DISPLAY_NAMES[accessType.type], school, source: accessType.source }
+        })
+        return {
+          ...access,
+          accessInfo
         }
-        return { accessDisplayName: ACCESS_TYPE_DISPLAY_NAMES[accessType.type], school, source: accessType.source }
       })
-      return {
-        ...access,
-        accessInfo
-      }
-    }).sort((a, b) => a.entra.displayName.localeCompare(b.entra.displayName))
+      .sort((a, b) => a.entra.displayName.localeCompare(b.entra.displayName))
   })
 
   type StudentSummaryDetails =
