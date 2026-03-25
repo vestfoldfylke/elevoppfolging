@@ -35,7 +35,7 @@ export const updateAppUserCache = async () => {
 
   appUserCache.updated = new Date()
   appUserCache.updateInProgress = false
-  console.log("memory used", process.memoryUsage().heapUsed / 1024 / 1024, "MB")
+  logger.info(`Memory used: ${process.memoryUsage().heapUsed / 1024 / 1024} MB`)
 }
 
 const updateAppUserCacheInBackgroundIfExpired = () => {

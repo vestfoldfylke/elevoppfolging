@@ -51,8 +51,8 @@ export const updateStudentsCache = async () => {
   studentsCache.updated = new Date()
   studentsCache.updateInProgress = false
 
-  console.log("Students cache updated with", studentsCache.students.size, "students, cache age reset to 0 minutes")
-  console.log("memory used", process.memoryUsage().heapUsed / 1024 / 1024, "MB")
+  logger.info(`Students cache updated with ${studentsCache.students.size} students, cache age reset to 0 minutes`)
+  logger.info(`Memory used: ${process.memoryUsage().heapUsed / 1024 / 1024} MB`)
 }
 
 export const updateStudentsCacheInBackgroundIfExpired = () => {
