@@ -151,9 +151,6 @@
   {/if}
 </div>
 
-<div class="section-box">
-</div>
-
 <style>
   h3 {
     margin: var(--ds-size-2) 0;
