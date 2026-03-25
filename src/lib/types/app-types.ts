@@ -4,32 +4,58 @@ import type {
   AppStudent,
   AppUser,
   ClassAutoAccessEntry,
+  ClassGroup,
   ClassManualAccessEntry,
   ClassMembership,
+  ContactTeacherGroup,
   ContactTeacherGroupAutoAccessEntry,
   ContactTeacherGroupMembership,
+  ManageManualStudentsManualAccessEntry,
   Period,
   ProgramAreaManualAccessEntry,
   SchoolInfo,
-  SchoolManualAccessEntry,
+  SchoolLeaderManualAccessEntry,
+  StudentCheckBox,
   StudentImportantStuff,
   StudentManualAccessEntry,
-  TeachingGroupAutoAccessEntry
+  TeachingGroup,
+  TeachingGroupAutoAccessEntry,
+  TeachingGroupMembership
 } from "./db/shared-types"
 
 export type FrontendStudent = Omit<AppStudent, "ssn">
 
-export type FrontendStudentDetails = {
-  mainSchool: SchoolInfo | null
-  mainClassMembership: ClassMembership | null
-  mainContactTeacherGroupMembership: ContactTeacherGroupMembership | null
-  additionalSchools: SchoolInfo[]
+export type EnrollmentWithinViewAccessWindow = {
+  systemId: string
+  mainSchool: boolean
+  school: SchoolInfo
+  period: PeriodDetails
+  classMemberships: (Omit<ClassMembership, "period"> & { period: PeriodDetails })[]
+  contactTeacherGroupMemberships: (Omit<ContactTeacherGroupMembership, "period"> & { period: PeriodDetails })[]
+  teachingGroupMemberships: (Omit<TeachingGroupMembership, "period"> & { period: PeriodDetails })[]
 }
 
-export type CachedFrontendStudent = FrontendStudent & FrontendStudentDetails
+export type EnrollmentDetails = {
+  period: PeriodDetails
+  school: SchoolInfo
+  classGroups: ClassGroup[]
+  contactTeacherGroup: ContactTeacherGroup | null
+  teachingGroups: TeachingGroup[]
+}
+
+export type FrontendStudentMainDetails = {
+  mainSchool: SchoolInfo | null
+  mainClass: ClassGroup | null
+  mainContactTeacherGroup: ContactTeacherGroup | null
+}
+
+export type CachedFrontendStudent = FrontendStudent & {
+  enrollmentsWithinViewAccessWindow: EnrollmentWithinViewAccessWindow[]
+}
 
 export type AccessEntry =
-  | SchoolManualAccessEntry
+  | SchoolLeaderManualAccessEntry
+  | ManageManualStudentsManualAccessEntry
   | ProgramAreaManualAccessEntry
   | StudentManualAccessEntry
   | ClassAutoAccessEntry
@@ -41,7 +67,12 @@ export type CachedFrontendStudentWithAccessInfo = CachedFrontendStudent & {
   accessTypes: AccessEntry[]
 }
 
-export type FrontendOverviewStudent = Omit<CachedFrontendStudentWithAccessInfo, "studentEnrollments"> & {
+/** Student which a given principal has access to, along with which access types principal has to the student */
+export type PrincipalAccessStudent = Omit<CachedFrontendStudent, "studentEnrollments" | "systemId" | "studentNumber" | "created" | "modified"> & {
+  accessTypes: AccessEntry[]
+}
+
+export type FrontendOverviewStudent = PrincipalAccessStudent & {
   importantStuff: StudentImportantStuff[]
   lastActivityTimestamp: Date | null
   dataSharingConsent: boolean
@@ -65,11 +96,14 @@ export type RootLayoutData = {
   APP_INFO: ApplicationInfo
   authenticatedPrincipal: AuthenticatedPrincipal
   principalAccess: Access | null
+  students: FrontendOverviewStudent[]
+  studentCheckBoxes: StudentCheckBox[]
+  schools: SchoolInfo[]
 }
 
 export type PeriodDetails = Period & {
   active: boolean
-  daysUntilExpire: number | null
+  daysAfterExpired: number | null
   daysUntilActive: number | null
   withinViewAccessWindow: boolean
 }
@@ -80,6 +114,13 @@ export type StudentUnavailableSchoolDocuments = {
 }
 
 export type CachedAppUser = AppUser
+
+export type StudentMemberships = {
+  schoolNumbers: string[]
+  classes: { schoolNumber: string; systemId: string }[]
+  contactTeacherGroups: { schoolNumber: string; systemId: string }[]
+  teachingGroups: { schoolNumber: string; systemId: string }[]
+}
 
 export type StudentAccess = {
   accessTypes: AccessEntry[]

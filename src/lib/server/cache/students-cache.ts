@@ -1,21 +1,23 @@
 import { logger } from "@vestfoldfylke/loglady"
-import type { CachedFrontendStudent, CachedFrontendStudentWithAccessInfo } from "$lib/types/app-types"
+import type { CachedFrontendStudent, PrincipalAccessStudent, StudentMemberships } from "$lib/types/app-types"
 import type { Access } from "$lib/types/db/shared-types"
-import { getFrontendStudentDetails } from "$lib/utils/frontend-student-details"
+import { getEnrollmentsWithinViewAccessWindow } from "$lib/utils/frontend-student-details"
 import { APP_INFO } from "../app-info"
-import { getStudentAccessInfo } from "../authorization/student-access"
+import { getPrincipalAccessEntriesForStudent } from "../authorization/student-access"
 import { getDbClient } from "../db/get-db-client"
 
 type StudentsCache = {
   updateInProgress: boolean
   updated: Date | null
-  students: CachedFrontendStudent[]
+  students: Map<string, CachedFrontendStudent>
+  studentsListCache: CachedFrontendStudent[] | null
 }
 
 const studentsCache: StudentsCache = {
   updateInProgress: false,
   updated: null,
-  students: []
+  students: new Map(),
+  studentsListCache: null
 }
 
 export const updateStudentsCache = async () => {
@@ -34,72 +36,109 @@ export const updateStudentsCache = async () => {
   const endTime = Date.now()
   logger.info(`Fetched ${students.length} students from database in ${(endTime - startTime) / 1000}s, updating cache`)
 
-  studentsCache.students = students.map((student) => ({
-    ...student,
-    ...getFrontendStudentDetails(student, APP_INFO)
-  }))
+  const tempStudentsMap: Map<string, CachedFrontendStudent> = new Map()
+
+  for (const student of students) {
+    tempStudentsMap.set(student._id, {
+      ...student,
+      enrollmentsWithinViewAccessWindow: getEnrollmentsWithinViewAccessWindow(student, APP_INFO)
+    })
+  }
+
+  studentsCache.students = tempStudentsMap
+  studentsCache.studentsListCache = Array.from(tempStudentsMap.values()) // Reset list cache, remember to invalidate on updates to studentsCache.students as well
 
   studentsCache.updated = new Date()
   studentsCache.updateInProgress = false
-  console.log("memory used", process.memoryUsage().heapUsed / 1024 / 1024, "MB")
+
+  logger.info(`Students cache updated with ${studentsCache.students.size} students, cache age reset to 0 minutes`)
+  logger.info(`Memory used: ${process.memoryUsage().heapUsed / 1024 / 1024} MB`)
 }
 
+export const updateStudentsCacheInBackgroundIfExpired = () => {
+  // IF cache is too old, update it in the background
+  const now = new Date()
+  const cacheAgeMinutes = studentsCache.updated ? (now.getTime() - studentsCache.updated.getTime()) / 1000 / 60 : null
+  if (!cacheAgeMinutes || cacheAgeMinutes > APP_INFO.STUDENT_CACHE_MAX_AGE_MINUTES) {
+    logger.info(`Students cache is ${cacheAgeMinutes} minutes old, requesting update in background`)
+    updateStudentsCache().catch((error) => {
+      logger.errorException(error, "Error updating students cache, application is probably unusable until this is fixed")
+    })
+  }
+}
 /**
  *
  * returns student available based on the access parameter
  * If cache is empty, it will populate the cache before returning students
  * If cache is too old, it will update the cache in the background but return the old cache for now, to avoid making users wait for the cache to update.
  */
-export const getStudentsFromCache = async (access: Access): Promise<CachedFrontendStudentWithAccessInfo[]> => {
-  const studentsWithAccessInfo: CachedFrontendStudentWithAccessInfo[] = []
+export const getStudentsFromCache = async (access: Access): Promise<PrincipalAccessStudent[]> => {
+  const studentsWithAccessInfo: PrincipalAccessStudent[] = []
 
   // If first time or cache is empty, populate cache before returning students
-  if (!studentsCache.updated || studentsCache.students.length === 0) {
+  if (!studentsCache.updated || studentsCache.students.size === 0) {
     logger.info("Students cache is empty, populating cache before returning students, user will have to wait...")
     await updateStudentsCache()
-
-    for (const student of studentsCache.students) {
-      const studentAccessInfo = getStudentAccessInfo(student, access)
-      if (studentAccessInfo.length > 0) {
-        studentsWithAccessInfo.push({
-          _id: student._id,
-          feideName: student.feideName,
-          name: student.name,
-          created: student.created,
-          modified: student.modified,
-          studentNumber: student.studentNumber,
-          systemId: student.systemId,
-          studentEnrollments: student.studentEnrollments,
-          source: student.source,
-          mainSchool: student.mainSchool,
-          mainClassMembership: student.mainClassMembership,
-          mainContactTeacherGroupMembership: student.mainContactTeacherGroupMembership,
-          additionalSchools: student.additionalSchools,
-          accessTypes: studentAccessInfo
-        })
-      }
-    }
-    return studentsWithAccessInfo
+  } else {
+    updateStudentsCacheInBackgroundIfExpired()
   }
 
-  // IF cache is too old, update it in the background but return the old cache for now
-  const now = new Date()
-  const cacheAgeMinutes = (now.getTime() - studentsCache.updated.getTime()) / 1000 / 60
-  if (cacheAgeMinutes > APP_INFO.STUDENT_CACHE_MAX_AGE_MINUTES) {
-    logger.info(`Students cache is ${cacheAgeMinutes} minutes old, requesting update in background`)
-    updateStudentsCache().catch((error) => {
-      logger.errorException(error, "Error updating students cache, application is probably unusable until this is fixed")
-    })
+  if (!studentsCache.studentsListCache) {
+    throw new Error("Students cache is not populated after update, cannot return students from cache, something is wrong gitt")
   }
 
-  for (const student of studentsCache.students) {
-    const studentAccessInfo = getStudentAccessInfo(student, access)
+  for (const student of studentsCache.studentsListCache) {
+    const studentAccessInfo = getPrincipalAccessEntriesForStudent(student, access)
     if (studentAccessInfo.length > 0) {
       studentsWithAccessInfo.push({
-        ...student,
+        _id: student._id,
+        feideName: student.feideName,
+        name: student.name,
+        source: student.source,
+        enrollmentsWithinViewAccessWindow: student.enrollmentsWithinViewAccessWindow,
         accessTypes: studentAccessInfo
       })
     }
   }
   return studentsWithAccessInfo
+}
+
+export const getStudentFromCache = async (studentId: string): Promise<CachedFrontendStudent | null> => {
+  // If first time or cache is empty, populate cache before returning students
+  if (!studentsCache.updated || studentsCache.students.size === 0) {
+    logger.info("Students cache is empty, populating cache before returning student, user will have to wait...")
+    await updateStudentsCache()
+  } else {
+    updateStudentsCacheInBackgroundIfExpired()
+  }
+
+  const student = studentsCache.students.get(studentId)
+  return student || null
+}
+
+export const getStudentMembershipsFromCache = async (studentId: string): Promise<StudentMemberships> => {
+  if (!studentsCache.updated) {
+    logger.info("Students cache is empty, populating cache before returning students, user will have to wait...")
+    await updateStudentsCache()
+  } else {
+    updateStudentsCacheInBackgroundIfExpired()
+  }
+
+  const student = studentsCache.students.get(studentId)
+  if (!student) {
+    throw new Error(`Student with ID ${studentId} not found in cache`)
+  }
+
+  return {
+    schoolNumbers: student.enrollmentsWithinViewAccessWindow.map((enrollment) => enrollment.school.schoolNumber),
+    classes: student.enrollmentsWithinViewAccessWindow.flatMap((enrollment) =>
+      enrollment.classMemberships.map((classMembership) => ({ schoolNumber: enrollment.school.schoolNumber, systemId: classMembership.classGroup.systemId }))
+    ),
+    contactTeacherGroups: student.enrollmentsWithinViewAccessWindow.flatMap((enrollment) =>
+      enrollment.contactTeacherGroupMemberships.map((groupMembership) => ({ schoolNumber: enrollment.school.schoolNumber, systemId: groupMembership.contactTeacherGroup.systemId }))
+    ),
+    teachingGroups: student.enrollmentsWithinViewAccessWindow.flatMap((enrollment) =>
+      enrollment.teachingGroupMemberships.map((groupMembership) => ({ schoolNumber: enrollment.school.schoolNumber, systemId: groupMembership.teachingGroup.systemId }))
+    )
+  }
 }

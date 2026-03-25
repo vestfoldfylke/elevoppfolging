@@ -55,104 +55,107 @@
   }
 </script>
 
-<div class="section-box">
-  <div class="section-box-header">
-    <div class="section-box-header-title">
+<div class="ds-card" data-variant="tinted" data-color="accent">
+  <div class="card-header">
+    <div class="card-title">
       <span class="material-symbols-outlined">star</span>
-      <h3>Viktig informasjon ved {school.name}</h3>
+      <h2 class="ds-heading">Viktig informasjon ({school.name})</h2>
     </div>
-    <div class="section-box-header-actions">
+    <div class="card-header-actions">
       {#if canEdit && !editMode}
-        <button onclick={() => editMode = true}><span class="material-symbols-outlined">edit</span>Rediger</button>
+        <button class="ds-button" data-variant="secondary" data-size="sm" type="button" onclick={() => editMode = true}><span class="material-symbols-outlined">edit</span>Rediger</button>
       {/if}
     </div>
   </div>
-
-  <div class="section-box-content">
-    <form bind:this={importantStuffForm}>
-      <div class="important-stuff-content">
-        <div class="important-info">
-          <h4>Informasjon</h4>
-          {#if editMode}
-            <textarea rows="4" style="width: 100%" bind:value={editableImportantStuff.importantInfo} placeholder="Skriv viktig informasjon om eleven som er relevant for skolen"></textarea>
-          {:else}
-            <div class="important-info-text">
-              {savedEditableImportantStuff.importantInfo || "Ingen informasjon lagt til"}
+  <form bind:this={importantStuffForm}>
+    <div class="important-stuff-content">
+      <div class="important-info">
+        <h3 class="ds-heading" data-size="xs">Informasjon</h3>
+        {#if editMode}
+          <ds-field class="ds-field">
+            <div data-field="description">
+              Skriv inn informasjon som eleven har godtatt at deles
             </div>
+            <textarea rows="5" bind:value={editableImportantStuff.importantInfo} class="ds-input"></textarea>
+          </ds-field>
+        {:else}
+          <p class="ds-paragraph important-info-text">
+            {savedEditableImportantStuff.importantInfo || "Ingen informasjon lagt til"}
+          </p>
+        {/if}
+      </div>
+
+      <div class="checkboxes-container">
+        <div class="checkboxes">
+          <h3 class="ds-heading" data-size="xs">Oppfølging</h3>
+          {#if editMode}
+            <fieldset class="ds-fieldset">
+              {#each studentCheckBoxes.filter(checkbox => checkbox.enabled && checkbox.type === "FOLLOW_UP") as followUpCheckbox}
+                <ds-field class="ds-field">
+                  <input id={followUpCheckbox._id} class="ds-input" type="checkbox" bind:group={editableImportantStuff.followUp} value={followUpCheckbox._id} />
+                  <label for={followUpCheckbox._id} class="ds-label" data-weight="regular">{followUpCheckbox.value}</label>
+                </ds-field>
+              {/each}
+            </fieldset>
+          {:else}
+            {#if savedEditableImportantStuff.followUp.length === 0}
+              Ingen oppfølging
+            {:else}
+              <ul class="ds-list">
+                {#each savedEditableImportantStuff.followUp || [] as followUpId}
+                  <li>{studentCheckBoxes.find(checkbox => checkbox._id === followUpId)?.value}</li>
+                {/each}
+              </ul>
+            {/if}
           {/if}
         </div>
 
-        <div class="checkboxes-container">
-          <div class="checkboxes">
-            <h4 class="checkbox-header">Oppfølging</h4>
-            {#if editMode}
-              <ul class="edit-checkbox-list">
-                {#each studentCheckBoxes.filter(checkbox => checkbox.enabled && checkbox.type === "FOLLOW_UP") as followUpCheckbox}
-                    <li>
-                      <label>
-                        <input type="checkbox" id={followUpCheckbox._id} bind:group={editableImportantStuff.followUp} value={followUpCheckbox._id} />
-                        {followUpCheckbox.value}
-                      </label>
-                    </li>
+        <div class="checkboxes">
+          <h3 class="ds-heading" data-size="xs">Tilrettelegging</h3>
+          {#if editMode}
+            <fieldset class="ds-fieldset">
+              {#each studentCheckBoxes.filter(checkbox => checkbox.enabled && checkbox.type === "FACILITATION") as facilitationCheckbox}
+                <ds-field class="ds-field">
+                  <input id={facilitationCheckbox._id} class="ds-input" type="checkbox" bind:group={editableImportantStuff.facilitation} value={facilitationCheckbox._id} />
+                  <label for={facilitationCheckbox._id} class="ds-label" data-weight="regular">{facilitationCheckbox.value}</label>
+                </ds-field>
+              {/each}
+            </fieldset>
+          {:else}
+            {#if savedEditableImportantStuff.facilitation.length === 0}
+              Ingen tilrettelegging
+            {:else}
+              <ul class="ds-list">
+                {#each savedEditableImportantStuff.facilitation || [] as facilitationId}
+                  <li>{studentCheckBoxes.find(checkbox => checkbox._id === facilitationId)?.value}</li>
                 {/each}
               </ul>
-            {:else}
-              {#if savedEditableImportantStuff.followUp.length === 0}
-                Ingen oppfølging
-              {:else}
-                <ul>
-                  {#each savedEditableImportantStuff.followUp || [] as followUpId}
-                    <li>{studentCheckBoxes.find(checkbox => checkbox._id === followUpId)?.value}</li>
-                  {/each}
-                </ul>
-              {/if}
             {/if}
-          </div>
-
-          <div class="checkboxes">
-            <h4>Tilrettelegging</h4>
-            {#if editMode}
-              <ul class="edit-checkbox-list"> 
-                {#each studentCheckBoxes.filter(checkbox => checkbox.enabled && checkbox.type === "FACILITATION") as facilitationCheckbox}
-                    <li>  
-                      <label>
-                        <input type="checkbox" id={facilitationCheckbox._id} bind:group={editableImportantStuff.facilitation} value={facilitationCheckbox._id} />
-                        {facilitationCheckbox.value}
-                      </label>
-                    </li>
-                {/each}
-              </ul>
-            {:else}
-              {#if savedEditableImportantStuff.facilitation.length === 0}
-                Ingen tilrettelegging
-              {:else}
-                <ul>
-                  {#each savedEditableImportantStuff.facilitation || [] as facilitationId}
-                    <li>{studentCheckBoxes.find(checkbox => checkbox._id === facilitationId)?.value}</li>
-                  {/each}
-                </ul>
-              {/if}
-            {/if}
-          </div>
+          {/if}
         </div>
       </div>
-    </form>
-  </div>
+    </div>
+  </form>
+
   {#if editMode}
-    <div class="section-box-footer">
-      <AsyncButton disabled={!hasMadeChanges} onClick={() => updateStudentImportantStuff()} reloadPageDataOnSuccess={true} buttonText="Lagre" classList={["filled"]} iconName="save" callBackAfterReloadPageData={() => { editMode = false }} />
-      <button type="button" onclick={() => { editMode = false; editableImportantStuff = $state.snapshot(savedEditableImportantStuff); }}><span class="material-symbols-outlined">close</span>Avbryt</button>
+    <div class="card-footer-actions">
+      <AsyncButton disabled={!hasMadeChanges} onClick={() => updateStudentImportantStuff()} reloadPageDataOnSuccess={true} buttonText="Lagre" iconName="save" callBackAfterReloadPageData={() => { editMode = false }} />
+      <button class="ds-button" data-variant="secondary" type="button" onclick={() => { editMode = false; editableImportantStuff = $state.snapshot(savedEditableImportantStuff); }}><span class="material-symbols-outlined">close</span>Avbryt</button>
     </div>
   {:else}
     {#if importantStuff?.modified && !editMode}
-      <div class="section-box-footer">
-        <span>{prettifyDate(importantStuff.modified.at)} av {importantStuff.modified.by.fallbackName}</span>
+      <div class="card-footer-actions">
+        <p class="ds-paragraph" data-size="sm">{prettifyDate(importantStuff.modified.at)} av {importantStuff.modified.by.fallbackName}</p>
       </div>
     {/if}
   {/if}
 </div>
 
 <style>
+  h3 {
+    margin: var(--ds-size-2) 0;
+  }
+
   .important-stuff-content {
     display: flex;
     column-gap: 2rem;
@@ -176,11 +179,9 @@
     min-width: 12rem;
     flex: 1;
   }
-  .edit-checkbox-list {
-    padding-left: 0;
-  }
-  .edit-checkbox-list > li {
-    list-style-type: none;
+
+  ul > li {
+    margin: 0;
   }
 
   @media (max-width: 60rem) {

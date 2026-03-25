@@ -130,13 +130,21 @@ export type AccessEntryBase = {
   source: Source
 }
 
-export type SchoolManualAccessEntryInput = {
+export type SchoolLeaderManualAccessEntryInput = {
   /** Hvilken skole gjelder tilgangen for */
   schoolNumber: string
   type: "MANUELL-SKOLELEDER-TILGANG"
 }
 
-export type SchoolManualAccessEntry = AccessEntryBase & SchoolManualAccessEntryInput
+export type SchoolLeaderManualAccessEntry = AccessEntryBase & SchoolLeaderManualAccessEntryInput
+
+export type ManageManualStudentsManualAccessEntryInput = {
+  /** Hvilken skole gjelder tilgangen for */
+  schoolNumber: string
+  type: "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG"
+}
+
+export type ManageManualStudentsManualAccessEntry = AccessEntryBase & ManageManualStudentsManualAccessEntryInput
 
 export type ProgramAreaManualAccessEntryInput = {
   /** Hvilken skole gjelder tilgangen for */
@@ -144,6 +152,10 @@ export type ProgramAreaManualAccessEntryInput = {
   /** Entydig identifikator (db _id) for hvilket undervisningsområde det er gitt tilgang til */
   _id: string
   type: "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG"
+}
+
+export type DbProgramAreaManualAccessEntry = Omit<ProgramAreaManualAccessEntry, "_id"> & {
+  _id: ObjectId
 }
 
 export type ProgramAreaManualAccessEntry = AccessEntryBase & ProgramAreaManualAccessEntryInput
@@ -158,6 +170,10 @@ export type StudentManualAccessEntryInput = {
 
 export type StudentManualAccessEntry = AccessEntryBase & StudentManualAccessEntryInput
 
+export type DbStudentManualAccessEntry = Omit<StudentManualAccessEntry, "_id"> & {
+  _id: ObjectId
+}
+
 export type ClassManualAccessEntryInput = {
   /** Hvilken skole gjelder tilgangen for */
   schoolNumber: string
@@ -168,7 +184,12 @@ export type ClassManualAccessEntryInput = {
 
 export type ClassManualAccessEntry = AccessEntryBase & ClassManualAccessEntryInput
 
-export type ManualAccessEntryInput = SchoolManualAccessEntryInput | ProgramAreaManualAccessEntryInput | StudentManualAccessEntryInput | ClassManualAccessEntryInput
+export type ManualAccessEntryInput =
+  | SchoolLeaderManualAccessEntryInput
+  | ManageManualStudentsManualAccessEntryInput
+  | ProgramAreaManualAccessEntryInput
+  | StudentManualAccessEntryInput
+  | ClassManualAccessEntryInput
 
 export type ClassAutoAccessEntry = AccessEntryBase & {
   /** Hvilken skole gjelder tilgangen for */
@@ -197,7 +218,8 @@ export type TeachingGroupAutoAccessEntry = AccessEntryBase & {
 export type NewAccess = {
   entraUserId: string
   name: string
-  schools: SchoolManualAccessEntry[]
+  leaderForSchools: SchoolLeaderManualAccessEntry[]
+  manageManualStudentsForSchools: ManageManualStudentsManualAccessEntry[]
   programAreas: ProgramAreaManualAccessEntry[]
   classes: (ClassAutoAccessEntry | ClassManualAccessEntry)[]
   contactTeacherGroups: ContactTeacherGroupAutoAccessEntry[]
@@ -209,8 +231,10 @@ export type Access = NewAccess & {
   _id: string
 }
 
-export type DbAccess = NewAccess & {
+export type DbAccess = Omit<NewAccess, "programAreas" | "students"> & {
   _id: ObjectId
+  programAreas: DbProgramAreaManualAccessEntry[]
+  students: DbStudentManualAccessEntry[]
 }
 
 // APP USER
@@ -297,6 +321,8 @@ export type DocumentRadioButtonItem = {
   value: string
 }
 
+export type DocumentCheckboxItem = DocumentRadioButtonItem
+
 export type DocumentRadioGroupItem = {
   type: "radioGroup"
   header: string
@@ -305,7 +331,15 @@ export type DocumentRadioGroupItem = {
   helpText?: string
 }
 
-export type DocumentInputItem = DocumentTextInputItem | DocumentTextAreaItem | DocumentRadioGroupItem
+export type DocumentCheckboxGroupItem = {
+  type: "checkboxGroup"
+  header: string
+  items: DocumentCheckboxItem[]
+  selectedValues: string[]
+  helpText?: string
+}
+
+export type DocumentInputItem = DocumentTextInputItem | DocumentTextAreaItem | DocumentRadioGroupItem | DocumentCheckboxGroupItem
 
 export type DocumentContentItem = DocumentHeaderItem | DocumentParagraphItem | DocumentInputItem
 
@@ -397,6 +431,7 @@ export type NewDocumentContentTemplate = {
   created: EditorData
   modified: EditorData
   content: DocumentContentItem[]
+  sort: number
 }
 
 export type DocumentContentTemplate = NewDocumentContentTemplate & {

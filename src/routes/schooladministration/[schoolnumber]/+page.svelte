@@ -5,7 +5,7 @@
   import PageHeader from "$lib/components/PageHeader.svelte"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
-  import type { ManualAccessEntryInput } from "$lib/types/db/shared-types"
+  import type { ManageManualStudentsManualAccessEntry, ManualAccessEntryInput } from "$lib/types/db/shared-types"
   import { getClassesFromStudents } from "$lib/utils/classes-from-students"
   import type { PageProps } from "./$types"
 
@@ -65,7 +65,15 @@
     return Array.from(classesWithAccess.values())
   })
 
-  let addAccessOpen = $state(false)
+  let manageManualStudentsAccessEntries = $derived.by(() => {
+    return data.manualAccessForSchool
+      .filter((access) => access.manageManualStudentsForSchools.some((school) => school.schoolNumber === currentSchool.schoolNumber))
+      .map((access) => ({
+        entraUserId: access.entraUserId,
+        name: access.name, // TODO - sikkert bedre å hente fra appusers
+        accessEntry: { type: "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG", schoolNumber: currentSchool.schoolNumber }
+      }))
+  })
 
   let addAccessForm: HTMLFormElement | undefined = $state()
   let selectedEntraUserId = $state("")
@@ -81,9 +89,6 @@
     if (!selectedType) {
       throw new Error("Access type must be selected")
     }
-    if (!selectedResourceId) {
-      throw new Error("Resource ID must be selected")
-    }
     if (!selectedEntraUserId) {
       throw new Error("Entra user ID must be selected")
     }
@@ -91,14 +96,21 @@
     let accessEntryToAdd: ManualAccessEntryInput
 
     switch (selectedType) {
-      case "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG":
-        accessEntryToAdd = { type: selectedType, schoolNumber: currentSchool.schoolNumber, _id: selectedResourceId }
-        break
       case "MANUELL-KLASSE-TILGANG":
+        if (!selectedResourceId) {
+          throw new Error("Resource ID must be selected")
+        }
         accessEntryToAdd = { type: selectedType, schoolNumber: currentSchool.schoolNumber, systemId: selectedResourceId }
         break
+      case "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG":
       case "MANUELL-ELEV-TILGANG":
+        if (!selectedResourceId) {
+          throw new Error("Resource ID must be selected")
+        }
         accessEntryToAdd = { type: selectedType, schoolNumber: currentSchool.schoolNumber, _id: selectedResourceId }
+        break
+      case "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG":
+        accessEntryToAdd = { type: selectedType, schoolNumber: currentSchool.schoolNumber }
         break
       default:
         throw new Error(`Invalid access entry type: ${selectedType}`)
@@ -138,7 +150,7 @@
         <li>
           {appUser.name} ({appUser.entraUserId})
         </li>
-        <AsyncButton onClick={() => removeManualAccessEntry(appUser.entraUserId, appUser.accessEntry)} reloadPageDataOnSuccess={true} buttonText="Fjern tilgang" classList={["danger", "filled"]} iconName="delete" />
+        <AsyncButton onClick={() => removeManualAccessEntry(appUser.entraUserId, appUser.accessEntry)} reloadPageDataOnSuccess={true} buttonText="Fjern tilgang" iconName="delete" />
       {/each}
     </ul>
   {/each}
@@ -151,8 +163,18 @@
         <li>
           {appUser.name} ({appUser.entraUserId})
         </li>
-        <AsyncButton onClick={() => removeManualAccessEntry(appUser.entraUserId, appUser.accessEntry)} reloadPageDataOnSuccess={true} buttonText="Fjern tilgang" classList={["danger", "filled"]} iconName="delete" />
+        <AsyncButton onClick={() => removeManualAccessEntry(appUser.entraUserId, appUser.accessEntry)} reloadPageDataOnSuccess={true} buttonText="Fjern tilgang" iconName="delete" />
       {/each}
+    </ul>
+  {/each}
+
+  <h2>Tilgang til å opprette manuelle elever</h2>
+  {#each manageManualStudentsAccessEntries as manageManualStudentsAccess}
+    <ul>
+      <li>
+        {manageManualStudentsAccess.name} ({manageManualStudentsAccess.entraUserId})
+      </li>
+      <AsyncButton onClick={() => removeManualAccessEntry(manageManualStudentsAccess.entraUserId, manageManualStudentsAccess.accessEntry as ManageManualStudentsManualAccessEntry)} reloadPageDataOnSuccess={true} buttonText="Fjern tilgang" iconName="delete" />
     </ul>
   {/each}
 
@@ -175,9 +197,11 @@
       <div>
         <label for="accessType">Tilgangstype:</label>
         <select id="accessType" bind:value={selectedType} required>
+          <!-- TODO: mer dynamisk liste med valg og hjelpetekst -->
           <option value="" disabled>Velg tilgangstype</option>
           <option value="MANUELL-KLASSE-TILGANG">Manuell klassetilgang</option>
           <option value="MANUELL-ELEV-TILGANG">Manuell elevtilgang</option>
+          <option value="MANUELL-OPPRETT-MANUELL-ELEV-TILGANG">Tilgang til å opprette manuelle elever</option>
         </select>
       </div>
 
@@ -198,7 +222,7 @@
           <label for="student">Velg elev:</label>
           <select id="student" bind:value={selectedResourceId} required>
             <option value="" disabled>Velg elev</option>
-            {#each schoolStudents as student}
+            {#each schoolStudents.sort((a, b) => a.name.localeCompare(b.name)) as student}
               <option value={student._id}>{student.name}</option>
             {/each}
           </select>
@@ -206,7 +230,7 @@
       {/if}
     </form>
 
-    <AsyncButton onClick={addManualAccessEntry} reloadPageDataOnSuccess={true} buttonText="Legg til tilgang" classList={["filled"]} iconName="add" />
+    <AsyncButton onClick={addManualAccessEntry} reloadPageDataOnSuccess={true} buttonText="Legg til tilgang"  iconName="add" />
 
   </div>
 </div>

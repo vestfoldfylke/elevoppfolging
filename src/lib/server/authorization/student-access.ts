@@ -1,23 +1,20 @@
-import type { AccessEntry, FrontendStudent } from "$lib/types/app-types"
+import type { AccessEntry, CachedFrontendStudent } from "$lib/types/app-types"
 import type { Access } from "$lib/types/db/shared-types"
-import { getPeriodDetails } from "$lib/utils/period"
-import { APP_INFO } from "../app-info"
 
 /**
  * Henter ut høyeste tilgangstype for en elev per skole basert på elevens elevforhold og tilgangene i Access-objektet. Hvis eleven har flere elevforhold på en skole, vil den høyeste tilgangstypen blant disse bli returnert.
  */
-export const getStudentAccessInfo = (student: FrontendStudent, access: Access): AccessEntry[] => {
-  // Putt på en cache her hvis det trengs
-
+export const getPrincipalAccessEntriesForStudent = (student: CachedFrontendStudent, access: Access): AccessEntry[] => {
   // Begynner med prioritert tilgang og går nedover derfra. Henter bare høyeste tilgangstype per skole, for å slippe å måtte håndtere flere access entries for samme skole i resten av logikken
-  let enrollmentsToCheck = student.studentEnrollments.filter((enrollment) => {
-    const enrollmentPeriod = getPeriodDetails(enrollment.period, APP_INFO)
-    return enrollmentPeriod.active || enrollmentPeriod.withinViewAccessWindow
-  })
+  let enrollmentsToCheck = student.enrollmentsWithinViewAccessWindow
+
+  if (enrollmentsToCheck.length === 0) {
+    return []
+  }
 
   const accessTypesForCurrentStudent: AccessEntry[] = []
 
-  for (const schoolAccess of access.schools) {
+  for (const schoolAccess of access.leaderForSchools) {
     const schoolAccessForCurrentStudent = enrollmentsToCheck.some((enrollment) => {
       return enrollment.school.schoolNumber === schoolAccess.schoolNumber
     })
@@ -34,8 +31,14 @@ export const getStudentAccessInfo = (student: FrontendStudent, access: Access): 
     return accessTypesForCurrentStudent
   }
 
-  // If school access, no need to check other access types for that school
-  for (const studentAccess of access.students.filter((entry) => !accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === entry.schoolNumber))) {
+  // Direkte elev-tilgang
+  for (const studentAccess of access.students) {
+    if (student._id !== studentAccess._id) {
+      continue
+    }
+    if (accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === studentAccess.schoolNumber)) {
+      continue
+    }
     const studentAccessForCurrentStudent = enrollmentsToCheck.some((enrollment) => enrollment.school.schoolNumber === studentAccess.schoolNumber)
     if (studentAccessForCurrentStudent) {
       accessTypesForCurrentStudent.push(studentAccess)
@@ -52,17 +55,50 @@ export const getStudentAccessInfo = (student: FrontendStudent, access: Access): 
 
   // TODO - programområder / programAreas når vi har en cache på det for å slippe drittoppslag hele tida
 
-  // // If school access, no need to check other access types for that school
-  for (const contactTeacherGroupAccess of access.contactTeacherGroups.filter((entry) => !accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === entry.schoolNumber))) {
+  // Manuell klassetilgang (Rådgiver)
+  for (const classAccess of access.classes.filter((entry) => entry.type === "MANUELL-KLASSE-TILGANG")) {
+    if (accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === classAccess.schoolNumber)) {
+      continue
+    }
+    const classAccessForCurrentStudent = enrollmentsToCheck.some((enrollment) => {
+      if (enrollment.school.schoolNumber !== classAccess.schoolNumber) {
+        return false
+      }
+      return enrollment.classMemberships.some((membership) => {
+        if (!membership.period.active && !membership.period.withinViewAccessWindow) {
+          return false
+        }
+        return membership.classGroup.systemId === classAccess.systemId
+      })
+    })
+    if (classAccessForCurrentStudent) {
+      accessTypesForCurrentStudent.push(classAccess)
+    }
+  }
+
+  // No need to check enrollments where already class access for that school
+  enrollmentsToCheck = enrollmentsToCheck.filter((enrollment) => {
+    return !accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === enrollment.school.schoolNumber)
+  })
+  if (enrollmentsToCheck.length === 0) {
+    return accessTypesForCurrentStudent
+  }
+
+  // Kontaktlærer-tilgang
+  for (const contactTeacherGroupAccess of access.contactTeacherGroups) {
+    if (accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === contactTeacherGroupAccess.schoolNumber)) {
+      continue
+    }
+
     const contactTeacherGroupAccessForCurrentStudent = enrollmentsToCheck.some((enrollment) => {
       if (enrollment.school.schoolNumber !== contactTeacherGroupAccess.schoolNumber) {
         return false
       }
       return enrollment.contactTeacherGroupMemberships.some((membership) => {
-        const membershipPeriod = getPeriodDetails(membership.period, APP_INFO)
-        if (!membershipPeriod.active && !membershipPeriod.withinViewAccessWindow) {
+        if (!membership.period.active && !membership.period.withinViewAccessWindow) {
           return false
         }
+
         return membership.contactTeacherGroup.systemId === contactTeacherGroupAccess.systemId
       })
     })
@@ -79,15 +115,17 @@ export const getStudentAccessInfo = (student: FrontendStudent, access: Access): 
     return accessTypesForCurrentStudent
   }
 
-  // If school access, no need to check other access types for that school
-  for (const classAccess of access.classes.filter((entry) => !accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === entry.schoolNumber))) {
+  // Klassetilgang (Automatisk - bare lærer)
+  for (const classAccess of access.classes.filter((entry) => entry.type === "AUTOMATISK-KLASSE-TILGANG")) {
+    if (accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === classAccess.schoolNumber)) {
+      continue
+    }
     const classAccessForCurrentStudent = enrollmentsToCheck.some((enrollment) => {
       if (enrollment.school.schoolNumber !== classAccess.schoolNumber) {
         return false
       }
       return enrollment.classMemberships.some((membership) => {
-        const membershipPeriod = getPeriodDetails(membership.period, APP_INFO)
-        if (!membershipPeriod.active && !membershipPeriod.withinViewAccessWindow) {
+        if (!membership.period.active && !membership.period.withinViewAccessWindow) {
           return false
         }
         return membership.classGroup.systemId === classAccess.systemId
@@ -107,14 +145,16 @@ export const getStudentAccessInfo = (student: FrontendStudent, access: Access): 
   }
 
   // If school access, no need to check other access types for that school
-  for (const teachingGroupAccess of access.teachingGroups.filter((entry) => !accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === entry.schoolNumber))) {
+  for (const teachingGroupAccess of access.teachingGroups) {
+    if (accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === teachingGroupAccess.schoolNumber)) {
+      continue
+    }
     const teachingGroupAccessForCurrentStudent = enrollmentsToCheck.some((enrollment) => {
       if (enrollment.school.schoolNumber !== teachingGroupAccess.schoolNumber) {
         return false
       }
       return enrollment.teachingGroupMemberships.some((membership) => {
-        const membershipPeriod = getPeriodDetails(membership.period, APP_INFO)
-        if (!membershipPeriod.active && !membershipPeriod.withinViewAccessWindow) {
+        if (!membership.period.active && !membership.period.withinViewAccessWindow) {
           return false
         }
         return membership.teachingGroup.systemId === teachingGroupAccess.systemId

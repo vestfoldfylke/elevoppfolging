@@ -68,7 +68,7 @@
         </div>
       </form>
       <div class="new-school-actions">
-        <AsyncButton onClick={newSchool} buttonText="Legg til skole" reloadPageDataOnSuccess={true} classList={["filled"]} iconName="add" callBackAfterReloadPageData={() => newSchoolOpen = false} />
+        <AsyncButton onClick={newSchool} buttonText="Legg til skole" reloadPageDataOnSuccess={true}  iconName="add" callBackAfterReloadPageData={() => newSchoolOpen = false} />
         <button onclick={() => newSchoolOpen = false} class="filled danger">Avbryt</button>
       </div>
     {/if}

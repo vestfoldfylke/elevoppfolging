@@ -24,32 +24,32 @@ const getDaysUntilActive = (period: Period): number | null => {
   return Math.ceil(timeDiff / (1000 * 3600 * 24))
 }
 
-const getDaysUntilExpire = (period: Period): number | null => {
+const getDaysAfterExpired = (period: Period): number | null => {
   if (!period.end) {
     return null
   }
 
   const now: Date = new Date()
-  const timeDiff = period.end.getTime() - now.getTime()
+  const timeDiff = now.getTime() - period.end.getTime()
   return Math.ceil(timeDiff / (1000 * 3600 * 24))
 }
 
-const isWithinPeriodAccessWindow = (daysUntilActive: number | null, daysUntilExpire: number | null, APP_INFO: ApplicationInfo): boolean => {
+const isWithinPeriodAccessWindow = (daysUntilActive: number | null, daysAfterExpired: number | null, APP_INFO: ApplicationInfo): boolean => {
   const withinActiveWindow = daysUntilActive !== null && daysUntilActive > 0 && daysUntilActive <= APP_INFO.STUDENT_ACCESS_BEFORE_ACTIVE_DAYS
-  const withinExpireWindow = daysUntilExpire !== null && daysUntilExpire > 0 && daysUntilExpire <= APP_INFO.STUDENT_ACCESS_AFTER_EXPIRE_DAYS
+  const withinExpireWindow = daysAfterExpired !== null && daysAfterExpired > 0 && daysAfterExpired <= APP_INFO.STUDENT_ACCESS_AFTER_EXPIRE_DAYS
   return withinActiveWindow || withinExpireWindow
 }
 
 export const getPeriodDetails = (period: Period, APP_INFO: ApplicationInfo): PeriodDetails => {
   const daysUntilActive = getDaysUntilActive(period)
-  const daysUntilExpire = getDaysUntilExpire(period)
-  const withinViewAccessWindow = isWithinPeriodAccessWindow(daysUntilActive, daysUntilExpire, APP_INFO)
+  const daysAfterExpired = getDaysAfterExpired(period)
+  const withinViewAccessWindow = isWithinPeriodAccessWindow(daysUntilActive, daysAfterExpired, APP_INFO)
 
   return {
     ...period,
     active: isActive(period),
     daysUntilActive,
-    daysUntilExpire,
+    daysAfterExpired,
     withinViewAccessWindow
   }
 }

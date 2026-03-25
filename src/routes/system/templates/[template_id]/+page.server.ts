@@ -1,6 +1,8 @@
+import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
+import { isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { DocumentContentTemplate } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
@@ -10,8 +12,11 @@ type TemplatePageData = {
   template: DocumentContentTemplate
 }
 
-const getTemplate: ServerLoadNextFunction<TemplatePageData> = async ({ requestEvent }) => {
-  // TODO validate admin access
+const getTemplate: ServerLoadNextFunction<TemplatePageData> = async ({ principal, requestEvent }) => {
+  if (!isSystemAdmin(principal, APP_INFO)) {
+    throw new HTTPError(403, noAccessMessage("No permission to handle this template"))
+  }
+
   const templateId = requestEvent.params.template_id
   if (!templateId) {
     throw new HTTPError(400, "Missing template id")
@@ -40,7 +45,8 @@ const getTemplate: ServerLoadNextFunction<TemplatePageData> = async ({ requestEv
           fallbackName: "nei"
         }
       },
-      content: []
+      content: [],
+      sort: 20
     }
     return {
       data: {

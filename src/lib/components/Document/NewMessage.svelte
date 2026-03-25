@@ -48,8 +48,8 @@
 
 {#if messageType === null}
   <div class="new-message-actions">
-    <button onclick={() => messageType = "comment"}><span class="material-symbols-outlined">add_comment</span>Ny kommentar</button>
-    <button onclick={() => messageType = "update"}><span class="material-symbols-outlined">info</span>Ny oppdatering</button>
+    <!--<button class="ds-button" data-variant="secondary" data-size="sm" onclick={() => messageType = "comment"}><span class="material-symbols-outlined">add_comment</span>Ny kommentar</button>-->
+    <button class="ds-button" data-variant="secondary" data-size="sm" onclick={() => messageType = "update"}><span class="material-symbols-outlined">info</span>Ny oppfølging/ny informasjon (eller no sånt)</button>
   </div>
 {:else if messageType === "comment"}
   <Message {studentId} {groupId} editMode={true} {documentId} message={newComment} callback={onNewMessageCreatedOrCancel} />
@@ -59,7 +59,6 @@
 
 <style>
   .new-message-actions {
-    padding: 1rem;
     display: flex;
     gap: 0.5rem;
   }

@@ -16,9 +16,6 @@
     align-items: center;
     height: var(--header-height);
   }
-  h1 {
-    margin: 0;
-  }
   .little-man-to-make-space-for-the-menu-button {
     width: 2.5rem;
   }

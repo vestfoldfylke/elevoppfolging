@@ -1,45 +1,57 @@
-import type { ApplicationInfo, FrontendStudent, FrontendStudentDetails } from "$lib/types/app-types"
-import type { SchoolInfo } from "$lib/types/db/shared-types"
+import type { ApplicationInfo, EnrollmentDetails, EnrollmentWithinViewAccessWindow, FrontendStudent, FrontendStudentMainDetails } from "$lib/types/app-types"
 import { getPeriodDetails } from "./period"
 
-export const getFrontendStudentDetails = (student: FrontendStudent, APP_INFO: ApplicationInfo): FrontendStudentDetails => {
-  const mainEnrollment = student.studentEnrollments.find((enrollment) => enrollment.mainSchool)
+export const getEnrollmentsWithinViewAccessWindow = (student: FrontendStudent, APP_INFO: ApplicationInfo): EnrollmentWithinViewAccessWindow[] => {
+  const enrollmentsWithinViewAccessWindow: EnrollmentWithinViewAccessWindow[] = []
 
-  if (!mainEnrollment) {
-    return {
-      mainSchool: null,
-      mainClassMembership: null,
-      mainContactTeacherGroupMembership: null,
-      additionalSchools: []
+  for (const enrollment of student.studentEnrollments) {
+    const periodDetails = getPeriodDetails(enrollment.period, APP_INFO)
+    if (periodDetails.active || periodDetails.withinViewAccessWindow) {
+      enrollmentsWithinViewAccessWindow.push({
+        systemId: enrollment.systemId,
+        mainSchool: enrollment.mainSchool,
+        school: enrollment.school,
+        period: periodDetails,
+        classMemberships: enrollment.classMemberships
+          .map((membership) => ({ ...membership, period: getPeriodDetails(membership.period, APP_INFO) }))
+          .filter((membership) => membership.period.active || membership.period.withinViewAccessWindow),
+        contactTeacherGroupMemberships: enrollment.contactTeacherGroupMemberships
+          .map((membership) => ({ ...membership, period: getPeriodDetails(membership.period, APP_INFO) }))
+          .filter((membership) => membership.period.active || membership.period.withinViewAccessWindow),
+        teachingGroupMemberships: enrollment.teachingGroupMemberships
+          .map((membership) => ({ ...membership, period: getPeriodDetails(membership.period, APP_INFO) }))
+          .filter((membership) => membership.period.active || membership.period.withinViewAccessWindow)
+      })
     }
   }
 
-  const mainSchool = mainEnrollment.school
-  const mainClassMembership = mainEnrollment.classMemberships
-    .map((membership) => ({ ...membership, period: getPeriodDetails(membership.period, APP_INFO) }))
-    .find((membership) => membership.period.active || membership.period.withinViewAccessWindow)
-  const mainContactTeacherGroupMembership = mainEnrollment.contactTeacherGroupMemberships
-    .map((membership) => ({ ...membership, period: getPeriodDetails(membership.period, APP_INFO) }))
-    .find((membership) => membership.period.active || membership.period.withinViewAccessWindow)
+  return enrollmentsWithinViewAccessWindow
+}
 
-  const additionalSchools: SchoolInfo[] = []
-  for (const enrollment of student.studentEnrollments || []) {
-    if (enrollment.school.schoolNumber === mainSchool?.schoolNumber) {
-      continue
-    }
-    const enrollmentPeriod = getPeriodDetails(enrollment.period, APP_INFO)
-    if (!enrollmentPeriod.active && !enrollmentPeriod.withinViewAccessWindow) {
-      continue
-    }
-    if (!additionalSchools.some((school) => school.schoolNumber === enrollment.school.schoolNumber)) {
-      additionalSchools.push(enrollment.school)
-    }
-  }
+export const getEnrollmentDetails = (enrollment: EnrollmentWithinViewAccessWindow): EnrollmentDetails => {
+  const school = enrollment.school
+  const classGroups = enrollment.classMemberships.map((membership) => membership.classGroup)
+  const contactTeacherGroup = enrollment.contactTeacherGroupMemberships.find((membership) => membership)?.contactTeacherGroup || null
+  const teachingGroups = enrollment.teachingGroupMemberships.map((membership) => membership.teachingGroup)
 
   return {
-    mainSchool: mainSchool || null,
-    mainClassMembership: mainClassMembership || null,
-    mainContactTeacherGroupMembership: mainContactTeacherGroupMembership || null,
-    additionalSchools
+    period: enrollment.period,
+    school,
+    classGroups,
+    contactTeacherGroup,
+    teachingGroups
+  }
+}
+
+export const getFrontendStudentMainDetails = (enrollmentsWithinViewAccessWindow: EnrollmentWithinViewAccessWindow[]): FrontendStudentMainDetails => {
+  const mainEnrollment = enrollmentsWithinViewAccessWindow.find((enrollment) => enrollment.mainSchool)
+  const mainSchool = mainEnrollment?.school || null
+  const mainClass = mainEnrollment?.classMemberships.find((membership) => membership)?.classGroup || null
+  const mainContactTeacherGroup = mainEnrollment?.contactTeacherGroupMemberships.find((membership) => membership)?.contactTeacherGroup || null
+
+  return {
+    mainSchool,
+    mainClass,
+    mainContactTeacherGroup
   }
 }

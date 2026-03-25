@@ -1,6 +1,8 @@
 <script lang="ts">
+  import { page } from "$app/state"
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
+  import { canEditDocumentMessage } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { DocumentMessage, DocumentMessageInput } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
@@ -78,103 +80,68 @@
 </script>
 
 <div class="message">
-  {#if message.type === "comment"}
-    <div class="message-icon">
-      <span class="material-symbols-outlined">comment</span>
-    </div>
-  {/if}
-  {#if message.type === "update"}
-    <div class="message-icon">
-      <span class="material-symbols-outlined">info</span>
-    </div>
-  {/if}
-  <div class="message-content">
-    {#if editMode}
-      <form bind:this={messageForm}>
-        {#if editableMessage.type === "update"}
-          <h3>Ny oppdatering</h3>
-          <div class="input-item">
-            <label for="update-title">Tittel<span class="required-indicator">*</span></label>
-            <input id="update-title" required name="messageTitle" type="text" bind:value={editableMessage.content.title} placeholder="Tittel på oppdatering" />
-          </div>
-          <div class="input-item">
-            <label for="update-content">Oppdatering<span class="required-indicator">*</span></label>
-            <textarea required name="messageContent" id="update-content" rows={5} bind:value={editableMessage.content.text} placeholder="Skriv oppdateringen her..."></textarea>
-          </div>
-        {/if}
-
-        {#if editableMessage.type === "comment"}
-          <h3>Ny kommentar</h3>
-          <div class="input-item">
-            <textarea rows="1" required name="messageContent" id="messageContent" bind:value={editableMessage.content.text} placeholder="Skriv kommentaren her..."></textarea>
-          </div>
-        {/if}
-      </form>
-    {:else}
-      <!-- TODO: Find a better way to show who created the message. Fetch name from Users or do it on load? -->
-      {#if message.type === "update"}
-        <div class="update-header">
-          <h3>Oppdatering: {message.content.title}</h3>
-          <div class="message-metadata"><strong>{message.created.by.fallbackName}</strong> - <span class="created-at">{new Date(message.created.at).toLocaleString("nb-NO", { dateStyle: "short", timeStyle: "short" })}</span></div>
-        </div>
-        <p class="message-text">{message.content.text}</p>
-      {/if}
-      
-      {#if message.type === "comment"}
-        <div class="message-metadata">
-          <strong>{message.created.by.fallbackName}</strong> - <span class="created-at">{new Date(message.created.at).toLocaleString("nb-NO", { dateStyle: "short", timeStyle: "short" })}</span>
-        </div>
-        <p class="message-text">{message.content.text}</p>
-      {/if}
-    {/if}
-  </div>
-</div>
-<div class="message-actions">
   {#if editMode}
-    <AsyncButton buttonText="Lagre" onClick={newMessage} reloadPageDataOnSuccess={true} callBackAfterReloadPageData={callBackOnSuccessOrCancel} classList={["filled"]} iconName="save" />
-    <button class="filled danger" onclick={callBackOnSuccessOrCancel}><span class="material-symbols-outlined">close</span>Avbryt</button>
+    <form bind:this={messageForm}>
+      {#if editableMessage.type === "update"}
+        {#if !message.messageId}
+          <h2 class="ds-heading">Ny oppfølging</h2>
+        {/if}
+        <ds-field class="ds-field content-item">
+          <label for="message-title-{message.messageId || documentId}" class="ds-label" data-weight="medium">
+            Tittel
+            <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
+          </label>
+          <input autocomplete="off" class="ds-input" type="text" id="message-title-{message.messageId || documentId}" name="messageTitle" required bind:value={editableMessage.content.title} placeholder="Tittel på oppfølging" />
+        </ds-field>
+        
+        <ds-field class="ds-field content-item">
+          <label for="message-content-{message.messageId || documentId}" class="ds-label" data-weight="medium">
+            Oppdatering
+            <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
+          </label>
+          <textarea required class="ds-input" name="messageContent" id="message-content-{message.messageId || documentId}" rows={5} bind:value={editableMessage.content.text} placeholder="Skriv oppdateringen her..."></textarea>
+        </ds-field>
+      {/if}
+      <!--
+      {#if editableMessage.type === "comment"}
+        {#if !message.messageId}
+          <h2 class="ds-heading">Ny kommentar</h2>
+        {/if}
+        <ds-field class="ds-field content-item">
+          <label for="message-content-{message.messageId || documentId}" class="ds-label" data-weight="medium">
+            Kommentar
+            <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
+          </label>
+          <input class="ds-input" required name="messageContent" id="message-content-{message.messageId || documentId}" type="text" bind:value={editableMessage.content.text} placeholder="Skriv kommentaren her..." />
+        </ds-field>
+      {/if}
+      -->
+    </form>
+  {:else}
+    <p class="ds-paragraph">
+      {message.content.text}
+    </p>
   {/if}
 </div>
+{#if editMode}
+  <div class="message-actions">
+    {#if !message.messageId}
+      <AsyncButton buttonText="Lagre" onClick={newMessage} reloadPageDataOnSuccess={true} callBackAfterReloadPageData={callBackOnSuccessOrCancel} iconName="save" />
+    {:else}
+      Lag "lagre endringer" knapp...
+    {/if}
+    <button class="ds-button" data-variant="secondary" onclick={callBackOnSuccessOrCancel}><span class="material-symbols-outlined">close</span>Avbryt</button>
+  </div>
+{:else if canEditDocumentMessage(page.data.authenticatedPrincipal, message)}
+  <div class="message-actions">
+    <button class="ds-button" data-variant="secondary" data-size="sm" onclick={() => editMode = true}><span class="material-symbols-outlined">edit</span>Rediger</button>
+  </div>
+{/if}
 
 <style>
-  .message {
-    display: flex;
-    gap: 1rem;
-    border-bottom: 0px solid var(--color-primary-30);
-    padding: 1rem 1rem 0 1rem;
-  }
-
-  .update-header {
-    padding-bottom: 1rem;
-  }
-
-  .message-metadata {
-    font-size: smaller;
-  }
-  .message-icon > span {
-    color: var(--color-primary);
-    background-color: var(--color-primary-20);
-    border-radius: 50%;
-    padding: 0.5rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .message-content {
-    flex: 1;
-  }
-
-  .message-text {
-    white-space: pre-wrap;
-    font: inherit;
-    margin: 0;
-  }
-
   .message-actions {
     display: flex;
     gap: 0.5rem;
     justify-content: flex-end;
-    padding: 0 1rem 1rem 1rem;
   }
 </style>

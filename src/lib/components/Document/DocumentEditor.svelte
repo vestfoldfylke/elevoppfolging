@@ -83,24 +83,29 @@
 <div class="document-content">
   <form bind:this={documentEditorForm}>
     {#if accessSchools.length > 1 && !documentId} <!-- Only show school selector when creating a new document and there are multiple access schools -->
-      <div class="input-item">
-        <label for="schoolNumber">
+      <ds-field class="ds-field content-item">
+        <label for="schoolNumber" class="ds-label" data-weight="medium">
           Skole
+          <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må velges</span>
         </label>
-        <select id="schoolNumber" name="schoolNumber" bind:value={currentDocument.school} required>
+        <div data-field="description">
+          Du har tilgang til denne eleven ved flere skoler, og må velge hvilken skole notatet er knyttet til.
+        </div>
+        <select id="schoolNumber" class="ds-input"  data-width="auto" name="schoolNumber" bind:value={currentDocument.school} required>
           <option value="" disabled selected>Velg skole</option>
           {#each accessSchools as school}
             <option value={school}>{school.name}</option>
           {/each}
         </select>
-      </div>
+      </ds-field>
     {/if}
-    <div class="input-item">
-      <label for="documentTitle">
-        Tittel<span class="required-indicator">*</span>
+    <ds-field class="ds-field content-item">
+      <label for="documentTitle" class="ds-label" data-weight="medium">
+        Tittel
+        <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
       </label>
-      <input id="documentTitle" name="documentTitle" type="text" bind:value={currentDocument.title} required>
-    </div>
+      <input autocomplete="off" id="documentTitle" class="ds-input" name="documentTitle" type="text" bind:value={currentDocument.title} required>
+    </ds-field>
     {#each currentDocument.content as _contentItem, index}
       <DocumentContentItem bind:contentItem={currentDocument.content[index]} {index} editMode={true} />
     {/each}
@@ -108,12 +113,13 @@
 </div>
 <div class="document-actions">
   {#if !documentId}
-    <AsyncButton buttonText="Lagre notat" onClick={newDocument} reloadPageDataOnSuccess={true} callBackAfterReloadPageData={closeEditor} iconName="save" classList={["filled"]} />
+    <AsyncButton buttonText="Lagre notat" onClick={newDocument} reloadPageDataOnSuccess={true} callBackAfterReloadPageData={closeEditor} iconName="save" />
   {/if}
   {#if documentId}
-    <AsyncButton buttonText="Lagre endringer" onClick={updateDocument} reloadPageDataOnSuccess={true} callBackAfterReloadPageData={closeEditor} iconName="save" classList={["filled"]} />
+    <!--TODO sjekk om det er gjort endringer først da... -->
+    <AsyncButton buttonText="Lagre endringer" onClick={updateDocument} reloadPageDataOnSuccess={true} callBackAfterReloadPageData={closeEditor} iconName="save" />
   {/if}
-  <button class="filled danger" onclick={closeEditor}><span class="material-symbols-outlined">close</span>Avbryt</button>
+  <button class="ds-button" type="button" data-variant="secondary" onclick={closeEditor}><span class="material-symbols-outlined">close</span>Avbryt</button>
 </div>
 
 <style>

@@ -1,7 +1,7 @@
 import { logger } from "@vestfoldfylke/loglady"
 import { type Db, type Filter, MongoClient, ObjectId, type WithId } from "mongodb"
 import { env } from "$env/dynamic/private"
-import type { AccessEntry, FrontendStudent } from "$lib/types/app-types"
+import type { AccessEntry, FrontendStudent, StudentMemberships } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { KeysToNumber } from "$lib/types/db/db-helpers"
 import type {
@@ -41,6 +41,7 @@ import type {
   StudentDocumentUpdate,
   StudentImportantStuff
 } from "$lib/types/db/shared-types"
+import { APP_INFO } from "../app-info"
 
 export class MongoDbClient implements IDbClient {
   private readonly mongoClient: MongoClient
@@ -162,6 +163,14 @@ export class MongoDbClient implements IDbClient {
 
     return {
       ...access,
+      programAreas: access.programAreas.map((programAreaAccessEntry) => ({
+        ...programAreaAccessEntry,
+        _id: programAreaAccessEntry._id.toString()
+      })),
+      students: access.students.map((studentAccessEntry) => ({
+        ...studentAccessEntry,
+        _id: studentAccessEntry._id.toString()
+      })),
       _id: access._id.toString()
     }
   }
@@ -169,10 +178,18 @@ export class MongoDbClient implements IDbClient {
   async getSchoolLeaderAccess(): Promise<Access[]> {
     const db = await this.getDb()
     const accessCollection = db.collection<DbAccess>(this.accessCollectionName)
-    const accessList = await accessCollection.find({ schools: { $exists: true, $ne: [] } }).toArray()
+    const accessList = await accessCollection.find({ leaderForSchools: { $exists: true, $ne: [] } }).toArray()
     return accessList.map((access) => {
       return {
         ...access,
+        programAreas: access.programAreas.map((programAreaAccessEntry) => ({
+          ...programAreaAccessEntry,
+          _id: programAreaAccessEntry._id.toString()
+        })),
+        students: access.students.map((studentAccessEntry) => ({
+          ...studentAccessEntry,
+          _id: studentAccessEntry._id.toString()
+        })),
         _id: access._id.toString()
       }
     })
@@ -194,16 +211,19 @@ export class MongoDbClient implements IDbClient {
     let updateResult: DbAccess | null
     switch (accessEntry.type) {
       case "MANUELL-SKOLELEDER-TILGANG":
-        updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { schools: accessEntry } })
+        updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { leaderForSchools: accessEntry } })
         break
       case "MANUELL-ELEV-TILGANG":
-        updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { students: accessEntry } })
+        updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { students: { ...accessEntry, _id: new ObjectId(accessEntry._id) } } })
         break
       case "MANUELL-KLASSE-TILGANG":
         updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { classes: accessEntry } })
         break
       case "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG":
-        updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { programAreas: accessEntry } })
+        updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { programAreas: { ...accessEntry, _id: new ObjectId(accessEntry._id) } } })
+        break
+      case "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG":
+        updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { manageManualStudentsForSchools: accessEntry } })
         break
       default:
         throw new Error(`Invalid access entry type: ${accessEntry.type}`)
@@ -220,16 +240,19 @@ export class MongoDbClient implements IDbClient {
     let updatedAccess: DbAccess | null
     switch (accessEntry.type) {
       case "MANUELL-SKOLELEDER-TILGANG":
-        updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { schools: { schoolNumber: accessEntry.schoolNumber } } })
+        updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { leaderForSchools: { schoolNumber: accessEntry.schoolNumber } } })
+        break
+      case "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG":
+        updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { manageManualStudentsForSchools: { schoolNumber: accessEntry.schoolNumber } } })
         break
       case "MANUELL-ELEV-TILGANG":
-        updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { students: { _id: accessEntry._id, schoolNumber: accessEntry.schoolNumber } } })
+        updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { students: { _id: new ObjectId(accessEntry._id), schoolNumber: accessEntry.schoolNumber } } })
         break
       case "MANUELL-KLASSE-TILGANG":
         updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { classes: { systemId: accessEntry.systemId, schoolNumber: accessEntry.schoolNumber } } })
         break
       case "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG":
-        updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { programAreas: { _id: accessEntry._id, schoolNumber: accessEntry.schoolNumber } } })
+        updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { programAreas: { _id: new ObjectId(accessEntry._id), schoolNumber: accessEntry.schoolNumber } } })
         break
     }
     if (!updatedAccess || !updatedAccess._id) {
@@ -244,6 +267,9 @@ export class MongoDbClient implements IDbClient {
     const accessList = await accessCollection
       .find({
         $or: [
+          {
+            manageManualStudentsForSchools: { $exists: true, $ne: [], $elemMatch: { schoolNumber } }
+          },
           {
             programAreas: { $exists: true, $ne: [], $elemMatch: { schoolNumber } }
           },
@@ -261,10 +287,21 @@ export class MongoDbClient implements IDbClient {
         _id: access._id.toString(),
         entraUserId: access.entraUserId,
         name: access.name,
-        schools: [],
-        programAreas: access.programAreas.filter((programArea) => programArea.schoolNumber === schoolNumber),
+        leaderForSchools: [],
+        manageManualStudentsForSchools: access.manageManualStudentsForSchools.filter((manageManualStudentAccessEntry) => manageManualStudentAccessEntry.schoolNumber === schoolNumber),
+        programAreas: access.programAreas
+          .filter((programArea) => programArea.schoolNumber === schoolNumber)
+          .map((programArea) => ({
+            ...programArea,
+            _id: programArea._id.toString()
+          })),
         classes: access.classes.filter((classAccess) => classAccess.type === "MANUELL-KLASSE-TILGANG" && classAccess.schoolNumber === schoolNumber),
-        students: access.students.filter((studentAccess) => studentAccess.schoolNumber === schoolNumber),
+        students: access.students
+          .filter((studentAccess) => studentAccess.schoolNumber === schoolNumber)
+          .map((studentAccess) => ({
+            ...studentAccess,
+            _id: studentAccess._id.toString()
+          })),
         contactTeacherGroups: [],
         teachingGroups: []
       }
@@ -302,7 +339,13 @@ export class MongoDbClient implements IDbClient {
       studentEnrollments: 1
     }
 
-    const students = await studentsCollection.find<FrontendStudent>({}, { projection }).toArray()
+    const endDateMustBeAfter = new Date()
+    endDateMustBeAfter.setDate(endDateMustBeAfter.getDate() - APP_INFO.STUDENT_ACCESS_AFTER_EXPIRE_DAYS)
+
+    // Get all students that has an enrollment with end date after the today minus STUDENT_ACCESS_AFTER_EXPIRE_DAYS, or no end date at all (active enrollments)
+    const students = await studentsCollection
+      .find<FrontendStudent>({ $or: [{ "studentEnrollments.period.end": { $eq: null } }, { "studentEnrollments.period.end": { $gte: endDateMustBeAfter } }] }, { projection })
+      .toArray()
 
     return students.map((student) => ({
       ...student,
@@ -317,12 +360,12 @@ export class MongoDbClient implements IDbClient {
     const query: Filter<DbAppStudent> = {}
     query.$or = [] // ts doesn't understand that this is defined, if defined in the object above
 
-    for (const schoolAccessEntry of access.schools) {
+    for (const schoolAccessEntry of access.leaderForSchools) {
       query.$or.push({ "studentEnrollments.school.schoolNumber": schoolAccessEntry.schoolNumber })
     }
 
     const accessEntryNotInSchoolsAccess = (accessEntry: AccessEntry): boolean => {
-      return !access.schools.some((school) => school.schoolNumber === accessEntry.schoolNumber)
+      return !access.leaderForSchools.some((school) => school.schoolNumber === accessEntry.schoolNumber)
     }
 
     const studentAccessEntries = access.students.filter(accessEntryNotInSchoolsAccess)
@@ -429,6 +472,42 @@ export class MongoDbClient implements IDbClient {
       modified: student.modified,
       source: student.source
     }
+  }
+
+  async getStudentAccess(studentId: string, studentMemberships: StudentMemberships): Promise<Access[]> {
+    const db = await this.getDb()
+    const accessCollection = db.collection<DbAccess>(this.accessCollectionName)
+
+    const query: Filter<DbAccess> = {
+      $or: [
+        { "leaderForSchools.schoolNumber": { $in: studentMemberships.schoolNumbers } },
+        { "classes.systemId": { $in: studentMemberships.classes.map((c) => c.systemId) } },
+        {
+          "contactTeacherGroups.systemId": { $in: studentMemberships.contactTeacherGroups.map((c) => c.systemId) }
+        },
+        {
+          "teachingGroups.systemId": { $in: studentMemberships.teachingGroups.map((c) => c.systemId) }
+        },
+        { "students._id": new ObjectId(studentId) }
+      ]
+    }
+
+    const accessList = await accessCollection.find(query).toArray()
+
+    return accessList.map((access) => {
+      return {
+        ...access,
+        _id: access._id.toString(),
+        programAreas: access.programAreas.map((programAreaAccessEntry) => ({
+          ...programAreaAccessEntry,
+          _id: programAreaAccessEntry._id.toString()
+        })),
+        students: access.students.map((studentAccessEntry) => ({
+          ...studentAccessEntry,
+          _id: studentAccessEntry._id.toString()
+        }))
+      }
+    })
   }
 
   async getStudentDocuments(studentId: string): Promise<StudentDocument[]> {

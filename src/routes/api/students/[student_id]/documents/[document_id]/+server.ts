@@ -1,12 +1,16 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
 import { validateDocument } from "$lib/data-validation/document-validation"
+import { getPrincipalAccessEntriesForStudent } from "$lib/server/authorization/student-access"
+import { getStudentFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canEditDocument } from "$lib/shared-authorization/authorization"
+import { canEditStudentDocument, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { EditorData, StudentDocumentUpdate } from "$lib/types/db/shared-types"
+import type { AccessEntry, CachedFrontendStudent } from "$lib/types/app-types"
+import type { IDbClient } from "$lib/types/db/db-client"
+import type { Access, EditorData, StudentDocumentUpdate } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
 type UpdateDocumentResponse = ApiRouteMap[`/api/students/${NoSlashString}/documents/${NoSlashString}`]["PATCH"]["res"]
@@ -17,20 +21,36 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
   if (!studentId) {
     throw new HTTPError(400, "Student ID is missing in request parameters")
   }
+
   const documentId = requestEvent.params.document_id
   if (!documentId) {
     throw new HTTPError(400, "Document ID is missing in request parameters")
   }
 
-  const dbClient = getDbClient()
+  const dbClient: IDbClient = getDbClient()
+
+  const access: Access | null = await dbClient.getPrincipalAccess(principal.id)
+  if (!access) {
+    throw new HTTPError(403, noAccessMessage("No access found for principal"))
+  }
+
+  const student: CachedFrontendStudent | null = await getStudentFromCache(studentId)
+  if (!student) {
+    throw new HTTPError(400, "Student not found. Cannot edit the document for non-existing student.")
+  }
+
+  const accessToStudent: AccessEntry[] = getPrincipalAccessEntriesForStudent(student, access)
+  if (accessToStudent.length === 0) {
+    throw new HTTPError(403, noAccessMessage("No permission to edit the document"))
+  }
 
   const currentDocument = await dbClient.getStudentDocumentById(documentId)
   if (!currentDocument) {
     throw new HTTPError(404, "Document not found, cannot update non-existing document")
   }
 
-  if (!canEditDocument(principal, currentDocument)) {
-    throw new HTTPError(403, "Access denied: No permission to edit the document")
+  if (!canEditStudentDocument(principal, accessToStudent, currentDocument)) {
+    throw new HTTPError(403, noAccessMessage("No permission to edit the document"))
   }
 
   if (currentDocument.student._id !== studentId) {
