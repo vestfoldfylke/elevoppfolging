@@ -163,6 +163,14 @@ export class MongoDbClient implements IDbClient {
 
     return {
       ...access,
+      programAreas: access.programAreas.map((programAreaAccessEntry) => ({
+        ...programAreaAccessEntry,
+        _id: programAreaAccessEntry._id.toString()
+      })),
+      students: access.students.map((studentAccessEntry) => ({
+        ...studentAccessEntry,
+        _id: studentAccessEntry._id.toString()
+      })),
       _id: access._id.toString()
     }
   }
@@ -174,6 +182,14 @@ export class MongoDbClient implements IDbClient {
     return accessList.map((access) => {
       return {
         ...access,
+        programAreas: access.programAreas.map((programAreaAccessEntry) => ({
+          ...programAreaAccessEntry,
+          _id: programAreaAccessEntry._id.toString()
+        })),
+        students: access.students.map((studentAccessEntry) => ({
+          ...studentAccessEntry,
+          _id: studentAccessEntry._id.toString()
+        })),
         _id: access._id.toString()
       }
     })
@@ -198,13 +214,13 @@ export class MongoDbClient implements IDbClient {
         updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { leaderForSchools: accessEntry } })
         break
       case "MANUELL-ELEV-TILGANG":
-        updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { students: accessEntry } })
+        updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { students: { ...accessEntry, _id: new ObjectId(accessEntry._id) } } })
         break
       case "MANUELL-KLASSE-TILGANG":
         updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { classes: accessEntry } })
         break
       case "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG":
-        updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { programAreas: accessEntry } })
+        updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { programAreas: { ...accessEntry, _id: new ObjectId(accessEntry._id) } } })
         break
       case "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG":
         updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { manageManualStudentsForSchools: accessEntry } })
@@ -230,13 +246,13 @@ export class MongoDbClient implements IDbClient {
         updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { manageManualStudentsForSchools: { schoolNumber: accessEntry.schoolNumber } } })
         break
       case "MANUELL-ELEV-TILGANG":
-        updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { students: { _id: accessEntry._id, schoolNumber: accessEntry.schoolNumber } } })
+        updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { students: { _id: new ObjectId(accessEntry._id), schoolNumber: accessEntry.schoolNumber } } })
         break
       case "MANUELL-KLASSE-TILGANG":
         updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { classes: { systemId: accessEntry.systemId, schoolNumber: accessEntry.schoolNumber } } })
         break
       case "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG":
-        updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { programAreas: { _id: accessEntry._id, schoolNumber: accessEntry.schoolNumber } } })
+        updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { programAreas: { _id: new ObjectId(accessEntry._id), schoolNumber: accessEntry.schoolNumber } } })
         break
     }
     if (!updatedAccess || !updatedAccess._id) {
@@ -273,9 +289,15 @@ export class MongoDbClient implements IDbClient {
         name: access.name,
         leaderForSchools: [],
         manageManualStudentsForSchools: access.manageManualStudentsForSchools.filter((manageManualStudentAccessEntry) => manageManualStudentAccessEntry.schoolNumber === schoolNumber),
-        programAreas: access.programAreas.filter((programArea) => programArea.schoolNumber === schoolNumber),
+        programAreas: access.programAreas.filter((programArea) => programArea.schoolNumber === schoolNumber).map((programArea) => ({
+          ...programArea,
+          _id: programArea._id.toString()
+        })),
         classes: access.classes.filter((classAccess) => classAccess.type === "MANUELL-KLASSE-TILGANG" && classAccess.schoolNumber === schoolNumber),
-        students: access.students.filter((studentAccess) => studentAccess.schoolNumber === schoolNumber),
+        students: access.students.filter((studentAccess) => studentAccess.schoolNumber === schoolNumber).map((studentAccess) => ({
+          ...studentAccess,
+          _id: studentAccess._id.toString()
+        })),
         contactTeacherGroups: [],
         teachingGroups: []
       }
@@ -454,19 +476,15 @@ export class MongoDbClient implements IDbClient {
 
     const query: Filter<DbAccess> = {
       $or: [
-        { "schools.schoolNumber": { $in: studentMemberships.schoolNumbers } },
-        { classes: { $elemMatch: { schoolNumber: { $in: studentMemberships.classes.map((c) => c.schoolNumber) }, systemId: { $in: studentMemberships.classes.map((c) => c.systemId) } } } },
+        { "leaderForSchools.schoolNumber": { $in: studentMemberships.schoolNumbers } },
+        { "classes.systemId": { $in: studentMemberships.classes.map((c) => c.systemId) } },
         {
-          contactTeacherGroups: {
-            $elemMatch: { schoolNumber: { $in: studentMemberships.contactTeacherGroups.map((c) => c.schoolNumber) }, systemId: { $in: studentMemberships.contactTeacherGroups.map((c) => c.systemId) } }
-          }
+          "contactTeacherGroups.systemId": { $in: studentMemberships.contactTeacherGroups.map((c) => c.systemId) }
         },
         {
-          teachingGroups: {
-            $elemMatch: { schoolNumber: { $in: studentMemberships.teachingGroups.map((c) => c.schoolNumber) }, systemId: { $in: studentMemberships.teachingGroups.map((c) => c.systemId) } }
-          }
+          "teachingGroups.systemId": { $in: studentMemberships.teachingGroups.map((c) => c.systemId) }
         },
-        { students: { $elemMatch: { _id: new ObjectId(studentId) } } }
+        { "students._id": new ObjectId(studentId) }
       ]
     }
 
@@ -475,7 +493,15 @@ export class MongoDbClient implements IDbClient {
     return accessList.map((access) => {
       return {
         ...access,
-        _id: access._id.toString()
+        _id: access._id.toString(),
+        programAreas: access.programAreas.map((programAreaAccessEntry) => ({
+          ...programAreaAccessEntry,
+          _id: programAreaAccessEntry._id.toString()
+        })),
+        students: access.students.map((studentAccessEntry) => ({
+          ...studentAccessEntry,
+          _id: studentAccessEntry._id.toString()
+        }))
       }
     })
   }

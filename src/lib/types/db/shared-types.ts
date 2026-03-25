@@ -154,6 +154,10 @@ export type ProgramAreaManualAccessEntryInput = {
   type: "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG"
 }
 
+export type DbProgramAreaManualAccessEntry = Omit<ProgramAreaManualAccessEntry, "_id"> & {
+  _id: ObjectId
+}
+
 export type ProgramAreaManualAccessEntry = AccessEntryBase & ProgramAreaManualAccessEntryInput
 
 export type StudentManualAccessEntryInput = {
@@ -165,6 +169,10 @@ export type StudentManualAccessEntryInput = {
 }
 
 export type StudentManualAccessEntry = AccessEntryBase & StudentManualAccessEntryInput
+
+export type DbStudentManualAccessEntry = Omit<StudentManualAccessEntry, "_id"> & {
+  _id: ObjectId
+}
 
 export type ClassManualAccessEntryInput = {
   /** Hvilken skole gjelder tilgangen for */
@@ -223,8 +231,10 @@ export type Access = NewAccess & {
   _id: string
 }
 
-export type DbAccess = NewAccess & {
+export type DbAccess = Omit<NewAccess, "programAreas" | "students"> & {
   _id: ObjectId
+  programAreas: DbProgramAreaManualAccessEntry[]
+  students: DbStudentManualAccessEntry[]
 }
 
 // APP USER

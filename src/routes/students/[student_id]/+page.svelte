@@ -6,12 +6,12 @@
   import DataSharingConsent from "$lib/components/StudentBoxes/DataSharingConsent.svelte"
   import ImportantStuff from "$lib/components/StudentBoxes/ImportantStuff.svelte"
   import { canEditStudentDataSharingConsent, canEditStudentImportantStuff } from "$lib/shared-authorization/authorization"
-  import type { StudentAccess } from "$lib/types/app-types"
-  import type { SchoolInfo, Source } from "$lib/types/db/shared-types"
+  import type { EnrollmentDetails, PeriodDetails, StudentAccess } from "$lib/types/app-types"
+  import type { Period, SchoolInfo, Source } from "$lib/types/db/shared-types"
   import { ACCESS_TYPE_DISPLAY_NAMES } from "$lib/utils/access-constants"
-  import { getFrontendStudentMainDetails } from "$lib/utils/frontend-student-details"
-  import { getPeriodDetails } from "$lib/utils/period"
+  import { getEnrollmentDetails, getFrontendStudentMainDetails } from "$lib/utils/frontend-student-details"
   import type { PageProps } from "./$types"
+  import { prettifyDate } from "$lib/utils/prettify-date";
 
   let { data }: PageProps = $props()
 
@@ -29,6 +29,10 @@
 
   let studentMainDetails = $derived.by(() => {
     return getFrontendStudentMainDetails(data.student.enrollmentsWithinViewAccessWindow)
+  })
+
+  let studentEnrollmentDetails: EnrollmentDetails[] = $derived.by(() => {
+    return data.student.enrollmentsWithinViewAccessWindow.map(getEnrollmentDetails)
   })
 
   let additionalSchool: SchoolInfo[] = $derived.by(() => {
@@ -64,7 +68,7 @@
         ...access,
         accessInfo
       }
-    })
+    }).sort((a, b) => a.entra.displayName.localeCompare(b.entra.displayName))
   })
 
   type StudentSummaryDetails =
@@ -104,7 +108,7 @@
   })
 
   let additionalSchools: SchoolInfo[] = $derived.by(() => {
-    return data.student.enrollmentsWithinViewAccessWindow.filter((enrollment) => !enrollment.mainSchool).map((enrollment) => enrollment.school)
+    return data.student.enrollmentsWithinViewAccessWindow.filter((enrollment) => enrollment.school.schoolNumber !== studentMainDetails.mainSchool?.schoolNumber).map((enrollment) => enrollment.school)
   })
 
   let hasOtherSchoolInfoAndNotConsent = $derived.by(() => {
@@ -125,22 +129,6 @@
     }
 
     return accessSchools
-  })
-
-  let studentEnrollments = $derived.by(() => {
-    const withinViewWindowEnrollments = []
-    for (const studentEnrollment of data.student.studentEnrollments) {
-      const periodDetails = getPeriodDetails(studentEnrollment.period, data.APP_INFO)
-      if (!periodDetails.active && !periodDetails.withinViewAccessWindow) {
-        continue
-      }
-      const enrollment = {
-        school: studentEnrollment.school,
-        period: periodDetails,
-        classes: [],
-        teachingGroups: []
-      }
-    }
   })
 </script>
 
@@ -209,6 +197,22 @@
       {/if}
     </div>
   {/if}
+
+  {#snippet periodDetails(period: Period & PeriodDetails)}
+    <p class="ds-paragraph" data-size="sm">
+      Periode: { period.start ? prettifyDate(period.start) : "Ukjent"} - {period.end ? prettifyDate(period.end) : "Ingen sluttdato"}
+      {#if !period.active}
+        {#if period.withinViewAccessWindow}
+          {#if period.daysUntilActive && period.daysUntilActive > 0}
+            (Starter om {period.daysUntilActive} dager)
+          {/if}
+          {#if period.daysAfterExpired && period.daysAfterExpired > 0}
+            (Inaktiv i {period.daysAfterExpired} dager)
+          {/if}
+        {/if}
+      {/if}
+    </p>
+  {/snippet}
   
   {#if expandedStudentDetails}
     <div class="student-details" transition:slide>
@@ -241,7 +245,7 @@
         </div>
       </div>
 
-      {#each data.student.studentEnrollments as enrollment}
+      {#each studentEnrollmentDetails as enrollment}
         <div class="ds-card" data-variant="tinted" data-color="brand3">
           <div class="card-header">
             <div class="card-title">
@@ -250,7 +254,34 @@
             </div>
           </div>
           <div>
-
+            {@render periodDetails(enrollment.period)}
+            <p class="ds-paragraph" data-size="sm">Klasser</p>
+            <ul class="ds-list">
+              {#if enrollment.classGroups.length === 0}
+                <li>Ingen klasser</li>
+              {/if}
+              {#each enrollment.classGroups as classGroup}
+                <li>{classGroup.name}</li>
+              {/each}
+            </ul>
+            <p class="ds-paragraph" data-size="sm">Kontaktlærere</p>
+            <ul class="ds-list">
+              {#if !enrollment.contactTeacherGroup || enrollment.contactTeacherGroup?.teachers.length === 0}
+                <li>Ingen kontaktlærere</li>
+              {/if}
+              {#each enrollment.contactTeacherGroup?.teachers || [] as contactTeacher}
+                <li>{contactTeacher.name}</li>
+              {/each}
+            </ul>
+            <p class="ds-paragraph" data-size="sm">Undervisningsgrupper</p>
+            <ul class="ds-list">
+              {#if enrollment.teachingGroups.length === 0}
+                <li>Ingen undervisningsgrupper</li>
+              {/if}
+              {#each enrollment.teachingGroups as teachingGroup}
+                <li>{teachingGroup.name}</li>
+              {/each}
+            </ul>
           </div>
         </div>
       {/each}

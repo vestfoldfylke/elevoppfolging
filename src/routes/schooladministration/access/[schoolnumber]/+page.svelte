@@ -75,8 +75,6 @@
       }))
   })
 
-  let addAccessOpen = $state(false)
-
   let addAccessForm: HTMLFormElement | undefined = $state()
   let selectedEntraUserId = $state("")
   let selectedType: ManualAccessEntryInput["type"] | "" = $state("")
@@ -224,7 +222,7 @@
           <label for="student">Velg elev:</label>
           <select id="student" bind:value={selectedResourceId} required>
             <option value="" disabled>Velg elev</option>
-            {#each schoolStudents as student}
+            {#each schoolStudents.sort((a, b) => a.name.localeCompare(b.name)) as student}
               <option value={student._id}>{student.name}</option>
             {/each}
           </select>

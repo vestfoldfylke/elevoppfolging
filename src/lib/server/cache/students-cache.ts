@@ -132,13 +132,13 @@ export const getStudentMembershipsFromCache = async (studentId: string): Promise
   return {
     schoolNumbers: student.enrollmentsWithinViewAccessWindow.map((enrollment) => enrollment.school.schoolNumber),
     classes: student.enrollmentsWithinViewAccessWindow.flatMap((enrollment) =>
-      enrollment.classMemberships.map((classMembership) => ({ schoolNumber: enrollment.school.schoolNumber, systemId: classMembership.systemId }))
+      enrollment.classMemberships.map((classMembership) => ({ schoolNumber: enrollment.school.schoolNumber, systemId: classMembership.classGroup.systemId }))
     ),
     contactTeacherGroups: student.enrollmentsWithinViewAccessWindow.flatMap((enrollment) =>
-      enrollment.contactTeacherGroupMemberships.map((groupMembership) => ({ schoolNumber: enrollment.school.schoolNumber, systemId: groupMembership.systemId }))
+      enrollment.contactTeacherGroupMemberships.map((groupMembership) => ({ schoolNumber: enrollment.school.schoolNumber, systemId: groupMembership.contactTeacherGroup.systemId }))
     ),
     teachingGroups: student.enrollmentsWithinViewAccessWindow.flatMap((enrollment) =>
-      enrollment.teachingGroupMemberships.map((groupMembership) => ({ schoolNumber: enrollment.school.schoolNumber, systemId: groupMembership.systemId }))
+      enrollment.teachingGroupMemberships.map((groupMembership) => ({ schoolNumber: enrollment.school.schoolNumber, systemId: groupMembership.teachingGroup.systemId }))
     )
   }
 }

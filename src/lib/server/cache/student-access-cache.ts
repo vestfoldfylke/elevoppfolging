@@ -48,15 +48,16 @@ export const getStudentAccessInfoFromCache = async (studentId: string): Promise<
       continue
     }
     const studentAccessInfo: AccessEntry[] = getPrincipalAccessEntriesForStudent(student, access)
-
-    accessInfo.push({
-      accessTypes: studentAccessInfo,
-      entra: {
-        displayName: appUser.entra.displayName,
-        id: access.entraUserId,
-        userPrincipalName: appUser.entra.userPrincipalName
-      }
-    })
+    if (studentAccessInfo.length > 0) {
+      accessInfo.push({
+        accessTypes: studentAccessInfo,
+        entra: {
+          displayName: appUser.entra.displayName,
+          id: access.entraUserId,
+          userPrincipalName: appUser.entra.userPrincipalName
+        }
+      })
+    }
   }
 
   studentAccessCache[studentId] = accessInfo

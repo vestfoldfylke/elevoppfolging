@@ -18,6 +18,7 @@ import type {
   StudentCheckBox,
   StudentImportantStuff,
   StudentManualAccessEntry,
+  TeachingGroup,
   TeachingGroupAutoAccessEntry,
   TeachingGroupMembership
 } from "./db/shared-types"
@@ -32,6 +33,14 @@ export type EnrollmentWithinViewAccessWindow = {
   classMemberships: (Omit<ClassMembership, "period"> & { period: PeriodDetails })[]
   contactTeacherGroupMemberships: (Omit<ContactTeacherGroupMembership, "period"> & { period: PeriodDetails })[]
   teachingGroupMemberships: (Omit<TeachingGroupMembership, "period"> & { period: PeriodDetails })[]
+}
+
+export type EnrollmentDetails = {
+  period: PeriodDetails
+  school: SchoolInfo
+  classGroups: ClassGroup[]
+  contactTeacherGroup: ContactTeacherGroup | null
+  teachingGroups: TeachingGroup[]
 }
 
 export type FrontendStudentMainDetails = {
@@ -94,7 +103,7 @@ export type RootLayoutData = {
 
 export type PeriodDetails = Period & {
   active: boolean
-  daysUntilExpire: number | null
+  daysAfterExpired: number | null
   daysUntilActive: number | null
   withinViewAccessWindow: boolean
 }
