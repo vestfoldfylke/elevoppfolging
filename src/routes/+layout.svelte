@@ -230,7 +230,7 @@
 	</main>
 
 	<footer>
-		Hei, jeg er en footer!
+		Vestfold fylkeskommune
 	</footer>
 </div>
 
@@ -242,7 +242,7 @@
 			"header"
 			"main"
 			"footer";
-		min-height: 100%;
+		min-height: 100vh;
 	}
 
 	#svelte-body > header {
@@ -269,6 +269,13 @@
 
 	#svelte-body > footer {
 		grid-area: footer;
+	}
+
+	footer {
+		max-width: var(--max-page-width);
+		padding: var(--ds-size-4);
+		margin: 0 auto;
+		display: flex;
 	}
 
 	.student-search-container {
