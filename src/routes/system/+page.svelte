@@ -34,7 +34,6 @@
     </div>
   </div>
 </div>
-<a href="/system/templates">Templates</a>
 
 <style>
   .ds-card {
