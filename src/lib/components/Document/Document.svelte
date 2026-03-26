@@ -81,7 +81,7 @@
     <div>
       {#if !editMode}
         {#each document.content as contentItem, index}
-          <DocumentContent {contentItem} editMode={false} {index} previewMode={true} />
+          <DocumentContent {contentItem} editMode={false} {index} />
         {/each}
       {:else}
         <!-- Add groupId when needed -->
