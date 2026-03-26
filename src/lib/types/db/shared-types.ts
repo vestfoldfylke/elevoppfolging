@@ -227,14 +227,17 @@ export type NewAccess = {
   students: StudentManualAccessEntry[]
 }
 
+export type NewDbAccess = Omit<NewAccess, "programAreas" | "students"> & {
+  programAreas: DbProgramAreaManualAccessEntry[]
+  students: DbStudentManualAccessEntry[]
+}
+
 export type Access = NewAccess & {
   _id: string
 }
 
-export type DbAccess = Omit<NewAccess, "programAreas" | "students"> & {
+export type DbAccess = NewDbAccess & {
   _id: ObjectId
-  programAreas: DbProgramAreaManualAccessEntry[]
-  students: DbStudentManualAccessEntry[]
 }
 
 // APP USER
