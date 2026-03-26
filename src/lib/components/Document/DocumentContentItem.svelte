@@ -15,7 +15,6 @@
   // Custom validation of checkboxes
   $effect(() => {
     if (contentItem.type === "checkboxGroup" && editMode && checkboxes.length > 0) {
-
       contentItem.selectedValues // Trigger reactivity on selectedValues to ensure validation runs when they change
 
       const atLeastOneChecked = checkboxes.some((checkbox) => checkbox.checked)
@@ -26,7 +25,6 @@
       }
     }
   })
-
 </script>
 
 {#snippet helpText(inputItem: DocumentInputItem)}
