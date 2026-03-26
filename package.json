@@ -14,7 +14,7 @@
     "lint:fix": "npx @biomejs/biome check --write"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.8",
+    "@biomejs/biome": "^2.4.9",
     "@digdir/designsystemet-types": "^1.13.0",
     "@sveltejs/kit": "^2.49.1",
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
@@ -22,7 +22,7 @@
     "svelte": "^5.55.0",
     "svelte-check": "^4.4.5",
     "typescript": "^5.9.3",
-    "vite": "^8.0.2"
+    "vite": "^8.0.3"
   },
   "dependencies": {
     "@digdir/designsystemet-css": "^1.13.0",

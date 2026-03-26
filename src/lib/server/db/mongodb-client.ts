@@ -228,7 +228,7 @@ export class MongoDbClient implements IDbClient {
       default:
         throw new Error(`Invalid access entry type: ${accessEntry.type}`)
     }
-    if (!updateResult || !updateResult._id) {
+    if (!updateResult?._id) {
       throw new Error("Failed to add access entry")
     }
     return updateResult._id.toString()
@@ -255,7 +255,7 @@ export class MongoDbClient implements IDbClient {
         updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { programAreas: { _id: new ObjectId(accessEntry._id), schoolNumber: accessEntry.schoolNumber } } })
         break
     }
-    if (!updatedAccess || !updatedAccess._id) {
+    if (!updatedAccess?._id) {
       throw new Error("Failed to remove access entry")
     }
     return updatedAccess._id.toString()
