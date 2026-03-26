@@ -20,9 +20,9 @@
       const atLeastOneChecked = checkboxes.some((checkbox) => checkbox.checked)
       if (!atLeastOneChecked) {
         checkboxes[0].setCustomValidity("Velg minst ett alternativ")
-      } else {
-        checkboxes[0].setCustomValidity("") // Ok, will not trigger validation error
+        return
       }
+      checkboxes[0].setCustomValidity("") // Ok, will not trigger validation error
     }
   })
 </script>
