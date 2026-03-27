@@ -5,7 +5,7 @@
   import PageHeader from "$lib/components/PageHeader.svelte"
   import { nameValidation, ssnValidation } from "$lib/data-validation/manual-student-validation"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
-  import { canCreateManualStudentOnSchool } from "$lib/shared-authorization/authorization"
+  import { canManageManualStudentsOnSchool } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { ManageManualStudentsManualAccessEntry, ManualAccessEntryInput, NewManualStudentInput } from "$lib/types/db/shared-types"
   import { getClassesFromStudents } from "$lib/utils/classes-from-students"
@@ -183,7 +183,7 @@
       return false
     }
 
-    return canCreateManualStudentOnSchool(data.principalAccess, currentSchool.schoolNumber)
+    return canManageManualStudentsOnSchool(data.principalAccess, currentSchool.schoolNumber)
   })
 </script>
 

@@ -5,7 +5,7 @@ import { validateNewManualStudentData } from "$lib/data-validation/manual-studen
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canCreateManualStudentOnSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { canManageManualStudentsOnSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap } from "$lib/types/api/api-route-map"
 import type { FrontendStudent } from "$lib/types/app-types"
 import type { ValidationResult } from "$lib/types/data-validation"
@@ -33,7 +33,7 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
     throw new HTTPError(403, noAccessMessage("No access found for principal"))
   }
 
-  if (!canCreateManualStudentOnSchool(access, newManualStudentData.school.schoolNumber)) {
+  if (!canManageManualStudentsOnSchool(access, newManualStudentData.school.schoolNumber)) {
     throw new HTTPError(403, noAccessMessage("No permission to add manual student to the specified school"))
   }
 
