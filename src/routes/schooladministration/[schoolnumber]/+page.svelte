@@ -3,9 +3,11 @@
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import AsyncButton from "$lib/components/AsyncButton.svelte"
   import PageHeader from "$lib/components/PageHeader.svelte"
+  import { nameValidation, ssnValidation } from "$lib/data-validation/manual-student-validation"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
+  import { canCreateManualStudentOnSchool } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
-  import type { ManageManualStudentsManualAccessEntry, ManualAccessEntryInput } from "$lib/types/db/shared-types"
+  import type { ManageManualStudentsManualAccessEntry, ManualAccessEntryInput, NewManualStudentInput } from "$lib/types/db/shared-types"
   import { getClassesFromStudents } from "$lib/utils/classes-from-students"
   import type { PageProps } from "./$types"
 
@@ -15,10 +17,12 @@
     if (data.accessSchools.length === 0) {
       throw new Error("Ingen skoler funnet")
     }
+
     const school = data.accessSchools.find((school) => school.schoolNumber === page.params.schoolnumber)
     if (!school) {
       throw new Error("Skole ikke funnet")
     }
+
     return school
   })
 
@@ -70,15 +74,22 @@
       .filter((access) => access.manageManualStudentsForSchools.some((school) => school.schoolNumber === currentSchool.schoolNumber))
       .map((access) => ({
         entraUserId: access.entraUserId,
-        name: access.name, // TODO - sikkert bedre å hente fra appusers
+        name: access.name, // TODO - sikkert bedre å hente fra app users
         accessEntry: { type: "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG", schoolNumber: currentSchool.schoolNumber }
       }))
   })
 
+  // new access
   let addAccessForm: HTMLFormElement | undefined = $state()
   let selectedEntraUserId = $state("")
   let selectedType: ManualAccessEntryInput["type"] | "" = $state("")
   let selectedResourceId = $state("")
+
+  // new manual student
+  let addManualStudentForm: HTMLFormElement | undefined = $state()
+  let newManualStudentFnr = $state("")
+  let newManualStudentFirstname = $state("")
+  let newManualStudentLastname = $state("")
 
   const addManualAccessEntry = async (): Promise<void> => {
     const validForm = addAccessForm?.reportValidity()
@@ -134,6 +145,46 @@
       }
     })
   }
+
+  const addNewManualStudent = async (): Promise<void> => {
+    if (!addManualStudentForm?.reportValidity()) {
+      throw new Error(INVALID_FORM_MESSAGE)
+    }
+
+    if (!newManualStudentFnr) {
+      throw new Error("Fødselsnummer må våre fylt ut")
+    }
+
+    if (!newManualStudentFirstname) {
+      throw new Error("Fornavn må våre fylt ut")
+    }
+
+    if (!newManualStudentLastname) {
+      throw new Error("Etternavn må våre fylt ut")
+    }
+
+    const newManualStudentInput: NewManualStudentInput = {
+      ssn: newManualStudentFnr,
+      name: `${newManualStudentFirstname} ${newManualStudentLastname}`,
+      school: currentSchool
+    }
+
+    await apiFetch(`/api/students`, {
+      method: "POST",
+      body: newManualStudentInput,
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+  }
+
+  const canCreateManualStudent = $derived.by(() => {
+    if (!data.principalAccess) {
+      return false
+    }
+
+    return canCreateManualStudentOnSchool(data.principalAccess, currentSchool.schoolNumber)
+  })
 </script>
 
 <div class="page-content">
@@ -233,6 +284,37 @@
     <AsyncButton onClick={addManualAccessEntry} reloadPageDataOnSuccess={true} buttonText="Legg til tilgang"  iconName="add" />
 
   </div>
+
+  {#if canCreateManualStudent}
+    <div class="new-manual-student">
+      <h2>Ny manuell elev</h2>
+      
+      <form bind:this={addManualStudentForm}>
+        <div class="ds-field">
+          <label class="ds-label" data-weight="medium" for="fnr">Fødselsnummer</label>
+          <div class="ds-field-affixes">
+            <input class="ds-input" inputmode="numeric" type="text" id="fnr" pattern={ssnValidation.pattern.source} minlength={ssnValidation.minLength} maxlength={ssnValidation.maxLength} bind:value={newManualStudentFnr} required>
+          </div>
+        </div>
+
+        <div class="ds-field">
+          <label class="ds-label" data-weight="medium" for="firstname">Fornavn</label>
+          <div class="ds-field-affixes">
+            <input class="ds-input" type="text" id="firstname" pattern={nameValidation.pattern.source} minlength={nameValidation.minLength} maxlength={nameValidation.maxLength} bind:value={newManualStudentFirstname} required>
+          </div>
+        </div>
+
+        <div class="ds-field">
+          <label class="ds-label" data-weight="medium" for="lastname">Etternavn</label>
+          <div class="ds-field-affixes">
+            <input class="ds-input" type="text" id="lastname" pattern={nameValidation.pattern.source} minlength={nameValidation.minLength} maxlength={nameValidation.maxLength} bind:value={newManualStudentLastname} required>
+          </div>
+        </div>
+      </form>
+
+      <AsyncButton onClick={addNewManualStudent} reloadPageDataOnSuccess={true} buttonText="Legg til ny manuell elev" iconName="add" />
+    </div>
+  {/if}
 </div>
 
 

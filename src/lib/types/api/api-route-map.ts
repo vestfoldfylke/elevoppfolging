@@ -3,6 +3,7 @@ import type {
   DocumentInput,
   DocumentMessageInput,
   ManualAccessEntryInput,
+  NewManualStudentInput,
   NewSchool,
   StudentCheckBoxInput,
   StudentDataSharingConsentInput,
@@ -33,6 +34,10 @@ type ApiAccessEntraUserIdRemove = {
 
 type ApiStudentsIdConsent = {
   PATCH: { req: StudentDataSharingConsentInput; res: { consentId: string } }
+}
+
+type ApiStudentAddManualStudent = {
+  POST: { req: NewManualStudentInput; res: { studentId: string } }
 }
 
 export type NoSlashString = string & { __noSlash?: true }
@@ -70,6 +75,8 @@ export interface ApiRouteMap {
   }
 
   [key: `/api/students/${NoSlashString}/documents/${NoSlashString}/messages`]: ApiDocumentsIdMessages
+
+  "/api/students": ApiStudentAddManualStudent
 
   "/api/studentcheckboxes": {
     POST: { req: StudentCheckBoxInput; res: { checkBoxId: string } }

@@ -1,6 +1,6 @@
 import type { AccessEntry, ApplicationInfo } from "$lib/types/app-types"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
-import type { Access, DocumentInput, DocumentMessage, StudentDocument } from "$lib/types/db/shared-types"
+import type { Access, DocumentInput, DocumentMessage, ManageManualStudentsManualAccessEntry, StudentDocument } from "$lib/types/db/shared-types"
 
 export const isSystemAdmin = (authenticatedPrincipal: AuthenticatedPrincipal, APP_INFO: ApplicationInfo): boolean => {
   return authenticatedPrincipal.roles.includes(APP_INFO.ROLES.ADMIN)
@@ -8,6 +8,10 @@ export const isSystemAdmin = (authenticatedPrincipal: AuthenticatedPrincipal, AP
 
 export const canAddMessageToStudentDocument = (accessToStudent: AccessEntry[], document: StudentDocument): boolean => {
   return accessToStudent.some((access: AccessEntry) => access.schoolNumber === document.school.schoolNumber)
+}
+
+export const canCreateManualStudentOnSchool = (principalAccess: Access, schoolNumber: string): boolean => {
+  return principalAccess.manageManualStudentsForSchools.some((accessEntry: ManageManualStudentsManualAccessEntry) => accessEntry.schoolNumber === schoolNumber)
 }
 
 export const canCreateStudentDocument = (accessToStudent: AccessEntry[], newDocument: DocumentInput): boolean => {

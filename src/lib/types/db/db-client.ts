@@ -7,6 +7,7 @@ import type {
   DocumentMessage,
   ManualAccessEntryInput,
   NewAccess,
+  NewAppStudent,
   NewDocumentContentTemplate,
   NewDocumentMessage,
   NewSchool,
@@ -45,6 +46,7 @@ export interface IDbClient {
   getAllStudents(): Promise<FrontendStudent[]>
   getStudents(access: Access): Promise<FrontendStudent[]>
   getStudentById(studentId: string): Promise<FrontendStudent | null>
+  getStudentBySsn(ssn: string): Promise<FrontendStudent | null>
 
   getStudentAccess(studentId: string, studentMemberships: StudentMemberships): Promise<Access[]>
 
@@ -52,6 +54,8 @@ export interface IDbClient {
   getStudentDocumentById(documentId: string): Promise<StudentDocument | null>
   createStudentDocument(document: NewStudentDocument): Promise<string>
   updateStudentDocument(documentId: string, documentUpdate: StudentDocumentUpdate): Promise<string>
+
+  createManualStudent(manualStudent: NewAppStudent): Promise<string>
 
   addDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<DocumentMessage>
 

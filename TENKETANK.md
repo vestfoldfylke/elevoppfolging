@@ -156,6 +156,8 @@ Merk at dette ikke sjekkes mot freg, og skriv riktig navn og sånn sjæl!
 BACKEND - vi begynner med dette
 - Finnes eleven med et elevforhold som er aktivt?
   - Feilmld, eleven finnes allerede ved {skole}
+- Finnes eleven med inaktive elevforhold?
+  - PT, så feilmelder vi. Kanskje gjøre noe annet senere?
 - Eleven finnes ikke
   - OK
 
