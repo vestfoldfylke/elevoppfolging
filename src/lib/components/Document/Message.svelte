@@ -118,7 +118,7 @@
       -->
     </form>
   {:else}
-    <p class="ds-paragraph">
+    <p class="ds-paragraph pre-wrap-whitespace">
       {message.content.text}
     </p>
   {/if}
@@ -143,5 +143,9 @@
     display: flex;
     gap: 0.5rem;
     justify-content: flex-end;
+  }
+
+  .pre-wrap-whitespace {
+    white-space: pre-wrap;
   }
 </style>

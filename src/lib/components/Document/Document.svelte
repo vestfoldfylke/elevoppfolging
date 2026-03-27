@@ -78,7 +78,7 @@
       </div>
     </summary>
 
-    <div>
+    <div class="ds-card__block">
       {#if !editMode}
         {#each document.content as contentItem, index}
           <DocumentContent {contentItem} editMode={false} {index} />
@@ -95,31 +95,27 @@
         {/if}
       </div>
     </div>
-  </details>
 
-  {#each document.messages as message (message.messageId)}
-    {#if message.type === "update"}
-      <details class="ds-details" data-variant="default">
-        <summary>
+    {#each document.messages as message (message.messageId)}
+      {#if message.type === "update"}
+        <div class="ds-card__block">
           <div class="message-header">
             <div class="message-header-left">
-              <div>{`Oppfølging: ${message.content.title}`}</div>
+              <h2 class="ds-heading" data-size="xs">{`Oppfølging: ${message.content.title}`}</h2>
             </div>
             <div class="message-header-right">
               <div class="ds-paragraph" data-size="xs">{message.modified.by.fallbackName}</div>
               <div class="ds-paragraph" data-size="xs">{prettifyDateTime(message.modified.at)}</div>
             </div>
           </div>
-        </summary>
-        <div>
           <Message {message} editMode={false} documentId={document._id} studentId={document.student._id} />
         </div>
-      </details>
-    {/if}
-  {/each}
-  <div class="ds-card__block">
-    <NewMessage documentId={document._id} studentId={document.student._id} />
-  </div>
+      {/if}
+    {/each}
+    <div class="ds-card__block">
+      <NewMessage documentId={document._id} studentId={document.student._id} />
+    </div>
+  </details>
 </div>
 
 <style>
