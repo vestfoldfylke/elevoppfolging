@@ -5,12 +5,11 @@
   type PageProps = {
     documentContentTemplates: DocumentContentTemplate[]
     accessSchools: SchoolInfo[]
-    creatorOpen: boolean
     studentId?: string
     groupId?: string
   }
 
-  let { documentContentTemplates, accessSchools, creatorOpen = $bindable(), studentId, groupId }: PageProps = $props()
+  let { documentContentTemplates, accessSchools, studentId, groupId }: PageProps = $props()
 
   // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounter ved endring av studentId/groupId
   if (!studentId && !groupId) {
@@ -29,6 +28,8 @@
     throw new Error("At least one document content template is required to create a new document")
   }
 
+  let newDocumentDialog: HTMLDialogElement | undefined
+
   const newDocumentTemplate = (template: DocumentContentTemplate): DocumentInput => {
     const newDocumentFromTemplate: DocumentInput = {
       title: "",
@@ -46,38 +47,74 @@
   // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounter ved endring av studentId/groupId TODO - sjekk om det skal være derived
   const newDocumentTemplates = documentContentTemplates.map((template) => newDocumentTemplate(template))
 
-  let newDocument: DocumentInput = $state(newDocumentTemplates[0])
+  let newDocument: DocumentInput | null = $state(null)
 
   const changeDocumentTemplate = (templateId: string) => {
     // TODO - add check to see if there are unsaved changes and warn the user before changing the template
+    if (!templateId) {
+      newDocument = null
+      return
+    }
     const documentTemplate = newDocumentTemplates.find((documentTemplate) => documentTemplate.template._id === templateId)
     if (!documentTemplate) {
       throw new Error("Template not found")
     }
     newDocument = documentTemplate
   }
+
+  const closeEditor = () => {
+    newDocument = null
+    if (newDocumentDialog?.open) {
+      newDocumentDialog.close()
+    }
+  }
 </script>
 
-<div class="template-selector">
-  <ds-field class="ds-field">
-    <label for="document-type" class="ds-label" data-weight="medium">Notat-type</label>
-    <select id="document-type" class="ds-input" data-width="auto" onchange={(event) => changeDocumentTemplate((event.target as HTMLSelectElement).value)}>
-      {#each newDocumentTemplates as documentTemplate}
-        <option value={documentTemplate.template._id}>{documentTemplate.template.name}</option>
-      {/each}
-    </select>
-  </ds-field>
-</div>
+<button class="ds-button" data-variant="primary" type="button" command="show-modal" commandfor="new-document-modal"><span class="material-symbols-outlined">note_add</span>Nytt notat</button>
 
+<dialog class="ds-dialog new-document-dialog" data-placement="center" id="new-document-modal" bind:this={newDocumentDialog}>
+  <button class="ds-button" data-icon="true" data-variant="tertiary" type="button" aria-label="Lukk dialogvindu" data-color="neutral" command="close" commandfor="new-document-modal" onclick={() => newDocument = null}></button>
+  
+  <div class="ds-dialog__block">
+    <div class="template-selector">
+      <h2 class="ds-heading">Nytt notat</h2>
+      <ds-field class="ds-field">
+        <label for="document-type" class="ds-label" data-weight="medium">Notat-type</label>
+        <select id="document-type" class="ds-input" data-width="auto" onchange={(event) => changeDocumentTemplate((event.target as HTMLSelectElement).value)}>
+          {#if !newDocument}
+            <option selected value="">Velg en notat-type</option>
+          {/if}
+          {#each newDocumentTemplates as documentTemplate}
+            <option value={documentTemplate.template._id}>{documentTemplate.template.name}</option>
+          {/each}
+        </select>
+      </ds-field>
+    </div>
 
-<div class="ds-card" data-variant="default" data-color="accent" style="margin-bottom: var(--ds-size-6);">
-  <h2 class="ds-heading">{newDocument.template.name}: {newDocument.title}</h2>
-  <div class="ds-paragraph" data-size="sm">{newDocument.school.name}</div>
-  <DocumentEditor {studentId} {groupId} {accessSchools} bind:currentDocument={newDocument} closeEditor={() => creatorOpen = false} />
-</div>
+    {#if newDocument}
+      <h2 class="ds-heading">{newDocument.template.name}: {newDocument.title}</h2>
+      <div class="ds-paragraph" data-size="sm">{newDocument.school.name}</div>
+      <DocumentEditor {studentId} {groupId} {accessSchools} bind:currentDocument={newDocument} closeEditor={closeEditor} />
+    {/if}
+  </div>
+</dialog>
 
 <style>
   .template-selector {
     margin-bottom: 1rem;
+  }
+  .new-document-dialog {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+  }
+
+  @media (min-width: 60rem) {
+    .new-document-dialog {
+      width: 80vw;
+      max-width: 80vw;
+      max-height: 90vh;
+    }
   }
 </style>
