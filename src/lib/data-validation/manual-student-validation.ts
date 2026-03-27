@@ -13,7 +13,7 @@ export const nameValidation = {
   maxLength: 50
 }
 
-export const validateNewManualStudentData = (manualStudentInput: NewManualStudentInput): ValidationResult => {
+export const validateManualStudentData = (manualStudentInput: NewManualStudentInput): ValidationResult => {
   if (!manualStudentInput.name || !manualStudentInput.ssn || !manualStudentInput.school) {
     return { valid: false, message: "'name', 'ssn' and 'school' are required" }
   }

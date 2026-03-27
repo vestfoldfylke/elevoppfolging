@@ -1,7 +1,7 @@
 import { idnr } from "@navikt/fnrvalidator"
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
-import { validateNewManualStudentData } from "$lib/data-validation/manual-student-validation"
+import { validateManualStudentData } from "$lib/data-validation/manual-student-validation"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
@@ -20,7 +20,7 @@ type AddManualStudentBody = ApiRouteMap["/api/students"]["POST"]["req"]
 const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStudentBody> = async ({ principal, body }) => {
   const newManualStudentData: AddManualStudentBody = body
 
-  const newManualStudentDataValid: ValidationResult = validateNewManualStudentData(newManualStudentData)
+  const newManualStudentDataValid: ValidationResult = validateManualStudentData(newManualStudentData)
   if (!newManualStudentDataValid.valid) {
     throw new HTTPError(400, newManualStudentDataValid.message)
   }
