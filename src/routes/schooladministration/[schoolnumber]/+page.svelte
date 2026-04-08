@@ -12,6 +12,12 @@
   import { getClassesFromStudents } from "$lib/utils/classes-from-students"
   import type { PageProps } from "./$types"
 
+  type AccessEntry = {
+    entraUserId: string
+    name: string
+    accessEntry: ManualAccessEntryInput
+  }
+
   let { data }: PageProps = $props()
 
   let selectedTab: string | undefined = $derived.by(() => {
@@ -42,7 +48,7 @@
   })
 
   let studentAccessEntries = $derived.by(() => {
-    const studentsWithAccess = new Map<string, { name: string; appUsers: { entraUserId: string; name: string; accessEntry: ManualAccessEntryInput }[] }>()
+    const studentsWithAccess = new Map<string, { name: string; appUsers: AccessEntry[] }>()
     for (const access of data.manualAccessForSchool) {
       for (const studentAccess of access.students) {
         if (!studentsWithAccess.has(studentAccess._id)) {
@@ -57,7 +63,7 @@
   })
 
   let classAccessEntries = $derived.by(() => {
-    const classesWithAccess = new Map<string, { name: string; appUsers: { entraUserId: string; name: string; accessEntry: ManualAccessEntryInput }[] }>()
+    const classesWithAccess = new Map<string, { name: string; appUsers: AccessEntry[] }>()
     for (const access of data.manualAccessForSchool) {
       for (const classAccess of access.classes) {
         if (!classesWithAccess.has(classAccess.systemId)) {
@@ -76,7 +82,7 @@
     return Array.from(classesWithAccess.values())
   })
 
-  let manageManualStudentsAccessEntries = $derived.by(() => {
+  let manageManualStudentsAccessEntries: AccessEntry[] = $derived.by(() => {
     return data.manualAccessForSchool
       .filter((access) => access.manageManualStudentsForSchools.some((school) => school.schoolNumber === currentSchool.schoolNumber))
       .map((access) => ({
@@ -151,6 +157,10 @@
         "Content-Type": "application/json"
       }
     })
+  }
+
+  const toManageManualStudentsManualAccessEntry = (manualAccessEntry: ManualAccessEntryInput): ManageManualStudentsManualAccessEntry => {
+    return manualAccessEntry as ManageManualStudentsManualAccessEntry
   }
 
   const addNewManualStudent = async (): Promise<void> => {
@@ -255,7 +265,7 @@
           <li>
             {manageManualStudentsAccess.name} ({manageManualStudentsAccess.entraUserId})
           </li>
-          <AsyncButton onClick={() => removeManualAccessEntry(manageManualStudentsAccess.entraUserId, manageManualStudentsAccess.accessEntry as ManageManualStudentsManualAccessEntry)} reloadPageDataOnSuccess={true} buttonText="Fjern tilgang" iconName="delete" />
+          <AsyncButton onClick={() => removeManualAccessEntry(manageManualStudentsAccess.entraUserId, toManageManualStudentsManualAccessEntry(manageManualStudentsAccess.accessEntry))} reloadPageDataOnSuccess={true} buttonText="Fjern tilgang" iconName="delete" />
         </ul>
       {/each}
 
