@@ -368,7 +368,7 @@
         {/if}
   
         <div class="manual-students">
-          {#if manualStudents.length }
+          {#if manualStudents.length > 0 }
             <table class="ds-table">
               <thead>
                 <tr>
