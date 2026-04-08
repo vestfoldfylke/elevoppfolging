@@ -16,16 +16,6 @@
   let { data }: PageProps = $props()
 
   let expandedStudentDetails = $state(false)
-  let documentCreatorOpen = $state(false)
-
-  const openDocumentCreator = async () => {
-    documentCreatorOpen = true
-    await tick()
-    const documentsHeader = document.getElementById("documents")
-    if (documentsHeader) {
-      documentsHeader.scrollIntoView({ behavior: "smooth" })
-    }
-  }
 
   let studentMainDetails = $derived.by(() => {
     return getFrontendStudentMainDetails(data.student.enrollmentsWithinViewAccessWindow)
@@ -301,18 +291,8 @@
 
   <div class="documents">
     <div class="documents-header">
-      {#if !documentCreatorOpen}
         <h2 id="documents" class="ds-heading">Notater</h2>
-        <button class="ds-button" onclick={openDocumentCreator}><span class="material-symbols-outlined">note_add</span>Nytt notat</button>
-      {:else}
-        <h2 id="documents" class="ds-heading">Nytt notat</h2>
-      {/if}
-    </div>
-
-    <div class="new-document">
-      {#if documentCreatorOpen}
-        <NewDocument {accessSchools} documentContentTemplates={data.documentContentTemplates} bind:creatorOpen={documentCreatorOpen} studentId={data.student._id} />
-      {/if}
+        <NewDocument {accessSchools} documentContentTemplates={data.documentContentTemplates} studentId={data.student._id} />
     </div>
 
     {#if data.documents.length === 0}
@@ -322,7 +302,6 @@
         <DocumentComponent {document} principalAccessEntriesForStudent={data.principalAccessEntriesForStudent} />
       {/each}
     {/if}
-
   </div>
 {/key}
 
@@ -370,7 +349,7 @@
     border-radius: 4px;
   }
 
-  .new-document {
+  .documents-header {
     margin-bottom: var(--ds-size-4);
   }
 </style>
