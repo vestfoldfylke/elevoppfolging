@@ -105,7 +105,7 @@ const updateManualStudent: ApiNextFunction<UpdateManualStudentResponse, UpdateMa
     modified: updateAppStudent.modified
   }
 
-  upsertStudentInCache(frontendStudent)
+  await upsertStudentInCache(frontendStudent)
 
   return {
     studentId

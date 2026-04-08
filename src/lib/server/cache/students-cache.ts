@@ -144,10 +144,16 @@ export const getStudentMembershipsFromCache = async (studentId: string): Promise
   }
 }
 
-export const upsertStudentInCache = (student: FrontendStudent) => {
-  if (studentsCache.updateInProgress) {
-    logger.warn("Update of students cache already in progress, skipping. This might leave the cache with old data for this student...")
-    return
+export const upsertStudentInCache = async (student: FrontendStudent): Promise<void> => {
+  let retries: number = 0
+  while (studentsCache.updateInProgress) {
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    retries++
+    if (retries === 5) {
+      logger.warn("Aborting upsert. Waited 5 seconds for student cache update to finish. Giving up. Student with ID {StudentId} was not upserted in cache", student._id)
+      return
+    }
   }
 
   logger.info("Upserting student in cache")
