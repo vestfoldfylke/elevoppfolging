@@ -18,6 +18,7 @@ jobs:
       audit_severity: "high" # required to be set. Can be one of (null, info, low, moderate, high, critical, none)
 
   build-and-deploy:
+    needs: call-security
     runs-on: self-hosted
     steps:
       - name: 'Checkout GitHub Action'
