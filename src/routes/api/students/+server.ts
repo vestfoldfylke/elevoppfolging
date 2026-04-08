@@ -1,6 +1,7 @@
 import { idnr } from "@navikt/fnrvalidator"
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
+import { env } from "$env/dynamic/private"
 import { validateManualStudentData } from "$lib/data-validation/manual-student-validation"
 import { upsertStudentInCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
@@ -38,9 +39,11 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
     throw new HTTPError(403, noAccessMessage("No permission to add manual student to the specified school"))
   }
 
-  const valid = idnr(newManualStudentData.ssn)
-  if (valid.status !== "valid") {
-    throw new HTTPError(400, valid.reasons.join(", "))
+  if (!(env.MOCK_SSN_CHECK?.trim().toLowerCase() === "true")) {
+    const valid = idnr(newManualStudentData.ssn)
+    if (valid.status !== "valid") {
+      throw new HTTPError(400, valid.reasons.join(", "))
+    }
   }
 
   const student: FrontendStudent | null = await dbClient.getStudentBySsn(newManualStudentData.ssn)
