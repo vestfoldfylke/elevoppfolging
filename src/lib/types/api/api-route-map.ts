@@ -7,7 +7,8 @@ import type {
   NewSchool,
   StudentCheckBoxInput,
   StudentDataSharingConsentInput,
-  StudentImportantStuffInput
+  StudentImportantStuffInput,
+  UpdateManualStudentInput
 } from "../db/shared-types"
 
 type ApiDocumentsIdMessages = {
@@ -60,6 +61,12 @@ export interface ApiRouteMap {
 
   [key: `/api/access/${NoSlashString}/remove`]: ApiAccessEntraUserIdRemove
 
+  "/api/students": ApiStudentAddManualStudent
+
+  [key: `/api/students/${NoSlashString}`]: {
+    POST: { req: UpdateManualStudentInput; res: { studentId: string } }
+  }
+
   [key: `/api/students/${NoSlashString}/consent`]: ApiStudentsIdConsent
 
   [key: `/api/students/${NoSlashString}/importantstuff`]: {
@@ -75,8 +82,6 @@ export interface ApiRouteMap {
   }
 
   [key: `/api/students/${NoSlashString}/documents/${NoSlashString}/messages`]: ApiDocumentsIdMessages
-
-  "/api/students": ApiStudentAddManualStudent
 
   "/api/studentcheckboxes": {
     POST: { req: StudentCheckBoxInput; res: { checkBoxId: string } }

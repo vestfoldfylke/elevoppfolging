@@ -124,10 +124,16 @@ export type DbAppStudent = NewAppStudent & {
   _id: ObjectId
 }
 
+export type UpdateAppStudent = AppStudent
+
 export type NewManualStudentInput = {
   ssn: string
   name: string
   school: School
+}
+
+export type UpdateManualStudentInput = NewManualStudentInput & {
+  studentId: string
 }
 
 export type AccessEntryBase = {

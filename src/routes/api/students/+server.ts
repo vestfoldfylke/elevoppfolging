@@ -2,6 +2,7 @@ import { idnr } from "@navikt/fnrvalidator"
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
 import { validateManualStudentData } from "$lib/data-validation/manual-student-validation"
+import { upsertStudentInCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
@@ -109,6 +110,20 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
   const studentId: string = await dbClient.createManualStudent(newAppStudent)
 
   logger.info("Created manual student with Id {Id} by user {DisplayName} ({PrincipalId})", studentId, principal.displayName, principal.id)
+
+  const frontendStudent: FrontendStudent = {
+    _id: studentId,
+    systemId: newAppStudent.systemId,
+    studentNumber: newAppStudent.studentNumber,
+    feideName: newAppStudent.feideName,
+    name: newAppStudent.name,
+    source: newAppStudent.source,
+    studentEnrollments: newAppStudent.studentEnrollments,
+    created: newAppStudent.created,
+    modified: newAppStudent.modified
+  }
+
+  upsertStudentInCache(frontendStudent)
 
   return {
     studentId

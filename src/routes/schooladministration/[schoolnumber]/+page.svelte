@@ -14,6 +14,12 @@
 
   let { data }: PageProps = $props()
 
+  let selectedTab: string | undefined = $derived.by(() => {
+    return page.url.searchParams.get("tab")?.trim().toLowerCase()
+  })
+  const accessTab: string = "access"
+  const manualStudentsTab: string = "manual"
+
   let currentSchool = $derived.by(() => {
     if (data.accessSchools.length === 0) {
       throw new Error("Ingen skoler funnet")
@@ -204,9 +210,13 @@
 
   <ds-tabs class="ds-tabs">
     <ds-tablist>
-      <ds-tab>Tilgangsstyring</ds-tab>
+      <ds-tab aria-selected={selectedTab === undefined || selectedTab === accessTab}>
+        <a href={`?tab=${accessTab}`} class="no-link">Tilgangsstyring</a>
+      </ds-tab>
       {#if canManageManualStudents}
-        <ds-tab>Manuelle elever</ds-tab>
+        <ds-tab aria-selected={selectedTab === manualStudentsTab}>
+          <a href={`?tab=${manualStudentsTab}`} class="no-link">Manuelle elever</a>
+        </ds-tab>
       {/if}
     </ds-tablist>
     <ds-tabpanel>
@@ -350,16 +360,24 @@
         <div class="manual-students">
           <table class="ds-table">
             <thead>
-            <tr>
-              <th aria-sort="ascending">
-                <button type="button">Navn</button>
-              </th>
-            </tr>
+              <tr>
+                <th aria-sort="ascending">
+                  <button type="button">Navn</button>
+                </th>
+                <th>
+                  Rediger
+                </th>
+              </tr>
             </thead>
             <tbody>
             {#each manualStudents as manualStudent}
               <tr>
-                <td>{manualStudent.name}</td>
+                <td>
+                  <a href={`/students/${manualStudent._id}`} class="ds-link" rel="noopener noreferrer">{manualStudent.name}</a>
+                </td>
+                <td>
+                  <a href={`${page.url.pathname}/manualstudents/${manualStudent._id}`} class="ds-link" rel="noopener noreferrer">Rediger</a>
+                </td>
               </tr>
             {/each}
             </tbody>
@@ -372,6 +390,10 @@
 
 
 <style>
+  .no-link {
+      text-decoration: none;
+      color: inherit;
+  }
   .new-manual-student {
       display: flex;
       align-items: center;
