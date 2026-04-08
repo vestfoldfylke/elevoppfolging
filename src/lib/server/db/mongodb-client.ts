@@ -591,15 +591,10 @@ export class MongoDbClient implements IDbClient {
 
   async createManualStudent(manualStudent: NewAppStudent): Promise<string> {
     const db: Db = await this.getDb()
-    const studentsCollection: Collection<DbAppStudent> = db.collection<DbAppStudent>(this.studentsCollectionName)
+    const studentsCollection: Collection<NewAppStudent> = db.collection<NewAppStudent>(this.studentsCollectionName)
     logger.info("Creating new manual student with systemId: {SystemId}", manualStudent.systemId)
 
-    const manualStudentWithId: DbAppStudent = {
-      ...manualStudent,
-      _id: new ObjectId()
-    }
-
-    const result: InsertOneResult<DbAppStudent> = await studentsCollection.insertOne(manualStudentWithId)
+    const result: InsertOneResult<DbAppStudent> = await studentsCollection.insertOne(manualStudent)
     if (!result.acknowledged) {
       throw new Error("Failed to insert manual student")
     }
