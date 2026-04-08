@@ -1,5 +1,5 @@
 import { logger } from "@vestfoldfylke/loglady"
-import type { CachedFrontendStudent, PrincipalAccessStudent, StudentMemberships } from "$lib/types/app-types"
+import type { CachedFrontendStudent, FrontendStudent, PrincipalAccessStudent, StudentMemberships } from "$lib/types/app-types"
 import type { Access } from "$lib/types/db/shared-types"
 import { getEnrollmentsWithinViewAccessWindow } from "$lib/utils/frontend-student-details"
 import { APP_INFO } from "../app-info"
@@ -22,7 +22,7 @@ const studentsCache: StudentsCache = {
 
 export const updateStudentsCache = async () => {
   if (studentsCache.updateInProgress) {
-    logger.info("Update of students cache already in progress, skipping")
+    logger.warn("Update of students cache already in progress, skipping")
     return
   }
 
@@ -31,7 +31,7 @@ export const updateStudentsCache = async () => {
   const dbClient = getDbClient()
 
   logger.info("Fetching all students from database to update cache")
-  const startTime = Date.now() // TODO remove datestuff when we know its ok
+  const startTime = Date.now() // TODO remove date stuff when we know its ok
   const students = await dbClient.getAllStudents()
   const endTime = Date.now()
   logger.info(`Fetched ${students.length} students from database in ${(endTime - startTime) / 1000}s, updating cache`)
@@ -66,10 +66,11 @@ export const updateStudentsCacheInBackgroundIfExpired = () => {
     })
   }
 }
+
 /**
  *
- * returns student available based on the access parameter
- * If cache is empty, it will populate the cache before returning students
+ * returns student available based on the access parameter.
+ * If cache is empty, it will populate the cache before returning students.
  * If cache is too old, it will update the cache in the background but return the old cache for now, to avoid making users wait for the cache to update.
  */
 export const getStudentsFromCache = async (access: Access): Promise<PrincipalAccessStudent[]> => {
@@ -141,4 +142,45 @@ export const getStudentMembershipsFromCache = async (studentId: string): Promise
       enrollment.teachingGroupMemberships.map((groupMembership) => ({ schoolNumber: enrollment.school.schoolNumber, systemId: groupMembership.teachingGroup.systemId }))
     )
   }
+}
+
+export const upsertStudentInCache = async (student: FrontendStudent): Promise<void> => {
+  let retries: number = 0
+  while (studentsCache.updateInProgress) {
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    retries++
+    if (retries === 5) {
+      logger.warn("Aborting upsert. Waited 5 seconds for student cache update to finish. Giving up. Student with ID {StudentId} was not upserted in cache", student._id)
+      return
+    }
+  }
+
+  logger.info("Upserting student in cache")
+  studentsCache.updateInProgress = true
+
+  const cachedStudent: CachedFrontendStudent = {
+    ...student,
+    enrollmentsWithinViewAccessWindow: getEnrollmentsWithinViewAccessWindow(student, APP_INFO)
+  }
+
+  studentsCache.students.set(student._id, cachedStudent)
+  logger.info("Student updated in student Map")
+
+  // update list cache
+  if (studentsCache.studentsListCache !== null) {
+    const studentListCacheIndex: number = studentsCache.studentsListCache.findIndex((studentEntry: CachedFrontendStudent) => studentEntry._id === student._id)
+    if (studentListCacheIndex > -1) {
+      studentsCache.studentsListCache[studentListCacheIndex] = cachedStudent
+      logger.info("Updated student list at index {Index} with updated student", studentListCacheIndex)
+    } else {
+      studentsCache.studentsListCache.push(cachedStudent)
+      logger.info("Inserted student to student list")
+    }
+  }
+
+  studentsCache.updateInProgress = false
+
+  logger.info(`Student in cache upserted, cache age NOT reset`)
+  logger.info(`Memory used: ${process.memoryUsage().heapUsed / 1024 / 1024} MB`)
 }

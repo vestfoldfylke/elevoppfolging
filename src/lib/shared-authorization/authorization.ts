@@ -1,6 +1,6 @@
 import type { AccessEntry, ApplicationInfo } from "$lib/types/app-types"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
-import type { Access, DocumentInput, DocumentMessage, StudentDocument } from "$lib/types/db/shared-types"
+import type { Access, DocumentInput, DocumentMessage, ManageManualStudentsManualAccessEntry, SchoolLeaderManualAccessEntry, StudentDocument } from "$lib/types/db/shared-types"
 
 export const isSystemAdmin = (authenticatedPrincipal: AuthenticatedPrincipal, APP_INFO: ApplicationInfo): boolean => {
   return authenticatedPrincipal.roles.includes(APP_INFO.ROLES.ADMIN)
@@ -8,6 +8,13 @@ export const isSystemAdmin = (authenticatedPrincipal: AuthenticatedPrincipal, AP
 
 export const canAddMessageToStudentDocument = (accessToStudent: AccessEntry[], document: StudentDocument): boolean => {
   return accessToStudent.some((access: AccessEntry) => access.schoolNumber === document.school.schoolNumber)
+}
+
+export const canManageManualStudentsOnSchool = (principalAccess: Access, schoolNumber: string): boolean => {
+  return (
+    principalAccess.leaderForSchools.some((accessEntry: SchoolLeaderManualAccessEntry) => accessEntry.schoolNumber === schoolNumber) ||
+    principalAccess.manageManualStudentsForSchools.some((accessEntry: ManageManualStudentsManualAccessEntry) => accessEntry.schoolNumber === schoolNumber)
+  )
 }
 
 export const canCreateStudentDocument = (accessToStudent: AccessEntry[], newDocument: DocumentInput): boolean => {
@@ -31,7 +38,7 @@ export const isSchoolLeader = (principalAccess: Access | null): boolean => {
 }
 
 export const canGrantAndRemoveAccessForSchool = (schoolNumber: string, principalAccess: Access): boolean => {
-  return principalAccess.leaderForSchools.some((schoolAccess) => schoolAccess.type === "MANUELL-SKOLELEDER-TILGANG" && schoolAccess.schoolNumber === schoolNumber)
+  return principalAccess.leaderForSchools.some((accessEntry: SchoolLeaderManualAccessEntry) => accessEntry.type === "MANUELL-SKOLELEDER-TILGANG" && accessEntry.schoolNumber === schoolNumber)
 }
 
 export const canEditStudentDataSharingConsent = (accessToStudent: AccessEntry[]): boolean => {

@@ -1,12 +1,14 @@
 import type { AccessEntry, FrontendStudent, StudentMemberships } from "../app-types.js"
 import type {
   Access,
+  AppStudent,
   AppUser,
   AvailableForDocumentType,
   DocumentContentTemplate,
   DocumentMessage,
   ManualAccessEntryInput,
   NewAccess,
+  NewAppStudent,
   NewDocumentContentTemplate,
   NewDocumentMessage,
   NewSchool,
@@ -21,7 +23,8 @@ import type {
   StudentDataSharingConsent,
   StudentDocument,
   StudentDocumentUpdate,
-  StudentImportantStuff
+  StudentImportantStuff,
+  UpdateAppStudent
 } from "./shared-types.js"
 
 export interface IDbClient {
@@ -45,6 +48,8 @@ export interface IDbClient {
   getAllStudents(): Promise<FrontendStudent[]>
   getStudents(access: Access): Promise<FrontendStudent[]>
   getStudentById(studentId: string): Promise<FrontendStudent | null>
+  getStudentBySsn(ssn: string): Promise<FrontendStudent | null>
+  getManualStudentById(studentId: string): Promise<AppStudent | null>
 
   getStudentAccess(studentId: string, studentMemberships: StudentMemberships): Promise<Access[]>
 
@@ -52,6 +57,9 @@ export interface IDbClient {
   getStudentDocumentById(documentId: string): Promise<StudentDocument | null>
   createStudentDocument(document: NewStudentDocument): Promise<string>
   updateStudentDocument(documentId: string, documentUpdate: StudentDocumentUpdate): Promise<string>
+
+  createManualStudent(manualStudent: NewAppStudent): Promise<string>
+  updateManualStudent(manualStudent: UpdateAppStudent): Promise<string>
 
   addDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<DocumentMessage>
 

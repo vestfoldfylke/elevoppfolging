@@ -3,10 +3,12 @@ import type {
   DocumentInput,
   DocumentMessageInput,
   ManualAccessEntryInput,
+  NewManualStudentInput,
   NewSchool,
   StudentCheckBoxInput,
   StudentDataSharingConsentInput,
-  StudentImportantStuffInput
+  StudentImportantStuffInput,
+  UpdateManualStudentInput
 } from "../db/shared-types"
 
 type ApiDocumentsIdMessages = {
@@ -35,6 +37,10 @@ type ApiStudentsIdConsent = {
   PATCH: { req: StudentDataSharingConsentInput; res: { consentId: string } }
 }
 
+type ApiStudentAddManualStudent = {
+  POST: { req: NewManualStudentInput; res: { studentId: string } }
+}
+
 export type NoSlashString = string & { __noSlash?: true }
 
 /**
@@ -54,6 +60,12 @@ export interface ApiRouteMap {
   [key: `/api/access/${NoSlashString}/add`]: ApiAccessEntraUserIdAdd
 
   [key: `/api/access/${NoSlashString}/remove`]: ApiAccessEntraUserIdRemove
+
+  "/api/students": ApiStudentAddManualStudent
+
+  [key: `/api/students/${NoSlashString}`]: {
+    POST: { req: UpdateManualStudentInput; res: { studentId: string } }
+  }
 
   [key: `/api/students/${NoSlashString}/consent`]: ApiStudentsIdConsent
 

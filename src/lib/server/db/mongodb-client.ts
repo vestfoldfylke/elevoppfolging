@@ -1,11 +1,12 @@
 import { logger } from "@vestfoldfylke/loglady"
-import { type Db, type Filter, MongoClient, ObjectId, type WithId } from "mongodb"
+import { type Collection, type Db, type Filter, type InsertOneResult, MongoClient, ObjectId, type UpdateResult, type WithId } from "mongodb"
 import { env } from "$env/dynamic/private"
 import type { AccessEntry, FrontendStudent, StudentMemberships } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { KeysToNumber } from "$lib/types/db/db-helpers"
 import type {
   Access,
+  AppStudent,
   AppUser,
   AvailableForDocumentType,
   DbAccess,
@@ -22,6 +23,7 @@ import type {
   EditorData,
   ManualAccessEntryInput,
   NewAccess,
+  NewAppStudent,
   NewDbStudentDataSharingConsent,
   NewDbStudentDocument,
   NewDbStudentImportantStuff,
@@ -39,7 +41,8 @@ import type {
   StudentDataSharingConsent,
   StudentDocument,
   StudentDocumentUpdate,
-  StudentImportantStuff
+  StudentImportantStuff,
+  UpdateAppStudent
 } from "$lib/types/db/shared-types"
 import { APP_INFO } from "../app-info"
 
@@ -474,6 +477,82 @@ export class MongoDbClient implements IDbClient {
     }
   }
 
+  async getStudentBySsn(ssn: string): Promise<FrontendStudent | null> {
+    const db: Db = await this.getDb()
+    const studentsCollection: Collection<DbAppStudent> = db.collection<DbAppStudent>(this.studentsCollectionName)
+    logger.info("Getting student by ssn")
+
+    const projection: KeysToNumber<WithId<FrontendStudent>> = {
+      _id: 1,
+      feideName: 1,
+      name: 1,
+      studentEnrollments: 1,
+      studentNumber: 1,
+      systemId: 1,
+      created: 1,
+      modified: 1,
+      source: 1
+    }
+
+    const student: WithId<DbAppStudent> | null = await studentsCollection.findOne({ ssn }, { projection })
+    if (!student) {
+      return null
+    }
+
+    logger.info("Student by ssn found. StudentId: {StudentId}", student._id.toString())
+
+    return {
+      _id: student._id.toString(),
+      feideName: student.feideName,
+      name: student.name,
+      studentEnrollments: student.studentEnrollments,
+      studentNumber: student.studentNumber,
+      systemId: student.systemId,
+      created: student.created,
+      modified: student.modified,
+      source: student.source
+    }
+  }
+
+  async getManualStudentById(studentId: string): Promise<AppStudent | null> {
+    const db: Db = await this.getDb()
+    const studentsCollection: Collection<DbAppStudent> = db.collection<DbAppStudent>(this.studentsCollectionName)
+    logger.info("Getting manual student by id")
+
+    const projection: KeysToNumber<WithId<AppStudent>> = {
+      _id: 1,
+      feideName: 1,
+      name: 1,
+      ssn: 1,
+      studentEnrollments: 1,
+      studentNumber: 1,
+      systemId: 1,
+      created: 1,
+      modified: 1,
+      source: 1
+    }
+
+    const student: WithId<DbAppStudent> | null = await studentsCollection.findOne({ _id: new ObjectId(studentId), source: "MANUAL" }, { projection })
+    if (!student) {
+      return null
+    }
+
+    logger.info("Manual student by id found. StudentId: {StudentId}", student._id.toString())
+
+    return {
+      _id: student._id.toString(),
+      feideName: student.feideName,
+      name: student.name,
+      ssn: student.ssn,
+      studentEnrollments: student.studentEnrollments,
+      studentNumber: student.studentNumber,
+      systemId: student.systemId,
+      created: student.created,
+      modified: student.modified,
+      source: student.source
+    }
+  }
+
   async getStudentAccess(studentId: string, studentMemberships: StudentMemberships): Promise<Access[]> {
     const db = await this.getDb()
     const accessCollection = db.collection<DbAccess>(this.accessCollectionName)
@@ -508,6 +587,42 @@ export class MongoDbClient implements IDbClient {
         }))
       }
     })
+  }
+
+  async createManualStudent(manualStudent: NewAppStudent): Promise<string> {
+    const db: Db = await this.getDb()
+    const studentsCollection: Collection<NewAppStudent> = db.collection<NewAppStudent>(this.studentsCollectionName)
+    logger.info("Creating new manual student with systemId: {SystemId}", manualStudent.systemId)
+
+    const result: InsertOneResult<DbAppStudent> = await studentsCollection.insertOne(manualStudent)
+    if (!result.acknowledged) {
+      throw new Error("Failed to insert manual student")
+    }
+
+    return result.insertedId.toString()
+  }
+
+  async updateManualStudent(manualStudent: UpdateAppStudent): Promise<string> {
+    const db: Db = await this.getDb()
+    const studentsCollection: Collection<DbAppStudent> = db.collection<DbAppStudent>(this.studentsCollectionName)
+    logger.info("Updating manual student with Id: {Id}", manualStudent._id)
+
+    const manualStudentWithId: DbAppStudent = {
+      ...manualStudent,
+      _id: new ObjectId(manualStudent._id)
+    }
+
+    const result: UpdateResult<DbAppStudent> = await studentsCollection.updateOne({ _id: new ObjectId(manualStudent._id) }, { $set: manualStudentWithId })
+    if (!result.acknowledged) {
+      throw new Error("Failed to update manual student")
+    }
+
+    if (result.modifiedCount !== 1) {
+      throw new Error("Failed to update manual student")
+    }
+
+    logger.info("Manual student with Id {Id} updated", manualStudent._id)
+    return manualStudent._id
   }
 
   async getStudentDocuments(studentId: string): Promise<StudentDocument[]> {
