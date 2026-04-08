@@ -189,6 +189,11 @@
         "Content-Type": "application/json"
       }
     })
+
+    // reset new manual student form
+    closeNewManualStudentForm()
+    newManualStudentFnr = ""
+    newManualStudentName = ""
   }
 
   let canManageManualStudents = $derived.by(() => {
