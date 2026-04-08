@@ -36,11 +36,11 @@
     }
 
     if (!updateManualStudentFnr) {
-      throw new Error("Fødselsnummer må våre fylt ut")
+      throw new Error("Fødselsnummer må være fylt ut")
     }
 
     if (!updateManualStudentName) {
-      throw new Error("Navn må våre fylt ut")
+      throw new Error("Navn må være fylt ut")
     }
 
     const updateManualStudentInput: UpdateManualStudentInput = {
