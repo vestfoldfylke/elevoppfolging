@@ -118,7 +118,10 @@
     <hr aria-hidden="true" class="ds-divider"/>
 
     <fieldset class="ds-fieldset content-item">
-      <legend class="ds-label" data-weight="medium">Tilgangsstyring</legend>
+      <legend class="ds-label" data-weight="medium">
+        Tilgangsstyring
+        <span class="ds-tag" data-variant="outline" data-color="warning" data-size="xs" style="margin-left: var(--ds-size-1)">Obs! Denne gjør ingenting enda, bare for testing</span>
+      </legend>
       <p class="ds-paragraph" data-variant="default">Som standard vil notatet være synlig for alle brukere med tilgang til eleven ved {currentDocument.school.name}, unntatt faglærere. Dersom du ønsker at også faglærere skal kunne se notatet, kan du krysse av for dette alternativet. I tillegg vil brukere ved andre skoler få tilgang til notatet dersom eleven har samtykket til deling av informasjon med andre skoler.</p>
       <ds-field class="ds-field">
         <input id="availableForAll" class="ds-input" type="checkbox" value="email"/>
@@ -130,7 +133,10 @@
 
     {#if studentAccessPersons && studentAccessPersons.length > 0}
       <fieldset class="ds-fieldset content-item">
-        <legend class="ds-label" data-weight="medium">Følgende personer skal varsles på e-post når notatet lagres</legend>
+        <legend class="ds-label" data-weight="medium">
+          Følgende personer skal varsles på e-post når notatet lagres
+          <span class="ds-tag" data-variant="outline" data-color="warning" data-size="xs" style="margin-left: var(--ds-size-1)">Obs! Denne gjør ingenting enda, bare for testing</span>
+        </legend>
 
         {#each studentAccessPersons as accessPerson}
           <ds-field class="ds-field">
