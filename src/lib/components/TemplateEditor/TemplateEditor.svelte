@@ -3,7 +3,7 @@
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
-  import type { DocumentContentItem, DocumentContentTemplate, DocumentRadioGroupItem } from "$lib/types/db/shared-types"
+  import type { DocumentContentItem, DocumentContentTemplate } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
   import DocumentContentItemComponent from "../Document/DocumentContentItem.svelte"
   import TemplateEditorItem from "./TemplateEditorItem.svelte"
@@ -123,8 +123,9 @@
     })
 
     previewMode = true
+
     // redirect and reload page data
-    goto(`/system/templates/${templateId}`, { invalidateAll: true })
+    await goto(`/system/templates/${templateId}`, { invalidateAll: true })
   }
 
   const updateTemplate = async (): Promise<void> => {
@@ -153,8 +154,9 @@
     await apiFetch(`/api/templates/${editableTemplate._id as NoSlashString}`, {
       method: "DELETE"
     })
+
     // redirect and reload page data
-    goto(`/system/templates`, { invalidateAll: true })
+    await goto(`/system/templates`, { invalidateAll: true })
   }
 </script>
 
@@ -196,7 +198,7 @@
           <p>Ingen elementer i malen enda</p>
         {/if}
         {#each editableTemplate.content as _contentItem, index}
-          <TemplateEditorItem bind:contentItem={editableTemplate.content[index]} index={index} contentItemsLength={editableTemplate.content.length} moveItem={(toIndex: number) => moveTemplateItem(index, toIndex)} removeItem={() => removeTemplateItem(index)} />
+          <TemplateEditorItem bind:contentItem={editableTemplate.content[index]} index={index} contentItemsLength={editableTemplate.content.length} moveItem={toIndex => moveTemplateItem(index, toIndex)} removeItem={() => removeTemplateItem(index)} />
         {/each}
       </div>
     </div>
@@ -249,11 +251,11 @@
     flex: 1;
   }
   .template-availability-options {
-    margin: 1rem 0rem;
+    margin: 1rem 0;
   }
 
   .template-editor-actions {
-    margin: 1rem 0rem;
+    margin: 1rem 0;
   }
   .template-editor-actions-buttons {
     display: flex;
@@ -262,7 +264,7 @@
   }
 
   .template-actions {
-    padding: 1rem 0rem;
+    padding: 1rem 0;
     display: flex;
     gap: 0.5rem;
   }

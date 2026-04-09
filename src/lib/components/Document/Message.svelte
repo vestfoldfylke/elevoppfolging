@@ -38,7 +38,7 @@
     }
   })
 
-  // svelte-ignore state_referenced_locally (we dont want to modify the original)
+  // svelte-ignore state_referenced_locally (we don't want to modify the original)
   let editableMessage: DocumentMessageInput = $state(savedEditableMessage)
 
   let messageForm: HTMLFormElement | undefined = $state()

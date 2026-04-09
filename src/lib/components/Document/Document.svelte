@@ -39,7 +39,7 @@
     )
   }
 
-  // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounter ved endring av document (ha en key på document i parent)
+  // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounts ved endring av document (ha en key på document i parent)
   let editableDocument: DocumentInput = $state(editableDocumentFromDocument())
 
   let editMode = $state(false)

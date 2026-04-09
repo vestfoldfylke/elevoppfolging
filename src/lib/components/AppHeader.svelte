@@ -88,7 +88,7 @@
 		height: var(--header-height);
 		display: flex;
 		align-items: center;
-		padding: 0rem var(--ds-size-4);
+		padding: 0 var(--ds-size-4);
 		justify-content: space-between;
 	}
 
@@ -132,12 +132,11 @@
 
 	ul.desktop-menu-items {
 		display: flex;
-    margin: 0;
+    margin: 0 var(--ds-size-14) 0 0;
     padding: 0;
     max-width: 100%;
     align-items: center;
-    margin-right: var(--ds-size-14);
-	}
+  }
 
   .menu-right {
     gap: var(--ds-size-2);

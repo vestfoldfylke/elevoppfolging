@@ -442,7 +442,7 @@ export type AvailableForDocumentType = {
 export type NewDocumentContentTemplate = {
   name: string
   version: number
-  availableForDocumentType: AvailableForDocumentType // Hmm might need explicit difference here if we add specific types for student documents (like fag-selector and so on)
+  availableForDocumentType: AvailableForDocumentType // might need explicit difference here if we add specific types for student documents (like fag-selector and so on)
   created: EditorData
   modified: EditorData
   content: DocumentContentItem[]

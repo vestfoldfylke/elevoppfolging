@@ -3,7 +3,7 @@
   import favicon32 from "$lib/assets/favicon-32x32.png"
   import "@digdir/designsystemet-web" // For ds to work
   import "@digdir/designsystemet-css" // for ds css to work and hot reload
-  import "@digdir/designsystemet-css/theme" // defualt theme for now
+  import "@digdir/designsystemet-css/theme" // default theme for now
   import "../style.css" // Add global css (and make it hot reload)
   import { page } from "$app/state"
   import AppHeader from "$lib/components/AppHeader.svelte"
@@ -39,26 +39,8 @@
     ...studentCheckBoxFilters
   })
 
-  let searchOrFiltersActive = $derived.by(() => {
-    const searchTermsActive = Object.values(searchTerms).some((term) => term.trim() !== "")
-    const filtersActive = Object.values(filters).some((filter) => filter)
-    return searchTermsActive || filtersActive
-  })
-
   let sortBy = $state<"name" | "school" | "class" | "teacher" | "lastActivity">("name")
   let sortDirection = $state<"ascending" | "descending">("ascending")
-
-  const resetFilters = () => {
-    searchTerms.name = ""
-    searchTerms.class = ""
-    searchTerms.teacher = ""
-    filters.importantInfo = false
-    filters.followUp = false
-    filters.facilitation = false
-    enabledStudentCheckBoxes.forEach((checkbox) => {
-      filters[checkbox._id] = false
-    })
-  }
 
   let students: (FrontendOverviewStudent & FrontendStudentMainDetails)[] = $derived.by(() =>
     data.students.map((student) => {
@@ -176,16 +158,16 @@
 					<table class="ds-table">
 						<thead>
 							<tr>
-								<th aria-sort="{sortBy === "name" ? sortDirection : "none"}">
+								<th aria-sort={sortBy === "name" ? sortDirection : "none"}>
 									<button type="button" onclick={() => sortBy === "name" ? sortDirection = sortDirection === "ascending" ? "descending" : "ascending" : sortBy = "name"}>Navn</button>
 								</th>
-								<th class="desktop-only" aria-sort="{sortBy === "class" ? sortDirection : "none"}">
+								<th class="desktop-only" aria-sort={sortBy === "class" ? sortDirection : "none"}>
 									<button type="button" onclick={() => sortBy === "class" ? sortDirection = sortDirection === "ascending" ? "descending" : "ascending" : sortBy = "class"}>Klasse</button>
 								</th>
-								<th class="desktop-only" aria-sort="{sortBy === "teacher" ? sortDirection : "none"}">
+								<th class="desktop-only" aria-sort={sortBy === "teacher" ? sortDirection : "none"}>
 									<button type="button" onclick={() => sortBy === "teacher" ? sortDirection = sortDirection === "ascending" ? "descending" : "ascending" : sortBy = "teacher"}>Kontaktlærer</button>
 								</th>
-								<th class="desktop-only" aria-sort="{sortBy === "lastActivity" ? sortDirection : "none"}">
+								<th class="desktop-only" aria-sort={sortBy === "lastActivity" ? sortDirection : "none"}>
 									<button type="button" onclick={() => sortBy === "lastActivity" ? sortDirection = sortDirection === "ascending" ? "descending" : "ascending" : sortBy = "lastActivity"}>Siste aktivitet</button>
 								</th>
 							</tr>
