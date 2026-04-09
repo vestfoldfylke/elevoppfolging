@@ -70,10 +70,8 @@
 <div class="page-content">
   <div class="update-manual-student-link">
     <a href={`/schooladministration/${currentSchool.schoolNumber}?tab=manual`} class="ds-link" rel="noopener noreferrer">
-      <div class="link-with-arrow">
-        <span class="material-symbols-outlined">arrow_back</span>
-        <span class="link-with-arrow-text">Tilbake til manuelle elever</span>
-      </div>
+      <span class="material-symbols-outlined">arrow_back</span>
+      Tilbake til manuelle elever
     </a>
   </div>
 
@@ -124,23 +122,9 @@
   {/if}
 </div>
 
-<style>
-  .ds-link {
-      text-decoration: none;
-  }
-  
+<style>  
   .update-manual-student-link {
       padding-bottom: var(--ds-size-4);
-  }
-  
-  .link-with-arrow {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-  }
-  
-  .link-with-arrow-text:hover {
-      text-decoration: underline;
   }
 
   .manual-student-edit-action {
