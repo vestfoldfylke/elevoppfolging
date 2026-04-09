@@ -5,7 +5,6 @@
   import PageHeader from "$lib/components/PageHeader.svelte"
   import { nameValidation, ssnValidation } from "$lib/data-validation/manual-student-validation"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
-  import { canManageManualStudentsOnSchool } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { UpdateManualStudentInput } from "$lib/types/db/shared-types"
   import type { PageProps } from "./$types"
@@ -69,6 +68,13 @@
 </script>
 
 <div class="page-content">
+  <div class="update-manual-student-link">
+    <a href={`/schooladministration/${currentSchool.schoolNumber}?tab=manual`} class="ds-link" rel="noopener noreferrer">
+      <span class="material-symbols-outlined">arrow_back</span>
+      Tilbake til manuelle elever
+    </a>
+  </div>
+
   <PageHeader title={`Manuell elev - ${data.manualStudent.name}`} />
 
   {#if !updateManualStudentEdit}
@@ -116,7 +122,11 @@
   {/if}
 </div>
 
-<style>
+<style>  
+  .update-manual-student-link {
+      padding-bottom: var(--ds-size-4);
+  }
+
   .manual-student-edit-action {
       padding-top: var(--ds-size-4);
   }

@@ -108,6 +108,10 @@ body {
   z-index: 10;
 }
 
+a > .material-symbols-outlined {
+  vertical-align: text-bottom;
+}
+
 @media (min-width: 60rem) {
   .document-dialog {
     width: 80vw;
