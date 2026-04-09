@@ -2,7 +2,7 @@
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
-    import type { AccessPerson } from "$lib/types/app-types";
+  import type { AccessPerson } from "$lib/types/app-types"
   import type { DocumentInput, SchoolInfo } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
   import DocumentContentItem from "./DocumentContentItem.svelte"

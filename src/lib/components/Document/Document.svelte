@@ -3,11 +3,11 @@
   import { canEditStudentDocument } from "$lib/shared-authorization/authorization"
   import type { AccessEntry } from "$lib/types/app-types"
   import type { DocumentInput, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
+  import EditorInfo from "../EditorInfo.svelte"
   import DocumentContent from "./DocumentContentItem.svelte"
   import DocumentEditor from "./DocumentEditor.svelte"
   import Message from "./Message.svelte"
   import NewMessage from "./NewMessage.svelte"
-  import EditorInfo from "../EditorInfo.svelte";
 
   type PageProps = {
     document: StudentDocument // Add GroupDocument union when needed
@@ -43,7 +43,6 @@
   let editableDocument: DocumentInput = $state(editableDocumentFromDocument())
 
   let editMode = $state(false)
-
 </script>
 
 <div class="ds-card document-card" data-variant="tinted" data-color="accent" data-clickdelegatefor="document-modal-{document._id}-open">

@@ -5,7 +5,7 @@
   import type { FrontendStudent } from "$lib/types/app-types"
   import type { SchoolInfo, StudentCheckBox, StudentImportantStuff, StudentImportantStuffInput } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
-    import EditorInfo from "../EditorInfo.svelte";
+  import EditorInfo from "../EditorInfo.svelte"
 
   type ImportantStuffProps = {
     canEdit: boolean

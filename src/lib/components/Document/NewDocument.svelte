@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { AccessPerson } from "$lib/types/app-types";
+  import type { AccessPerson } from "$lib/types/app-types"
   import type { DocumentContentTemplate, DocumentInput, SchoolInfo } from "$lib/types/db/shared-types"
   import DocumentEditor from "./DocumentEditor.svelte"
 
@@ -7,7 +7,7 @@
     documentContentTemplates: DocumentContentTemplate[]
     accessSchools: SchoolInfo[]
     studentId?: string
-    groupId?: string,
+    groupId?: string
     studentDataSharingConsent?: boolean
     studentAccessPersons?: AccessPerson[]
   }

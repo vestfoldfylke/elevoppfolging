@@ -1,6 +1,6 @@
 <script lang="ts">
+  import { tick } from "svelte"
   import type { DocumentMessage, EditorData } from "$lib/types/db/shared-types"
-  import { tick } from "svelte";
   import Message from "./Message.svelte"
 
   type PageProps = {
