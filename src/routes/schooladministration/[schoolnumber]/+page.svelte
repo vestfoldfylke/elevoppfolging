@@ -189,6 +189,11 @@
         "Content-Type": "application/json"
       }
     })
+
+    // reset new manual student form
+    closeNewManualStudentForm()
+    newManualStudentFnr = ""
+    newManualStudentName = ""
   }
 
   let canManageManualStudents = $derived.by(() => {
@@ -368,30 +373,34 @@
         {/if}
   
         <div class="manual-students">
-          <table class="ds-table">
-            <thead>
-              <tr>
-                <th aria-sort="ascending">
-                  <button type="button">Navn</button>
-                </th>
-                <th>
-                  Rediger
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-            {#each manualStudents as manualStudent}
-              <tr>
-                <td>
-                  <a href={`/students/${manualStudent._id}`} class="ds-link" rel="noopener noreferrer">{manualStudent.name}</a>
-                </td>
-                <td>
-                  <a href={`${page.url.pathname}/manualstudents/${manualStudent._id}`} class="ds-link" rel="noopener noreferrer">Rediger</a>
-                </td>
-              </tr>
-            {/each}
-            </tbody>
-          </table>
+          {#if manualStudents.length > 0 }
+            <table class="ds-table">
+              <thead>
+                <tr>
+                  <th aria-sort="ascending">
+                    <button type="button">Navn</button>
+                  </th>
+                  <th>
+                    Rediger
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+              {#each manualStudents as manualStudent}
+                <tr>
+                  <td>
+                    <a href={`/students/${manualStudent._id}`} class="ds-link" rel="noopener noreferrer">{manualStudent.name}</a>
+                  </td>
+                  <td>
+                    <a href={`${page.url.pathname}/manualstudents/${manualStudent._id}`} class="ds-link" rel="noopener noreferrer">Rediger</a>
+                  </td>
+                </tr>
+              {/each}
+              </tbody>
+            </table>
+          {:else}
+            <span>Ingen manuelle elever her</span>
+          {/if}
         </div>
       </ds-tabpanel>
     {/if}
