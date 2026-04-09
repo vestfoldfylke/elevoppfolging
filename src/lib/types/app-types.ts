@@ -15,6 +15,7 @@ import type {
   ProgramAreaManualAccessEntry,
   SchoolInfo,
   SchoolLeaderManualAccessEntry,
+  Source,
   StudentCheckBox,
   StudentImportantStuff,
   StudentManualAccessEntry,
@@ -130,3 +131,11 @@ export type StudentAccess = {
     displayName: string
   }
 }
+
+export type AccessInfo = {
+  accessDisplayName: string
+  school: SchoolInfo
+  source: Source
+}
+
+export type AccessPerson = StudentAccess & { accessInfo: AccessInfo[] }

@@ -1,12 +1,11 @@
 <script lang="ts">
   import { apiFetch } from "$lib/api-fetch/api-fetch"
-  import { studentDataSharingConsentMessageValidation } from "$lib/data-validation/student-consent-validation"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { FrontendStudent, StudentUnavailableSchoolDocuments } from "$lib/types/app-types"
   import type { StudentDataSharingConsent, StudentDataSharingConsentInput } from "$lib/types/db/shared-types"
-  import { prettifyDate } from "$lib/utils/prettify-date"
   import AsyncButton from "../AsyncButton.svelte"
+    import EditorInfo from "../EditorInfo.svelte";
 
   type DataSharingConsentProps = {
     canEdit: boolean
@@ -110,7 +109,7 @@
   {:else}
     {#if studentDataSharingConsent?.modified && !editMode}
       <div class="card-footer-actions">
-        <p class="ds-paragraph" data-size="sm">{prettifyDate(studentDataSharingConsent.modified.at)} av {studentDataSharingConsent.modified.by.fallbackName}</p>
+        <EditorInfo created={studentDataSharingConsent.modified} modified={studentDataSharingConsent.modified} />
       </div>
     {/if}
   {/if}

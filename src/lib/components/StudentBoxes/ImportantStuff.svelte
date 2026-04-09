@@ -4,8 +4,8 @@
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { FrontendStudent } from "$lib/types/app-types"
   import type { SchoolInfo, StudentCheckBox, StudentImportantStuff, StudentImportantStuffInput } from "$lib/types/db/shared-types"
-  import { prettifyDate } from "$lib/utils/prettify-date"
   import AsyncButton from "../AsyncButton.svelte"
+    import EditorInfo from "../EditorInfo.svelte";
 
   type ImportantStuffProps = {
     canEdit: boolean
@@ -145,7 +145,7 @@
   {:else}
     {#if importantStuff?.modified && !editMode}
       <div class="card-footer-actions">
-        <p class="ds-paragraph" data-size="sm">{prettifyDate(importantStuff.modified.at)} av {importantStuff.modified.by.fallbackName}</p>
+        <EditorInfo created={importantStuff.created} modified={importantStuff.modified} />
       </div>
     {/if}
   {/if}
