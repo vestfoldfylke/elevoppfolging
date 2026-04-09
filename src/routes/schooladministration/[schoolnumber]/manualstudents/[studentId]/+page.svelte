@@ -25,7 +25,7 @@
     return school
   })
 
-  // new manual student
+  let updateManualStudentEdit: boolean = $state(false)
   let updateManualStudentForm: HTMLFormElement | undefined = $state()
   let updateManualStudentFnr: string = $derived.by(() => data.manualStudent.ssn)
   let updateManualStudentName: string = $derived.by(() => data.manualStudent.name)
@@ -57,25 +57,34 @@
         "Content-Type": "application/json"
       }
     })
+
+    updateManualStudentEdit = false
   }
 
-  let canManageManualStudents = $derived.by(() => {
-    if (!data.principalAccess) {
-      return false
-    }
-
-    return canManageManualStudentsOnSchool(data.principalAccess, currentSchool.schoolNumber)
-  })
-
   const abortUpdateManualStudent = () => {
-    console.log("Meh")
+    updateManualStudentEdit = false
+    updateManualStudentFnr = data.manualStudent.ssn
+    updateManualStudentName = data.manualStudent.name
   }
 </script>
 
 <div class="page-content">
-  <PageHeader title={data.manualStudent.name} />
-  
-  {#if canManageManualStudents}
+  <PageHeader title={`Manuell elev - ${data.manualStudent.name}`} />
+
+  {#if !updateManualStudentEdit}
+    <div class="update-manual-student">
+      <div>
+        <h6 class="ds-heading">Fødselsnummer</h6>
+        <p class="ds-paragraph">{updateManualStudentFnr}</p>
+      </div>
+      <div class="manual-student-edit-action">
+        <button onclick={() => updateManualStudentEdit = true} class="ds-button">
+          <span class="material-symbols-outlined">edit</span>
+          Rediger
+        </button>
+      </div>
+    </div>
+  {:else}
     <div class="update-manual-student-form">
       <form bind:this={updateManualStudentForm}>
         <ds-field class="ds-field content-item">
@@ -99,16 +108,20 @@
         </ds-field>
       </form>
 
-      <div class="manual-student-actions">
-        <AsyncButton onClick={updateManualStudent} buttonText="Oppdater manuell elev" iconName="update" reloadPageDataOnSuccess={true} />
+      <div class="manual-student-save-actions">
+        <AsyncButton onClick={updateManualStudent} buttonText="Lagre" iconName="save" reloadPageDataOnSuccess={true} disabled={updateManualStudentFnr === data.manualStudent.ssn && updateManualStudentName === data.manualStudent.name} />
         <button class="ds-button" type="button" data-variant="secondary" onclick={abortUpdateManualStudent}><span class="material-symbols-outlined">close</span>Avbryt</button>
       </div>
     </div>
   {/if}
 </div>
 
-<style>  
-  .manual-student-actions {
+<style>
+  .manual-student-edit-action {
+      padding-top: var(--ds-size-4);
+  }
+
+  .manual-student-save-actions {
       display: flex;
       gap: 0.5rem;
       justify-content: flex-end;
