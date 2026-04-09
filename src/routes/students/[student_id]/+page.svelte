@@ -299,7 +299,7 @@
       <p>Ingen notater her</p>
     {:else}
       {#each data.documents as document (document._id)}
-        <DocumentComponent {document} principalAccessEntriesForStudent={data.principalAccessEntriesForStudent} />
+        <DocumentComponent {document} principalAccessEntriesForStudent={data.principalAccessEntriesForStudent} studentName={data.student.name} />
       {/each}
     {/if}
   </div>
