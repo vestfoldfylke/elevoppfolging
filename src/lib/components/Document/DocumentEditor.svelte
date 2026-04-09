@@ -2,6 +2,7 @@
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
+    import type { AccessPerson } from "$lib/types/app-types";
   import type { DocumentInput, SchoolInfo } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
   import DocumentContentItem from "./DocumentContentItem.svelte"
@@ -12,10 +13,12 @@
     groupId?: string
     currentDocument: DocumentInput
     accessSchools: SchoolInfo[]
+    studentDataSharingConsent?: boolean
+    studentAccessPersons?: AccessPerson[]
     closeEditor: () => void
   }
 
-  let { documentId, studentId, groupId, accessSchools, currentDocument = $bindable(), closeEditor }: EditorProps = $props()
+  let { documentId, studentId, groupId, accessSchools, currentDocument = $bindable(), studentDataSharingConsent, studentAccessPersons, closeEditor }: EditorProps = $props()
 
   let documentEditorForm: HTMLFormElement | undefined = $state()
 
@@ -99,6 +102,7 @@
         </select>
       </ds-field>
     {/if}
+
     <ds-field class="ds-field content-item">
       <label for="documentTitle" class="ds-label" data-weight="medium">
         Tittel
@@ -106,9 +110,42 @@
       </label>
       <input autocomplete="off" id="documentTitle" class="ds-input" name="documentTitle" type="text" bind:value={currentDocument.title} required>
     </ds-field>
+
     {#each currentDocument.content as _contentItem, index}
       <DocumentContentItem bind:contentItem={currentDocument.content[index]} {index} editMode={true} />
     {/each}
+
+    <hr aria-hidden="true" class="ds-divider"/>
+
+    <fieldset class="ds-fieldset content-item">
+      <legend class="ds-label" data-weight="medium">Tilgangsstyring</legend>
+      <p class="ds-paragraph" data-variant="default">Som standard vil notatet være synlig for alle brukere med tilgang til eleven ved {currentDocument.school.name}, unntatt faglærere. Dersom du ønsker at også faglærere skal kunne se notatet, kan du krysse av for dette alternativet. I tillegg vil brukere ved andre skoler få tilgang til notatet dersom eleven har samtykket til deling av informasjon med andre skoler.</p>
+      <ds-field class="ds-field">
+        <input id="availableForAll" class="ds-input" type="checkbox" value="email"/>
+        <label for="availableForAll" class="ds-label" data-weight="regular">Synlig for faglærere</label>
+      </ds-field>
+    </fieldset>
+
+    <hr aria-hidden="true" class="ds-divider"/>
+
+    {#if studentAccessPersons && studentAccessPersons.length > 0}
+      <fieldset class="ds-fieldset content-item">
+        <legend class="ds-label" data-weight="medium">Følgende personer skal varsles på e-post når notatet lagres</legend>
+
+        {#each studentAccessPersons as accessPerson}
+          <ds-field class="ds-field">
+            <input id={accessPerson.entra.id} class="ds-input" type="checkbox" value="email"/>
+            <label for={accessPerson.entra.id} class="ds-label" data-weight="regular">
+              {accessPerson.entra.displayName}
+              {#each accessPerson.accessInfo.filter((accessInfo) => studentDataSharingConsent || accessInfo.school.schoolNumber === currentDocument.school.schoolNumber) as accessInfo}
+                <span class="ds-tag" data-variant="outline" data-color={accessInfo.source === "AUTO" ? "accent" : "brand1"} data-size="xs" style="margin-left: var(--ds-size-1)">{accessInfo.accessDisplayName} ved {accessInfo.school.name}</span>
+              {/each}
+            </label>
+          </ds-field>
+        {/each}
+      </fieldset>
+    {/if}
+
   </form>
 </div>
 <div class="document-actions">
