@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from "svelte"
   import type { DocumentMessage, EditorData } from "$lib/types/db/shared-types"
   import Message from "./Message.svelte"
 
@@ -44,17 +45,29 @@
   const onNewMessageCreatedOrCancel = () => {
     messageType = null
   }
+
+  const scrollToNewMessage = async () => {
+    await tick()
+    const newMessageElement = document.getElementById("new-message-container")
+    if (newMessageElement) {
+      newMessageElement.scrollIntoView({ behavior: "smooth" })
+    }
+  }
 </script>
 
 {#if messageType === null}
   <div class="new-message-actions">
     <!--<button class="ds-button" data-variant="secondary" data-size="sm" onclick={() => messageType = "comment"}><span class="material-symbols-outlined">add_comment</span>Ny kommentar</button>-->
-    <button class="ds-button" data-variant="secondary" data-size="sm" onclick={() => messageType = "update"}><span class="material-symbols-outlined">info</span>Ny oppfølging/ny informasjon (eller no sånt)</button>
+    <button class="ds-button" data-variant="primary" data-size="sm" onclick={() => { messageType = "update"; scrollToNewMessage(); }}><span class="material-symbols-outlined">info</span>Ny oppfølging/ny informasjon (eller no sånt)</button>
   </div>
-{:else if messageType === "comment"}
-  <Message {studentId} {groupId} editMode={true} {documentId} message={newComment} callback={onNewMessageCreatedOrCancel} />
-{:else if messageType === "update"}
-  <Message {studentId} {groupId} editMode={true} {documentId} message={newUpdate} callback={onNewMessageCreatedOrCancel} />
+{:else}
+  <div id="new-message-container">
+    {#if messageType === "comment"}
+      <Message {studentId} {groupId} editMode={true} {documentId} message={newComment} callback={onNewMessageCreatedOrCancel} />
+    {:else if messageType === "update"}
+      <Message {studentId} {groupId} editMode={true} {documentId} message={newUpdate} callback={onNewMessageCreatedOrCancel} />
+    {/if}
+  </div>
 {/if}
 
 <style>

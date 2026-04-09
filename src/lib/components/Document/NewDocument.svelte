@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { AccessPerson } from "$lib/types/app-types"
   import type { DocumentContentTemplate, DocumentInput, SchoolInfo } from "$lib/types/db/shared-types"
   import DocumentEditor from "./DocumentEditor.svelte"
 
@@ -7,9 +8,11 @@
     accessSchools: SchoolInfo[]
     studentId?: string
     groupId?: string
+    studentDataSharingConsent?: boolean
+    studentAccessPersons?: AccessPerson[]
   }
 
-  let { documentContentTemplates, accessSchools, studentId, groupId }: PageProps = $props()
+  let { documentContentTemplates, accessSchools, studentId, groupId, studentDataSharingConsent, studentAccessPersons }: PageProps = $props()
 
   // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounter ved endring av studentId/groupId
   if (!studentId && !groupId) {
@@ -72,8 +75,8 @@
 
 <button class="ds-button" data-variant="primary" type="button" command="show-modal" commandfor="new-document-modal"><span class="material-symbols-outlined">note_add</span>Nytt notat</button>
 
-<dialog class="ds-dialog new-document-dialog" data-placement="center" id="new-document-modal" bind:this={newDocumentDialog}>
-  <button class="ds-button" data-icon="true" data-variant="tertiary" type="button" aria-label="Lukk dialogvindu" data-color="neutral" command="close" commandfor="new-document-modal" onclick={() => newDocument = null}></button>
+<dialog class="ds-dialog document-dialog" data-placement="center" id="new-document-modal" bind:this={newDocumentDialog}>
+  <button class="ds-button close-dialog-button" data-icon="true" data-variant="tertiary" type="button" aria-label="Lukk dialogvindu" data-color="neutral" command="close" commandfor="new-document-modal" onclick={() => newDocument = null}></button>
   
   <div class="ds-dialog__block">
     <div class="template-selector">
@@ -92,9 +95,11 @@
     </div>
 
     {#if newDocument}
-      <h2 class="ds-heading">{newDocument.template.name}: {newDocument.title}</h2>
+      <hr aria-hidden="true" class="ds-divider"/>
+      <br />
       <div class="ds-paragraph" data-size="sm">{newDocument.school.name}</div>
-      <DocumentEditor {studentId} {groupId} {accessSchools} bind:currentDocument={newDocument} closeEditor={closeEditor} />
+      <h2 class="ds-heading">{newDocument.template.name}: {newDocument.title}</h2>
+      <DocumentEditor {studentId} {groupId} {accessSchools} bind:currentDocument={newDocument} {studentDataSharingConsent} {studentAccessPersons} closeEditor={closeEditor} />
     {/if}
   </div>
 </dialog>
@@ -102,19 +107,5 @@
 <style>
   .template-selector {
     margin-bottom: 1rem;
-  }
-  .new-document-dialog {
-    width: 100vw;
-    max-width: 100vw;
-    height: 100vh;
-    max-height: 100vh;
-  }
-
-  @media (min-width: 60rem) {
-    .new-document-dialog {
-      width: 80vw;
-      max-width: 80vw;
-      max-height: 90vh;
-    }
   }
 </style>

@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { tick } from "svelte"
   import { page } from "$app/state"
   import { canEditStudentDocument } from "$lib/shared-authorization/authorization"
   import type { AccessEntry } from "$lib/types/app-types"
   import type { DocumentInput, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
-  import { prettifyDateTime } from "$lib/utils/prettify-date"
+  import EditorInfo from "../EditorInfo.svelte"
   import DocumentContent from "./DocumentContentItem.svelte"
   import DocumentEditor from "./DocumentEditor.svelte"
   import Message from "./Message.svelte"
@@ -13,9 +12,11 @@
   type PageProps = {
     document: StudentDocument // Add GroupDocument union when needed
     principalAccessEntriesForStudent: AccessEntry[]
+    studentName?: string
+    groupName?: string
   }
 
-  let { document, principalAccessEntriesForStudent }: PageProps = $props()
+  let { document, principalAccessEntriesForStudent, studentName, groupName }: PageProps = $props()
 
   let accessSchools: SchoolInfo[] = $derived.by(() => {
     return principalAccessEntriesForStudent.map((access) => {
@@ -26,24 +27,6 @@
       return school
     })
   })
-
-  const toggleDocument = async () => {
-    documentOpen = !documentOpen
-    if (documentOpen) {
-      await tick()
-      const documentElement = window.document.getElementById(`document-${document._id}`)
-      if (documentElement) {
-        documentElement.scrollIntoView({ behavior: "smooth" })
-      }
-    }
-  }
-
-  const scrollToDocument = () => {
-    const documentElement = window.document.getElementById(`document-${document._id}`)
-    if (documentElement) {
-      documentElement.scrollIntoView({ behavior: "smooth" })
-    }
-  }
 
   const editableDocumentFromDocument = () => {
     return JSON.parse(
@@ -59,87 +42,87 @@
   // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounter ved endring av document (ha en key på document i parent)
   let editableDocument: DocumentInput = $state(editableDocumentFromDocument())
 
-  let documentOpen = $state(false)
   let editMode = $state(false)
 </script>
 
-<div id="document-{document._id}" class="ds-card document-card" data-variant="default" data-color="accent" style="margin-bottom: var(--ds-size-6);">
-  <details class="ds-details" data-variant="default">
-    <summary onclick={() => scrollToDocument()}>
-      <div class="document-header">
-        <div class="document-header-left">
-          <h2 class="ds-heading">{document.template.name}: {editableDocument.title}</h2>
-          <div class="ds-paragraph" data-size="xs">{document.school.name}</div>
-        </div>
-        <div class="document-header-right">
-          <div class="ds-paragraph" data-size="xs">{document.created.by.displayName}</div>
-          <div class="ds-paragraph" data-size="xs">{prettifyDateTime(document.modified.at)}{document.modified.at > document.created.at ? " Redigert" : ""}</div>
-        </div>
-      </div>
-    </summary>
-
-    <div class="ds-card__block">
-      {#if !editMode}
-        {#each document.content as contentItem, index}
-          <DocumentContent {contentItem} editMode={false} {index} />
-        {/each}
-      {:else}
-        <!-- Add groupId when needed -->
-        <DocumentEditor documentId={document._id} studentId={document.student._id} bind:currentDocument={editableDocument} {accessSchools} closeEditor={() => { editMode = false; editableDocument = editableDocumentFromDocument(); }} />
-      {/if}
-      <div class="document-actions">
-        {#if !editMode && canEditStudentDocument(page.data.authenticatedPrincipal, principalAccessEntriesForStudent, document)}
-          <button class="ds-button" data-variant="secondary" onclick={() => editMode = !editMode}>
-            <span class="material-symbols-outlined">{editMode ? "close" : "edit"}</span>{editMode ? "Lukk redigering" : "Rediger"}
-          </button>
-        {/if}
-      </div>
-    </div>
-
-    {#each document.messages as message (message.messageId)}
-      {#if message.type === "update"}
-        <div class="ds-card__block">
-          <div class="message-header">
-            <div class="message-header-left">
-              <h2 class="ds-heading" data-size="xs">{`Oppfølging: ${message.content.title}`}</h2>
-            </div>
-            <div class="message-header-right">
-              <div class="ds-paragraph" data-size="xs">{message.modified.by.fallbackName}</div>
-              <div class="ds-paragraph" data-size="xs">{prettifyDateTime(message.modified.at)}</div>
-            </div>
-          </div>
-          <Message {message} editMode={false} documentId={document._id} studentId={document.student._id} />
-        </div>
-      {/if}
-    {/each}
-    <div class="ds-card__block">
-      <NewMessage documentId={document._id} studentId={document.student._id} />
-    </div>
-  </details>
+<div class="ds-card document-card" data-variant="tinted" data-color="accent" data-clickdelegatefor="document-modal-{document._id}-open">
+  <div class="ds-card__block">
+    <div class="ds-paragraph" data-size="xs" >{document.school.name}</div>
+    <button id="document-modal-{document._id}-open" class="ds-button card-button" data-size="lg" command="show-modal" commandfor="document-modal-{document._id}" data-variant="tertiary">{document.template.name}: {editableDocument.title}</button>
+    <EditorInfo created={document.created} modified={document.modified} timestamp={true} modifiedIndicator={true} style="margin: 0;" />
+  </div>
 </div>
+
+<dialog class="ds-dialog document-dialog" data-placement="center" id="document-modal-{document._id}">
+  <button class="ds-button close-dialog-button" data-icon="true" data-variant="tertiary" type="button" aria-label="Lukk dialogvindu" data-color="neutral" command="close" commandfor="document-modal-{document._id}"></button>
+  <div class="ds-dialog__block document-dialog-header">
+    <div class="ds-paragraph" data-size="sm">{studentName || groupName} - {editableDocument.school.name}</div>
+    <h2 class="ds-heading">{document.template.name}: {editableDocument.title}</h2>
+    <EditorInfo created={document.created} modified={document.modified} timestamp={true} modifiedIndicator={true} />
+  </div>
+  
+  <div class="ds-dialog__block">
+    {#if !editMode}
+      {#each document.content as contentItem, index}
+        <DocumentContent {contentItem} editMode={false} {index} />
+      {/each}
+    {:else}
+      <!-- Add groupId when needed -->
+      <DocumentEditor documentId={document._id} studentId={document.student._id} bind:currentDocument={editableDocument} {accessSchools} closeEditor={() => { editMode = false; editableDocument = editableDocumentFromDocument(); }} />
+    {/if}
+
+    {#if !editMode && canEditStudentDocument(page.data.authenticatedPrincipal, principalAccessEntriesForStudent, document)}
+      <div class="document-actions">
+        <button class="ds-button" data-variant="secondary" data-size="sm" onclick={() => editMode = true}>
+          <span class="material-symbols-outlined">{editMode ? "close" : "edit"}</span>
+          Rediger
+        </button>
+      </div>
+    {/if}
+  </div>
+
+  {#each document.messages as message (message.messageId)}
+    {#if message.type === "update"}
+      <div class="ds-dialog__block">
+        <div class="message-header">
+          <div class="message-header-left">
+            <h2 class="ds-heading" data-size="xs">{`Oppfølging: ${message.content.title}`}</h2>
+            <EditorInfo created={message.modified} modified={message.modified} timestamp={true} modifiedIndicator={true} />
+          </div>
+        </div>
+        <Message {message} editMode={false} documentId={document._id} studentId={document.student._id} />
+      </div>
+    {/if}
+  {/each}
+  <div class="ds-dialog__block">
+    <NewMessage documentId={document._id} studentId={document.student._id} />
+  </div>
+</dialog>
 
 <style>
   .document-card {
-    scroll-margin-top: var(--header-height);
+    margin-bottom: var(--ds-size-6);
   }
 
-  .document-header, .message-header {
+  .card-button {
+    padding: 0;
+    margin: 0;
+    min-height: min-content;
+  }
+
+  .message-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 100%;
   }
 
-  .document-header {
-    padding: var(--ds-size-4) 0;
-  }
-
-  .document-header-right, .message-header-right {
-    text-align: right;
-  }
-
   .document-actions {
     display: flex;
     justify-content: flex-end;
+  }
+
+  .card-button:hover {
+    color: var(--dsc-button-color);
   }
 </style>

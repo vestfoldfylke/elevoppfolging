@@ -1,12 +1,11 @@
 <script lang="ts">
-  import { tick } from "svelte"
   import { slide } from "svelte/transition"
   import DocumentComponent from "$lib/components/Document/Document.svelte"
   import NewDocument from "$lib/components/Document/NewDocument.svelte"
   import DataSharingConsent from "$lib/components/StudentBoxes/DataSharingConsent.svelte"
   import ImportantStuff from "$lib/components/StudentBoxes/ImportantStuff.svelte"
   import { canEditStudentDataSharingConsent, canEditStudentImportantStuff } from "$lib/shared-authorization/authorization"
-  import type { EnrollmentDetails, PeriodDetails, StudentAccess } from "$lib/types/app-types"
+  import type { AccessInfo, AccessPerson, EnrollmentDetails, PeriodDetails, StudentAccess } from "$lib/types/app-types"
   import type { Period, SchoolInfo, Source } from "$lib/types/db/shared-types"
   import { ACCESS_TYPE_DISPLAY_NAMES } from "$lib/utils/access-constants"
   import { getEnrollmentDetails, getFrontendStudentMainDetails } from "$lib/utils/frontend-student-details"
@@ -29,12 +28,6 @@
     return data.student.enrollmentsWithinViewAccessWindow.filter((enrollment) => !enrollment.mainSchool).map((enrollment) => enrollment.school)
   })
 
-  type AccessInfo = {
-    accessDisplayName: string
-    school: SchoolInfo
-    source: Source
-  }
-
   let principalAccessEntriesForStudent: AccessInfo[] = $derived.by(() => {
     return data.principalAccessEntriesForStudent.map((access) => {
       const school = data.student.enrollmentsWithinViewAccessWindow.find((enrollment) => enrollment.school.schoolNumber === access.schoolNumber)?.school
@@ -45,7 +38,7 @@
     })
   })
 
-  let studentAccessPersons: (StudentAccess & { accessInfo: AccessInfo[] })[] = $derived.by(() => {
+  let studentAccessPersons: AccessPerson[] = $derived.by(() => {
     return data.studentAccessInfo
       .map((access) => {
         const accessInfo = access.accessTypes.map((accessType) => {
@@ -292,14 +285,14 @@
   <div class="documents">
     <div class="documents-header">
         <h2 id="documents" class="ds-heading">Notater</h2>
-        <NewDocument {accessSchools} documentContentTemplates={data.documentContentTemplates} studentId={data.student._id} />
+        <NewDocument {accessSchools} documentContentTemplates={data.documentContentTemplates} studentId={data.student._id} studentDataSharingConsent={data.studentDataSharingConsent?.consent} {studentAccessPersons} />
     </div>
 
     {#if data.documents.length === 0}
       <p>Ingen notater her</p>
     {:else}
       {#each data.documents as document (document._id)}
-        <DocumentComponent {document} principalAccessEntriesForStudent={data.principalAccessEntriesForStudent} />
+        <DocumentComponent {document} principalAccessEntriesForStudent={data.principalAccessEntriesForStudent} studentName={data.student.name} />
       {/each}
     {/if}
   </div>

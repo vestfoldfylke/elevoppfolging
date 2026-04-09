@@ -14,22 +14,22 @@
     "lint:fix": "npx @biomejs/biome check --write"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.9",
-    "@digdir/designsystemet-types": "^1.13.0",
-    "@sveltejs/kit": "^2.49.1",
+    "@biomejs/biome": "2.4.10",
+    "@digdir/designsystemet-types": "^1.13.1",
+    "@sveltejs/kit": "^2.56.1",
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
-    "@types/node": "^25.5.0",
-    "svelte": "^5.55.0",
-    "svelte-check": "^4.4.5",
+    "@types/node": "^25.5.2",
+    "svelte": "^5.55.1",
+    "svelte-check": "^4.4.6",
     "typescript": "^5.9.3",
-    "vite": "^8.0.3"
+    "vite": "^8.0.5"
   },
   "dependencies": {
-    "@digdir/designsystemet-css": "^1.13.0",
-    "@digdir/designsystemet-web": "^1.13.0",
+    "@digdir/designsystemet-css": "^1.13.1",
+    "@digdir/designsystemet-web": "^1.13.1",
     "@navikt/fnrvalidator": "^2.2.1",
     "@sveltejs/adapter-node": "^5.5.4",
-    "@vestfoldfylke/loglady": "^1.5.2",
+    "@vestfoldfylke/loglady": "^1.5.3",
     "mongodb": "^7.1.1"
   }
 }
