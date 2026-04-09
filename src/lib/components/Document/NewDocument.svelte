@@ -34,7 +34,7 @@
   let newDocumentDialog: HTMLDialogElement | undefined
 
   const newDocumentTemplate = (template: DocumentContentTemplate): DocumentInput => {
-    const newDocumentFromTemplate: DocumentInput = {
+    return {
       title: "",
       content: template.content,
       template: {
@@ -44,7 +44,6 @@
       },
       school: accessSchools[0]
     }
-    return newDocumentFromTemplate
   }
 
   // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounter ved endring av studentId/groupId TODO - sjekk om det skal være derived
@@ -52,12 +51,19 @@
 
   let newDocument: DocumentInput | null = $state(null)
 
-  const changeDocumentTemplate = (templateId: string) => {
+  const changeDocumentTemplate = (selectedItem: EventTarget | null) => {
     // TODO - add check to see if there are unsaved changes and warn the user before changing the template
+    if (!selectedItem) {
+      newDocument = null
+      return
+    }
+
+    const templateId: string | undefined = (selectedItem as HTMLSelectElement)?.value
     if (!templateId) {
       newDocument = null
       return
     }
+
     const documentTemplate = newDocumentTemplates.find((documentTemplate) => documentTemplate.template._id === templateId)
     if (!documentTemplate) {
       throw new Error("Template not found")
@@ -83,7 +89,7 @@
       <h2 class="ds-heading">Nytt notat</h2>
       <ds-field class="ds-field">
         <label for="document-type" class="ds-label" data-weight="medium">Notat-type</label>
-        <select id="document-type" class="ds-input" data-width="auto" onchange={(event) => changeDocumentTemplate((event.target as HTMLSelectElement).value)}>
+        <select id="document-type" class="ds-input" data-width="auto" onchange={(event) => changeDocumentTemplate(event.target)}>
           {#if !newDocument}
             <option selected value="">Velg en notat-type</option>
           {/if}

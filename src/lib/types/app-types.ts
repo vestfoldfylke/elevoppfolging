@@ -64,10 +64,6 @@ export type AccessEntry =
   | ContactTeacherGroupAutoAccessEntry
   | TeachingGroupAutoAccessEntry
 
-export type CachedFrontendStudentWithAccessInfo = CachedFrontendStudent & {
-  accessTypes: AccessEntry[]
-}
-
 /** Student which a given principal has access to, along with which access types principal has to the student */
 export type PrincipalAccessStudent = Omit<CachedFrontendStudent, "studentEnrollments" | "systemId" | "studentNumber" | "created" | "modified"> & {
   accessTypes: AccessEntry[]

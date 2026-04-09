@@ -133,7 +133,7 @@
         {#if previewMode}
           <input class="ds-input" type="checkbox" id={`contentItem-${index}-checkbox-${itemIndex}`} name={`preview-contentItem-${index}-checkbox`} value={item.value} />
         {:else if editMode}
-          <input class="ds-input" disabled={!editMode} type="checkbox" id={`contentItem-${index}-checkbox-${itemIndex}`} name={`prevcontentItem-${index}-checkbox`} value={item.value} bind:group={contentItem.selectedValues} bind:this={checkboxes[itemIndex]} />
+          <input class="ds-input" disabled={!editMode} type="checkbox" id={`contentItem-${index}-checkbox-${itemIndex}`} name={`contentItem-${index}-checkbox`} value={item.value} bind:group={contentItem.selectedValues} bind:this={checkboxes[itemIndex]} />
         {:else}
           <input class="ds-input" type="checkbox" checked={contentItem.selectedValues?.includes(item.value)} disabled={true} style={contentItem.selectedValues?.includes(item.value) ? "opacity: 1;" : ""} />
         {/if}
