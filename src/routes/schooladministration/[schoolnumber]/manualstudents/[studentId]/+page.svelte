@@ -74,7 +74,7 @@
   {#if !updateManualStudentEdit}
     <div class="update-manual-student">
       <div>
-        <h6 class="ds-heading">Fødselsnummer</h6>
+        <h2 class="ds-heading">Fødselsnummer</h2>
         <p class="ds-paragraph">{updateManualStudentFnr}</p>
       </div>
       <div class="manual-student-edit-action">
