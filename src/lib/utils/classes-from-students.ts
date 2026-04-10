@@ -46,9 +46,7 @@ export const getAccessibleClassesFromStudents = (principalAccess: Access, studen
         continue
       }
 
-      const regularAccess = studentEnrollment.classMemberships.filter(
-        (classMembership) => classMembership.classGroup.source === "MANUAL" || principalAccess.classes.find((classEntry) => classEntry.systemId === classMembership.classGroup.systemId)
-      )
+      const regularAccess = studentEnrollment.classMemberships.filter((classMembership) => principalAccess.classes.find((classEntry) => classEntry.systemId === classMembership.classGroup.systemId))
       if (regularAccess.length === 0) {
         continue
       }
