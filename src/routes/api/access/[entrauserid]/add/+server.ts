@@ -8,7 +8,7 @@ import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canGrantAndRemoveAccessForSchool, isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { AccessEntry, PrincipalAccessStudent } from "$lib/types/app-types"
-import type { Access, ClassGroup, NewAccess } from "$lib/types/db/shared-types"
+import type { Access, NewAccess, StudentClassGroup } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 import { getClassesFromStudents } from "$lib/utils/classes-from-students"
 
@@ -46,7 +46,7 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
     }
 
     const principalAccessStudents: PrincipalAccessStudent[] = await getStudentsFromCache(principalAccess)
-    const principalClasses: (ClassGroup & { schoolNumber: string })[] = getClassesFromStudents(principalAccessStudents)
+    const principalClasses: StudentClassGroup[] = getClassesFromStudents(principalAccessStudents)
 
     // Check also that the principal has access to the specific program area, class or student if the access entry is for those types
     switch (accessEntryInput.type) {
@@ -61,7 +61,7 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
         break
       }
       case "MANUELL-KLASSE-TILGANG": {
-        if (!principalClasses.some((c) => c.systemId === accessEntryInput.systemId && c.schoolNumber === accessEntryInput.schoolNumber)) {
+        if (!principalClasses.some((c) => c.systemId === accessEntryInput.systemId && c.school.schoolNumber === accessEntryInput.schoolNumber)) {
           throw new HTTPError(403, noAccessMessage("No permission to grant grant access to this class"))
         }
         break

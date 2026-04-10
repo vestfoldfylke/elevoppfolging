@@ -5,21 +5,24 @@ import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
 import type { FrontendOverviewStudent, PrincipalAccessStudent, RootLayoutData } from "$lib/types/app-types"
-import type { Access, SchoolInfo, StudentDataSharingConsent, StudentImportantStuff } from "$lib/types/db/shared-types"
+import type { IDbClient } from "$lib/types/db/db-client"
+import type { Access, SchoolInfo, StudentClassGroup, StudentDataSharingConsent, StudentImportantStuff } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
+import { getAccessibleClassesFromStudents } from "$lib/utils/classes-from-students"
 import type { LayoutServerLoad } from "./$types"
 
 const layoutLoad: ServerLoadNextFunction<RootLayoutData> = async ({ principal }) => {
-  const dbClient = getDbClient()
+  const dbClient: IDbClient = getDbClient()
 
   const principalAccess: Access | null = await dbClient.getPrincipalAccess(principal.id)
 
   if (!principalAccess) {
-    logger.info(`No access entry found for user ${principal.id}, but appearantly have access through entra, quick return with no students or schools or anything`)
+    logger.info(`No access entry found for user ${principal.id}, but apparently have access through entra, quick return with no students, schools or anything`)
     return {
       data: {
         authenticatedPrincipal: principal,
         APP_INFO,
+        classes: [],
         principalAccess,
         studentCheckBoxes: [],
         students: [],
@@ -127,10 +130,17 @@ const layoutLoad: ServerLoadNextFunction<RootLayoutData> = async ({ principal })
   }))
   logger.info(`Found ${schoolsFromDb.length} schools`)
 
+  logger.info("NÅ FILTRERER JEG KLASSER BRUKER HAR TILGANG PÅ")
+  const now5: number = Date.now()
+  const classes: StudentClassGroup[] = getAccessibleClassesFromStudents(principalAccess, overviewStudents)
+  const timeTaken5: number = Date.now() - now5
+  logger.info(`Fant ${classes.length} klasser - brukte ${timeTaken5 / 1000} sekunder`)
+
   return {
     data: {
       authenticatedPrincipal: principal,
       APP_INFO,
+      classes,
       principalAccess,
       studentCheckBoxes,
       students: overviewStudents,
