@@ -17,6 +17,7 @@ import type {
   SchoolLeaderManualAccessEntry,
   Source,
   StudentCheckBox,
+  StudentClassGroup,
   StudentImportantStuff,
   StudentManualAccessEntry,
   TeachingGroup,
@@ -92,6 +93,7 @@ export type ApplicationInfo = {
 export type RootLayoutData = {
   APP_INFO: ApplicationInfo
   authenticatedPrincipal: AuthenticatedPrincipal
+  classes: StudentClassGroup[]
   principalAccess: Access | null
   students: FrontendOverviewStudent[]
   studentCheckBoxes: StudentCheckBox[]

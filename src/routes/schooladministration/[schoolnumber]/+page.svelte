@@ -47,7 +47,7 @@
   })
 
   let schoolClasses = $derived.by(() => {
-    return getClassesFromStudents(schoolStudents).filter((classInfo) => classInfo.schoolNumber === currentSchool.schoolNumber)
+    return getClassesFromStudents(schoolStudents).filter((classInfo) => classInfo.school.schoolNumber === currentSchool.schoolNumber)
   })
 
   type SortDirection = "ascending" | "descending"
