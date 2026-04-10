@@ -39,7 +39,7 @@
     ...studentCheckBoxFilters
   })
 
-  let sortBy = $state<"name" | "school" | "class" | "teacher" | "lastActivity">("name")
+  let sortBy = $state<"name" | "class" | "teacher" | "lastActivity">("name")
   let sortDirection = $state<"ascending" | "descending">("ascending")
 
   let students: (FrontendOverviewStudent & FrontendStudentMainDetails)[] = $derived.by(() =>

@@ -25,6 +25,10 @@ export type ClassGroup = Group & {
   teachers: Teacher[]
 }
 
+export type StudentClassGroup = ClassGroup & {
+  school: SchoolInfo
+}
+
 /** Klassemedlemskap */
 export type ClassMembership = GroupMembership & {
   classGroup: ClassGroup
