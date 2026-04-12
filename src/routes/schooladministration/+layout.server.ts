@@ -1,9 +1,8 @@
-import { getStudentsFromCache } from "$lib/server/cache/students-cache"
+import { getAppUsersFromCache } from "$lib/server/cache/users-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canGrantAndRemoveAccessForSchool, isSchoolLeader, noAccessMessage } from "$lib/shared-authorization/authorization"
-import type { PrincipalAccessStudent } from "$lib/types/app-types"
+import { canAccessSchoolAdministration, canGrantAndRemoveAccessForSchool, canManageManualStudentsOnSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { AppUser, School } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
@@ -11,7 +10,6 @@ import type { LayoutServerLoad } from "./$types"
 
 type AdministrationAccessLayoutData = {
   accessSchools: School[]
-  accessStudents: PrincipalAccessStudent[]
   appUsers: AppUser[]
 }
 
@@ -23,28 +21,24 @@ const getAdministrationAccessData: ServerLoadNextFunction<AdministrationAccessLa
     throw new HTTPError(403, noAccessMessage("No access found for principal"))
   }
 
-  if (!isSchoolLeader(principalAccess)) {
-    throw new HTTPError(403, noAccessMessage("No permission to handle access"))
+  if (!canAccessSchoolAdministration(principalAccess)) {
+    throw new HTTPError(403, noAccessMessage("No permission to access school administration"))
   }
 
   const schools = await dbClient.getSchools()
-  const accessSchools = schools.filter((school) => canGrantAndRemoveAccessForSchool(school.schoolNumber, principalAccess))
+  const allowedToAdministrateSchools = schools.filter(
+    (school) => canGrantAndRemoveAccessForSchool(school.schoolNumber, principalAccess) || canManageManualStudentsOnSchool(principalAccess, school.schoolNumber)
+  )
 
-  if (accessSchools.length === 0) {
-    throw new HTTPError(403, noAccessMessage("No permission to administrate access at any schools"))
+  if (allowedToAdministrateSchools.length === 0) {
+    throw new HTTPError(403, noAccessMessage("No permission to administrate any schools"))
   }
 
-  const principalAccessStudents: PrincipalAccessStudent[] = await getStudentsFromCache(principalAccess)
-
-  // Only return students that user have school access for
-  const accessStudents = principalAccessStudents.filter((student) => student.accessTypes.some((accessType) => accessType.type === "MANUELL-SKOLELEDER-TILGANG"))
-
-  const appUsers = await dbClient.getAllAppUsers()
+  const appUsers = await getAppUsersFromCache()
 
   return {
     data: {
-      accessSchools,
-      accessStudents,
+      accessSchools: allowedToAdministrateSchools,
       appUsers
     },
     isAuthorized: true

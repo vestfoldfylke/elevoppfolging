@@ -7,7 +7,7 @@
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import { canGrantAndRemoveAccessForSchool, canManageManualStudentsOnSchool } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
-  import type { EnrollmentWithinViewAccessWindow, FrontendOverviewStudent } from "$lib/types/app-types"
+  import type { EnrollmentWithinViewAccessWindow, FrontendOverviewStudent, NewManualAccessControl } from "$lib/types/app-types"
   import type { ClassManualAccessEntry, ManageManualStudentsManualAccessEntry, ManualAccessEntryInput, NewManualStudentInput, StudentManualAccessEntry } from "$lib/types/db/shared-types"
   import { getClassesFromStudents } from "$lib/utils/classes-from-students"
   import type { PageProps } from "./$types"
@@ -32,7 +32,6 @@
 
     return school
   })
-
 
   // ACCESS CONTROL
   let canManageAccess = $derived.by(() => {
@@ -101,9 +100,9 @@
           entraUser: {
             id: access.entraUserId,
             name: appUserInfo.name,
-            companyName: appUserInfo.companyName,
+            companyName: appUserInfo.companyName
           },
-          accessEntry: classAccessEntry 
+          accessEntry: classAccessEntry
         })
       }
     }
@@ -146,22 +145,22 @@
     const studentAccessRows: StudentAccessEntry[] = []
     for (const access of data.manualAccessForSchool) {
       for (const studentAccessEntry of access.students) {
-       const studentInfo = schoolStudents.find((student) => student._id === studentAccessEntry._id)
+        const studentInfo = schoolStudents.find((student) => student._id === studentAccessEntry._id)
         const studentName = studentInfo ? studentInfo.name : `Inaktiv elev (${studentAccessEntry._id})`
         const studentFeideName = studentInfo ? studentInfo.feideName : `Inaktiv elev (${studentAccessEntry._id})`
         const appUserInfo = getAppUserInfo(access.entraUserId)
 
         studentAccessRows.push({
-            student: {
-              feideName: studentFeideName,
-              name: studentName
-            },
-            entraUser: {
-              id: access.entraUserId,
-              name: appUserInfo.name,
-              companyName: appUserInfo.companyName,
-            },
-            accessEntry: studentAccessEntry
+          student: {
+            feideName: studentFeideName,
+            name: studentName
+          },
+          entraUser: {
+            id: access.entraUserId,
+            name: appUserInfo.name,
+            companyName: appUserInfo.companyName
+          },
+          accessEntry: studentAccessEntry
         })
       }
     }
@@ -205,7 +204,7 @@
           entraUser: {
             id: access.entraUserId,
             name: appUserInfo.name,
-            companyName: appUserInfo.companyName,
+            companyName: appUserInfo.companyName
           },
           accessEntry: manageManualStudentsAccessEntry
         })
@@ -218,48 +217,95 @@
   })
 
   // new access
-  let addAccessForm: HTMLFormElement | undefined = $state()
-  let selectedEntraUserId = $state("")
-  // let selectedType: ManualAccessEntryInput["type"] | "" = $state("")
-  let selectedResourceId = $state("")
+  let newClassAccessControl: NewManualAccessControl = $state({
+    type: "MANUELL-KLASSE-TILGANG",
+    name: "klassetilgang",
+    open: false,
+    form: undefined,
+    classId: "",
+    entraUserId: ""
+  })
 
-  const addManualAccessEntry = async (selectedType: ManualAccessEntryInput["type"]): Promise<void> => {
-    const validForm = addAccessForm?.reportValidity()
-    if (!validForm) {
+  let newStudentAccessControl: NewManualAccessControl = $state({
+    type: "MANUELL-ELEV-TILGANG",
+    name: "elevtilgang",
+    open: false,
+    form: undefined,
+    studentId: "",
+    entraUserId: ""
+  })
+
+  let newManageManualStudentsAccessControl: NewManualAccessControl = $state({
+    type: "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG",
+    name: "tilgang til å administrere manuelle elever",
+    open: false,
+    form: undefined,
+    entraUserId: ""
+  })
+
+  const closeManualAccessControl = (newManualAccessControl: NewManualAccessControl) => {
+    newManualAccessControl.open = false
+    newManualAccessControl.classId = ""
+    newManualAccessControl.studentId = ""
+    newManualAccessControl.entraUserId = ""
+  }
+
+  const addManualAccessEntry = async (newManualAccessControl: NewManualAccessControl): Promise<void> => {
+    if (!newManualAccessControl.form) {
+      throw new Error("Form reference is missing")
+    }
+
+    if (!newManualAccessControl.form.reportValidity()) {
       throw new Error(INVALID_FORM_MESSAGE)
     }
 
-    if (!selectedType) {
+    if (!newManualAccessControl.type) {
       throw new Error("Access type must be selected")
     }
-    if (!selectedEntraUserId) {
+
+    if (!newManualAccessControl.entraUserId) {
       throw new Error("Entra user ID must be selected")
     }
 
+    // Temp override of entraUserId until issue is fixed: https://github.com/digdir/designsystemet/issues/4718
+    const entraUserIdToUse = newManualAccessControl.entraUserId.substring(newManualAccessControl.entraUserId.lastIndexOf(" ") + 1)
+
     let accessEntryToAdd: ManualAccessEntryInput
 
-    switch (selectedType) {
-      case "MANUELL-KLASSE-TILGANG":
-        if (!selectedResourceId) {
-          throw new Error("Resource ID must be selected")
+    switch (newManualAccessControl.type) {
+      case "MANUELL-KLASSE-TILGANG": {
+        if (!newManualAccessControl.classId) {
+          throw new Error("Class ID must be selected")
         }
-        accessEntryToAdd = { type: selectedType, schoolNumber: currentSchool.schoolNumber, systemId: selectedResourceId }
+        // temp override of classId until issue is fixed: https://github.com/digdir/designsystemet/issues/4718
+        const classIdToUse = newManualAccessControl.classId.substring(newManualAccessControl.classId.lastIndexOf(" ") + 1)
+
+        accessEntryToAdd = { type: newManualAccessControl.type, schoolNumber: currentSchool.schoolNumber, systemId: classIdToUse }
         break
+      }
       case "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG":
-      case "MANUELL-ELEV-TILGANG":
-        if (!selectedResourceId) {
-          throw new Error("Resource ID must be selected")
+        throw new Error("Manuell undervisningsområde-tilgang er ikke implementert ennå")
+
+      case "MANUELL-ELEV-TILGANG": {
+        if (!newManualAccessControl.studentId) {
+          throw new Error("Student ID must be selected")
         }
-        accessEntryToAdd = { type: selectedType, schoolNumber: currentSchool.schoolNumber, _id: selectedResourceId }
+        // temp override of studentId until issue is fixed: https://github.com/digdir/designsystemet/issues/4718
+        const studentIdToUse = newManualAccessControl.studentId.substring(newManualAccessControl.studentId.lastIndexOf(" ") + 1)
+
+        accessEntryToAdd = { type: newManualAccessControl.type, schoolNumber: currentSchool.schoolNumber, _id: studentIdToUse }
         break
+      }
+
       case "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG":
-        accessEntryToAdd = { type: selectedType, schoolNumber: currentSchool.schoolNumber }
+        accessEntryToAdd = { type: newManualAccessControl.type, schoolNumber: currentSchool.schoolNumber }
         break
+
       default:
-        throw new Error(`Invalid access entry type: ${selectedType}`)
+        throw new Error(`Invalid access entry type: ${newManualAccessControl.type}`)
     }
 
-    await apiFetch(`/api/access/${selectedEntraUserId as NoSlashString}/add`, {
+    await apiFetch(`/api/access/${entraUserIdToUse as NoSlashString}/add`, {
       method: "POST",
       body: accessEntryToAdd,
       headers: {
@@ -278,7 +324,8 @@
     })
   }
 
-  // MANUAL STUDENTS
+  /* --- MANUAL STUDENTS --- */
+
   let addManualStudentForm: HTMLFormElement | undefined = $state()
   let newManualStudentFnr = $state("")
   let newManualStudentName = $state("")
@@ -341,6 +388,80 @@
   }
 </script>
 
+{#snippet newAccess(newManualAccessControl: NewManualAccessControl)}
+  <div class="new-access" style="margin-top: var(--ds-size-4)">
+    {#if newManualAccessControl.open}
+      <h3 class="ds-heading" data-size="xs" style="margin-top: var(--ds-size-4)">Ny {newManualAccessControl.name}</h3>
+      <form bind:this={newManualAccessControl.form}>
+        <ds-field class="ds-field content-item">
+          <label for="{newManualAccessControl.name}-access-person" class="ds-label" data-weight="medium">Velg bruker</label>
+          <ds-suggestion class="ds-suggestion">
+            <input id="{newManualAccessControl.name}-access-person" class="ds-input" type="text" placeholder="" bind:value={newManualAccessControl.entraUserId} />
+            <del aria-label="Tøm" hidden=""></del>
+            <u-datalist>
+              {#each data.appUsers as appUser}
+                <u-option label="{appUser.entra.displayName} ({appUser.entra.companyName}) {appUser.entra.id}">
+                  {appUser.entra.displayName}
+                  <div>
+                    {appUser.entra.companyName}
+                  </div>
+                </u-option>
+              {/each}
+            </u-datalist>
+          </ds-suggestion>
+        </ds-field>
+
+        {#if newManualAccessControl.type === "MANUELL-KLASSE-TILGANG"}
+          <ds-field class="ds-field content-item">
+            <label for="{newManualAccessControl.name}-class" class="ds-label" data-weight="medium">Velg klasse</label>
+            <ds-suggestion class="ds-suggestion">
+              <input id="{newManualAccessControl.name}-class" class="ds-input" type="text" placeholder="" bind:value={newManualAccessControl.classId}/>
+              <del aria-label="Tøm" hidden=""></del>
+              <u-datalist>
+                {#each schoolClasses as classInfo}
+                  <u-option label="{classInfo.name} {classInfo.systemId}">
+                    {classInfo.name}
+                  </u-option>
+                {/each}
+              </u-datalist>
+            </ds-suggestion>
+          </ds-field>
+        {/if}
+
+        {#if newManualAccessControl.type === "MANUELL-ELEV-TILGANG"}
+          <ds-field class="ds-field content-item">
+            <label for="{newManualAccessControl.name}-student" class="ds-label" data-weight="medium">Velg elev</label>
+            <ds-suggestion class="ds-suggestion">
+              <input id="{newManualAccessControl.name}-student" class="ds-input" type="text" placeholder="" bind:value={newManualAccessControl.studentId}/>
+              <del aria-label="Tøm" hidden=""></del>
+              <u-datalist>
+                {#each schoolStudents.sort((a, b) => a.name.localeCompare(b.name)) as student}
+                  <u-option label="{student.name} {student._id}">
+                    {student.name}
+                  </u-option>
+                {/each}
+              </u-datalist>
+            </ds-suggestion>
+          </ds-field>
+        {/if}
+
+        <div class="new-manual-access-actions">
+          <AsyncButton onClick={() => addManualAccessEntry(newManualAccessControl)} reloadPageDataOnSuccess={true} buttonText="Legg til tilgang"  iconName="add" callBackAfterReloadPageData={() => { newManualAccessControl.classId = ""; newManualAccessControl.studentId = ""; }} />
+
+          <button class="ds-button" type="button" data-variant="secondary" onclick={() => closeManualAccessControl(newManualAccessControl)}>
+            <span class="material-symbols-outlined">close</span>Lukk
+          </button>
+        </div>
+      </form>
+    {:else}
+      <button class="ds-button" type="button" data-variant="secondary" onclick={() => newManualAccessControl.open = true}>
+        <span class="material-symbols-outlined">add</span>Ny {newManualAccessControl.name}
+      </button>
+    {/if}
+  </div>
+{/snippet}
+
+
 <div class="page-content">
   <PageHeader title={`Skoleadministrasjon - ${currentSchool.name}`} />
 
@@ -369,164 +490,105 @@
 
         <div class="access-group">
           <h2 class="ds-heading">Klassetilganger</h2>
-          <table class="ds-table" style="table-layout:fixed">
-            <thead>
-              <tr>
-                <th aria-sort={classAccessEntriesSort.column === "klasse" ? classAccessEntriesSort.direction : "none"}>
-                  <button type="button" onclick={() => toggleSort(classAccessEntriesSort, "klasse")}>Klasse</button>
-                </th>
-                <th aria-sort={classAccessEntriesSort.column === "bruker" ? classAccessEntriesSort.direction : "none"}>
-                   <button type="button" onclick={() => toggleSort(classAccessEntriesSort, "bruker")}>Bruker</button>
-                </th>
-                <th>Handling</th>
-              </tr>
-            </thead>
-            <tbody>
-              {#each classAccessEntries as classAccess}
-                  <tr>
-                  <td>{classAccess.className}</td>
-                  <td>{classAccess.entraUser.name} ({classAccess.entraUser.companyName})</td>
-                  <td>
-                    <AsyncButton onClick={() => removeManualAccessEntry(classAccess.entraUser.id, classAccess.accessEntry)} reloadPageDataOnSuccess={true} buttonText="Fjern tilgang" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
-                  </td>
+          {#if classAccessEntries.length > 0}
+            <table class="ds-table" style="table-layout:fixed">
+              <thead>
+                <tr>
+                  <th aria-sort={classAccessEntriesSort.column === "klasse" ? classAccessEntriesSort.direction : "none"}>
+                    <button type="button" onclick={() => toggleSort(classAccessEntriesSort, "klasse")}>Klasse</button>
+                  </th>
+                  <th aria-sort={classAccessEntriesSort.column === "bruker" ? classAccessEntriesSort.direction : "none"}>
+                    <button type="button" onclick={() => toggleSort(classAccessEntriesSort, "bruker")}>Bruker</button>
+                  </th>
+                  <th>Handling</th>
                 </tr>
-              {/each}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {#each classAccessEntries as classAccess}
+                    <tr>
+                    <td>{classAccess.className}</td>
+                    <td>{classAccess.entraUser.name} ({classAccess.entraUser.companyName})</td>
+                    <td>
+                      <AsyncButton onClick={() => removeManualAccessEntry(classAccess.entraUser.id, classAccess.accessEntry)} reloadPageDataOnSuccess={true} buttonText="Fjern tilgang" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
+                    </td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          {:else}
+            <p class="ds-paragraph">Ingen manuelle klassetilganger</p>
+          {/if}
 
-          <!--
-          <form>
-            <ds-field class="ds-field">
-              <label for="access-person" class="ds-label" data-weight="medium">Velg bruker</label>
-              {selectedEntraUserId}
-              <ds-suggestion class="ds-suggestion">
-                <input id="access-person" class="ds-input" type="text" placeholder="" onchange={(e) => { console.log(e.target.value) }}/>
-                <del aria-label="Tøm" hidden=""></del>
-                <u-datalist>
-                  {#each data.appUsers as appUser, index}
-                    <u-option label={appUser.entra.id}>
-                      {appUser.entra.displayName}
-                      <div>
-                        {appUser.entra.companyName}
-                      </div>
-                      <div style="display: none;">
-                        {appUser.entra.id}
-                      </div>
-                    </u-option>
-                  {/each}
-                </u-datalist>
-              </ds-suggestion>
-            </ds-field>
-          </form>
+          {@render newAccess(newClassAccessControl)}
         </div>
-        -->
 
         <div class="access-group">
           <h2 class="ds-heading">Direkte elevtilganger</h2>
-          <table class="ds-table" style="table-layout:fixed">
-            <thead>
-              <tr>
-                <th aria-sort={studentAccessEntriesSort.column === "elev" ? studentAccessEntriesSort.direction : "none"}>
-                  <button type="button" onclick={() => toggleSort(studentAccessEntriesSort, "elev")}>Elev</button>
-                </th>
-                <th aria-sort={studentAccessEntriesSort.column === "bruker" ? studentAccessEntriesSort.direction : "none"}>
-                   <button type="button" onclick={() => toggleSort(studentAccessEntriesSort, "bruker")}>Bruker</button>
-                </th>
-                <th>Handling</th>
-              </tr>
-            </thead>
-            <tbody>
-              {#each studentAccessEntries as studentAccess}
-                  <tr>
-                  <td>{studentAccess.student.name} ({studentAccess.student.feideName})</td>
-                  <td>{studentAccess.entraUser.name} ({studentAccess.entraUser.companyName})</td>
-                  <td>
-                    <AsyncButton onClick={() => removeManualAccessEntry(studentAccess.entraUser.id, studentAccess.accessEntry)} reloadPageDataOnSuccess={true} buttonText="Fjern tilgang" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
-                  </td>
+          {#if studentAccessEntries.length > 0}
+            <table class="ds-table" style="table-layout:fixed">
+              <thead>
+                <tr>
+                  <th aria-sort={studentAccessEntriesSort.column === "elev" ? studentAccessEntriesSort.direction : "none"}>
+                    <button type="button" onclick={() => toggleSort(studentAccessEntriesSort, "elev")}>Elev</button>
+                  </th>
+                  <th aria-sort={studentAccessEntriesSort.column === "bruker" ? studentAccessEntriesSort.direction : "none"}>
+                    <button type="button" onclick={() => toggleSort(studentAccessEntriesSort, "bruker")}>Bruker</button>
+                  </th>
+                  <th>Handling</th>
                 </tr>
-              {/each}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {#each studentAccessEntries as studentAccess}
+                    <tr>
+                    <td>{studentAccess.student.name} ({studentAccess.student.feideName})</td>
+                    <td>{studentAccess.entraUser.name} ({studentAccess.entraUser.companyName})</td>
+                    <td>
+                      <AsyncButton onClick={() => removeManualAccessEntry(studentAccess.entraUser.id, studentAccess.accessEntry)} reloadPageDataOnSuccess={true} buttonText="Fjern tilgang" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
+                    </td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          {:else}
+            <p class="ds-paragraph">Ingen direkte elevtilganger</p>
+          {/if}
+
+          {@render newAccess(newStudentAccessControl)}
         </div>
 
         <div class="access-group">
           <h2 class="ds-heading">Tilgang til å administrere manuelle elever</h2>
-          <table class="ds-table" style="table-layout:fixed">
-            <thead>
-              <tr>
-                <th aria-sort={manageManualStudentsAccessEntriesSort.column === "bruker" ? manageManualStudentsAccessEntriesSort.direction : "none"}>
-                   <button type="button" onclick={() => toggleSort(manageManualStudentsAccessEntriesSort, "bruker")}>Bruker</button>
-                </th>
-                <th>Handling</th>
-              </tr>
-            </thead>
-            <tbody>
-              {#each manageManualStudentsAccessEntries as manualStudentsAccess}
-                  <tr>
-                  <td>
-                    {manualStudentsAccess.entraUser.name} ({manualStudentsAccess.entraUser.companyName})
-                  </td>
-                  <td>
-                    <AsyncButton onClick={() => removeManualAccessEntry(manualStudentsAccess.entraUser.id, manualStudentsAccess.accessEntry)} reloadPageDataOnSuccess={true} buttonText="Fjern tilgang" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
-                  </td>
+          {#if manageManualStudentsAccessEntries.length > 0}
+            <table class="ds-table" style="table-layout:fixed">
+              <thead>
+                <tr>
+                  <th aria-sort={manageManualStudentsAccessEntriesSort.column === "bruker" ? manageManualStudentsAccessEntriesSort.direction : "none"}>
+                    <button type="button" onclick={() => toggleSort(manageManualStudentsAccessEntriesSort, "bruker")}>Bruker</button>
+                  </th>
+                  <th>Handling</th>
                 </tr>
-              {/each}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {#each manageManualStudentsAccessEntries as manualStudentsAccess}
+                    <tr>
+                    <td>
+                      {manualStudentsAccess.entraUser.name} ({manualStudentsAccess.entraUser.companyName})
+                    </td>
+                    <td>
+                      <AsyncButton onClick={() => removeManualAccessEntry(manualStudentsAccess.entraUser.id, manualStudentsAccess.accessEntry)} reloadPageDataOnSuccess={true} buttonText="Fjern tilgang" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
+                    </td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          {:else}
+            <p class="ds-paragraph">Ingen tilganger til å administrere manuelle elever</p>
+          {/if}
+
+          {@render newAccess(newManageManualStudentsAccessControl)}
         </div>
 
         <div class="new-access">
-          <h2 class="ds-heading">Ny manuell tilgang</h2>
-          <p>Tilganger for lærere gjøres i InSchool</p>
-
-          <!--
-          <form bind:this={addAccessForm}>
-            <div>
-              <label for="appUser">Velg bruker</label>
-              <select id="appUser" name="appUser" bind:value={selectedEntraUserId} required>
-                {#each data.appUsers as appUser}
-                  <option value={appUser.entra.id}>{appUser.entra.displayName} ({appUser.entra.companyName})</option>
-                {/each}
-              </select>
-            </div>
-
-            <div>
-              <label for="accessType">Tilgangstype:</label>
-              <select id="accessType" bind:value={selectedType} required>
-                <option value="" disabled>Velg tilgangstype</option>
-                <option value="MANUELL-KLASSE-TILGANG">Manuell klassetilgang</option>
-                <option value="MANUELL-ELEV-TILGANG">Manuell elevtilgang</option>
-                <option value="MANUELL-OPPRETT-MANUELL-ELEV-TILGANG">Tilgang til å administrere manuelle elever</option>
-              </select>
-            </div>
-
-            {#if selectedType === "MANUELL-KLASSE-TILGANG"}
-              <div>
-                <label for="class">Velg klasse:</label>
-                <select id="class" bind:value={selectedResourceId} required>
-                  <option value="" disabled>Velg klasse</option>
-                  {#each schoolClasses as classInfo}
-                    <option value={classInfo.systemId}>{classInfo.name}</option>
-                  {/each}
-                </select>
-              </div>
-            {/if}
-
-            {#if selectedType === "MANUELL-ELEV-TILGANG"}
-              <div>
-                <label for="student">Velg elev:</label>
-                <select id="student" bind:value={selectedResourceId} required>
-                  <option value="" disabled>Velg elev</option>
-                  {#each schoolStudents.sort((a, b) => a.name.localeCompare(b.name)) as student}
-                    <option value={student._id}>{student.name}</option>
-                  {/each}
-                </select>
-              </div>
-            {/if}
-          </form>
-
-          <AsyncButton onClick={addManualAccessEntry} reloadPageDataOnSuccess={true} buttonText="Legg til tilgang"  iconName="add" />
-        -->
 
         </div>
       </ds-tabpanel>
@@ -617,6 +679,16 @@
 
   .access-group h2 {
     margin-bottom: var(--ds-size-2);
+  }
+
+  .ds-suggestion, .ds-label {
+    max-width: 20rem;
+  }
+
+  .new-manual-access-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: var(--ds-size-4);
   }
 
   .new-manual-student {

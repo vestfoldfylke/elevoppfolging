@@ -1,7 +1,7 @@
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canGrantAndRemoveAccessForSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { canAccessSchoolAdministration, canGrantAndRemoveAccessForSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { Access } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
@@ -24,8 +24,17 @@ const getSchoolAccessAdministrationData: ServerLoadNextFunction<SchoolAccessAdmi
     throw new HTTPError(404, noAccessMessage("No access found for principal"))
   }
 
+  if (!canAccessSchoolAdministration(access)) {
+    throw new HTTPError(403, noAccessMessage("No permission to access school administration"))
+  }
+
   if (!canGrantAndRemoveAccessForSchool(schoolNumber, access)) {
-    throw new HTTPError(403, noAccessMessage("No permission to handle access for this school"))
+    return {
+      data: {
+        manualAccessForSchool: []
+      },
+      isAuthorized: true
+    }
   }
 
   const manualAccessForSchool: Access[] = await dbClient.getManualAccess(schoolNumber)
