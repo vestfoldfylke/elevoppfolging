@@ -32,6 +32,14 @@
       value: "Dette er et avsnitt med litt tekst."
     },
     {
+      type: "info",
+      value: "Dette er en informasjonsboks. Den kan brukes til å gi ekstra informasjon, tips eller advarsler til brukeren som skal fylle ut feltene i et notat.",
+      link: {
+        url: "https://designsystemet.no/no/components/docs/link/overview",
+        text: "F. eks: Les mer om rutine for oppfølgingsamtaler på Innsida"
+      }
+    },
+    {
       type: "inputText",
       placeholder: "Heisann",
       label: "Beskrivelse av tekstfelt",

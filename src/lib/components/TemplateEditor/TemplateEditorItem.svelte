@@ -68,6 +68,18 @@
       <textarea class="ds-input" rows="8" id="paragraph-{index}" bind:value={contentItem.value}></textarea>
     {/if}
 
+    {#if contentItem.type === "info"}
+      <textarea class="ds-input" rows="8" id="info-{index}" bind:value={contentItem.value}></textarea>
+      <ds-field class="ds-field">
+        <label for="info-linkUrl-{index}" class="ds-label" data-weight="medium">Lenke URL (valgfritt)</label>
+        <input id="info-linkUrl-{index}" type="url" class="ds-input" bind:value={contentItem.link.url} />
+      </ds-field>
+      <ds-field class="ds-field">
+        <label for="info-linkText-{index}" class="ds-label" data-weight="medium">Lenketekst (valgfritt)</label>
+        <input id="info-linkText-{index}" class="ds-input" type="text" bind:value={contentItem.link.text} />
+      </ds-field>
+    {/if}
+
     {#if contentItem.type === "inputText"}
       <ds-field class="ds-field">
         <input id="inputText-required-{index}" class="ds-input" type="checkbox" bind:checked={contentItem.required} />

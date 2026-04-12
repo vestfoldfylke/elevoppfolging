@@ -53,6 +53,15 @@
   <p class="ds-paragraph content-item pre-wrap-whitespace">{contentItem.value}</p>
 {/if}
 
+{#if contentItem.type === "info" && (editMode || previewMode)}
+  <div class="ds-card content-item" data-variant="tinted" data-color="accent">
+    <p class="ds-paragraph pre-wrap-whitespace">{contentItem.value}</p>
+    {#if contentItem.link && contentItem.link.url && contentItem.link.text}
+      <a class="ds-link" href={contentItem.link.url} target="_blank" rel="noopener noreferrer">{contentItem.link.text}</a>
+    {/if}
+  </div>
+{/if}
+
 {#if contentItem.type === "inputText"}
   {#if editMode}
     <ds-field class="ds-field content-item">
