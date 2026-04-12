@@ -37,6 +37,10 @@ export const isSchoolLeader = (principalAccess: Access | null): boolean => {
   return principalAccess.leaderForSchools.some((schoolAccess) => schoolAccess.type === "MANUELL-SKOLELEDER-TILGANG")
 }
 
+export const canAccessSchoolAdministration = (principalAccess: Access | null): boolean => {
+  return isSchoolLeader(principalAccess) || principalAccess?.manageManualStudentsForSchools.some((accessEntry: AccessEntry) => accessEntry.type === "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG") || false
+}
+
 export const canGrantAndRemoveAccessForSchool = (schoolNumber: string, principalAccess: Access): boolean => {
   return principalAccess.leaderForSchools.some((accessEntry: SchoolLeaderManualAccessEntry) => accessEntry.type === "MANUELL-SKOLELEDER-TILGANG" && accessEntry.schoolNumber === schoolNumber)
 }

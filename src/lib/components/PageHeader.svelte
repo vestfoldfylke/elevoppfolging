@@ -7,21 +7,13 @@
 </script>
 
 <header>
-  <div class="little-man-to-make-space-for-the-menu-button">&nbsp;</div>
-  <h1>{title}</h1>
+  <h1 class="ds-heading" data-size="lg">{title}</h1>
 </header>
+
 <style>
   header {
     display: flex;
     align-items: center;
-    height: var(--header-height);
-  }
-  .little-man-to-make-space-for-the-menu-button {
-    width: 2.5rem;
-  }
-  @media (min-width: 66.5rem) {
-    .little-man-to-make-space-for-the-menu-button {
-      display: none;
-    }
+    margin-bottom: var(--ds-size-4);    
   }
 </style>
