@@ -54,10 +54,10 @@
   const toggleSort = (sortConfig: { column: string; direction: SortDirection }, sortByColumn: string) => {
     if (sortConfig.column === sortByColumn) {
       sortConfig.direction = sortConfig.direction === "ascending" ? "descending" : "ascending"
-    } else {
-      sortConfig.column = sortByColumn
-      sortConfig.direction = "ascending"
+      return
     }
+    sortConfig.column = sortByColumn
+    sortConfig.direction = "ascending"
   }
 
   const getAppUserInfo = (entraUserId: string): { name: string; companyName: string } => {
