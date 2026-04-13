@@ -5,7 +5,6 @@ import type {
   AppUser,
   AvailableForDocumentType,
   DocumentContentTemplate,
-  DocumentMessage,
   ManualAccessEntryInput,
   NewAccess,
   NewAppStudent,
@@ -61,7 +60,7 @@ export interface IDbClient {
   createManualStudent(manualStudent: NewAppStudent): Promise<string>
   updateManualStudent(manualStudent: UpdateAppStudent): Promise<string>
 
-  addDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<DocumentMessage>
+  addDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<string>
 
   getStudentsImportantStuff(studentIds: string[]): Promise<Record<string, Record<string, StudentImportantStuff>>>
   getStudentImportantStuff(studentId: string, schoolNumbers: string[]): Promise<StudentImportantStuff[]>
