@@ -316,6 +316,15 @@ export type DocumentParagraphItem = {
   value: string
 }
 
+export type DocumentInfoItem = {
+  type: "info"
+  value: string
+  link: {
+    url: string
+    text: string
+  }
+}
+
 export type DocumentTextInputItem = {
   type: "inputText"
   label: string
@@ -360,7 +369,7 @@ export type DocumentCheckboxGroupItem = {
 
 export type DocumentInputItem = DocumentTextInputItem | DocumentTextAreaItem | DocumentRadioGroupItem | DocumentCheckboxGroupItem
 
-export type DocumentContentItem = DocumentHeaderItem | DocumentParagraphItem | DocumentInputItem
+export type DocumentContentItem = DocumentHeaderItem | DocumentParagraphItem | DocumentInfoItem | DocumentInputItem
 
 export type DocumentMessageBase = {
   created: EditorData
