@@ -62,7 +62,7 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
       }
       case "MANUELL-KLASSE-TILGANG": {
         if (!principalClasses.some((c) => c.systemId === accessEntryInput.systemId && c.school.schoolNumber === accessEntryInput.schoolNumber)) {
-          throw new HTTPError(403, noAccessMessage("No permission to grant grant access to this class"))
+          throw new HTTPError(403, noAccessMessage("No permission to grant access to this class"))
         }
         break
       }

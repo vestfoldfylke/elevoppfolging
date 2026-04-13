@@ -6,6 +6,7 @@
     onClick: () => Promise<void>
     variant?: "primary" | "secondary" | "tertiary"
     color?: "accent" | "danger"
+    dataSize?: "sm" | "md" | "lg"
     iconName?: string
     reloadPageDataOnSuccess?: boolean
     /** If you need anything to trigger after page data is reloaded (requires reloadPageDataOnSuccess to be true) */
@@ -20,6 +21,7 @@
     iconName,
     variant = "primary",
     color = "accent",
+    dataSize = "md",
     reloadPageDataOnSuccess = false,
     callBackAfterReloadPageData,
     errorMessage = $bindable(),
@@ -65,12 +67,15 @@
   }
 </script>
 
-<button type="button" class="ds-button" data-variant={variant} data-color={color} onclick={wrappedOnClick} disabled={buttonState.loading || disabled}>
+<button type="button" class="ds-button" data-variant={variant} data-color={color} data-size={dataSize} onclick={wrappedOnClick} disabled={buttonState.loading || disabled}>
   {#if iconName}
     <span class="material-symbols-outlined">{iconName}</span>
   {/if}
   {buttonState.loading ? "Laster..." : buttonText}
 </button>
+
+<!--<div class="ds-alert" data-color="info">A message that is important for the user to see</div>-->
+
 
 {#if buttonState.errorMessage}
   <p class="error">{buttonState.errorMessage}</p>

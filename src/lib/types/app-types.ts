@@ -11,6 +11,7 @@ import type {
   ContactTeacherGroupAutoAccessEntry,
   ContactTeacherGroupMembership,
   ManageManualStudentsManualAccessEntry,
+  ManualAccessEntryInput,
   Period,
   ProgramAreaManualAccessEntry,
   SchoolInfo,
@@ -137,3 +138,13 @@ export type AccessInfo = {
 }
 
 export type AccessPerson = StudentAccess & { accessInfo: AccessInfo[] }
+
+export type NewManualAccessControl = {
+  type: ManualAccessEntryInput["type"]
+  name: string
+  open: boolean
+  form: HTMLFormElement | undefined
+  entraUserId: string
+  classId?: string
+  studentId?: string
+}
