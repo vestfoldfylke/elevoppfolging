@@ -30,6 +30,7 @@
     "@navikt/fnrvalidator": "^2.2.1",
     "@sveltejs/adapter-node": "^5.5.4",
     "@vestfoldfylke/loglady": "^1.5.3",
-    "mongodb": "^7.1.1"
+    "mongodb": "^7.1.1",
+    "mongodb-client-encryption": "^7.0.0"
   }
 }

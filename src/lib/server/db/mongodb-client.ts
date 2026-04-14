@@ -1,5 +1,17 @@
 import { logger } from "@vestfoldfylke/loglady"
-import { type Collection, type Db, type Filter, type InsertOneResult, MongoClient, ObjectId, type UpdateResult, type WithId } from "mongodb"
+import {
+  ClientEncryption,
+  type ClientEncryptionEncryptOptions,
+  type Collection,
+  type Db,
+  type Filter,
+  type InsertOneResult,
+  MongoClient,
+  ObjectId,
+  type UpdateResult,
+  type UUID,
+  type WithId
+} from "mongodb"
 import { env } from "$env/dynamic/private"
 import type { AccessEntry, FrontendStudent, StudentMemberships } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
@@ -12,6 +24,11 @@ import type {
   DbAccess,
   DbAppStudent,
   DbDocumentContentTemplate,
+  DbEncryptedDocumentMessage,
+  DbEncryptedStudentCheckBox,
+  DbEncryptedStudentDocument,
+  DbEncryptedStudentDocumentUpdate,
+  DbEncryptedStudentImportantStuff,
   DbProgramArea,
   DbSchool,
   DbStudentCheckBox,
@@ -19,13 +36,13 @@ import type {
   DbStudentDocument,
   DbStudentImportantStuff,
   DocumentContentTemplate,
-  DocumentMessage,
   EditorData,
   ManualAccessEntryInput,
   NewAccess,
   NewAppStudent,
+  NewDbEncryptedStudentCheckBox,
+  NewDbEncryptedStudentDocument,
   NewDbStudentDataSharingConsent,
-  NewDbStudentDocument,
   NewDbStudentImportantStuff,
   NewDocumentContentTemplate,
   NewDocumentMessage,
@@ -46,9 +63,18 @@ import type {
 } from "$lib/types/db/shared-types"
 import { APP_INFO } from "../app-info"
 
+type DbEncryptionClient = {
+  client: ClientEncryption
+  encryptionOptions: ClientEncryptionEncryptOptions
+}
+
 export class MongoDbClient implements IDbClient {
   private readonly mongoClient: MongoClient
   private db: Db | null = null
+  private encryptionClient: ClientEncryption | null = null
+  private encryptionKeyIds: UUID[] = []
+  private readonly keyVaultNamespace
+  private readonly kmsProviders: { azure: { tenantId: string; clientId: string; clientSecret: string } }
   private readonly schoolsCollectionName = "schools"
   private readonly accessCollectionName = "access"
   private readonly studentsCollectionName = "students"
@@ -64,7 +90,29 @@ export class MongoDbClient implements IDbClient {
     if (!env.MONGODB_CONNECTION_STRING) {
       throw new Error("MONGODB_CONNECTION_STRING is not set (du har glemt den)")
     }
-    this.mongoClient = new MongoClient(env.MONGODB_CONNECTION_STRING)
+    if (!env.MONGODB_DATABASE_NAME) {
+      throw new Error("MONGODB_DATABASE_NAME is not set (du har glemt den)")
+    }
+    if (!env.AZURE_TENANT_ID || !env.AZURE_CLIENT_ID || !env.AZURE_CLIENT_SECRET) {
+      throw new Error("Azure credentials for client-side encryption is not fully set (du har glemt en av AZURE_TENANT_ID, AZURE_CLIENT_ID eller AZURE_CLIENT_SECRET)")
+    }
+
+    this.keyVaultNamespace = `${env.MONGODB_DATABASE_NAME}.__keyVault`
+    this.kmsProviders = {
+      azure: {
+        tenantId: env.AZURE_TENANT_ID,
+        clientId: env.AZURE_CLIENT_ID,
+        clientSecret: env.AZURE_CLIENT_SECRET
+      }
+    }
+
+    this.mongoClient = new MongoClient(env.MONGODB_CONNECTION_STRING, {
+      autoEncryption: {
+        keyVaultNamespace: this.keyVaultNamespace,
+        kmsProviders: this.kmsProviders,
+        bypassAutoEncryption: true
+      }
+    })
   }
 
   private async getDb(): Promise<Db> {
@@ -77,6 +125,52 @@ export class MongoDbClient implements IDbClient {
       return this.db
     } catch (error) {
       logger.errorException(error, "Error when connecting to MongoDB")
+      throw error
+    }
+  }
+
+  private async getEncryptionClient(): Promise<DbEncryptionClient> {
+    const algorithm = "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
+
+    if (this.encryptionClient) {
+      if (this.encryptionKeyIds.length === 0) {
+        throw new Error("Encryption client is initialized but no encryption keys found in the key vault collection")
+      }
+      return {
+        client: this.encryptionClient,
+        encryptionOptions: {
+          // Random id
+          keyId: this.encryptionKeyIds[Math.floor(Math.random() * this.encryptionKeyIds.length)],
+          algorithm
+        }
+      }
+    }
+
+    // Must ensure connect
+    await this.getDb()
+
+    try {
+      this.encryptionClient = new ClientEncryption(this.mongoClient, {
+        keyVaultNamespace: this.keyVaultNamespace,
+        kmsProviders: this.kmsProviders
+      })
+
+      this.encryptionKeyIds = (await this.encryptionClient.getKeys().toArray()).map((key) => key._id)
+
+      if (this.encryptionKeyIds.length === 0) {
+        throw new Error("No encryption keys found in the key vault collection")
+      }
+
+      return {
+        client: this.encryptionClient,
+        encryptionOptions: {
+          // Random id
+          keyId: this.encryptionKeyIds[Math.floor(Math.random() * this.encryptionKeyIds.length)],
+          algorithm
+        }
+      }
+    } catch (error) {
+      logger.errorException(error, "Error when initializing encryption client")
       throw error
     }
   }
@@ -704,11 +798,31 @@ export class MongoDbClient implements IDbClient {
 
   async createStudentDocument(document: NewStudentDocument): Promise<string> {
     const db = await this.getDb()
-    const documentsCollection = db.collection<NewDbStudentDocument>(this.documentsCollectionName)
+    const documentsCollection = db.collection<NewDbEncryptedStudentDocument>(this.documentsCollectionName)
 
-    const documentToInsert: NewDbStudentDocument = {
+    const encryption = await this.getEncryptionClient()
+
+    const encryptedDocumentMessages: DbEncryptedDocumentMessage[] = []
+
+    for (const message of document.messages) {
+      const encryptedMessageContent = await encryption.client.encrypt(message.content, encryption.encryptionOptions)
+      encryptedDocumentMessages.push({
+        ...message,
+        content: encryptedMessageContent
+      })
+    }
+
+    const documentToInsert: NewDbEncryptedStudentDocument = {
       ...document,
-      student: { _id: new ObjectId(document.student._id) }
+      student: { _id: new ObjectId(document.student._id) },
+      content: await encryption.client.encrypt(document.content, encryption.encryptionOptions),
+      title: await encryption.client.encrypt(document.title, encryption.encryptionOptions),
+      template: {
+        _id: document.template._id,
+        name: await encryption.client.encrypt(document.template.name, encryption.encryptionOptions),
+        version: document.template.version
+      },
+      messages: encryptedDocumentMessages
     }
 
     const result = await documentsCollection.insertOne(documentToInsert)
@@ -730,9 +844,21 @@ export class MongoDbClient implements IDbClient {
 
   async updateStudentDocument(documentId: string, documentUpdate: StudentDocumentUpdate): Promise<string> {
     const db = await this.getDb()
-    const documentsCollection = db.collection<DbStudentDocument>(this.documentsCollectionName)
+    const documentsCollection = db.collection<DbEncryptedStudentDocument>(this.documentsCollectionName)
+    const encryption = await this.getEncryptionClient()
 
-    const updatedDocument: DbStudentDocument | null = await documentsCollection.findOneAndUpdate({ _id: new ObjectId(documentId) }, { $set: documentUpdate })
+    const encryptedDocumentUpdate: DbEncryptedStudentDocumentUpdate = {
+      ...documentUpdate,
+      content: await encryption.client.encrypt(documentUpdate.content, encryption.encryptionOptions),
+      title: await encryption.client.encrypt(documentUpdate.title, encryption.encryptionOptions),
+      template: {
+        _id: documentUpdate.template._id,
+        name: await encryption.client.encrypt(documentUpdate.template.name, encryption.encryptionOptions),
+        version: documentUpdate.template.version
+      }
+    }
+
+    const updatedDocument: DbStudentDocument | null = (await documentsCollection.findOneAndUpdate({ _id: new ObjectId(documentId) }, { $set: encryptedDocumentUpdate })) as DbStudentDocument | null // Db client decrypts for us, so we can cast it to DbStudentDocument
     if (!updatedDocument?._id) {
       throw new Error("Failed to update student document")
     }
@@ -740,16 +866,18 @@ export class MongoDbClient implements IDbClient {
     return updatedDocument._id.toString()
   }
 
-  async addDocumentMessage(documentId: string, message: NewDocumentMessage, studentId?: string): Promise<DocumentMessage> {
+  async addDocumentMessage(documentId: string, message: NewDocumentMessage, studentId?: string): Promise<string> {
     const db = await this.getDb()
-    const documentsCollection = db.collection<DbStudentDocument>(this.documentsCollectionName)
+    const documentsCollection = db.collection<DbEncryptedStudentDocument>(this.documentsCollectionName)
+    const encryption = await this.getEncryptionClient()
 
-    const messageWithId = {
+    const encryptedMessageWithId: DbEncryptedDocumentMessage = {
       ...message,
+      content: await encryption.client.encrypt(message.content, encryption.encryptionOptions),
       messageId: new ObjectId().toString()
     }
 
-    const document = await documentsCollection.findOneAndUpdate({ _id: new ObjectId(documentId) }, { $push: { messages: messageWithId } })
+    const document = (await documentsCollection.findOneAndUpdate({ _id: new ObjectId(documentId) }, { $push: { messages: encryptedMessageWithId } })) as DbStudentDocument | null // Db client decrypts for us, so we can cast it to DbStudentDocument
 
     if (!document?._id) {
       throw new Error("Failed to add message to document")
@@ -764,7 +892,7 @@ export class MongoDbClient implements IDbClient {
       }
     }
 
-    return messageWithId
+    return encryptedMessageWithId.messageId
   }
 
   async getStudentsImportantStuff(studentIds: string[]): Promise<Record<string, Record<string, StudentImportantStuff>>> {
@@ -772,12 +900,6 @@ export class MongoDbClient implements IDbClient {
 
     const importantStuffCollection = db.collection<DbStudentImportantStuff>(this.importantStuffCollectionName)
     const importantStuffList = await importantStuffCollection.find({ "student._id": { $in: studentIds.map((id) => new ObjectId(id)) } }).toArray()
-
-    /*
-    - Skal hente important stuff for alle elever brukeren har tilgang på - og important stuff skal være knyttet til skolene brukeren har tilgang på.
-    - Hvis vi har liste med
-
-    */
 
     return importantStuffList.reduce((acc: Record<string, Record<string, StudentImportantStuff>>, importantStuff: DbStudentImportantStuff) => {
       const studentId = importantStuff.student._id.toString()
@@ -820,20 +942,22 @@ export class MongoDbClient implements IDbClient {
 
   async upsertStudentImportantStuff(studentId: string, importantStuff: NewStudentImportantStuff): Promise<string> {
     const db = await this.getDb()
-    const importantStuffCollection = db.collection<DbStudentImportantStuff>(this.importantStuffCollectionName)
+    const importantStuffCollection = db.collection<DbEncryptedStudentImportantStuff>(this.importantStuffCollectionName)
+    const encryption = await this.getEncryptionClient()
 
-    const result = await importantStuffCollection.findOneAndUpdate(
+    const result: DbStudentImportantStuff | null = (await importantStuffCollection.findOneAndUpdate(
       { "student._id": new ObjectId(studentId), "school.schoolNumber": importantStuff.school.schoolNumber },
       {
         $set: {
           ...importantStuff,
+          importantInfo: await encryption.client.encrypt(importantStuff.importantInfo, encryption.encryptionOptions),
           student: {
             _id: new ObjectId(studentId)
           }
         }
       },
       { upsert: true, returnDocument: "after" }
-    )
+    )) as DbStudentImportantStuff | null // Db client decrypts for us, so we can cast it to DbStudentImportantStuff
 
     if (!result?._id) {
       throw new Error("Failed to upsert student important stuff")
@@ -1028,15 +1152,26 @@ export class MongoDbClient implements IDbClient {
 
   async createStudentCheckBox(studentCheckBox: NewStudentCheckBox): Promise<string> {
     const db = await this.getDb()
-    const studentCheckBoxesCollection = db.collection<NewStudentCheckBox>(this.studentCheckBoxesCollectionName)
-    const result = await studentCheckBoxesCollection.insertOne(studentCheckBox)
+    const encryption = await this.getEncryptionClient()
+
+    const studentCheckBoxesCollection = db.collection<NewDbEncryptedStudentCheckBox>(this.studentCheckBoxesCollectionName)
+    const result = await studentCheckBoxesCollection.insertOne({
+      ...studentCheckBox,
+      value: await encryption.client.encrypt(studentCheckBox.value, encryption.encryptionOptions)
+    })
     return result.insertedId.toString()
   }
 
   async updateStudentCheckBox(studentCheckBoxId: string, studentCheckBox: NewStudentCheckBox): Promise<string> {
     const db = await this.getDb()
-    const studentCheckBoxesCollection = db.collection<NewStudentCheckBox>(this.studentCheckBoxesCollectionName)
-    const result = await studentCheckBoxesCollection.updateOne({ _id: new ObjectId(studentCheckBoxId) }, { $set: studentCheckBox })
+    const encryption = await this.getEncryptionClient()
+    const studentCheckBoxesCollection = db.collection<DbEncryptedStudentCheckBox>(this.studentCheckBoxesCollectionName)
+
+    const result = await studentCheckBoxesCollection.updateOne(
+      { _id: new ObjectId(studentCheckBoxId) },
+      { $set: { ...studentCheckBox, value: await encryption.client.encrypt(studentCheckBox.value, encryption.encryptionOptions) } }
+    )
+
     if (result.matchedCount === 0) {
       throw new Error("Failed to update student check box")
     }
@@ -1045,7 +1180,7 @@ export class MongoDbClient implements IDbClient {
 
   async deleteStudentCheckBox(studentCheckBoxId: string): Promise<void> {
     const db = await this.getDb()
-    const studentCheckBoxesCollection = db.collection<NewStudentCheckBox>(this.studentCheckBoxesCollectionName)
+    const studentCheckBoxesCollection = db.collection<DbStudentCheckBox>(this.studentCheckBoxesCollectionName)
     const result = await studentCheckBoxesCollection.deleteOne({ _id: new ObjectId(studentCheckBoxId) })
     if (result.deletedCount === 0) {
       throw new Error("Failed to delete student check box")
