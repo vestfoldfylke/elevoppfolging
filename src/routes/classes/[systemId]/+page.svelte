@@ -44,7 +44,10 @@
 </script>
 
 <div class="page-content">
-  <h1 class="ds-heading" data-size="lg">{selectedClass.name}</h1>
+  <div class="page-header">
+    <h1 class="ds-heading" data-size="lg">{selectedClass.name}</h1>
+    <span class="ds-paragraph" data-size="sm">{selectedClass.school.name}</span>
+  </div>
   
   <div class="class-table-container">
     <table class="ds-table">
@@ -67,3 +70,9 @@
     </table>
   </div>
 </div>
+
+<style>
+  .page-header {
+      padding-bottom: var(--ds-size-4);
+  }
+</style>
