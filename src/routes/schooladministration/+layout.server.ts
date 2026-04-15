@@ -34,7 +34,7 @@ const getAdministrationAccessData: ServerLoadNextFunction<AdministrationAccessLa
     throw new HTTPError(403, noAccessMessage("No permission to administrate any schools"))
   }
 
-  const appUsers = await getAppUsersFromCache()
+  const appUsers = (await getAppUsersFromCache()).sort((a, b) => a.entra.displayName.localeCompare(b.entra.displayName))
 
   return {
     data: {
