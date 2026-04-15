@@ -1,12 +1,12 @@
 import type { RequestHandler } from "@sveltejs/kit"
-import { getPrincipalAccessEntriesForStudent } from "$lib/server/authorization/student-access"
+import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
 import { getStudentFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canAddMessageToStudentDocument, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { AccessEntry, CachedFrontendStudent } from "$lib/types/app-types"
+import type { CachedFrontendStudent, PrincipalAccessForStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { Access, DocumentMessageInput, EditorData, NewDocumentMessage } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -38,8 +38,8 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
     throw new HTTPError(400, "Student not found. Cannot create document for non-existing student.")
   }
 
-  const accessToStudent: AccessEntry[] = getPrincipalAccessEntriesForStudent(student, access)
-  if (accessToStudent.length === 0) {
+  const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, access)
+  if (principalAccessForStudent.length === 0) {
     throw new HTTPError(403, noAccessMessage("No permission to add message to document"))
   }
 
@@ -95,7 +95,7 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
     throw new HTTPError(404, "Document not found, cannot add message to non-existing document...")
   }
 
-  if (!canAddMessageToStudentDocument(accessToStudent, currentDocument)) {
+  if (!canAddMessageToStudentDocument(principalAccessForStudent, currentDocument)) {
     throw new HTTPError(403, noAccessMessage("No permission to add message to document"))
   }
 

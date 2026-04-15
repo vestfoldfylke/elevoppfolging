@@ -59,7 +59,7 @@ const layoutLoad: ServerLoadNextFunction<RootLayoutData> = async ({ principal })
   logger.info("NÅ SKAL JEG SJEKKE SISTE AKTIVITETSTIDSPUNKT FOR ALLE ELEVER OG MAPPE ALLE SAMMEN")
   const now4 = Date.now()
   for (const student of studentsWithAccessInfo) {
-    const accessSchoolsForStudent = student.accessTypes.map((accessType) => accessType.schoolNumber)
+    const accessSchoolsForStudent = Array.from(new Set(student.principalAccessForStudent.map((accessType) => accessType.schoolNumber)))
 
     if (accessSchoolsForStudent.length === 0) {
       throw new HTTPError(500, `User has no access to any schools for student ${student._id}, this should not happen...`)
@@ -92,7 +92,7 @@ const layoutLoad: ServerLoadNextFunction<RootLayoutData> = async ({ principal })
     }
 
     const overviewStudent: FrontendOverviewStudent = {
-      accessTypes: student.accessTypes,
+      principalAccessForStudent: student.principalAccessForStudent,
       _id: student._id,
       feideName: student.feideName,
       name: student.name,

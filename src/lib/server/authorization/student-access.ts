@@ -1,34 +1,31 @@
-import type { AccessEntry, CachedFrontendStudent } from "$lib/types/app-types"
+import type { CachedFrontendStudent, PrincipalAccessForStudent } from "$lib/types/app-types"
 import type { Access } from "$lib/types/db/shared-types"
 
 /**
- * Henter ut høyeste tilgangstype for en elev per skole basert på elevens elevforhold og tilgangene i Access-objektet. Hvis eleven har flere elevforhold på en skole, vil den høyeste tilgangstypen blant disse bli returnert.
+ * Henter ut tilgangene en bruker har til en elev per skole basert på elevens elevforhold og tilgangene i Access-objektet. Tilgangene er sortert på prioritet per skole (høyeste tilgang først).
  */
-export const getPrincipalAccessEntriesForStudent = (student: CachedFrontendStudent, access: Access): AccessEntry[] => {
+export const getPrincipalAccessForStudent = (student: CachedFrontendStudent, access: Access): PrincipalAccessForStudent[] => {
   // Begynner med prioritert tilgang og går nedover derfra. Henter bare høyeste tilgangstype per skole, for å slippe å måtte håndtere flere access entries for samme skole i resten av logikken
-  let enrollmentsToCheck = student.enrollmentsWithinViewAccessWindow
+  const enrollmentsToCheck = student.enrollmentsWithinViewAccessWindow
 
   if (enrollmentsToCheck.length === 0) {
     return []
   }
 
-  const accessTypesForCurrentStudent: AccessEntry[] = []
+  const principalAccessForCurrentStudent: PrincipalAccessForStudent[] = []
 
   for (const schoolAccess of access.leaderForSchools) {
     const schoolAccessForCurrentStudent = enrollmentsToCheck.some((enrollment) => {
       return enrollment.school.schoolNumber === schoolAccess.schoolNumber
     })
     if (schoolAccessForCurrentStudent) {
-      accessTypesForCurrentStudent.push(schoolAccess)
+      principalAccessForCurrentStudent.push({
+        type: schoolAccess.type,
+        schoolNumber: schoolAccess.schoolNumber,
+        accessThroughResource: null,
+        source: schoolAccess.source
+      })
     }
-  }
-
-  // No need to check enrollments where already school access
-  enrollmentsToCheck = enrollmentsToCheck.filter((enrollment) => {
-    return !accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === enrollment.school.schoolNumber)
-  })
-  if (enrollmentsToCheck.length === 0) {
-    return accessTypesForCurrentStudent
   }
 
   // Direkte elev-tilgang
@@ -36,134 +33,118 @@ export const getPrincipalAccessEntriesForStudent = (student: CachedFrontendStude
     if (student._id !== studentAccess._id) {
       continue
     }
-    if (accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === studentAccess.schoolNumber)) {
-      continue
-    }
     const studentAccessForCurrentStudent = enrollmentsToCheck.some((enrollment) => enrollment.school.schoolNumber === studentAccess.schoolNumber)
     if (studentAccessForCurrentStudent) {
-      accessTypesForCurrentStudent.push(studentAccess)
+      principalAccessForCurrentStudent.push({
+        type: studentAccess.type,
+        schoolNumber: studentAccess.schoolNumber,
+        accessThroughResource: null,
+        source: studentAccess.source
+      })
     }
   }
 
-  // No need to check enrollments where already school access
-  enrollmentsToCheck = enrollmentsToCheck.filter((enrollment) => {
-    return !accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === enrollment.school.schoolNumber)
-  })
-  if (enrollmentsToCheck.length === 0) {
-    return accessTypesForCurrentStudent
-  }
-
-  // TODO - programområder / programAreas når vi har en cache på det for å slippe drittoppslag hele tida
+  // TODO - programområder / programAreas når vi har en cache på det for å slippe drittoppslag hele tida (ta de inn som parameter)
 
   // Manuell klassetilgang (Rådgiver)
   for (const classAccess of access.classes.filter((entry) => entry.type === "MANUELL-KLASSE-TILGANG")) {
-    if (accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === classAccess.schoolNumber)) {
-      continue
-    }
-    const classAccessForCurrentStudent = enrollmentsToCheck.some((enrollment) => {
+    enrollmentsToCheck.forEach((enrollment) => {
       if (enrollment.school.schoolNumber !== classAccess.schoolNumber) {
-        return false
+        return
       }
-      return enrollment.classMemberships.some((membership) => {
+      enrollment.classMemberships.forEach((membership) => {
         if (!membership.period.active && !membership.period.withinViewAccessWindow) {
-          return false
+          return
         }
-        return membership.classGroup.systemId === classAccess.systemId
+        if (membership.classGroup.systemId === classAccess.systemId) {
+          principalAccessForCurrentStudent.push({
+            type: classAccess.type,
+            schoolNumber: classAccess.schoolNumber,
+            accessThroughResource: {
+              id: membership.classGroup.systemId,
+              name: membership.classGroup.name
+            },
+            source: classAccess.source
+          })
+        }
       })
     })
-    if (classAccessForCurrentStudent) {
-      accessTypesForCurrentStudent.push(classAccess)
-    }
-  }
-
-  // No need to check enrollments where already class access for that school
-  enrollmentsToCheck = enrollmentsToCheck.filter((enrollment) => {
-    return !accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === enrollment.school.schoolNumber)
-  })
-  if (enrollmentsToCheck.length === 0) {
-    return accessTypesForCurrentStudent
   }
 
   // Kontaktlærer-tilgang
   for (const contactTeacherGroupAccess of access.contactTeacherGroups) {
-    if (accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === contactTeacherGroupAccess.schoolNumber)) {
-      continue
-    }
-
-    const contactTeacherGroupAccessForCurrentStudent = enrollmentsToCheck.some((enrollment) => {
+    enrollmentsToCheck.forEach((enrollment) => {
       if (enrollment.school.schoolNumber !== contactTeacherGroupAccess.schoolNumber) {
-        return false
+        return
       }
-      return enrollment.contactTeacherGroupMemberships.some((membership) => {
+      enrollment.contactTeacherGroupMemberships.forEach((membership) => {
         if (!membership.period.active && !membership.period.withinViewAccessWindow) {
-          return false
+          return
         }
-
-        return membership.contactTeacherGroup.systemId === contactTeacherGroupAccess.systemId
+        if (membership.contactTeacherGroup.systemId === contactTeacherGroupAccess.systemId) {
+          principalAccessForCurrentStudent.push({
+            type: contactTeacherGroupAccess.type,
+            schoolNumber: contactTeacherGroupAccess.schoolNumber,
+            accessThroughResource: {
+              id: membership.contactTeacherGroup.systemId,
+              name: membership.contactTeacherGroup.name
+            },
+            source: contactTeacherGroupAccess.source
+          })
+        }
       })
     })
-    if (contactTeacherGroupAccessForCurrentStudent) {
-      accessTypesForCurrentStudent.push(contactTeacherGroupAccess)
-    }
-  }
-
-  // No need to check enrollments where already contact teacher group access for that school
-  enrollmentsToCheck = enrollmentsToCheck.filter((enrollment) => {
-    return !accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === enrollment.school.schoolNumber)
-  })
-  if (enrollmentsToCheck.length === 0) {
-    return accessTypesForCurrentStudent
   }
 
   // Klassetilgang (Automatisk - bare lærer)
   for (const classAccess of access.classes.filter((entry) => entry.type === "AUTOMATISK-KLASSE-TILGANG")) {
-    if (accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === classAccess.schoolNumber)) {
-      continue
-    }
-    const classAccessForCurrentStudent = enrollmentsToCheck.some((enrollment) => {
+    enrollmentsToCheck.forEach((enrollment) => {
       if (enrollment.school.schoolNumber !== classAccess.schoolNumber) {
-        return false
+        return
       }
-      return enrollment.classMemberships.some((membership) => {
+      enrollment.classMemberships.forEach((membership) => {
         if (!membership.period.active && !membership.period.withinViewAccessWindow) {
-          return false
+          return
         }
-        return membership.classGroup.systemId === classAccess.systemId
+        if (membership.classGroup.systemId === classAccess.systemId) {
+          principalAccessForCurrentStudent.push({
+            type: classAccess.type,
+            schoolNumber: classAccess.schoolNumber,
+            accessThroughResource: {
+              id: membership.classGroup.systemId,
+              name: membership.classGroup.name
+            },
+            source: classAccess.source
+          })
+        }
       })
     })
-    if (classAccessForCurrentStudent) {
-      accessTypesForCurrentStudent.push(classAccess)
-    }
   }
 
-  // No need to check enrollments where already class access for that school
-  enrollmentsToCheck = enrollmentsToCheck.filter((enrollment) => {
-    return !accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === enrollment.school.schoolNumber)
-  })
-  if (enrollmentsToCheck.length === 0) {
-    return accessTypesForCurrentStudent
-  }
-
-  // If school access, no need to check other access types for that school
+  // Faglærer
   for (const teachingGroupAccess of access.teachingGroups) {
-    if (accessTypesForCurrentStudent.some((accessType) => accessType.schoolNumber === teachingGroupAccess.schoolNumber)) {
-      continue
-    }
-    const teachingGroupAccessForCurrentStudent = enrollmentsToCheck.some((enrollment) => {
+    enrollmentsToCheck.forEach((enrollment) => {
       if (enrollment.school.schoolNumber !== teachingGroupAccess.schoolNumber) {
-        return false
+        return
       }
-      return enrollment.teachingGroupMemberships.some((membership) => {
+      enrollment.teachingGroupMemberships.forEach((membership) => {
         if (!membership.period.active && !membership.period.withinViewAccessWindow) {
-          return false
+          return
         }
-        return membership.teachingGroup.systemId === teachingGroupAccess.systemId
+        if (membership.teachingGroup.systemId === teachingGroupAccess.systemId) {
+          principalAccessForCurrentStudent.push({
+            type: teachingGroupAccess.type,
+            schoolNumber: teachingGroupAccess.schoolNumber,
+            accessThroughResource: {
+              id: membership.teachingGroup.systemId,
+              name: membership.teachingGroup.name
+            },
+            source: teachingGroupAccess.source
+          })
+        }
       })
     })
-    if (teachingGroupAccessForCurrentStudent) {
-      accessTypesForCurrentStudent.push(teachingGroupAccess)
-    }
   }
 
-  return accessTypesForCurrentStudent
+  return principalAccessForCurrentStudent
 }

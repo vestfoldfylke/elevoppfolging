@@ -3,7 +3,7 @@ import type { CachedFrontendStudent, FrontendStudent, PrincipalAccessStudent, St
 import type { Access } from "$lib/types/db/shared-types"
 import { getEnrollmentsWithinViewAccessWindow } from "$lib/utils/frontend-student-details"
 import { APP_INFO } from "../app-info"
-import { getPrincipalAccessEntriesForStudent } from "../authorization/student-access"
+import { getPrincipalAccessForStudent } from "../authorization/student-access"
 import { getDbClient } from "../db/get-db-client"
 
 type StudentsCache = {
@@ -89,7 +89,7 @@ export const getStudentsFromCache = async (access: Access): Promise<PrincipalAcc
   }
 
   for (const student of studentsCache.studentsListCache) {
-    const studentAccessInfo = getPrincipalAccessEntriesForStudent(student, access)
+    const studentAccessInfo = getPrincipalAccessForStudent(student, access)
     if (studentAccessInfo.length > 0) {
       studentsWithAccessInfo.push({
         _id: student._id,
@@ -97,7 +97,7 @@ export const getStudentsFromCache = async (access: Access): Promise<PrincipalAcc
         name: student.name,
         source: student.source,
         enrollmentsWithinViewAccessWindow: student.enrollmentsWithinViewAccessWindow,
-        accessTypes: studentAccessInfo
+        principalAccessForStudent: studentAccessInfo
       })
     }
   }

@@ -2,9 +2,10 @@
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
-  import type { AccessPerson } from "$lib/types/app-types"
+  import type { StudentAccessPerson } from "$lib/types/app-types"
   import type { DocumentInput, SchoolInfo } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
+  import PrincipalAccessTags from "../PrincipalAccessTags.svelte"
   import DocumentContentItem from "./DocumentContentItem.svelte"
 
   type EditorProps = {
@@ -14,7 +15,7 @@
     currentDocument: DocumentInput
     accessSchools: SchoolInfo[]
     studentDataSharingConsent?: boolean
-    studentAccessPersons?: AccessPerson[]
+    studentAccessPersons?: StudentAccessPerson[]
     closeEditor: () => void
   }
 
@@ -143,9 +144,7 @@
             <input id={accessPerson.entra.id} class="ds-input" type="checkbox" value="email"/>
             <label for={accessPerson.entra.id} class="ds-label" data-weight="regular">
               {accessPerson.entra.displayName}
-              {#each accessPerson.accessInfo.filter((accessInfo) => studentDataSharingConsent || accessInfo.school.schoolNumber === currentDocument.school.schoolNumber) as accessInfo}
-                <span class="ds-tag" data-variant="outline" data-color={accessInfo.source === "AUTO" ? "accent" : "brand1"} data-size="xs" style="margin-left: var(--ds-size-1)">{accessInfo.accessDisplayName} ved {accessInfo.school.name}</span>
-              {/each}
+              <PrincipalAccessTags principalAccessForStudent={accessPerson.principalAccessForStudent} />
             </label>
           </ds-field>
         {/each}
