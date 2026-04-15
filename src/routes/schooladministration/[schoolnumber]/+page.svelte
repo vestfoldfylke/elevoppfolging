@@ -357,11 +357,6 @@
         "Content-Type": "application/json"
       }
     })
-
-    // reset new manual student form
-    closeNewManualStudentForm()
-    newManualStudentFnr = ""
-    newManualStudentName = ""
   }
 
   let canManageManualStudents = $derived.by(() => {
@@ -385,6 +380,8 @@
 
   const closeNewManualStudentForm = () => {
     newManualStudentFormOpen = false
+    newManualStudentFnr = ""
+    newManualStudentName = ""
   }
 </script>
 
@@ -630,7 +627,7 @@
             </form>
   
             <div class="manual-student-actions">
-              <AsyncButton onClick={addNewManualStudent} reloadPageDataOnSuccess={true} buttonText="Legg til ny manuell elev" iconName="add" />
+              <AsyncButton onClick={addNewManualStudent} reloadPageDataOnSuccess={true} buttonText="Legg til ny manuell elev" iconName="add" callBackAfterReloadPageData={closeNewManualStudentForm} />
               <button class="ds-button" type="button" data-variant="secondary" onclick={closeNewManualStudentForm}><span class="material-symbols-outlined">close</span>Avbryt</button>
             </div>
           </div>
