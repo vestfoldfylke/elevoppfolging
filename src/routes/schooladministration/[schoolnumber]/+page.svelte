@@ -219,7 +219,7 @@
   // new access
   let newClassAccessControl: NewManualAccessControl = $state({
     type: "MANUELL-KLASSE-TILGANG",
-    name: "klassetilgang",
+    name: "rådgivertilgang til klasse",
     open: false,
     form: undefined,
     classId: "",
@@ -228,7 +228,7 @@
 
   let newStudentAccessControl: NewManualAccessControl = $state({
     type: "MANUELL-ELEV-TILGANG",
-    name: "elevtilgang",
+    name: "rådgivertilgang til elev",
     open: false,
     form: undefined,
     studentId: "",
@@ -478,15 +478,15 @@
 
     {#if canManageAccess}
       <ds-tabpanel>
-        <div class="ds-alert" data-color="info">Tilganger for lærere styres i InSchool, her skal det kun administreres manuelle tilganger.</div>
+        <div class="ds-alert" data-color="info">Tilganger for lærere styres i InSchool, her skal det kun administreres rådgiver-tilganger. Rådgiver-tilgang gir samme tilgang som en kontaktlærer, og kan gis på programområdenivå, klassenivå, eller direkte til elever.</div>
 
         <div class="access-group">
-          <h2 class="ds-heading">Programområdetilganger</h2>
+          <h2 class="ds-heading">Rådgivertilgang til programområde</h2>
           <p class="ds-paragraph">Kommer etterhvert...</p>
         </div>
 
         <div class="access-group">
-          <h2 class="ds-heading">Klassetilganger</h2>
+          <h2 class="ds-heading">Rådgivertilgang til klasser</h2>
           {#if classAccessEntries.length > 0}
             <table class="ds-table" style="table-layout:fixed">
               <thead>
@@ -513,14 +513,14 @@
               </tbody>
             </table>
           {:else}
-            <p class="ds-paragraph">Ingen manuelle klassetilganger</p>
+            <p class="ds-paragraph">Ingen klassetilganger</p>
           {/if}
 
           {@render newAccess(newClassAccessControl)}
         </div>
 
         <div class="access-group">
-          <h2 class="ds-heading">Direkte elevtilganger</h2>
+          <h2 class="ds-heading">Rådgivertilgang til enkeltelever</h2>
           {#if studentAccessEntries.length > 0}
             <table class="ds-table" style="table-layout:fixed">
               <thead>
@@ -547,7 +547,7 @@
               </tbody>
             </table>
           {:else}
-            <p class="ds-paragraph">Ingen direkte elevtilganger</p>
+            <p class="ds-paragraph">Ingen elevtilganger</p>
           {/if}
 
           {@render newAccess(newStudentAccessControl)}
