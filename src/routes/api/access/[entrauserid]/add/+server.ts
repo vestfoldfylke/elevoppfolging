@@ -53,7 +53,8 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
       case "MANUELL-ELEV-TILGANG": {
         if (
           !principalAccessStudents.some(
-            (student) => student._id === accessEntryInput._id && student.accessTypes.some((a) => a.type === "MANUELL-SKOLELEDER-TILGANG" && a.schoolNumber === accessEntryInput.schoolNumber)
+            (student) =>
+              student._id === accessEntryInput._id && student.principalAccessForStudent.some((a) => a.type === "MANUELL-SKOLELEDER-TILGANG" && a.schoolNumber === accessEntryInput.schoolNumber)
           )
         ) {
           throw new HTTPError(403, noAccessMessage("No permission to grant access to this student"))

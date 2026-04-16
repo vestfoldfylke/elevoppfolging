@@ -1,11 +1,11 @@
-import { getPrincipalAccessEntriesForStudent } from "$lib/server/authorization/student-access"
-import { getStudentAccessInfoFromCache } from "$lib/server/cache/student-access-cache"
+import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
+import { getStudentAccessPersonsFromCache } from "$lib/server/cache/student-access-cache"
 import { getStudentFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
 import { noAccessMessage } from "$lib/shared-authorization/authorization"
-import type { AccessEntry, CachedFrontendStudent, StudentAccess, StudentUnavailableSchoolDocuments } from "$lib/types/app-types"
+import type { CachedFrontendStudent, PrincipalAccessForStudent, StudentAccessPerson, StudentUnavailableSchoolDocuments } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { Access, DocumentContentTemplate, SchoolInfo, StudentDataSharingConsent, StudentDocument, StudentImportantStuff } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
@@ -15,8 +15,8 @@ type StudentPageData = {
   student: CachedFrontendStudent
   studentDataSharingConsent: StudentDataSharingConsent | null
   importantStuff: StudentImportantStuff[]
-  principalAccessEntriesForStudent: AccessEntry[]
-  studentAccessInfo: StudentAccess[]
+  principalAccessForStudent: PrincipalAccessForStudent[]
+  studentAccessPersons: StudentAccessPerson[]
   documents: StudentDocument[]
   unavailableSchoolDocuments: StudentUnavailableSchoolDocuments[]
   documentContentTemplates: DocumentContentTemplate[]
@@ -46,13 +46,13 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
     throw new HTTPError(404, "Student not found")
   }
 
-  const principalAccessEntriesForStudent: AccessEntry[] = getPrincipalAccessEntriesForStudent(student, access)
+  const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, access)
 
-  if (principalAccessEntriesForStudent.length === 0) {
+  if (principalAccessForStudent.length === 0) {
     throw new HTTPError(403, noAccessMessage("No access to this student"))
   }
 
-  const accessSchoolsForStudent = principalAccessEntriesForStudent.map((accessEntry) => accessEntry.schoolNumber)
+  const accessSchoolsForStudent: string[] = Array.from(new Set(principalAccessForStudent.map((accessEntry) => accessEntry.schoolNumber)))
 
   const studentImportantStuff: StudentImportantStuff[] = await dbClient.getStudentImportantStuff(studentId, accessSchoolsForStudent) // Vi henter kun important stuff for skolene brukeren har tilgang til eleven på
 
@@ -69,7 +69,7 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 
     // Hvis eleven ikke har samtykket til deling, kan vi kun vise dokumenter knyttet til skoler brukeren har tilgang til eleven på
     // Og vi må etterhvert også sjekke at dokumentet er tilgjengelig for DEN tilgangstypen (for eksempel hvis dokumentet ikke er tilgjengelig for faglærere)
-    return principalAccessEntriesForStudent.some((accessType) => accessType.schoolNumber === document.school.schoolNumber)
+    return principalAccessForStudent.some((accessType) => accessType.schoolNumber === document.school.schoolNumber)
   })
 
   const unavailableDocuments = allStudentDocuments.filter((document) => !documents.some((availableDocument) => availableDocument._id === document._id))
@@ -90,18 +90,18 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 
   const documentContentTemplates: DocumentContentTemplate[] = await dbClient.getDocumentContentTemplates({ student: true, group: false })
 
-  const studentAccessInfo: StudentAccess[] = await getStudentAccessInfoFromCache(studentId)
+  const studentAccessPersons: StudentAccessPerson[] = await getStudentAccessPersonsFromCache(studentId)
 
   return {
     data: {
       student,
-      principalAccessEntriesForStudent,
+      principalAccessForStudent: principalAccessForStudent,
       importantStuff: studentImportantStuff,
       studentDataSharingConsent,
       documents,
       unavailableSchoolDocuments,
       documentContentTemplates: documentContentTemplates.sort((a, b) => a.sort - b.sort),
-      studentAccessInfo
+      studentAccessPersons
     },
     isAuthorized: true
   }

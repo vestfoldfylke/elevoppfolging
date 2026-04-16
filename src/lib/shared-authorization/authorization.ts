@@ -1,4 +1,4 @@
-import type { AccessEntry, ApplicationInfo } from "$lib/types/app-types"
+import type { AccessEntry, ApplicationInfo, PrincipalAccessForStudent } from "$lib/types/app-types"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
 import type { Access, DocumentInput, DocumentMessage, ManageManualStudentsManualAccessEntry, SchoolLeaderManualAccessEntry, StudentDocument } from "$lib/types/db/shared-types"
 
@@ -6,8 +6,8 @@ export const isSystemAdmin = (authenticatedPrincipal: AuthenticatedPrincipal, AP
   return authenticatedPrincipal.roles.includes(APP_INFO.ROLES.ADMIN)
 }
 
-export const canAddMessageToStudentDocument = (accessToStudent: AccessEntry[], document: StudentDocument): boolean => {
-  return accessToStudent.some((access: AccessEntry) => access.schoolNumber === document.school.schoolNumber)
+export const canAddMessageToStudentDocument = (accessToStudent: PrincipalAccessForStudent[], document: StudentDocument): boolean => {
+  return accessToStudent.some((access: PrincipalAccessForStudent) => access.schoolNumber === document.school.schoolNumber)
 }
 
 export const canManageManualStudentsOnSchool = (principalAccess: Access, schoolNumber: string): boolean => {
@@ -17,12 +17,12 @@ export const canManageManualStudentsOnSchool = (principalAccess: Access, schoolN
   )
 }
 
-export const canCreateStudentDocument = (accessToStudent: AccessEntry[], newDocument: DocumentInput): boolean => {
-  return accessToStudent.some((access: AccessEntry) => access.schoolNumber === newDocument.school.schoolNumber)
+export const canCreateStudentDocument = (accessToStudent: PrincipalAccessForStudent[], newDocument: DocumentInput): boolean => {
+  return accessToStudent.some((access: PrincipalAccessForStudent) => access.schoolNumber === newDocument.school.schoolNumber)
 }
 
-export const canEditStudentDocument = (authenticatedPrincipal: AuthenticatedPrincipal, accessToStudent: AccessEntry[], document: StudentDocument): boolean => {
-  return document.created.by.entraUserId === authenticatedPrincipal.id && accessToStudent.some((access: AccessEntry) => access.schoolNumber === document.school.schoolNumber)
+export const canEditStudentDocument = (authenticatedPrincipal: AuthenticatedPrincipal, accessToStudent: PrincipalAccessForStudent[], document: StudentDocument): boolean => {
+  return document.created.by.entraUserId === authenticatedPrincipal.id && accessToStudent.some((access: PrincipalAccessForStudent) => access.schoolNumber === document.school.schoolNumber)
 }
 
 export const canEditDocumentMessage = (authenticatedPrincipal: AuthenticatedPrincipal, message: DocumentMessage): boolean => {
@@ -45,11 +45,11 @@ export const canGrantAndRemoveAccessForSchool = (schoolNumber: string, principal
   return principalAccess.leaderForSchools.some((accessEntry: SchoolLeaderManualAccessEntry) => accessEntry.type === "MANUELL-SKOLELEDER-TILGANG" && accessEntry.schoolNumber === schoolNumber)
 }
 
-export const canEditStudentDataSharingConsent = (accessToStudent: AccessEntry[]): boolean => {
+export const canEditStudentDataSharingConsent = (accessToStudent: PrincipalAccessForStudent[]): boolean => {
   return accessToStudent.some((accessEntry) => accessEntry.type !== "AUTOMATISK-UNDERVISNINGSGRUPPE-TILGANG" && accessEntry.type !== "AUTOMATISK-KLASSE-TILGANG")
 }
 
-export const canEditStudentImportantStuff = (importantStuffSchoolNumber: string, accessToStudent: AccessEntry[]): boolean => {
+export const canEditStudentImportantStuff = (importantStuffSchoolNumber: string, accessToStudent: PrincipalAccessForStudent[]): boolean => {
   return accessToStudent.some(
     (accessEntry) => accessEntry.type !== "AUTOMATISK-UNDERVISNINGSGRUPPE-TILGANG" && accessEntry.type !== "AUTOMATISK-KLASSE-TILGANG" && accessEntry.schoolNumber === importantStuffSchoolNumber
   )

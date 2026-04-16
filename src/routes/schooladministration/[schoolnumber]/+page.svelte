@@ -42,7 +42,9 @@
   })
 
   let schoolStudents: FrontendOverviewStudent[] = $derived.by(() => {
-    return data.students.filter((student) => student.accessTypes.some((accessType) => accessType.type === "MANUELL-SKOLELEDER-TILGANG" && accessType.schoolNumber === currentSchool.schoolNumber))
+    return data.students.filter((student) =>
+      student.principalAccessForStudent.some((accessType) => accessType.type === "MANUELL-SKOLELEDER-TILGANG" && accessType.schoolNumber === currentSchool.schoolNumber)
+    )
   })
 
   let schoolClasses = $derived.by(() => {

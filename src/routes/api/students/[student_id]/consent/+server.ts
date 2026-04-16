@@ -1,6 +1,6 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { validateStudentDataSharingConsentData } from "$lib/data-validation/student-consent-validation"
-import { getPrincipalAccessEntriesForStudent } from "$lib/server/authorization/student-access"
+import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
 import { getStudentFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
@@ -32,12 +32,12 @@ const updateStudentDataSharingConsent: ApiNextFunction<PatchConsentResponse, Pat
     throw new HTTPError(404, "Student not found, cannot consent to non-existing student")
   }
 
-  const accessInfo = getPrincipalAccessEntriesForStudent(currentStudent, principalAccess)
-  if (accessInfo.length === 0) {
+  const principalAccessForStudent = getPrincipalAccessForStudent(currentStudent, principalAccess)
+  if (principalAccessForStudent.length === 0) {
     throw new HTTPError(403, noAccessMessage("No permission to edit student data sharing consent"))
   }
 
-  const canConsentForStudent = canEditStudentDataSharingConsent(accessInfo)
+  const canConsentForStudent = canEditStudentDataSharingConsent(principalAccessForStudent)
   if (!canConsentForStudent) {
     throw new HTTPError(403, noAccessMessage("Insufficient access level to edit student data sharing consent"))
   }

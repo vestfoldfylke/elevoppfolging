@@ -66,9 +66,19 @@ export type AccessEntry =
   | ContactTeacherGroupAutoAccessEntry
   | TeachingGroupAutoAccessEntry
 
+export type PrincipalAccessForStudent = {
+  type: AccessEntry["type"]
+  schoolNumber: string
+  accessThroughResource: {
+    id: string
+    name: string
+  } | null
+  source: Source
+}
+
 /** Student which a given principal has access to, along with which access types principal has to the student */
 export type PrincipalAccessStudent = Omit<CachedFrontendStudent, "studentEnrollments" | "systemId" | "studentNumber" | "created" | "modified"> & {
-  accessTypes: AccessEntry[]
+  principalAccessForStudent: PrincipalAccessForStudent[]
 }
 
 export type FrontendOverviewStudent = PrincipalAccessStudent & {
@@ -122,22 +132,14 @@ export type StudentMemberships = {
   teachingGroups: { schoolNumber: string; systemId: string }[]
 }
 
-export type StudentAccess = {
-  accessTypes: AccessEntry[]
+export type StudentAccessPerson = {
   entra: {
     id: string
     userPrincipalName: string
     displayName: string
   }
+  principalAccessForStudent: PrincipalAccessForStudent[]
 }
-
-export type AccessInfo = {
-  accessDisplayName: string
-  school: SchoolInfo
-  source: Source
-}
-
-export type AccessPerson = StudentAccess & { accessInfo: AccessInfo[] }
 
 export type NewManualAccessControl = {
   type: ManualAccessEntryInput["type"]

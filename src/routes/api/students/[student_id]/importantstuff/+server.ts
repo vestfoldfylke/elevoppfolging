@@ -1,13 +1,13 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { validateStudentImportantStuffData } from "$lib/data-validation/student-important-stuff-validation"
-import { getPrincipalAccessEntriesForStudent } from "$lib/server/authorization/student-access"
+import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
 import { getStudentFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canEditStudentImportantStuff, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { CachedFrontendStudent } from "$lib/types/app-types"
+import type { CachedFrontendStudent, PrincipalAccessForStudent } from "$lib/types/app-types"
 import type { EditorData, NewStudentImportantStuff, StudentImportantStuffInput } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
@@ -33,8 +33,8 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
     throw new HTTPError(404, "Student not found, cannot consent to non-existing student")
   }
 
-  const accessInfo = getPrincipalAccessEntriesForStudent(currentStudent, principalAccess)
-  if (accessInfo.length === 0) {
+  const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(currentStudent, principalAccess)
+  if (principalAccessForStudent.length === 0) {
     throw new HTTPError(403, noAccessMessage("No permission to student"))
   }
 
@@ -46,7 +46,7 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
     throw new HTTPError(400, "Invalid request body", { details: validationResult.message })
   }
 
-  const canEditImportantStuff = canEditStudentImportantStuff(studentImportantStuffData.school.schoolNumber, accessInfo)
+  const canEditImportantStuff = canEditStudentImportantStuff(studentImportantStuffData.school.schoolNumber, principalAccessForStudent)
   if (!canEditImportantStuff) {
     throw new HTTPError(403, noAccessMessage("Insufficient access level to edit student important stuff"))
   }

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { AccessPerson } from "$lib/types/app-types"
+  import type { StudentAccessPerson } from "$lib/types/app-types"
   import type { DocumentContentTemplate, DocumentInput, SchoolInfo } from "$lib/types/db/shared-types"
   import DocumentEditor from "./DocumentEditor.svelte"
 
@@ -9,7 +9,7 @@
     studentId?: string
     groupId?: string
     studentDataSharingConsent?: boolean
-    studentAccessPersons?: AccessPerson[]
+    studentAccessPersons?: StudentAccessPerson[]
   }
 
   let { documentContentTemplates, accessSchools, studentId, groupId, studentDataSharingConsent, studentAccessPersons }: PageProps = $props()

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from "$app/state"
   import { canEditStudentDocument } from "$lib/shared-authorization/authorization"
-  import type { AccessEntry } from "$lib/types/app-types"
+  import type { PrincipalAccessForStudent } from "$lib/types/app-types"
   import type { DocumentInput, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
   import EditorInfo from "../EditorInfo.svelte"
   import DocumentContent from "./DocumentContentItem.svelte"
@@ -11,12 +11,12 @@
 
   type PageProps = {
     document: StudentDocument // Add GroupDocument union when needed
-    principalAccessEntriesForStudent: AccessEntry[]
+    principalAccessForStudent: PrincipalAccessForStudent[]
     studentName?: string
     groupName?: string
   }
 
-  let { document, principalAccessEntriesForStudent, studentName, groupName }: PageProps = $props()
+  let { document, principalAccessForStudent: principalAccessEntriesForStudent, studentName, groupName }: PageProps = $props()
 
   let accessSchools: SchoolInfo[] = $derived.by(() => {
     return principalAccessEntriesForStudent.map((access) => {

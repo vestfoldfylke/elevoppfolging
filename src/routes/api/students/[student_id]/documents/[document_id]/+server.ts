@@ -1,14 +1,14 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
 import { validateDocument } from "$lib/data-validation/document-validation"
-import { getPrincipalAccessEntriesForStudent } from "$lib/server/authorization/student-access"
+import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
 import { getStudentFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canEditStudentDocument, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { AccessEntry, CachedFrontendStudent } from "$lib/types/app-types"
+import type { CachedFrontendStudent, PrincipalAccessForStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { Access, EditorData, StudentDocumentUpdate } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -39,8 +39,8 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
     throw new HTTPError(400, "Student not found. Cannot edit the document for non-existing student.")
   }
 
-  const accessToStudent: AccessEntry[] = getPrincipalAccessEntriesForStudent(student, access)
-  if (accessToStudent.length === 0) {
+  const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, access)
+  if (principalAccessForStudent.length === 0) {
     throw new HTTPError(403, noAccessMessage("No permission to edit the document"))
   }
 
@@ -49,7 +49,7 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
     throw new HTTPError(404, "Document not found, cannot update non-existing document")
   }
 
-  if (!canEditStudentDocument(principal, accessToStudent, currentDocument)) {
+  if (!canEditStudentDocument(principal, principalAccessForStudent, currentDocument)) {
     throw new HTTPError(403, noAccessMessage("No permission to edit the document"))
   }
 

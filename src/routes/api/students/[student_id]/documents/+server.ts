@@ -1,13 +1,13 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
-import { getPrincipalAccessEntriesForStudent } from "$lib/server/authorization/student-access"
+import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
 import { getStudentFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canCreateStudentDocument, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { AccessEntry, CachedFrontendStudent } from "$lib/types/app-types"
+import type { CachedFrontendStudent, PrincipalAccessForStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { Access, EditorData, NewStudentDocument } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -37,12 +37,12 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
     throw new HTTPError(400, "Student not found. Cannot add document for non-existing student.")
   }
 
-  const accessToStudent: AccessEntry[] = getPrincipalAccessEntriesForStudent(student, access)
-  if (accessToStudent.length === 0) {
+  const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, access)
+  if (principalAccessForStudent.length === 0) {
     throw new HTTPError(403, noAccessMessage("No permission to add document"))
   }
 
-  if (!canCreateStudentDocument(accessToStudent, newDocumentData)) {
+  if (!canCreateStudentDocument(principalAccessForStudent, newDocumentData)) {
     throw new HTTPError(403, noAccessMessage("No permission to add document for the specified school"))
   }
 
