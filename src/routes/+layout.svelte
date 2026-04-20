@@ -8,6 +8,7 @@
   import { page } from "$app/state"
   import AppHeader from "$lib/components/AppHeader.svelte"
   import type { FrontendOverviewStudent, FrontendStudentMainDetails } from "$lib/types/app-types.js"
+  import type { StudentCheckBox } from "$lib/types/db/shared-types.js"
   import { getFrontendStudentMainDetails } from "$lib/utils/frontend-student-details.js"
   import type { LayoutProps } from "./$types.js"
 
@@ -24,19 +25,43 @@
     teacher: ""
   })
 
-  // svelte-ignore state_referenced_locally - det går bra så lenge ikke system admin kødder med checkboxene, da kan de bare refreshe sida
-  const enabledStudentCheckBoxes = data.studentCheckBoxes.filter((checkbox) => checkbox.enabled)
+  // svelte-ignore state_referenced_locally - det går bra så lenge ikke system admin kødder med checkboxene, da kan de bare refresh sida
+  const enabledStudentCheckBoxes: StudentCheckBox[] = data.studentCheckBoxes.filter((checkbox: StudentCheckBox) => checkbox.enabled)
+  const followUpStudentCheckBoxes: StudentCheckBox[] = enabledStudentCheckBoxes.filter((checkbox: StudentCheckBox) => checkbox.type === "FOLLOW_UP")
+  const facilitationStudentCheckBoxes: StudentCheckBox[] = enabledStudentCheckBoxes.filter((checkbox: StudentCheckBox) => checkbox.type === "FACILITATION")
 
-  const studentCheckBoxFilters: Record<string, boolean> = enabledStudentCheckBoxes.reduce((acc: Record<string, boolean>, checkbox) => {
-    acc[checkbox._id] = false
-    return acc
-  }, {})
+  let selectedFollowUpStudentCheckBoxes: string[] = $state([])
+  let selectedFacilitationStudentCheckBoxes: string[] = $state([])
+
+  const getStudentCheckBox = (studentCheckBoxId: string): StudentCheckBox => {
+    const studentCheckBox: StudentCheckBox | undefined = enabledStudentCheckBoxes.find((checkBox: StudentCheckBox) => checkBox._id === studentCheckBoxId)
+    if (!studentCheckBox) {
+      throw new Error(`No student checkbox found for ${studentCheckBoxId}`)
+    }
+
+    return studentCheckBox
+  }
+
+  const removeFollowUpStudentCheckBoxFilter = (studentCheckBoxId: string): void => {
+    if (!selectedFollowUpStudentCheckBoxes.includes(studentCheckBoxId)) {
+      throw new Error("Trying to remove document filter that is not selected, something wrong here gitt")
+    }
+
+    selectedFollowUpStudentCheckBoxes = selectedFollowUpStudentCheckBoxes.filter((id: string) => id !== studentCheckBoxId)
+  }
+
+  const removeFacilitationStudentCheckBoxFilter = (studentCheckBoxId: string): void => {
+    if (!selectedFacilitationStudentCheckBoxes.includes(studentCheckBoxId)) {
+      throw new Error("Trying to remove document filter that is not selected, something wrong here gitt")
+    }
+
+    selectedFacilitationStudentCheckBoxes = selectedFacilitationStudentCheckBoxes.filter((id: string) => id !== studentCheckBoxId)
+  }
 
   let filters: Record<string, boolean> = $state({
     importantInfo: false,
     followUp: false,
-    facilitation: false,
-    ...studentCheckBoxFilters
+    facilitation: false
   })
 
   let sortBy = $state<"name" | "class" | "teacher" | "lastActivity">("name")
@@ -57,16 +82,19 @@
         const searchFilters: Record<string, boolean> = {
           matchesImportantInfo: !filters.importantInfo || student.importantStuff.some((importantStuff) => importantStuff.importantInfo && importantStuff.importantInfo.trim() !== "")
         }
-        Object.keys(studentCheckBoxFilters).forEach((checkboxId: string) => {
-          searchFilters[`matchesCheckbox_${checkboxId}`] =
-            !filters[checkboxId] || student.importantStuff.some((importantStuff) => importantStuff.followUp.includes(checkboxId) || importantStuff.facilitation.includes(checkboxId))
+        Object.values(selectedFollowUpStudentCheckBoxes).forEach((checkboxId: string) => {
+          searchFilters[`matchesCheckbox_${checkboxId}`] = student.importantStuff.some((importantStuff) => importantStuff.followUp.includes(checkboxId))
+        })
+        Object.values(selectedFacilitationStudentCheckBoxes).forEach((checkboxId: string) => {
+          searchFilters[`matchesCheckbox_${checkboxId}`] = student.importantStuff.some((importantStuff) => importantStuff.facilitation.includes(checkboxId))
         })
 
         const matchesName = !searchTerms.name || student.name.toLowerCase().includes(searchTerms.name.toLowerCase())
         const matchesClass = !searchTerms.class || student.mainClass?.name.toLowerCase().includes(searchTerms.class.toLowerCase()) || false
         const matchesTeacher = !searchTerms.teacher || student.mainContactTeacherGroup?.teachers.some((teacher) => teacher.name.toLowerCase().includes(searchTerms.teacher.toLowerCase())) || false
+        const searchFilterMatch = Object.values(searchFilters).every((filter) => filter)
 
-        return matchesName && matchesClass && matchesTeacher && Object.values(searchFilters).every((filter) => filter)
+        return matchesName && matchesClass && matchesTeacher && searchFilterMatch
       })
       .sort((a, b) => {
         switch (sortBy) {
@@ -128,30 +156,64 @@
 				</div>
 
 				<div class="student-filters-container">
-					<details class="ds-details" data-variant="default">
-						<summary>Filter</summary>
-						<div class="student-filters">
-							<fieldset class="ds-fieldset">
-								<legend class="ds-label" data-weight="semibold">Oppfølging</legend>
-								{#each enabledStudentCheckBoxes.filter(checkbox => checkbox.type === "FOLLOW_UP") as followUpCheckbox}
-									<ds-field class="ds-field">
-										<input id={followUpCheckbox._id} class="ds-input" type="checkbox" bind:checked={filters[followUpCheckbox._id]} />
-										<label for={followUpCheckbox._id} class="ds-label" data-weight="regular">{followUpCheckbox.value}</label>
-									</ds-field>
-								{/each}
-							</fieldset>
+					<div class="student-filters-selected">
+						{#each selectedFollowUpStudentCheckBoxes.map(getStudentCheckBox) as selectedFollowUpStudentCheckBox}
+							<button class="ds-chip chip-followup" id={selectedFollowUpStudentCheckBox._id} aria-label={`Fjern ${selectedFollowUpStudentCheckBox.value}`} onclick={() => removeFollowUpStudentCheckBoxFilter(selectedFollowUpStudentCheckBox._id)} data-removable="true">{selectedFollowUpStudentCheckBox.value}</button>
+						{/each}
+						{#each selectedFacilitationStudentCheckBoxes.map(getStudentCheckBox) as selectedFacilitationStudentCheckBox}
+							<button class="ds-chip chip-facilitation" id={selectedFacilitationStudentCheckBox._id} aria-label={`Fjern ${selectedFacilitationStudentCheckBox.value}`} onclick={() => removeFacilitationStudentCheckBoxFilter(selectedFacilitationStudentCheckBox._id)} data-removable="true">{selectedFacilitationStudentCheckBox.value}</button>
+						{/each}
+					</div>
 
-							<fieldset class="ds-fieldset">
-								<legend class="ds-label" data-weight="semibold">Tilrettelegging</legend>
-								{#each enabledStudentCheckBoxes.filter(checkbox => checkbox.type === "FACILITATION") as facilitationCheckbox}
-									<ds-field class="ds-field">
-										<input id={facilitationCheckbox._id} class="ds-input" type="checkbox" bind:checked={filters[facilitationCheckbox._id]} />
-										<label for={facilitationCheckbox._id} class="ds-label" data-weight="regular">{facilitationCheckbox.value}</label>
-									</ds-field>
-								{/each}
-							</fieldset>
+					<div class="student-filters-content">
+						<button
+							disabled={facilitationStudentCheckBoxes.length === 0 && followUpStudentCheckBoxes.length === 0}
+							class="ds-button"
+							data-variant="secondary"
+							type="button"
+							popovertarget="student-filters-action-container"
+							aria-label="Elevfilter"
+							data-tooltip="Elevfilter"
+							data-placement="top"
+							data-autoplacement="true"
+						>
+							<span class="material-symbols-outlined">filter_list</span>
+						</button>
+						<div id="student-filters-action-container" class="ds-popover ds-dropdown" popover="auto" data-placement="bottom-end" data-variant="default">
+							{#if followUpStudentCheckBoxes.length > 0}
+								<div class="student-filters-followup">
+									<h2 class="ds-heading">Oppfølging</h2>
+									<hr class="ds-divider" />
+									<ul class="ds-list">
+										{#each followUpStudentCheckBoxes as followUpStudentCheckBox}
+											<li>
+												<ds-field class="ds-field">
+													<input id="student-filters-{followUpStudentCheckBox._id}" bind:group={selectedFollowUpStudentCheckBoxes} class="ds-input" type="checkbox" value={followUpStudentCheckBox._id} />
+													<label for="student-filters-{followUpStudentCheckBox._id}" class="ds-label" data-weight="regular">{followUpStudentCheckBox.value}</label>
+												</ds-field>
+											</li>
+										{/each}
+									</ul>
+								</div>
+							{/if}
+							{#if facilitationStudentCheckBoxes.length > 0}
+								<div class="student-filters-facilitation">
+									<h2 class="ds-heading">Tilrettelegging</h2>
+									<hr class="ds-divider" />
+									<ul class="ds-list">
+										{#each facilitationStudentCheckBoxes as facilitationStudentCheckBox}
+											<li>
+												<ds-field class="ds-field">
+													<input id="student-filters-{facilitationStudentCheckBox._id}" bind:group={selectedFacilitationStudentCheckBoxes} class="ds-input" type="checkbox" value={facilitationStudentCheckBox._id} />
+													<label for="student-filters-{facilitationStudentCheckBox._id}" class="ds-label" data-weight="regular">{facilitationStudentCheckBox.value}</label>
+												</ds-field>
+											</li>
+										{/each}
+									</ul>
+								</div>
+							{/if}
 						</div>
-					</details>
+					</div>
 				</div>
 
 				<div class="student-table-container">
@@ -268,13 +330,46 @@
 	}
 
 	.student-filters-container {
-		margin-bottom: var(--ds-size-8);
+		margin-bottom: var(--ds-size-4);
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
 	}
 
-	.student-filters {
+	#student-filters-action-container {
+		--dsc-popover-max-width: 100%;
+	}
+
+	@media (max-width: 64rem) {
+		.student-filters-container {
+			display: none;
+		}
+	}
+	
+	.student-filters-followup > ul > li, .student-filters-facilitation > ul > li {
+		list-style: none;
+	}
+
+	.student-filters-followup > ul, .student-filters-facilitation > ul {
+		padding-left: var(--ds-size-2);
+	}
+	
+	#student-filters-action-container:popover-open {
 		display: flex;
-		gap: var(--ds-size-8);
+	}
+	
+	.student-filters-selected {
+		display: flex;
+		gap: var(--ds-size-1) var(--ds-size-2);
 		flex-wrap: wrap;
+	}
+
+	.chip-followup {
+		background-color: var(--dsc-chip-background--checked)
+	}
+	
+	.chip-facilitation {
+		background-color: var(--ds-color-brand1-text-subtle);
 	}
 
 	.student-table-container {
