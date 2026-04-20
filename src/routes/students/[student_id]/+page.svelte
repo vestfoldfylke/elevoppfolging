@@ -295,37 +295,37 @@
 
   <div class="documents">
     <div class="documents-header">
-        <h2 id="documents" class="ds-heading">Notater</h2>
-        <div class="documents-header-actions">
-          <div class="documents-filter-action">
-            <button
-              disabled={documentTypes.length === 0}
-              class="ds-button"
-              data-variant="secondary"
-              type="button"
-              popovertarget="documents-filter-action-container"
-              aria-label="Notattype filter"
-              data-tooltip="Notattype filter"
-              data-placement="top"
-              data-autoplacement="true"
-            >
-              <span class="material-symbols-outlined">filter_list</span>
-            </button>
-            <div id="documents-filter-action-container" class="ds-popover ds-dropdown" popover="auto" data-placement="bottom-end" data-variant="default">
-              <ul class="ds-list">
-                {#each documentTypes as documentType}
-                  <li>
-                    <ds-field class="ds-field">
-                      <input id="documents-filter-{documentType.id}" bind:group={selectedDocumentTypes} class="ds-input" type="checkbox" value={documentType.id} />
-                      <label for="documents-filter-{documentType.id}" class="ds-label" data-weight="regular">{documentType.name}</label>
-                    </ds-field>
-                  </li>
-                {/each}
-              </ul>
-            </div>
+      <h2 id="documents" class="ds-heading">Notater</h2>
+      <div class="documents-header-actions">
+        <div class="documents-filter-action">
+          <button
+            disabled={documentTypes.length === 0}
+            class="ds-button"
+            data-variant="secondary"
+            type="button"
+            popovertarget="documents-filter-action-container"
+            aria-label="Notattype filter"
+            data-tooltip="Notattype filter"
+            data-placement="top"
+            data-autoplacement="true"
+          >
+            <span class="material-symbols-outlined">filter_list</span>
+          </button>
+          <div id="documents-filter-action-container" class="ds-popover ds-dropdown" popover="auto" data-placement="bottom-end" data-variant="default">
+            <ul class="ds-list">
+              {#each documentTypes as documentType}
+                <li>
+                  <ds-field class="ds-field">
+                    <input id="documents-filter-{documentType.id}" bind:group={selectedDocumentTypes} class="ds-input" type="checkbox" value={documentType.id} />
+                    <label for="documents-filter-{documentType.id}" class="ds-label" data-weight="regular">{documentType.name}</label>
+                  </ds-field>
+                </li>
+              {/each}
+            </ul>
           </div>
-          <NewDocument {accessSchools} documentContentTemplates={data.documentContentTemplates} studentId={data.student._id} studentDataSharingConsent={data.studentDataSharingConsent?.consent} studentAccessPersons={data.studentAccessPersons} />
         </div>
+        <NewDocument {accessSchools} documentContentTemplates={data.documentContentTemplates} studentId={data.student._id} studentDataSharingConsent={data.studentDataSharingConsent?.consent} studentAccessPersons={data.studentAccessPersons} />
+      </div>
     </div>
 
     {#if data.documents.length === 0}
