@@ -2,6 +2,7 @@ import type { RequestHandler } from "@sveltejs/kit"
 import { validateAccessEntryInput } from "$lib/data-validation/access-entry-validation"
 import { APP_INFO } from "$lib/server/app-info"
 import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
+import { invalidateStudentAccessCache } from "$lib/server/cache/student-access-cache"
 import { getStudentsFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
@@ -12,7 +13,6 @@ import type { AccessEntry, PrincipalAccess, PrincipalAccessStudent } from "$lib/
 import type { Access, NewAccess, StudentClassGroup } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 import { getClassesFromStudents } from "$lib/utils/classes-from-students"
-import { invalidateStudentAccessCache } from "$lib/server/cache/student-access-cache"
 
 type GrantAccessResponse = ApiRouteMap[`/api/access/${NoSlashString}/add`]["POST"]["res"]
 type GrantAccessBody = ApiRouteMap[`/api/access/${NoSlashString}/add`]["POST"]["req"]

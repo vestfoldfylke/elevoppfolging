@@ -1,13 +1,13 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { validateAccessEntryInput } from "$lib/data-validation/access-entry-validation"
 import { APP_INFO } from "$lib/server/app-info"
+import { invalidateStudentAccessCache } from "$lib/server/cache/student-access-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canGrantAndRemoveAccessForSchool, isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
-import { invalidateStudentAccessCache } from "$lib/server/cache/student-access-cache"
 
 type RemoveAccessResponse = ApiRouteMap[`/api/access/${NoSlashString}/remove`]["POST"]["res"]
 type RemoveAccessBody = ApiRouteMap[`/api/access/${NoSlashString}/remove`]["POST"]["req"]

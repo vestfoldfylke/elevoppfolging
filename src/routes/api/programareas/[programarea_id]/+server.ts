@@ -1,6 +1,7 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { validateProgramAreaData } from "$lib/data-validation/program-area-validation"
 import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
+import { invalidateProgramAreaCache } from "$lib/server/cache/program-area-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
@@ -8,7 +9,6 @@ import { canAccessSchoolAdministration, canGrantAndRemoveAccessForSchool, noAcce
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { NewProgramArea } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
-import { invalidateProgramAreaCache } from "$lib/server/cache/program-area-cache"
 
 type DeleteProgramAreaResponse = ApiRouteMap[`/api/programareas/${NoSlashString}`]["DELETE"]["res"]
 
