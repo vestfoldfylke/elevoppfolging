@@ -731,7 +731,7 @@
           </div>
         {/if}
 
-        {#each data.programAreasForSchool as programArea}
+        {#each data.programAreasForSchool as programArea (programArea._id)}
           <ProgramAreaComponent {schoolClasses} schoolNumber={currentSchool.schoolNumber} programArea={programArea} />
         {/each}
 
