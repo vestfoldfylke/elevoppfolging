@@ -41,21 +41,26 @@ export const getAuthenticatedPrincipal = (headers: Headers): AuthenticatedPrinci
   if (MOCK_AUTH) {
     headers = injectMockAuthenticatedUserHeaders(headers)
   }
+
   const base64EncodedHeaderValue = headers.get(MS_AUTH_PRINCIPAL_CLAIMS_HEADER)
   if (!base64EncodedHeaderValue) {
     throw new Error(`Missing ${MS_AUTH_PRINCIPAL_CLAIMS_HEADER} header, cannot get authenticated principal`)
   }
 
   const principalClaims = getPrincipalClaims(base64EncodedHeaderValue)
+
   const objectId = principalClaims.claims.find((claim) => claim.typ === "http://schemas.microsoft.com/identity/claims/objectidentifier")?.val
   if (!objectId) {
     throw new Error("Object ID claim is missing in principal claims")
   }
+
   const preferredUserName = principalClaims.claims.find((claim) => claim.typ === "preferred_username")?.val || "unknown"
   const displayName = principalClaims.claims.find((claim) => claim.typ === "name")?.val
-  if (!displayName) {
-    throw new Error("Name claim is missing in principal claims")
+  const appId = principalClaims.claims.find((claim) => claim.typ === "appid")?.val
+  if (!displayName && !appId) {
+    throw new Error("Name claim and AppId claim is missing in principal claims. Expected one of them")
   }
+
   const email = principalClaims.claims.find((claim) => claim.typ === "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress")?.val
   const roles = principalClaims.claims.filter((claim) => claim.typ === "roles").map((claim) => claim.val)
   if (roles.length === 0) {
@@ -66,7 +71,7 @@ export const getAuthenticatedPrincipal = (headers: Headers): AuthenticatedPrinci
   return {
     id: objectId,
     preferredUserName,
-    displayName,
+    displayName: displayName || appId || "unknown",
     email,
     roles,
     groups
