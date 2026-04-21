@@ -7,6 +7,7 @@ import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canGrantAndRemoveAccessForSchool, isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
+import { invalidateStudentAccessCache } from "$lib/server/cache/student-access-cache"
 
 type RemoveAccessResponse = ApiRouteMap[`/api/access/${NoSlashString}/remove`]["POST"]["res"]
 type RemoveAccessBody = ApiRouteMap[`/api/access/${NoSlashString}/remove`]["POST"]["req"]
@@ -74,6 +75,9 @@ const removeAccess: ApiNextFunction<RemoveAccessResponse, RemoveAccessBody> = as
 
   // Then we can finally remove the access entry
   const updatedAccessId = await dbClient.removeAccessEntry(entraUserId, accessEntryToRemove)
+
+  // Invalidate cache
+  invalidateStudentAccessCache()
 
   return {
     updatedAccessId

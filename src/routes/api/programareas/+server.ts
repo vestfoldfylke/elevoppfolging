@@ -8,6 +8,7 @@ import { canAccessSchoolAdministration, canGrantAndRemoveAccessForSchool, noAcce
 import type { ApiRouteMap } from "$lib/types/api/api-route-map"
 import type { EditorData, NewProgramArea } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
+import { invalidateProgramAreaCache } from "$lib/server/cache/program-area-cache"
 
 type AddProgramAreaResponse = ApiRouteMap["/api/programareas"]["POST"]["res"]
 type AddProgramAreaBody = ApiRouteMap["/api/programareas"]["POST"]["req"]

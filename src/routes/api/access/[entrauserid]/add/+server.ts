@@ -12,6 +12,7 @@ import type { AccessEntry, PrincipalAccess, PrincipalAccessStudent } from "$lib/
 import type { Access, NewAccess, StudentClassGroup } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 import { getClassesFromStudents } from "$lib/utils/classes-from-students"
+import { invalidateStudentAccessCache } from "$lib/server/cache/student-access-cache"
 
 type GrantAccessResponse = ApiRouteMap[`/api/access/${NoSlashString}/add`]["POST"]["res"]
 type GrantAccessBody = ApiRouteMap[`/api/access/${NoSlashString}/add`]["POST"]["req"]
@@ -139,6 +140,9 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
 
   // Then we can finally add the access entry
   const updatedAccessId = await dbClient.addAccessEntry(entraUserId, accessEntryToAdd)
+
+  // Invalidate cache
+  invalidateStudentAccessCache()
 
   return {
     updatedAccessId
