@@ -1,7 +1,6 @@
 import { logger } from "@vestfoldfylke/loglady"
 import { updateGauge } from "$lib/server/metrics/handle-metrics"
 import type { CachedFrontendStudent, FrontendStudent, PrincipalAccess, PrincipalAccessStudent, StudentMemberships } from "$lib/types/app-types"
-import type { Access } from "$lib/types/db/shared-types"
 import { getEnrollmentsWithinViewAccessWindow } from "$lib/utils/frontend-student-details"
 import { APP_INFO } from "../app-info"
 import { getPrincipalAccessForStudent } from "../authorization/student-access"
