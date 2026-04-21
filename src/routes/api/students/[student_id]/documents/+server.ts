@@ -12,6 +12,7 @@ import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent 
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { EditorData, NewStudentDocument } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
+import { validateDocument } from "$lib/data-validation/document-validation"
 
 type AddDocumentResponse = ApiRouteMap[`/api/students/${NoSlashString}/documents`]["POST"]["res"]
 type AddDocumentBody = ApiRouteMap[`/api/students/${NoSlashString}/documents`]["POST"]["req"]
@@ -21,9 +22,6 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
   if (!studentId) {
     throw new HTTPError(400, "Student ID is missing in request parameters")
   }
-
-  const newDocumentData: AddDocumentBody = body
-  // TODO validate body
 
   // authorization check if principal has access to the student
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
@@ -39,6 +37,13 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
   const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, principalAccess)
   if (principalAccessForStudent.length === 0) {
     throw new HTTPError(403, noAccessMessage("No permission to add document"))
+  }
+
+  const newDocumentData: AddDocumentBody = body
+
+  const validationResult = validateDocument(newDocumentData)
+  if (!validationResult.valid) {
+    throw new HTTPError(400, `Invalid document data: ${validationResult.message}`)
   }
 
   if (!canCreateStudentDocument(principalAccessForStudent, newDocumentData)) {

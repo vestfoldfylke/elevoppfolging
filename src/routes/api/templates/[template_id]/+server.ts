@@ -63,14 +63,16 @@ export const PUT: RequestHandler = async (requestEvent) => {
 
 type DeleteDocumentContentTemplateResponse = ApiRouteMap[`/api/templates/${NoSlashString}`]["DELETE"]["res"]
 
-const deleteDocumentContentTemplate: ApiNextFunction<DeleteDocumentContentTemplateResponse> = async ({ requestEvent }) => {
+const deleteDocumentContentTemplate: ApiNextFunction<DeleteDocumentContentTemplateResponse> = async ({ requestEvent, principal }) => {
   const templateId = requestEvent.params.template_id
 
   if (!templateId) {
     throw new HTTPError(400, "template id from url params is missing?")
   }
 
-  // TODO authorization check if principal has access to delete template
+  if (!isSystemAdmin(principal, APP_INFO)) {
+    throw new HTTPError(403, noAccessMessage("No permission to delete template"))
+  }
 
   const dbClient = getDbClient()
   const currentTemplate = await dbClient.getDocumentContentTemplateById(templateId)

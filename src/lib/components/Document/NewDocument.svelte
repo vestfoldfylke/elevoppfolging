@@ -52,7 +52,6 @@
   let newDocument: DocumentInput | null = $state(null)
 
   const changeDocumentTemplate = (selectedItem: EventTarget | null) => {
-    // TODO - add check to see if there are unsaved changes and warn the user before changing the template
     if (!selectedItem) {
       newDocument = null
       return
