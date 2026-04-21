@@ -39,7 +39,7 @@ const deleteProgramArea: ApiNextFunction<DeleteProgramAreaResponse> = async ({ p
     throw new HTTPError(403, noAccessMessage("No access to school administration for this school"))
   }
 
-  await dbClient.deleteProgramArea(programAreaId)
+  await dbClient.deleteProgramArea(programAreaToDelete)
 
   // Invalidate cache entry
   invalidateProgramAreaCache(programAreaId)

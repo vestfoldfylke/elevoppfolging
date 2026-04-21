@@ -581,9 +581,33 @@ export class MongoDbClient implements IDbClient {
     const programAreasCollection = db.collection<NewProgramArea>(this.programAreasCollectionName)
     const result = await programAreasCollection.insertOne(programArea)
 
+    const metricBody: MetricCount = {
+      name: "ProgramArea_Create",
+      description: "Number of program areas created"
+    }
+    const labels: [labelName: string, labelValue: string][] = [["schoolNumber", programArea.schoolNumber]]
+
     if (!result.insertedId) {
+      incrementCount({
+        ...metricBody,
+        labels: [
+          ...labels,
+          [metricResultName, metricResultFailure]
+        ]
+      })
+
       throw new Error("Failed to create program area")
     }
+
+    incrementCount({
+      ...metricBody,
+      labels: [
+        ...labels,
+        [metricResultName, metricResultSuccessful]
+      ]
+    })
+
+    // TODO: audit-implementation
 
     return result.insertedId.toString()
   }
@@ -593,21 +617,69 @@ export class MongoDbClient implements IDbClient {
     const programAreasCollection = db.collection<DbProgramArea>(this.programAreasCollectionName)
     const updateResult = await programAreasCollection.updateOne({ _id: new ObjectId(programAreaId) }, { $set: programArea })
 
+    const metricBody: MetricCount = {
+      name: "ProgramArea_Update",
+      description: "Number of program areas updated"
+    }
+    const labels: [labelName: string, labelValue: string][] = [["schoolNumber", programArea.schoolNumber]]
+
     if (updateResult.matchedCount === 0) {
+      incrementCount({
+        ...metricBody,
+        labels: [
+          ...labels,
+          [metricResultName, metricResultFailure]
+        ]
+      })
+
       throw new Error(`Program area with id: ${programAreaId} not found, cannot update when it does not exist...`)
     }
+
+    incrementCount({
+      ...metricBody,
+      labels: [
+        ...labels,
+        [metricResultName, metricResultSuccessful]
+      ]
+    })
+
+    // TODO: audit-implementation
 
     return programAreaId
   }
 
-  async deleteProgramArea(programAreaId: string): Promise<void> {
+  async deleteProgramArea(programArea: ProgramArea): Promise<void> {
     const db = await this.getDb()
     const programAreasCollection = db.collection<DbProgramArea>(this.programAreasCollectionName)
-    const deleteResult = await programAreasCollection.deleteOne({ _id: new ObjectId(programAreaId) })
+    const deleteResult = await programAreasCollection.deleteOne({ _id: new ObjectId(programArea._id) })
+
+    const metricBody: MetricCount = {
+      name: "ProgramArea_Remove",
+      description: "Number of program areas removed"
+    }
+    const labels: [labelName: string, labelValue: string][] = [["schoolNumber", programArea.schoolNumber]]
 
     if (deleteResult.deletedCount === 0) {
-      throw new Error(`Failed to delete program area with id: ${programAreaId}`)
+      incrementCount({
+        ...metricBody,
+        labels: [
+          ...labels,
+          [metricResultName, metricResultFailure]
+        ]
+      })
+
+      throw new Error(`Failed to delete program area with id: ${programArea._id}`)
     }
+
+    incrementCount({
+      ...metricBody,
+      labels: [
+        ...labels,
+        [metricResultName, metricResultSuccessful]
+      ]
+    })
+
+    // TODO: audit-implementation
   }
 
   async getAllStudents(): Promise<FrontendStudent[]> {

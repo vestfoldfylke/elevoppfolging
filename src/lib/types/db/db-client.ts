@@ -48,7 +48,7 @@ export interface IDbClient {
   getProgramAreasForSchool(schoolNumber: string): Promise<ProgramArea[]>
   createProgramArea(programArea: NewProgramArea): Promise<string>
   updateProgramArea(programAreaId: string, programArea: NewProgramArea): Promise<string>
-  deleteProgramArea(programAreaId: string): Promise<void>
+  deleteProgramArea(programArea: ProgramArea): Promise<void>
 
   getAllStudents(): Promise<FrontendStudent[]>
   getStudents(access: Access): Promise<FrontendStudent[]>
