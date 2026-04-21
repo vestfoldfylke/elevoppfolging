@@ -10,6 +10,7 @@ import type {
   NewAppStudent,
   NewDocumentContentTemplate,
   NewDocumentMessage,
+  NewProgramArea,
   NewSchool,
   NewStudentCheckBox,
   NewStudentDataSharingConsent,
@@ -43,6 +44,11 @@ export interface IDbClient {
   getSchoolLeaderAccess(): Promise<Access[]>
 
   getProgramArea(_id: string): Promise<ProgramArea | null>
+  getProgramAreasFromClassIds(classSystemIds: string[]): Promise<ProgramArea[]>
+  getProgramAreasForSchool(schoolNumber: string): Promise<ProgramArea[]>
+  createProgramArea(programArea: NewProgramArea): Promise<string>
+  updateProgramArea(programAreaId: string, programArea: NewProgramArea): Promise<string>
+  deleteProgramArea(programAreaId: string): Promise<void>
 
   getAllStudents(): Promise<FrontendStudent[]>
   getStudents(access: Access): Promise<FrontendStudent[]>
@@ -50,7 +56,7 @@ export interface IDbClient {
   getStudentBySsn(ssn: string): Promise<FrontendStudent | null>
   getManualStudentById(studentId: string): Promise<AppStudent | null>
 
-  getStudentAccess(studentId: string, studentMemberships: StudentMemberships): Promise<Access[]>
+  getStudentAccess(studentId: string, studentMemberships: StudentMemberships, studentProgramAreaIds: string[]): Promise<Access[]>
 
   getStudentDocuments(studentId: string): Promise<StudentDocument[]>
   getStudentDocumentById(documentId: string): Promise<StudentDocument | null>

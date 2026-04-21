@@ -1,12 +1,13 @@
 import { logger } from "@vestfoldfylke/loglady"
 import { APP_INFO } from "$lib/server/app-info"
+import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
 import { getStudentsFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
-import type { FrontendOverviewStudent, PrincipalAccessStudent, RootLayoutData } from "$lib/types/app-types"
+import type { FrontendOverviewStudent, PrincipalAccess, PrincipalAccessStudent, RootLayoutData } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { Access, SchoolInfo, StudentClassGroup, StudentDataSharingConsent, StudentImportantStuff } from "$lib/types/db/shared-types"
+import type { SchoolInfo, StudentClassGroup, StudentDataSharingConsent, StudentImportantStuff } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
 import { getAccessibleClassesFromStudents } from "$lib/utils/classes-from-students"
 import type { LayoutServerLoad } from "./$types"
@@ -14,7 +15,7 @@ import type { LayoutServerLoad } from "./$types"
 const layoutLoad: ServerLoadNextFunction<RootLayoutData> = async ({ principal }) => {
   const dbClient: IDbClient = getDbClient()
 
-  const principalAccess: Access | null = await dbClient.getPrincipalAccess(principal.id)
+  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
 
   if (!principalAccess) {
     logger.info(`No access entry found for user ${principal.id}, but apparently have access through entra, quick return with no students, schools or anything`)

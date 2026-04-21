@@ -5,8 +5,8 @@ export const ACCESS_TYPE_DISPLAY_NAMES: Record<AccessEntry["type"], string> = {
   "AUTOMATISK-KONTAKTLÆRERGRUPPE-TILGANG": "Kontaktlærer (InSchool) for",
   "AUTOMATISK-UNDERVISNINGSGRUPPE-TILGANG": "Faglærer (InSchool) for",
   "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG": "Opprett manuelle elever",
-  "MANUELL-ELEV-TILGANG": "Rådgiver for enkeltelev",
-  "MANUELL-KLASSE-TILGANG": "Rådgiver for klasse",
+  "MANUELL-ELEV-TILGANG": "Elevtilgang",
+  "MANUELL-KLASSE-TILGANG": "Klassetilgang",
   "MANUELL-SKOLELEDER-TILGANG": "Skoleleder",
-  "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG": "Rådgiver for undervisningsområde"
+  "MANUELL-PROGRAMOMRÅDE-TILGANG": "Programområde-tilgang"
 }

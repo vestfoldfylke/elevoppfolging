@@ -1,3 +1,4 @@
+import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
 import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
 import { getStudentAccessPersonsFromCache } from "$lib/server/cache/student-access-cache"
 import { getStudentFromCache } from "$lib/server/cache/students-cache"
@@ -5,9 +6,9 @@ import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
 import { noAccessMessage } from "$lib/shared-authorization/authorization"
-import type { CachedFrontendStudent, PrincipalAccessForStudent, StudentAccessPerson, StudentUnavailableSchoolDocuments } from "$lib/types/app-types"
+import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent, StudentAccessPerson, StudentUnavailableSchoolDocuments } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { Access, DocumentContentTemplate, SchoolInfo, StudentDataSharingConsent, StudentDocument, StudentImportantStuff } from "$lib/types/db/shared-types"
+import type { DocumentContentTemplate, SchoolInfo, StudentDataSharingConsent, StudentDocument, StudentImportantStuff } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
 import type { PageServerLoad } from "./$types"
 
@@ -36,8 +37,8 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 	- Så har vi en støgg funksjon som sjekker at brukeren har tilgang til denne eleven - og hva slags tilgang, for da kan vi lage litt tester på funksjonen, i stedet for en psyjo query monster
 	*/
 
-  const access: Access | null = await dbClient.getPrincipalAccess(principal.id)
-  if (!access) {
+  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id) // Vi må hente ut tilgangene til brukeren for å vite om de har tilgang til eleven, og hva slags tilgang de har
+  if (!principalAccess) {
     throw new HTTPError(403, noAccessMessage("No access found for principal"))
   }
 
@@ -46,7 +47,7 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
     throw new HTTPError(404, "Student not found")
   }
 
-  const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, access)
+  const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, principalAccess)
 
   if (principalAccessForStudent.length === 0) {
     throw new HTTPError(403, noAccessMessage("No access to this student"))

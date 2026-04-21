@@ -1,6 +1,7 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { validateAccessEntryInput } from "$lib/data-validation/access-entry-validation"
 import { APP_INFO } from "$lib/server/app-info"
+import { invalidateStudentAccessCache } from "$lib/server/cache/student-access-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
@@ -65,8 +66,8 @@ const removeAccess: ApiNextFunction<RemoveAccessResponse, RemoveAccessBody> = as
         throw new HTTPError(400, "Cannot remove access entry that does not exist")
       }
       break
-    case "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG":
-      if (!existingAccess.programAreas.some((p) => p._id === accessEntryToRemove._id && p.schoolNumber === accessEntryToRemove.schoolNumber && p.type === "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG")) {
+    case "MANUELL-PROGRAMOMRÅDE-TILGANG":
+      if (!existingAccess.programAreas.some((p) => p._id === accessEntryToRemove._id && p.schoolNumber === accessEntryToRemove.schoolNumber && p.type === "MANUELL-PROGRAMOMRÅDE-TILGANG")) {
         throw new HTTPError(400, "Cannot remove access entry that does not exist")
       }
       break
@@ -74,6 +75,9 @@ const removeAccess: ApiNextFunction<RemoveAccessResponse, RemoveAccessBody> = as
 
   // Then we can finally remove the access entry
   const updatedAccessId = await dbClient.removeAccessEntry(entraUserId, accessEntryToRemove)
+
+  // Invalidate cache
+  invalidateStudentAccessCache()
 
   return {
     updatedAccessId

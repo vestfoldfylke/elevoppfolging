@@ -66,6 +66,10 @@ export type AccessEntry =
   | ContactTeacherGroupAutoAccessEntry
   | TeachingGroupAutoAccessEntry
 
+export type PrincipalAccess = Omit<Access, "programAreas"> & {
+  programAreas: (ProgramAreaManualAccessEntry & { name: string; classSystemIds: string[] })[]
+}
+
 export type PrincipalAccessForStudent = {
   type: AccessEntry["type"]
   schoolNumber: string
@@ -147,6 +151,7 @@ export type NewManualAccessControl = {
   open: boolean
   form: HTMLFormElement | undefined
   entraUserId: string
+  programAreaId?: string
   classId?: string
   studentId?: string
 }
