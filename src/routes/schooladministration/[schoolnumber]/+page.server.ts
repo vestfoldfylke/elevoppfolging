@@ -3,12 +3,13 @@ import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canAccessSchoolAdministration, canGrantAndRemoveAccessForSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { Access } from "$lib/types/db/shared-types"
+import type { Access, ProgramArea } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
 import type { PageServerLoad } from "./$types"
 
 type SchoolAccessAdministrationPageData = {
   manualAccessForSchool: Access[]
+  programAreasForSchool: ProgramArea[]
 }
 
 const getSchoolAccessAdministrationData: ServerLoadNextFunction<SchoolAccessAdministrationPageData> = async ({ principal, requestEvent }) => {
@@ -31,17 +32,20 @@ const getSchoolAccessAdministrationData: ServerLoadNextFunction<SchoolAccessAdmi
   if (!canGrantAndRemoveAccessForSchool(schoolNumber, access)) {
     return {
       data: {
-        manualAccessForSchool: []
+        manualAccessForSchool: [],
+        programAreasForSchool: []
       },
       isAuthorized: true
     }
   }
 
   const manualAccessForSchool: Access[] = await dbClient.getManualAccess(schoolNumber)
+  const programAreasForSchool: ProgramArea[] = await dbClient.getProgramAreasForSchool(schoolNumber)
 
   return {
     data: {
-      manualAccessForSchool
+      manualAccessForSchool,
+      programAreasForSchool
     },
     isAuthorized: true
   }

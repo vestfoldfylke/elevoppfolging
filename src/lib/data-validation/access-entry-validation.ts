@@ -11,9 +11,9 @@ export const validateAccessEntryInput = (accessEntry: ManualAccessEntryInput): V
     case "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG":
       // No additional fields to validate for this type
       break
-    case "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG":
+    case "MANUELL-PROGRAMOMRÅDE-TILGANG":
       if (!accessEntry._id || typeof accessEntry._id !== "string") {
-        return { valid: false, message: "'_id' is required for MANUELL-UNDERVISNINGSOMRÅDE-TILGANG" }
+        return { valid: false, message: "'_id' is required for MANUELL-PROGRAMOMRÅDE-TILGANG" }
       }
       break
     case "MANUELL-ELEV-TILGANG":

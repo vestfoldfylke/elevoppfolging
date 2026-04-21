@@ -1,13 +1,14 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { validateAccessEntryInput } from "$lib/data-validation/access-entry-validation"
 import { APP_INFO } from "$lib/server/app-info"
+import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
 import { getStudentsFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canGrantAndRemoveAccessForSchool, isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { AccessEntry, PrincipalAccessStudent } from "$lib/types/app-types"
+import type { AccessEntry, PrincipalAccess, PrincipalAccessStudent } from "$lib/types/app-types"
 import type { Access, NewAccess, StudentClassGroup } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 import { getClassesFromStudents } from "$lib/utils/classes-from-students"
@@ -36,7 +37,7 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
     }
   } else {
     // Get access for principal to check if they have access to grant access on their school
-    const principalAccess = await dbClient.getPrincipalAccess(principal.id)
+    const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
     if (!principalAccess) {
       throw new HTTPError(403, noAccessMessage("No access found for principal"))
     }
@@ -67,11 +68,9 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
         }
         break
       }
-      case "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG": {
+      case "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG":
+      case "MANUELL-PROGRAMOMRÅDE-TILGANG":
         break
-      }
-      default:
-        throw new Error("PROGRAM-OMRÅDE-TILGANG IKKE IMPLEMENTERT ENDA")
     }
   }
 
@@ -118,13 +117,11 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
           throw new HTTPError(400, "Access entry already exists")
         }
         break
-      /* TODO uncomment when we implement program area access
-      case "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG":
-        if (existingAccess.programAreas.some((p) => p._id === accessEntryInput._id && p.schoolNumber === accessEntryInput.schoolNumber && p.type === "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG")) {
+      case "MANUELL-PROGRAMOMRÅDE-TILGANG":
+        if (existingAccess.programAreas.some((p) => p._id === accessEntryInput._id && p.schoolNumber === accessEntryInput.schoolNumber && p.type === "MANUELL-PROGRAMOMRÅDE-TILGANG")) {
           throw new HTTPError(400, "Access entry already exists")
         }
         break
-      */
     }
   }
 

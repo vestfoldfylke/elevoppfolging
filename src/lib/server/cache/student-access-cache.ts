@@ -1,5 +1,6 @@
 import { logger } from "@vestfoldfylke/loglady"
-import type { CachedFrontendStudent, PrincipalAccessForStudent, StudentAccessPerson, StudentMemberships } from "$lib/types/app-types"
+import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent, StudentAccessPerson, StudentMemberships } from "$lib/types/app-types"
+import { expandAccessWithProgramAreaNames } from "../authorization/principal-access"
 import { getPrincipalAccessForStudent } from "../authorization/student-access"
 import { getDbClient } from "../db/get-db-client"
 import { getStudentFromCache, getStudentMembershipsFromCache } from "./students-cache"
@@ -7,9 +8,11 @@ import { getAppUserFromCache } from "./users-cache"
 
 type StudentAccessCache = Record<string, StudentAccessPerson[]>
 
-const studentAccessCache: StudentAccessCache = {}
+let studentAccessCache: StudentAccessCache = {}
 
-// TODO Refreshe access for en elev når det blir gitt tilgang eller fjernet tilgang der eleven er involverad (mulig bare wipe hele cachen når noen gjør tilgangsendringer)
+export const invalidateStudentAccessCache = () => {
+  studentAccessCache = {}
+}
 
 export const getStudentAccessPersonsFromCache = async (studentId: string): Promise<StudentAccessPerson[]> => {
   const cacheEntry = studentAccessCache[studentId]
@@ -24,7 +27,12 @@ export const getStudentAccessPersonsFromCache = async (studentId: string): Promi
   }
   const studentMemberships: StudentMemberships = await getStudentMembershipsFromCache(studentId)
   const dbClient = getDbClient()
-  const studentAccess = await dbClient.getStudentAccess(studentId, studentMemberships)
+
+  // Trenger også å hente programområder som inneholder klasser eleven er i. Hente fra db - hvilke programområde-ider inneholder klasser fra studentMemberships
+  const programAreaIdsToCheck = (await dbClient.getProgramAreasFromClassIds(studentMemberships.classes.map((classGroup) => classGroup.systemId))).map((programArea) => programArea._id)
+
+  const studentAccess = await dbClient.getStudentAccess(studentId, studentMemberships, programAreaIdsToCheck)
+
   logger.info(`Got ${studentAccess.length} access for student ${studentId} from db`)
 
   const studentAccessPersons: StudentAccessPerson[] = []
@@ -34,7 +42,11 @@ export const getStudentAccessPersonsFromCache = async (studentId: string): Promi
       logger.warn(`App user with Entra ID ${access.entraUserId} not found, skipping access entry for student ${studentId}`)
       continue
     }
-    const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, access)
+
+    const principalAccess: PrincipalAccess = await expandAccessWithProgramAreaNames(access)
+
+    const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, principalAccess)
+
     if (principalAccessForStudent.length > 0) {
       studentAccessPersons.push({
         principalAccessForStudent: principalAccessForStudent,

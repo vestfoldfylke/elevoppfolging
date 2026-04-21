@@ -1,4 +1,5 @@
 import type { RequestHandler } from "@sveltejs/kit"
+import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
 import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
 import { getStudentFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
@@ -6,9 +7,9 @@ import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canAddMessageToStudentDocument, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { CachedFrontendStudent, PrincipalAccessForStudent } from "$lib/types/app-types"
+import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { Access, DocumentMessageInput, EditorData, NewDocumentMessage } from "$lib/types/db/shared-types"
+import type { DocumentMessageInput, EditorData, NewDocumentMessage } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
 type AddDocumentMessageResponse = ApiRouteMap[`/api/students/${NoSlashString}/documents/${NoSlashString}/messages`]["POST"]["res"]
@@ -26,10 +27,8 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
   }
 
   // authorization check if principal has access to the student or group
-  const dbClient: IDbClient = getDbClient()
-
-  const access: Access | null = await dbClient.getPrincipalAccess(principal.id)
-  if (!access) {
+  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
+  if (!principalAccess) {
     throw new HTTPError(403, noAccessMessage("No access found for principal"))
   }
 
@@ -38,7 +37,7 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
     throw new HTTPError(400, "Student not found. Cannot create document for non-existing student.")
   }
 
-  const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, access)
+  const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, principalAccess)
   if (principalAccessForStudent.length === 0) {
     throw new HTTPError(403, noAccessMessage("No permission to add message to document"))
   }
@@ -89,6 +88,8 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
       break
     }
   }
+
+  const dbClient: IDbClient = getDbClient()
 
   const currentDocument = await dbClient.getStudentDocumentById(documentId)
   if (!currentDocument) {

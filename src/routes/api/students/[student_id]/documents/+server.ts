@@ -1,5 +1,6 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
+import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
 import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
 import { getStudentFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
@@ -7,9 +8,9 @@ import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canCreateStudentDocument, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { CachedFrontendStudent, PrincipalAccessForStudent } from "$lib/types/app-types"
+import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { Access, EditorData, NewStudentDocument } from "$lib/types/db/shared-types"
+import type { EditorData, NewStudentDocument } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
 type AddDocumentResponse = ApiRouteMap[`/api/students/${NoSlashString}/documents`]["POST"]["res"]
@@ -24,11 +25,9 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
   const newDocumentData: AddDocumentBody = body
   // TODO validate body
 
-  // authorization check if principal has access to the student or group
-  const dbClient: IDbClient = getDbClient()
-
-  const access: Access | null = await dbClient.getPrincipalAccess(principal.id)
-  if (!access) {
+  // authorization check if principal has access to the student
+  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
+  if (!principalAccess) {
     throw new HTTPError(403, noAccessMessage("No access found for principal"))
   }
 
@@ -37,7 +36,7 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
     throw new HTTPError(400, "Student not found. Cannot add document for non-existing student.")
   }
 
-  const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, access)
+  const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, principalAccess)
   if (principalAccessForStudent.length === 0) {
     throw new HTTPError(403, noAccessMessage("No permission to add document"))
   }
@@ -71,6 +70,8 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
   if (!newDocument.student?._id) {
     throw new HTTPError(400, "Student ID is missing in the document data")
   }
+
+  const dbClient: IDbClient = getDbClient()
 
   const documentId = await dbClient.createStudentDocument(newDocument)
 
