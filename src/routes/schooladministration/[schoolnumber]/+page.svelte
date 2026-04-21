@@ -3,12 +3,20 @@
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import AsyncButton from "$lib/components/AsyncButton.svelte"
   import PageHeader from "$lib/components/PageHeader.svelte"
+  import ProgramAreaComponent from "$lib/components/SchoolAdministration/ProgramArea.svelte"
   import { nameValidation, ssnValidation } from "$lib/data-validation/manual-student-validation"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import { canGrantAndRemoveAccessForSchool, canManageManualStudentsOnSchool } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { EnrollmentWithinViewAccessWindow, FrontendOverviewStudent, NewManualAccessControl } from "$lib/types/app-types"
-  import type { ClassManualAccessEntry, ManageManualStudentsManualAccessEntry, ManualAccessEntryInput, NewManualStudentInput, StudentManualAccessEntry } from "$lib/types/db/shared-types"
+  import type {
+    ClassManualAccessEntry,
+    ManageManualStudentsManualAccessEntry,
+    ManualAccessEntryInput,
+    NewManualStudentInput,
+    ProgramAreaManualAccessEntryInput,
+    StudentManualAccessEntry
+  } from "$lib/types/db/shared-types"
   import { getClassesFromStudents } from "$lib/utils/classes-from-students"
   import type { PageProps } from "./$types"
 
@@ -18,6 +26,7 @@
     return page.url.searchParams.get("tab")?.trim().toLowerCase()
   })
   const accessTab: string = "access"
+  const programAreasTab: string = "programareas"
   const manualStudentsTab: string = "manual"
 
   let currentSchool = $derived.by(() => {
@@ -69,6 +78,61 @@
       companyName: appUser?.entra.companyName || "Ukjent"
     }
   }
+
+  let programAreaEntriesSort: { column: "programArea" | "bruker"; direction: SortDirection } = $state({
+    column: "programArea",
+    direction: "ascending"
+  })
+
+  type ProgramAreaAccessEntry = {
+    programAreaName: string
+    entraUser: {
+      id: string
+      name: string
+      companyName: string
+    }
+    accessEntry: ProgramAreaManualAccessEntryInput
+  }
+
+  let programAreaAccessEntries: ProgramAreaAccessEntry[] = $derived.by(() => {
+    const programAreaAccessRows: ProgramAreaAccessEntry[] = []
+    for (const access of data.manualAccessForSchool) {
+      for (const programAreaAccessEntry of access.programAreas) {
+        if (programAreaAccessEntry.type !== "MANUELL-PROGRAMOMRÅDE-TILGANG") {
+          throw new Error(`Uventet access entry type for programområde: ${programAreaAccessEntry.type}`)
+        }
+
+        const programAreaInfo = data.programAreasForSchool.find((programArea) => programArea._id === programAreaAccessEntry._id)
+        const programAreaName = programAreaInfo ? programAreaInfo.name : `Inaktivt programområde (${programAreaAccessEntry._id})`
+        const appUserInfo = getAppUserInfo(access.entraUserId)
+
+        programAreaAccessRows.push({
+          programAreaName,
+          entraUser: {
+            id: access.entraUserId,
+            name: appUserInfo.name,
+            companyName: appUserInfo.companyName
+          },
+          accessEntry: programAreaAccessEntry
+        })
+      }
+    }
+    return programAreaAccessRows.sort((a, b) => {
+      switch (programAreaEntriesSort.column) {
+        case "programArea": {
+          const compareResult = a.programAreaName.localeCompare(b.programAreaName)
+          return programAreaEntriesSort.direction === "ascending" ? compareResult : -compareResult
+        }
+        case "bruker": {
+          const compareResult = a.entraUser.name.localeCompare(b.entraUser.name)
+          return programAreaEntriesSort.direction === "ascending" ? compareResult : -compareResult
+        }
+        default: {
+          return 0
+        }
+      }
+    })
+  })
 
   let classAccessEntriesSort: { column: "klasse" | "bruker"; direction: SortDirection } = $state({
     column: "klasse",
@@ -219,9 +283,18 @@
   })
 
   // new access
+  let newProgramAreaAccessControl: NewManualAccessControl = $state({
+    type: "MANUELL-PROGRAMOMRÅDE-TILGANG",
+    name: "tilgang til programområde",
+    open: false,
+    form: undefined,
+    programAreaId: "",
+    entraUserId: ""
+  })
+
   let newClassAccessControl: NewManualAccessControl = $state({
     type: "MANUELL-KLASSE-TILGANG",
-    name: "rådgivertilgang til klasse",
+    name: "tilgang til klasse",
     open: false,
     form: undefined,
     classId: "",
@@ -230,7 +303,7 @@
 
   let newStudentAccessControl: NewManualAccessControl = $state({
     type: "MANUELL-ELEV-TILGANG",
-    name: "rådgivertilgang til elev",
+    name: "tilgang til elev",
     open: false,
     form: undefined,
     studentId: "",
@@ -247,6 +320,7 @@
 
   const closeManualAccessControl = (newManualAccessControl: NewManualAccessControl) => {
     newManualAccessControl.open = false
+    newManualAccessControl.programAreaId = ""
     newManualAccessControl.classId = ""
     newManualAccessControl.studentId = ""
     newManualAccessControl.entraUserId = ""
@@ -275,6 +349,14 @@
     let accessEntryToAdd: ManualAccessEntryInput
 
     switch (newManualAccessControl.type) {
+      case "MANUELL-PROGRAMOMRÅDE-TILGANG": {
+        if (!newManualAccessControl.programAreaId) {
+          throw new Error("Programområde must be selected")
+        }
+        accessEntryToAdd = { type: newManualAccessControl.type, schoolNumber: currentSchool.schoolNumber, _id: newManualAccessControl.programAreaId }
+        break
+      }
+
       case "MANUELL-KLASSE-TILGANG": {
         if (!newManualAccessControl.classId) {
           throw new Error("Class ID must be selected")
@@ -285,8 +367,6 @@
         accessEntryToAdd = { type: newManualAccessControl.type, schoolNumber: currentSchool.schoolNumber, systemId: classIdToUse }
         break
       }
-      case "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG":
-        throw new Error("Manuell undervisningsområde-tilgang er ikke implementert ennå")
 
       case "MANUELL-ELEV-TILGANG": {
         if (!newManualAccessControl.studentId) {
@@ -325,6 +405,9 @@
       }
     })
   }
+
+  /* --- PROGRAM AREAS --- */
+  let newProgramAreaFormOpen = $state(false)
 
   /* --- MANUAL STUDENTS --- */
 
@@ -427,6 +510,17 @@
           </ds-field>
         {/if}
 
+        {#if newManualAccessControl.type === "MANUELL-PROGRAMOMRÅDE-TILGANG"}
+          <ds-field class="ds-field content-item">
+            <label for="{newManualAccessControl.name}-program-area" class="ds-label" data-weight="medium">Velg programområde</label>
+            <select id="{newManualAccessControl.name}-program-area" class="ds-input" bind:value={newManualAccessControl.programAreaId}>
+              {#each data.programAreasForSchool.sort((a, b) => a.name.localeCompare(b.name)) as programArea}
+                <option value="{programArea._id}">{programArea.name}</option>
+              {/each}
+            </select>
+          </ds-field>
+        {/if}
+
         {#if newManualAccessControl.type === "MANUELL-ELEV-TILGANG"}
           <ds-field class="ds-field content-item">
             <label for="{newManualAccessControl.name}-student" class="ds-label" data-weight="medium">Velg elev</label>
@@ -470,6 +564,9 @@
       <ds-tab aria-selected={selectedTab === undefined || selectedTab === accessTab}>
         Tilgangsstyring
       </ds-tab>
+      <ds-tab aria-selected={selectedTab === programAreasTab}>
+        Programområder
+      </ds-tab>
       {/if}
       {#if canManageManualStudents}
         <ds-tab aria-selected={selectedTab === manualStudentsTab || !canManageAccess}>
@@ -480,15 +577,43 @@
 
     {#if canManageAccess}
       <ds-tabpanel>
-        <div class="ds-alert" data-color="info">Tilganger for lærere styres i InSchool, her skal det kun administreres rådgiver-tilganger. Rådgiver-tilgang gir samme tilgang som en kontaktlærer, og kan gis på programområdenivå, klassenivå, eller direkte til elever.</div>
+        <div class="ds-alert" data-color="info">Tilganger for lærere styres i InSchool, her skal det kun administreres tilganger for rådgivere, elevtjeneste, osv. Tilganger som gis her, gir samme tilgang som en kontaktlærer, og kan gis på programområdenivå, klassenivå, eller direkte til elever.</div>
 
         <div class="access-group">
-          <h2 class="ds-heading">Rådgivertilgang til programområde</h2>
-          <p class="ds-paragraph">Kommer etterhvert...</p>
+          <h2 class="ds-heading">Tilgang til programområde</h2>
+          {#if programAreaAccessEntries.length > 0}
+            <table class="ds-table" style="table-layout:fixed">
+              <thead>
+                <tr>
+                  <th aria-sort={programAreaEntriesSort.column === "programArea" ? programAreaEntriesSort.direction : "none"}>
+                    <button type="button" onclick={() => toggleSort(programAreaEntriesSort, "programArea")}>Programområde</button>
+                  </th>
+                  <th aria-sort={programAreaEntriesSort.column === "bruker" ? programAreaEntriesSort.direction : "none"}>
+                    <button type="button" onclick={() => toggleSort(programAreaEntriesSort, "bruker")}>Bruker</button>
+                  </th>
+                  <th>Handling</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each programAreaAccessEntries as programAreaAccess}
+                  <tr>
+                    <td>{programAreaAccess.programAreaName}</td>
+                    <td>{programAreaAccess.entraUser.name} ({programAreaAccess.entraUser.companyName})</td>
+                    <td>
+                      <AsyncButton onClick={() => removeManualAccessEntry(programAreaAccess.entraUser.id, programAreaAccess.accessEntry)} reloadPageDataOnSuccess={true} buttonText="Fjern tilgang" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
+                    </td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          {:else}
+            <p class="ds-paragraph">Ingen programområdetilganger</p>
+          {/if}
+          {@render newAccess(newProgramAreaAccessControl)}
         </div>
 
         <div class="access-group">
-          <h2 class="ds-heading">Rådgivertilgang til klasser</h2>
+          <h2 class="ds-heading">Tilgang til klasser</h2>
           {#if classAccessEntries.length > 0}
             <table class="ds-table" style="table-layout:fixed">
               <thead>
@@ -504,7 +629,7 @@
               </thead>
               <tbody>
                 {#each classAccessEntries as classAccess}
-                    <tr>
+                  <tr>
                     <td>{classAccess.className}</td>
                     <td>{classAccess.entraUser.name} ({classAccess.entraUser.companyName})</td>
                     <td>
@@ -522,7 +647,7 @@
         </div>
 
         <div class="access-group">
-          <h2 class="ds-heading">Rådgivertilgang til enkeltelever</h2>
+          <h2 class="ds-heading">Tilgang til enkeltelever</h2>
           {#if studentAccessEntries.length > 0}
             <table class="ds-table" style="table-layout:fixed">
               <thead>
@@ -586,16 +711,36 @@
 
           {@render newAccess(newManageManualStudentsAccessControl)}
         </div>
+      </ds-tabpanel>
 
-        <div class="new-access">
-
+      <ds-tabpanel>
+        <div class="header-with-action">
+          {#if !newProgramAreaFormOpen}
+            <h2 class="ds-heading">Programområder</h2>
+            <button class="ds-button" onclick={() => { newProgramAreaFormOpen = true }}><span class="material-symbols-outlined">note_add</span>Nytt programområde</button>
+          {:else}
+            <h2 class="ds-heading">Nytt programområde</h2>
+          {/if}
         </div>
+
+        <p class="ds-paragraph" style="margin-top: var(--ds-size-2)">Et programområde i denne sammenhengen er bare en samling av klasser. Disse brukes for enklere tilgangsstyring.</p>
+
+        {#if newProgramAreaFormOpen}
+          <div class="new-program-area-form">
+            <ProgramAreaComponent {schoolClasses} schoolNumber={currentSchool.schoolNumber} bind:editMode={newProgramAreaFormOpen} />
+          </div>
+        {/if}
+
+        {#each data.programAreasForSchool as programArea (programArea._id)}
+          <ProgramAreaComponent {schoolClasses} schoolNumber={currentSchool.schoolNumber} programArea={programArea} />
+        {/each}
+
       </ds-tabpanel>
     {/if}
 
     {#if canManageManualStudents}
       <ds-tabpanel>
-        <div class="new-manual-student">
+        <div class="header-with-action">
           {#if !newManualStudentFormOpen}
             <h2 class="ds-heading">Manuelle elever</h2>
             <button class="ds-button" onclick={openNewManualStudentForm}><span class="material-symbols-outlined">note_add</span>Ny manuell elev</button>
@@ -690,7 +835,7 @@
     margin-top: var(--ds-size-4);
   }
 
-  .new-manual-student {
+  .header-with-action {
     display: flex;
     align-items: center;
     justify-content: space-between;

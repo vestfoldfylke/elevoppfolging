@@ -6,6 +6,7 @@ import type {
   MetricCount,
   NewManualStudentInput,
   NewSchool,
+  ProgramAreaInput,
   StudentCheckBoxInput,
   StudentDataSharingConsentInput,
   StudentImportantStuffInput,
@@ -91,6 +92,15 @@ export interface ApiRouteMap {
   [key: `/api/studentcheckboxes/${NoSlashString}`]: {
     DELETE: { res: { deletedCheckBoxId: string } }
     PATCH: { req: StudentCheckBoxInput; res: { updatedCheckBoxId: string } }
+  }
+
+  "/api/programareas": {
+    POST: { req: ProgramAreaInput; res: { programAreaId: string } }
+  }
+
+  [key: `/api/programareas/${NoSlashString}`]: {
+    DELETE: { res: { deletedProgramAreaId: string } }
+    PATCH: { req: ProgramAreaInput; res: { updatedProgramAreaId: string } }
   }
 
   "/api/metrics": {

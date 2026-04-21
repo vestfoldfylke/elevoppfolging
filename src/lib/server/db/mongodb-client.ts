@@ -49,6 +49,7 @@ import type {
   NewDbStudentImportantStuff,
   NewDocumentContentTemplate,
   NewDocumentMessage,
+  NewProgramArea,
   NewSchool,
   NewStudentCheckBox,
   NewStudentDataSharingConsent,
@@ -403,7 +404,7 @@ export class MongoDbClient implements IDbClient {
       case "MANUELL-KLASSE-TILGANG":
         updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { classes: accessEntry } })
         break
-      case "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG":
+      case "MANUELL-PROGRAMOMRÅDE-TILGANG":
         updateResult = await accessCollection.findOneAndUpdate({ entraUserId }, { $push: { programAreas: { ...accessEntry, _id: new ObjectId(accessEntry._id) } } })
         break
       case "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG":
@@ -458,7 +459,7 @@ export class MongoDbClient implements IDbClient {
       case "MANUELL-KLASSE-TILGANG":
         updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { classes: { systemId: accessEntry.systemId, schoolNumber: accessEntry.schoolNumber } } })
         break
-      case "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG":
+      case "MANUELL-PROGRAMOMRÅDE-TILGANG":
         updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { programAreas: { _id: new ObjectId(accessEntry._id), schoolNumber: accessEntry.schoolNumber } } })
         break
     }
@@ -550,6 +551,62 @@ export class MongoDbClient implements IDbClient {
     return {
       ...programArea,
       _id: programArea._id.toString()
+    }
+  }
+
+  async getProgramAreasFromClassIds(classSystemIds: string[]): Promise<ProgramArea[]> {
+    const db = await this.getDb()
+    const programAreasCollection = db.collection<DbProgramArea>(this.programAreasCollectionName)
+    const programAreas = await programAreasCollection.find({ "classes.systemId": { $in: classSystemIds } }).toArray()
+
+    return programAreas.map((programArea) => ({
+      ...programArea,
+      _id: programArea._id.toString()
+    }))
+  }
+
+  async getProgramAreasForSchool(schoolNumber: string): Promise<ProgramArea[]> {
+    const db = await this.getDb()
+    const programAreasCollection = db.collection<DbProgramArea>(this.programAreasCollectionName)
+    const programAreas = await programAreasCollection.find({ schoolNumber }).toArray()
+
+    return programAreas.map((programArea) => ({
+      ...programArea,
+      _id: programArea._id.toString()
+    }))
+  }
+
+  async createProgramArea(programArea: NewProgramArea): Promise<string> {
+    const db = await this.getDb()
+    const programAreasCollection = db.collection<NewProgramArea>(this.programAreasCollectionName)
+    const result = await programAreasCollection.insertOne(programArea)
+
+    if (!result.insertedId) {
+      throw new Error("Failed to create program area")
+    }
+
+    return result.insertedId.toString()
+  }
+
+  async updateProgramArea(programAreaId: string, programArea: NewProgramArea): Promise<string> {
+    const db = await this.getDb()
+    const programAreasCollection = db.collection<DbProgramArea>(this.programAreasCollectionName)
+    const updateResult = await programAreasCollection.updateOne({ _id: new ObjectId(programAreaId) }, { $set: programArea })
+
+    if (updateResult.matchedCount === 0) {
+      throw new Error(`Program area with id: ${programAreaId} not found, cannot update when it does not exist...`)
+    }
+
+    return programAreaId
+  }
+
+  async deleteProgramArea(programAreaId: string): Promise<void> {
+    const db = await this.getDb()
+    const programAreasCollection = db.collection<DbProgramArea>(this.programAreasCollectionName)
+    const deleteResult = await programAreasCollection.deleteOne({ _id: new ObjectId(programAreaId) })
+
+    if (deleteResult.deletedCount === 0) {
+      throw new Error(`Failed to delete program area with id: ${programAreaId}`)
     }
   }
 
@@ -780,7 +837,7 @@ export class MongoDbClient implements IDbClient {
     }
   }
 
-  async getStudentAccess(studentId: string, studentMemberships: StudentMemberships): Promise<Access[]> {
+  async getStudentAccess(studentId: string, studentMemberships: StudentMemberships, studentProgramAreaIds: string[]): Promise<Access[]> {
     const db = await this.getDb()
     const accessCollection = db.collection<DbAccess>(this.accessCollectionName)
 
@@ -788,6 +845,7 @@ export class MongoDbClient implements IDbClient {
       $or: [
         { "leaderForSchools.schoolNumber": { $in: studentMemberships.schoolNumbers } },
         { "classes.systemId": { $in: studentMemberships.classes.map((c) => c.systemId) } },
+        { "programAreas._id": { $in: studentProgramAreaIds.map((id) => new ObjectId(id)) } },
         {
           "contactTeacherGroups.systemId": { $in: studentMemberships.contactTeacherGroups.map((c) => c.systemId) }
         },

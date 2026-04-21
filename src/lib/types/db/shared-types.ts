@@ -167,7 +167,7 @@ export type ProgramAreaManualAccessEntryInput = {
   schoolNumber: string
   /** Entydig identifikator (db _id) for hvilket undervisningsområde det er gitt tilgang til */
   _id: string
-  type: "MANUELL-UNDERVISNINGSOMRÅDE-TILGANG"
+  type: "MANUELL-PROGRAMOMRÅDE-TILGANG"
 }
 
 export type DbProgramAreaManualAccessEntry = Omit<ProgramAreaManualAccessEntry, "_id"> & {
@@ -284,9 +284,10 @@ export type DbAppUser = NewAppUser & {
 // PROGRAM AREA
 export type ProgramAreaInput = {
   name: string
+  schoolNumber: string
   classes: {
     systemId: string
-    name: string
+    fallbackName: string
   }[]
 }
 

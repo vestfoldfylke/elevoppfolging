@@ -1,6 +1,6 @@
 import { logger } from "@vestfoldfylke/loglady"
 import { updateGauge } from "$lib/server/metrics/handle-metrics"
-import type { CachedFrontendStudent, FrontendStudent, PrincipalAccessStudent, StudentMemberships } from "$lib/types/app-types"
+import type { CachedFrontendStudent, FrontendStudent, PrincipalAccess, PrincipalAccessStudent, StudentMemberships } from "$lib/types/app-types"
 import type { Access } from "$lib/types/db/shared-types"
 import { getEnrollmentsWithinViewAccessWindow } from "$lib/utils/frontend-student-details"
 import { APP_INFO } from "../app-info"
@@ -86,7 +86,7 @@ export const updateStudentsCacheInBackgroundIfExpired = () => {
  * If cache is empty, it will populate the cache before returning students.
  * If cache is too old, it will update the cache in the background but return the old cache for now, to avoid making users wait for the cache to update.
  */
-export const getStudentsFromCache = async (access: Access): Promise<PrincipalAccessStudent[]> => {
+export const getStudentsFromCache = async (principalAccess: PrincipalAccess): Promise<PrincipalAccessStudent[]> => {
   const studentsWithAccessInfo: PrincipalAccessStudent[] = []
 
   // If first time or cache is empty, populate cache before returning students
@@ -102,7 +102,7 @@ export const getStudentsFromCache = async (access: Access): Promise<PrincipalAcc
   }
 
   for (const student of studentsCache.studentsListCache) {
-    const studentAccessInfo = getPrincipalAccessForStudent(student, access)
+    const studentAccessInfo = getPrincipalAccessForStudent(student, principalAccess)
     if (studentAccessInfo.length > 0) {
       studentsWithAccessInfo.push({
         _id: student._id,

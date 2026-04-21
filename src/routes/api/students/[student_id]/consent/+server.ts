@@ -1,5 +1,6 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { validateStudentDataSharingConsentData } from "$lib/data-validation/student-consent-validation"
+import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
 import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
 import { getStudentFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
@@ -20,9 +21,7 @@ const updateStudentDataSharingConsent: ApiNextFunction<PatchConsentResponse, Pat
   }
 
   // Authorization
-  const dbClient = getDbClient()
-
-  const principalAccess = await dbClient.getPrincipalAccess(principal.id)
+  const principalAccess = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
     throw new HTTPError(403, noAccessMessage("No access found for principal"))
   }
@@ -59,6 +58,8 @@ const updateStudentDataSharingConsent: ApiNextFunction<PatchConsentResponse, Pat
       at: new Date()
     }
   }
+
+  const dbClient = getDbClient()
 
   const upsertedConsentId = await dbClient.upsertStudentDataSharingConsent(studentId, upsertConsentData)
 

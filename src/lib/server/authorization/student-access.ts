@@ -1,10 +1,9 @@
-import type { CachedFrontendStudent, PrincipalAccessForStudent } from "$lib/types/app-types"
-import type { Access } from "$lib/types/db/shared-types"
+import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent } from "$lib/types/app-types"
 
 /**
  * Henter ut tilgangene en bruker har til en elev per skole basert på elevens elevforhold og tilgangene i Access-objektet. Tilgangene er sortert på prioritet per skole (høyeste tilgang først).
  */
-export const getPrincipalAccessForStudent = (student: CachedFrontendStudent, access: Access): PrincipalAccessForStudent[] => {
+export const getPrincipalAccessForStudent = (student: CachedFrontendStudent, principalAccess: PrincipalAccess): PrincipalAccessForStudent[] => {
   // Begynner med prioritert tilgang og går nedover derfra. Henter bare høyeste tilgangstype per skole, for å slippe å måtte håndtere flere access entries for samme skole i resten av logikken
   const enrollmentsToCheck = student.enrollmentsWithinViewAccessWindow
 
@@ -14,7 +13,7 @@ export const getPrincipalAccessForStudent = (student: CachedFrontendStudent, acc
 
   const principalAccessForCurrentStudent: PrincipalAccessForStudent[] = []
 
-  for (const schoolAccess of access.leaderForSchools) {
+  for (const schoolAccess of principalAccess.leaderForSchools) {
     const schoolAccessForCurrentStudent = enrollmentsToCheck.some((enrollment) => {
       return enrollment.school.schoolNumber === schoolAccess.schoolNumber
     })
@@ -29,7 +28,7 @@ export const getPrincipalAccessForStudent = (student: CachedFrontendStudent, acc
   }
 
   // Direkte elev-tilgang
-  for (const studentAccess of access.students) {
+  for (const studentAccess of principalAccess.students) {
     if (student._id !== studentAccess._id) {
       continue
     }
@@ -44,10 +43,41 @@ export const getPrincipalAccessForStudent = (student: CachedFrontendStudent, acc
     }
   }
 
-  // TODO - programområder / programAreas når vi har en cache på det for å slippe drittoppslag hele tida (ta de inn som parameter)
+  // Programområde-tilgang
+  for (const programAreaAccess of principalAccess.programAreas) {
+    enrollmentsToCheck.forEach((enrollment) => {
+      if (enrollment.school.schoolNumber !== programAreaAccess.schoolNumber) {
+        return
+      }
+      enrollment.classMemberships.forEach((membership) => {
+        if (!membership.period.active && !membership.period.withinViewAccessWindow) {
+          return
+        }
+        if (
+          principalAccessForCurrentStudent.some(
+            (access) => access.type === "MANUELL-PROGRAMOMRÅDE-TILGANG" && access.accessThroughResource?.id === programAreaAccess._id && access.schoolNumber === programAreaAccess.schoolNumber
+          )
+        ) {
+          // Already added
+          return
+        }
+        if (programAreaAccess.classSystemIds.includes(membership.classGroup.systemId)) {
+          principalAccessForCurrentStudent.push({
+            type: programAreaAccess.type,
+            schoolNumber: programAreaAccess.schoolNumber,
+            accessThroughResource: {
+              id: programAreaAccess._id,
+              name: programAreaAccess.name
+            },
+            source: programAreaAccess.source
+          })
+        }
+      })
+    })
+  }
 
   // Manuell klassetilgang (Rådgiver)
-  for (const classAccess of access.classes.filter((entry) => entry.type === "MANUELL-KLASSE-TILGANG")) {
+  for (const classAccess of principalAccess.classes.filter((entry) => entry.type === "MANUELL-KLASSE-TILGANG")) {
     enrollmentsToCheck.forEach((enrollment) => {
       if (enrollment.school.schoolNumber !== classAccess.schoolNumber) {
         return
@@ -72,7 +102,7 @@ export const getPrincipalAccessForStudent = (student: CachedFrontendStudent, acc
   }
 
   // Kontaktlærer-tilgang
-  for (const contactTeacherGroupAccess of access.contactTeacherGroups) {
+  for (const contactTeacherGroupAccess of principalAccess.contactTeacherGroups) {
     enrollmentsToCheck.forEach((enrollment) => {
       if (enrollment.school.schoolNumber !== contactTeacherGroupAccess.schoolNumber) {
         return
@@ -97,7 +127,7 @@ export const getPrincipalAccessForStudent = (student: CachedFrontendStudent, acc
   }
 
   // Klassetilgang (Automatisk - bare lærer)
-  for (const classAccess of access.classes.filter((entry) => entry.type === "AUTOMATISK-KLASSE-TILGANG")) {
+  for (const classAccess of principalAccess.classes.filter((entry) => entry.type === "AUTOMATISK-KLASSE-TILGANG")) {
     enrollmentsToCheck.forEach((enrollment) => {
       if (enrollment.school.schoolNumber !== classAccess.schoolNumber) {
         return
@@ -122,7 +152,7 @@ export const getPrincipalAccessForStudent = (student: CachedFrontendStudent, acc
   }
 
   // Faglærer
-  for (const teachingGroupAccess of access.teachingGroups) {
+  for (const teachingGroupAccess of principalAccess.teachingGroups) {
     enrollmentsToCheck.forEach((enrollment) => {
       if (enrollment.school.schoolNumber !== teachingGroupAccess.schoolNumber) {
         return

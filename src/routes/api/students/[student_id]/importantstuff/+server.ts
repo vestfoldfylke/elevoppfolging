@@ -1,5 +1,6 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { validateStudentImportantStuffData } from "$lib/data-validation/student-important-stuff-validation"
+import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
 import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
 import { getStudentFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
@@ -7,7 +8,7 @@ import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canEditStudentImportantStuff, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { CachedFrontendStudent, PrincipalAccessForStudent } from "$lib/types/app-types"
+import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent } from "$lib/types/app-types"
 import type { EditorData, NewStudentImportantStuff, StudentImportantStuffInput } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
@@ -21,9 +22,7 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
   }
 
   // Authorization
-  const dbClient = getDbClient()
-
-  const principalAccess = await dbClient.getPrincipalAccess(principal.id)
+  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
     throw new HTTPError(403, noAccessMessage("No access found for principal"))
   }
@@ -50,6 +49,8 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
   if (!canEditImportantStuff) {
     throw new HTTPError(403, noAccessMessage("Insufficient access level to edit student important stuff"))
   }
+
+  const dbClient = getDbClient()
 
   const allStudentCheckBoxes = await dbClient.getStudentCheckBoxes()
 
