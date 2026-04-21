@@ -10,7 +10,10 @@ export type MSPrincipalClaimTyp =
   | "nbf"
   | "exp"
   | "aio"
+  | "appid"
+  | "appidacr"
   | "c_hash"
+  | "http://schemas.microsoft.com/identity/claims/identityprovider"
   | "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
   | "groups"
   | "name"
@@ -25,6 +28,7 @@ export type MSPrincipalClaimTyp =
   | "ver"
   | "roles"
   | "cc"
+  | "xms_ftd"
 
 export type MSPrincipalClaim = {
   typ: MSPrincipalClaimTyp

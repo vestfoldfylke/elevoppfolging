@@ -12,7 +12,10 @@ export const MS_PRINCIPAL_CLAIM_TYPES: MSPrincipalClaimTyp[] = [
   "nbf",
   "exp",
   "aio",
+  "appid",
+  "appidacr",
   "c_hash",
+  "http://schemas.microsoft.com/identity/claims/identityprovider",
   "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
   "groups",
   "nonce",
@@ -26,5 +29,6 @@ export const MS_PRINCIPAL_CLAIM_TYPES: MSPrincipalClaimTyp[] = [
   "http://schemas.microsoft.com/identity/claims/tenantid",
   "uti",
   "ver",
-  "cc"
+  "cc",
+  "xms_ftd"
 ]
