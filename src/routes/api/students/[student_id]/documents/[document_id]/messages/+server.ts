@@ -55,8 +55,6 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
 
   let newMessage: NewDocumentMessage
 
-  console.log("Received new message data:", newMessageData)
-
   switch (newMessageData.type) {
     case "comment": {
       if (!newMessageData.content || typeof newMessageData.content.text !== "string") {

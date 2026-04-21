@@ -36,7 +36,6 @@
       const originalClassIds = programArea.classes?.map((classGroup) => classGroup.systemId) || []
       // Sjekk om de valgte klassene er forskjellige fra de originale
       classesChanged = selectedClassIds.length !== originalClassIds.length || !selectedClassIds.every((id) => originalClassIds.includes(id))
-      console.log("Selected class IDs:", selectedClassIds)
     }
 
     programAreaEdited = nameChanged || classesChanged
