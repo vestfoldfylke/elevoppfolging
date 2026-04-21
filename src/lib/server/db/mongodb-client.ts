@@ -590,10 +590,7 @@ export class MongoDbClient implements IDbClient {
     if (!result.insertedId) {
       incrementCount({
         ...metricBody,
-        labels: [
-          ...labels,
-          [metricResultName, metricResultFailure]
-        ]
+        labels: [...labels, [metricResultName, metricResultFailure]]
       })
 
       throw new Error("Failed to create program area")
@@ -601,10 +598,7 @@ export class MongoDbClient implements IDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [
-        ...labels,
-        [metricResultName, metricResultSuccessful]
-      ]
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
 
     // TODO: audit-implementation
@@ -626,10 +620,7 @@ export class MongoDbClient implements IDbClient {
     if (updateResult.matchedCount === 0) {
       incrementCount({
         ...metricBody,
-        labels: [
-          ...labels,
-          [metricResultName, metricResultFailure]
-        ]
+        labels: [...labels, [metricResultName, metricResultFailure]]
       })
 
       throw new Error(`Program area with id: ${programAreaId} not found, cannot update when it does not exist...`)
@@ -637,10 +628,7 @@ export class MongoDbClient implements IDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [
-        ...labels,
-        [metricResultName, metricResultSuccessful]
-      ]
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
 
     // TODO: audit-implementation
@@ -662,10 +650,7 @@ export class MongoDbClient implements IDbClient {
     if (deleteResult.deletedCount === 0) {
       incrementCount({
         ...metricBody,
-        labels: [
-          ...labels,
-          [metricResultName, metricResultFailure]
-        ]
+        labels: [...labels, [metricResultName, metricResultFailure]]
       })
 
       throw new Error(`Failed to delete program area with id: ${programArea._id}`)
@@ -673,10 +658,7 @@ export class MongoDbClient implements IDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [
-        ...labels,
-        [metricResultName, metricResultSuccessful]
-      ]
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
 
     // TODO: audit-implementation
