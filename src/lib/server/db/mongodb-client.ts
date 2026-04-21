@@ -1225,7 +1225,7 @@ export class MongoDbClient implements IDbClient {
     const document = (await documentsCollection.findOneAndUpdate({ _id: new ObjectId(documentId) }, { $push: { messages: encryptedMessageWithId } })) as DbStudentDocument | null // Db client decrypts for us, so we can cast it to DbStudentDocument
 
     const metricBody: MetricCount = {
-      name: "DocumentMessage_Create",
+      name: "StudentDocumentMessage_Create",
       description: "Number of document messages created"
     }
 
@@ -1506,7 +1506,7 @@ export class MongoDbClient implements IDbClient {
     const result = await documentContentTemplatesCollection.deleteOne({ _id: new ObjectId(templateId) })
 
     const metricBody: MetricCount = {
-      name: "DocumentTemplate_Removed",
+      name: "DocumentTemplate_Remove",
       description: "Number of document templates removed"
     }
 
