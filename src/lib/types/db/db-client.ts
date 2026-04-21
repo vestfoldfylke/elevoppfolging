@@ -48,7 +48,7 @@ export interface IDbClient {
   getProgramAreasForSchool(schoolNumber: string): Promise<ProgramArea[]>
   createProgramArea(programArea: NewProgramArea): Promise<string>
   updateProgramArea(programAreaId: string, programArea: NewProgramArea): Promise<string>
-  deleteProgramArea(programAreaId: string): Promise<void>
+  deleteProgramArea(programArea: ProgramArea): Promise<void>
 
   getAllStudents(): Promise<FrontendStudent[]>
   getStudents(access: Access): Promise<FrontendStudent[]>
@@ -85,6 +85,6 @@ export interface IDbClient {
 
   getStudentCheckBoxes(): Promise<StudentCheckBox[]>
   createStudentCheckBox(studentCheckBox: NewStudentCheckBox): Promise<string>
-  deleteStudentCheckBox(studentCheckBoxId: string): Promise<void>
+  deleteStudentCheckBox(studentCheckBox: StudentCheckBox): Promise<void>
   updateStudentCheckBox(studentCheckBoxId: string, studentCheckBox: NewStudentCheckBox): Promise<string>
 }

@@ -13,6 +13,7 @@ import {
   type WithId
 } from "mongodb"
 import { env } from "$env/dynamic/private"
+import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "$lib/server/metrics/handle-metrics"
 import type { AccessEntry, FrontendStudent, StudentMemberships } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { KeysToNumber } from "$lib/types/db/db-helpers"
@@ -38,6 +39,8 @@ import type {
   DocumentContentTemplate,
   EditorData,
   ManualAccessEntryInput,
+  MetricCount,
+  MetricLabel,
   NewAccess,
   NewAppStudent,
   NewDbEncryptedStudentCheckBox,
@@ -59,6 +62,7 @@ import type {
   StudentDataSharingConsent,
   StudentDocument,
   StudentDocumentUpdate,
+  StudentEnrollment,
   StudentImportantStuff,
   UpdateAppStudent
 } from "$lib/types/db/shared-types"
@@ -137,6 +141,7 @@ export class MongoDbClient implements IDbClient {
       if (this.encryptionKeyIds.length === 0) {
         throw new Error("Encryption client is initialized but no encryption keys found in the key vault collection")
       }
+
       return {
         client: this.encryptionClient,
         encryptionOptions: {
@@ -157,22 +162,23 @@ export class MongoDbClient implements IDbClient {
       })
 
       this.encryptionKeyIds = (await this.encryptionClient.getKeys().toArray()).map((key) => key._id)
-
-      if (this.encryptionKeyIds.length === 0) {
-        throw new Error("No encryption keys found in the key vault collection")
-      }
-
-      return {
-        client: this.encryptionClient,
-        encryptionOptions: {
-          // Random id
-          keyId: this.encryptionKeyIds[Math.floor(Math.random() * this.encryptionKeyIds.length)],
-          algorithm
-        }
-      }
     } catch (error) {
       logger.errorException(error, "Error when initializing encryption client")
       throw error
+    }
+
+    if (this.encryptionKeyIds.length === 0) {
+      logger.error("No encryption keys found in the key vault collection")
+      throw new Error("No encryption keys found in the key vault collection")
+    }
+
+    return {
+      client: this.encryptionClient,
+      encryptionOptions: {
+        // Random id
+        keyId: this.encryptionKeyIds[Math.floor(Math.random() * this.encryptionKeyIds.length)],
+        algorithm
+      }
     }
   }
 
@@ -223,9 +229,28 @@ export class MongoDbClient implements IDbClient {
 
     const schoolsCollection = db.collection<NewSchool>(this.schoolsCollectionName)
     const result = await schoolsCollection.insertOne(newSchool)
+
+    const metricBody: MetricCount = {
+      name: "School_Create",
+      description: "Number of schools created"
+    }
+
     if (!result.insertedId) {
+      incrementCount({
+        ...metricBody,
+        labels: [[metricResultName, metricResultFailure]]
+      })
+
       throw new Error("Failed to create school")
     }
+
+    incrementCount({
+      ...metricBody,
+      labels: [[metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
+
     return result.insertedId.toString()
   }
 
@@ -233,12 +258,37 @@ export class MongoDbClient implements IDbClient {
     const db = await this.getDb()
     const schoolsCollection = db.collection<DbSchool>(this.schoolsCollectionName)
     const result = await schoolsCollection.updateOne({ schoolNumber }, { $set: schoolData })
+
+    const metricBody: MetricCount = {
+      name: "School_Update",
+      description: "Number of schools updated"
+    }
+
     if (result.matchedCount === 0) {
+      incrementCount({
+        ...metricBody,
+        labels: [[metricResultName, metricResultFailure]]
+      })
+
       throw new Error(`School with schoolNumber: ${schoolNumber} not found`)
     }
+
     if (result.modifiedCount === 0) {
+      incrementCount({
+        ...metricBody,
+        labels: [[metricResultName, metricResultFailure]]
+      })
+
       throw new Error(`Failed to update school with schoolNumber: ${schoolNumber}`)
     }
+
+    incrementCount({
+      ...metricBody,
+      labels: [[metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
+
     return schoolNumber
   }
 
@@ -246,9 +296,27 @@ export class MongoDbClient implements IDbClient {
     const db = await this.getDb()
     const schoolsCollection = db.collection<DbSchool>(this.schoolsCollectionName)
     const result = await schoolsCollection.deleteOne({ schoolNumber })
+
+    const metricBody: MetricCount = {
+      name: "School_Remove",
+      description: "Number of schools removed"
+    }
+
     if (result.deletedCount === 0) {
+      incrementCount({
+        ...metricBody,
+        labels: [[metricResultName, metricResultFailure]]
+      })
+
       throw new Error(`Failed to delete school with schoolNumber: ${schoolNumber}`)
     }
+
+    incrementCount({
+      ...metricBody,
+      labels: [[metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
   }
 
   async getPrincipalAccess(entraUserId: string): Promise<Access | null> {
@@ -297,9 +365,28 @@ export class MongoDbClient implements IDbClient {
     const db = await this.getDb()
     const accessCollection = db.collection<NewAccess>(this.accessCollectionName)
     const result = await accessCollection.insertOne(access)
+
+    const metricBody: MetricCount = {
+      name: "Access_Create",
+      description: "Number of access created"
+    }
+
     if (!result.insertedId) {
+      incrementCount({
+        ...metricBody,
+        labels: [[metricResultName, metricResultFailure]]
+      })
+
       throw new Error("Failed to create access")
     }
+
+    incrementCount({
+      ...metricBody,
+      labels: [[metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
+
     return result.insertedId.toString()
   }
 
@@ -326,9 +413,32 @@ export class MongoDbClient implements IDbClient {
       default:
         throw new Error(`Invalid access entry type: ${accessEntry.type}`)
     }
+
+    const metricBody: MetricCount = {
+      name: "AccessEntry_Create",
+      description: "Number of access entries created"
+    }
+    const labels: MetricLabel[] = [
+      ["schoolNumber", accessEntry.schoolNumber],
+      ["type", accessEntry.type]
+    ]
+
     if (!updateResult?._id) {
+      incrementCount({
+        ...metricBody,
+        labels: [...labels, [metricResultName, metricResultFailure]]
+      })
+
       throw new Error("Failed to add access entry")
     }
+
+    incrementCount({
+      ...metricBody,
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
+
     return updateResult._id.toString()
   }
 
@@ -353,9 +463,32 @@ export class MongoDbClient implements IDbClient {
         updatedAccess = await accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { programAreas: { _id: new ObjectId(accessEntry._id), schoolNumber: accessEntry.schoolNumber } } })
         break
     }
+
+    const metricBody: MetricCount = {
+      name: "AccessEntry_Remove",
+      description: "Number of access entries removed"
+    }
+    const labels: MetricLabel[] = [
+      ["schoolNumber", accessEntry.schoolNumber],
+      ["type", accessEntry.type]
+    ]
+
     if (!updatedAccess?._id) {
+      incrementCount({
+        ...metricBody,
+        labels: [...labels, [metricResultName, metricResultFailure]]
+      })
+
       throw new Error("Failed to remove access entry")
     }
+
+    incrementCount({
+      ...metricBody,
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
+
     return updatedAccess._id.toString()
   }
 
@@ -448,9 +581,27 @@ export class MongoDbClient implements IDbClient {
     const programAreasCollection = db.collection<NewProgramArea>(this.programAreasCollectionName)
     const result = await programAreasCollection.insertOne(programArea)
 
+    const metricBody: MetricCount = {
+      name: "ProgramArea_Create",
+      description: "Number of program areas created"
+    }
+    const labels: [labelName: string, labelValue: string][] = [["schoolNumber", programArea.schoolNumber]]
+
     if (!result.insertedId) {
+      incrementCount({
+        ...metricBody,
+        labels: [...labels, [metricResultName, metricResultFailure]]
+      })
+
       throw new Error("Failed to create program area")
     }
+
+    incrementCount({
+      ...metricBody,
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
 
     return result.insertedId.toString()
   }
@@ -460,21 +611,57 @@ export class MongoDbClient implements IDbClient {
     const programAreasCollection = db.collection<DbProgramArea>(this.programAreasCollectionName)
     const updateResult = await programAreasCollection.updateOne({ _id: new ObjectId(programAreaId) }, { $set: programArea })
 
+    const metricBody: MetricCount = {
+      name: "ProgramArea_Update",
+      description: "Number of program areas updated"
+    }
+    const labels: [labelName: string, labelValue: string][] = [["schoolNumber", programArea.schoolNumber]]
+
     if (updateResult.matchedCount === 0) {
+      incrementCount({
+        ...metricBody,
+        labels: [...labels, [metricResultName, metricResultFailure]]
+      })
+
       throw new Error(`Program area with id: ${programAreaId} not found, cannot update when it does not exist...`)
     }
+
+    incrementCount({
+      ...metricBody,
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
 
     return programAreaId
   }
 
-  async deleteProgramArea(programAreaId: string): Promise<void> {
+  async deleteProgramArea(programArea: ProgramArea): Promise<void> {
     const db = await this.getDb()
     const programAreasCollection = db.collection<DbProgramArea>(this.programAreasCollectionName)
-    const deleteResult = await programAreasCollection.deleteOne({ _id: new ObjectId(programAreaId) })
+    const deleteResult = await programAreasCollection.deleteOne({ _id: new ObjectId(programArea._id) })
+
+    const metricBody: MetricCount = {
+      name: "ProgramArea_Remove",
+      description: "Number of program areas removed"
+    }
+    const labels: [labelName: string, labelValue: string][] = [["schoolNumber", programArea.schoolNumber]]
 
     if (deleteResult.deletedCount === 0) {
-      throw new Error(`Failed to delete program area with id: ${programAreaId}`)
+      incrementCount({
+        ...metricBody,
+        labels: [...labels, [metricResultName, metricResultFailure]]
+      })
+
+      throw new Error(`Failed to delete program area with id: ${programArea._id}`)
     }
+
+    incrementCount({
+      ...metricBody,
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
   }
 
   async getAllStudents(): Promise<FrontendStudent[]> {
@@ -747,9 +934,33 @@ export class MongoDbClient implements IDbClient {
     logger.info("Creating new manual student with systemId: {SystemId}", manualStudent.systemId)
 
     const result: InsertOneResult<DbAppStudent> = await studentsCollection.insertOne(manualStudent)
+
+    const mainSchoolNumber: string | undefined = manualStudent.studentEnrollments.find((enrollment: StudentEnrollment) => enrollment.mainSchool)?.school.schoolNumber
+    const metricBody: MetricCount = {
+      name: "ManualStudent_Create",
+      description: "Number of manual students created"
+    }
+    const labels: MetricLabel[] = []
+
+    if (mainSchoolNumber) {
+      labels.push(["schoolNumber", mainSchoolNumber])
+    }
+
     if (!result.acknowledged) {
+      incrementCount({
+        ...metricBody,
+        labels: [...labels, [metricResultName, metricResultFailure]]
+      })
+
       throw new Error("Failed to insert manual student")
     }
+
+    incrementCount({
+      ...metricBody,
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
 
     return result.insertedId.toString()
   }
@@ -765,13 +976,42 @@ export class MongoDbClient implements IDbClient {
     }
 
     const result: UpdateResult<DbAppStudent> = await studentsCollection.updateOne({ _id: new ObjectId(manualStudent._id) }, { $set: manualStudentWithId })
+
+    const mainSchoolNumber: string | undefined = manualStudent.studentEnrollments.find((enrollment: StudentEnrollment) => enrollment.mainSchool)?.school.schoolNumber
+    const metricBody: MetricCount = {
+      name: "ManualStudent_Update",
+      description: "Number of manual students updated"
+    }
+    const labels: MetricLabel[] = []
+
+    if (mainSchoolNumber) {
+      labels.push(["schoolNumber", mainSchoolNumber])
+    }
+
     if (!result.acknowledged) {
+      incrementCount({
+        ...metricBody,
+        labels: [...labels, [metricResultName, metricResultFailure]]
+      })
+
       throw new Error("Failed to update manual student")
     }
 
     if (result.modifiedCount !== 1) {
+      incrementCount({
+        ...metricBody,
+        labels: [...labels, [metricResultName, metricResultFailure]]
+      })
+
       throw new Error("Failed to update manual student")
     }
+
+    incrementCount({
+      ...metricBody,
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
 
     logger.info("Manual student with Id {Id} updated", manualStudent._id)
     return manualStudent._id
@@ -885,6 +1125,24 @@ export class MongoDbClient implements IDbClient {
 
     const result = await documentsCollection.insertOne(documentToInsert)
 
+    const metricBody: MetricCount = {
+      name: "StudentDocument_Create",
+      description: "Number of student documents created"
+    }
+    const labels: MetricLabel[] = [
+      ["schoolNumber", document.school.schoolNumber],
+      ["templateName", document.template.name]
+    ]
+
+    if (!result.insertedId) {
+      incrementCount({
+        ...metricBody,
+        labels: [...labels, [metricResultName, metricResultFailure]]
+      })
+
+      throw new Error("Failed to create student document")
+    }
+
     if (document.student?._id) {
       try {
         await this.updateStudentLastActivityTimestamp(document.student._id, document.school)
@@ -896,6 +1154,13 @@ export class MongoDbClient implements IDbClient {
         )
       }
     }
+
+    incrementCount({
+      ...metricBody,
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
 
     return result.insertedId.toString()
   }
@@ -917,9 +1182,31 @@ export class MongoDbClient implements IDbClient {
     }
 
     const updatedDocument: DbStudentDocument | null = (await documentsCollection.findOneAndUpdate({ _id: new ObjectId(documentId) }, { $set: encryptedDocumentUpdate })) as DbStudentDocument | null // Db client decrypts for us, so we can cast it to DbStudentDocument
+
+    const metricBody: MetricCount = {
+      name: "StudentDocument_Update",
+      description: "Number of student documents updated"
+    }
+    const labels: MetricLabel[] = [
+      ["schoolNumber", documentUpdate.school.schoolNumber],
+      ["templateName", documentUpdate.template.name]
+    ]
+
     if (!updatedDocument?._id) {
+      incrementCount({
+        ...metricBody,
+        labels: [...labels, [metricResultName, metricResultFailure]]
+      })
+
       throw new Error("Failed to update student document")
     }
+
+    incrementCount({
+      ...metricBody,
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
 
     return updatedDocument._id.toString()
   }
@@ -937,9 +1224,26 @@ export class MongoDbClient implements IDbClient {
 
     const document = (await documentsCollection.findOneAndUpdate({ _id: new ObjectId(documentId) }, { $push: { messages: encryptedMessageWithId } })) as DbStudentDocument | null // Db client decrypts for us, so we can cast it to DbStudentDocument
 
+    const metricBody: MetricCount = {
+      name: "DocumentMessage_Create",
+      description: "Number of document messages created"
+    }
+
     if (!document?._id) {
+      incrementCount({
+        ...metricBody,
+        labels: [[metricResultName, metricResultFailure]]
+      })
+
       throw new Error("Failed to add message to document")
     }
+
+    incrementCount({
+      ...metricBody,
+      labels: [[metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
 
     // TODO - flytt denne ut, den hører ikke hjemme her - men der den blir påkalt fra
     if (studentId) {
@@ -1017,9 +1321,27 @@ export class MongoDbClient implements IDbClient {
       { upsert: true, returnDocument: "after" }
     )) as DbStudentImportantStuff | null // Db client decrypts for us, so we can cast it to DbStudentImportantStuff
 
+    const metricBody: MetricCount = {
+      name: "StudentImportantStuff_Upsert",
+      description: "Number of student important stuff upserted"
+    }
+    const labels: MetricLabel[] = [["schoolNumber", importantStuff.school.schoolNumber]]
+
     if (!result?._id) {
+      incrementCount({
+        ...metricBody,
+        labels: [...labels, [metricResultName, metricResultFailure]]
+      })
+
       throw new Error("Failed to upsert student important stuff")
     }
+
+    incrementCount({
+      ...metricBody,
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
 
     return result._id.toString()
   }
@@ -1114,6 +1436,32 @@ export class MongoDbClient implements IDbClient {
     const documentContentTemplatesCollection = db.collection<NewDocumentContentTemplate>(this.documentContentTemplatesCollectionName)
 
     const result = await documentContentTemplatesCollection.insertOne(template)
+
+    const metricBody: MetricCount = {
+      name: "DocumentTemplate_Create",
+      description: "Number of document templates created"
+    }
+    const labels: MetricLabel[] = [
+      ["availableForClasses", template.availableForDocumentType.group.toString()],
+      ["availableForStudents", template.availableForDocumentType.student.toString()]
+    ]
+
+    if (!result.insertedId) {
+      incrementCount({
+        ...metricBody,
+        labels: [...labels, [metricResultName, metricResultFailure]]
+      })
+
+      throw new Error("Failed to create document template")
+    }
+
+    incrementCount({
+      ...metricBody,
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
+
     return result.insertedId.toString()
   }
 
@@ -1123,9 +1471,30 @@ export class MongoDbClient implements IDbClient {
 
     const result = await documentContentTemplatesCollection.updateOne({ _id: new ObjectId(templateId) }, { $set: { ...template } })
 
+    const metricBody: MetricCount = {
+      name: "DocumentTemplate_Update",
+      description: "Number of document templates updated"
+    }
+    const labels: MetricLabel[] = [
+      ["availableForClasses", template.availableForDocumentType.group.toString()],
+      ["availableForStudents", template.availableForDocumentType.student.toString()]
+    ]
+
     if (result.modifiedCount === 0) {
+      incrementCount({
+        ...metricBody,
+        labels: [...labels, [metricResultName, metricResultFailure]]
+      })
+
       throw new Error("Failed to update document content template")
     }
+
+    incrementCount({
+      ...metricBody,
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
 
     return templateId
   }
@@ -1136,9 +1505,26 @@ export class MongoDbClient implements IDbClient {
 
     const result = await documentContentTemplatesCollection.deleteOne({ _id: new ObjectId(templateId) })
 
+    const metricBody: MetricCount = {
+      name: "DocumentTemplate_Removed",
+      description: "Number of document templates removed"
+    }
+
     if (result.deletedCount === 0) {
+      incrementCount({
+        ...metricBody,
+        labels: [[metricResultName, metricResultFailure]]
+      })
+
       throw new Error("Failed to delete document content template")
     }
+
+    incrementCount({
+      ...metricBody,
+      labels: [[metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
   }
 
   async getStudentDataSharingConsent(studentId: string): Promise<StudentDataSharingConsent | null> {
@@ -1191,9 +1577,26 @@ export class MongoDbClient implements IDbClient {
 
     const result = await studentDataSharingConsentsCollection.findOneAndUpdate({ "student._id": new ObjectId(studentId) }, { $set: updatedConsent }, { upsert: true, returnDocument: "after" })
 
+    const metricBody: MetricCount = {
+      name: "StudentDataSharing_Upsert",
+      description: "Number of student data sharing upserted"
+    }
+
     if (!result?._id) {
+      incrementCount({
+        ...metricBody,
+        labels: [[metricResultName, metricResultFailure]]
+      })
+
       throw new Error("Failed to upsert student data sharing consent")
     }
+
+    incrementCount({
+      ...metricBody,
+      labels: [[metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
 
     return result._id.toString()
   }
@@ -1217,6 +1620,29 @@ export class MongoDbClient implements IDbClient {
       ...studentCheckBox,
       value: await encryption.client.encrypt(studentCheckBox.value, encryption.encryptionOptions)
     })
+
+    const metricBody: MetricCount = {
+      name: "StudentCheckBox_Create",
+      description: "Number of student checkboxes created"
+    }
+    const labels: MetricLabel[] = [["type", studentCheckBox.type]]
+
+    if (!result.acknowledged) {
+      incrementCount({
+        ...metricBody,
+        labels: [...labels, [metricResultName, metricResultFailure]]
+      })
+
+      throw new Error("Failed to create student check box")
+    }
+
+    incrementCount({
+      ...metricBody,
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
+
     return result.insertedId.toString()
   }
 
@@ -1230,18 +1656,56 @@ export class MongoDbClient implements IDbClient {
       { $set: { ...studentCheckBox, value: await encryption.client.encrypt(studentCheckBox.value, encryption.encryptionOptions) } }
     )
 
+    const metricBody: MetricCount = {
+      name: "StudentCheckBox_Update",
+      description: "Number of student checkboxes updated"
+    }
+    const labels: MetricLabel[] = [["type", studentCheckBox.type]]
+
     if (result.matchedCount === 0) {
+      incrementCount({
+        ...metricBody,
+        labels: [...labels, [metricResultName, metricResultFailure]]
+      })
+
       throw new Error("Failed to update student check box")
     }
+
+    incrementCount({
+      ...metricBody,
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
+
     return studentCheckBoxId
   }
 
-  async deleteStudentCheckBox(studentCheckBoxId: string): Promise<void> {
+  async deleteStudentCheckBox(studentCheckBox: StudentCheckBox): Promise<void> {
     const db = await this.getDb()
     const studentCheckBoxesCollection = db.collection<DbStudentCheckBox>(this.studentCheckBoxesCollectionName)
-    const result = await studentCheckBoxesCollection.deleteOne({ _id: new ObjectId(studentCheckBoxId) })
+    const result = await studentCheckBoxesCollection.deleteOne({ _id: new ObjectId(studentCheckBox._id) })
+
+    const metricBody: MetricCount = {
+      name: "StudentCheckBox_Remove",
+      description: "Number of student checkboxes removed"
+    }
+    const labels: MetricLabel[] = [["type", studentCheckBox.type]]
+
     if (result.deletedCount === 0) {
+      incrementCount({
+        ...metricBody,
+        labels: [...labels, [metricResultName, metricResultFailure]]
+      })
+
       throw new Error("Failed to delete student check box")
     }
+
+    incrementCount({
+      ...metricBody,
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
   }
 }

@@ -33,6 +33,7 @@
     if (!newSchoolForm) {
       throw new Error("New school form not found")
     }
+
     const formIsValid = newSchoolForm.reportValidity()
     if (!formIsValid) {
       throw new Error(INVALID_FORM_MESSAGE)

@@ -1,8 +1,9 @@
 <script lang="ts">
   import { page } from "$app/state"
+  import { apiFetch } from "$lib/api-fetch/api-fetch"
   import { canEditStudentDocument } from "$lib/shared-authorization/authorization"
   import type { PrincipalAccessForStudent } from "$lib/types/app-types"
-  import type { DocumentInput, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
+  import type { DocumentInput, MetricCount, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
   import EditorInfo from "../EditorInfo.svelte"
   import DocumentContent from "./DocumentContentItem.svelte"
   import DocumentEditor from "./DocumentEditor.svelte"
@@ -39,6 +40,24 @@
     )
   }
 
+  const handleDocumentOpen = (): void => {
+    const metricBody: MetricCount = {
+      name: "Document_Open",
+      description: "Number of times documents has been opened"
+    }
+
+    // we don't need to await this since we actually don't care if it goes through or not
+    apiFetch("/api/metrics", {
+      method: "POST",
+      body: metricBody,
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+
+    // TODO: audit-implementation
+  }
+
   // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounts ved endring av document (ha en key på document i parent)
   let editableDocument: DocumentInput = $state(editableDocumentFromDocument())
 
@@ -48,7 +67,7 @@
 <div class="ds-card document-card" data-variant="tinted" data-color="accent" data-clickdelegatefor="document-modal-{document._id}-open">
   <div class="ds-card__block">
     <div class="ds-paragraph" data-size="xs" >{document.school.name}</div>
-    <button id="document-modal-{document._id}-open" class="ds-button card-button" data-size="lg" command="show-modal" commandfor="document-modal-{document._id}" data-variant="tertiary">{document.template.name}: {editableDocument.title}</button>
+    <button id="document-modal-{document._id}-open" class="ds-button card-button" onclick={() => handleDocumentOpen()} data-size="lg" command="show-modal" commandfor="document-modal-{document._id}" data-variant="tertiary">{document.template.name}: {editableDocument.title}</button>
     <EditorInfo created={document.created} modified={document.modified} timestamp={true} modifiedIndicator={true} style="margin: 0;" />
   </div>
 </div>

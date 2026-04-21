@@ -2,7 +2,7 @@
 </script>
 
 <div class="page-content">
-  <h1 class="ds-heading" data-size="lg">System-administrator</h1>
+  <h1 class="ds-heading" data-size="lg">Systemadministrasjon</h1>
   <div class="ds-card" data-variant="default" data-color="neutral">
     <div class="ds-card__block">
       <h2 class="ds-heading">

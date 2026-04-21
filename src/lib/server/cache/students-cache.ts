@@ -1,4 +1,5 @@
 import { logger } from "@vestfoldfylke/loglady"
+import { updateGauge } from "$lib/server/metrics/handle-metrics"
 import type { CachedFrontendStudent, FrontendStudent, PrincipalAccess, PrincipalAccessStudent, StudentMemberships } from "$lib/types/app-types"
 import { getEnrollmentsWithinViewAccessWindow } from "$lib/utils/frontend-student-details"
 import { APP_INFO } from "../app-info"
@@ -49,6 +50,18 @@ export const updateStudentsCache = async () => {
 
   studentsCache.updated = new Date()
   studentsCache.updateInProgress = false
+
+  updateGauge({
+    name: "StudentsCache_Count",
+    description: "Number of students in the cache",
+    value: students.length
+  })
+
+  updateGauge({
+    name: "StudentsCache_UpdateInMilliseconds",
+    description: "Time taken to update the students cache in milliseconds",
+    value: Date.now() - startTime
+  })
 
   logger.info(`Students cache updated with ${studentsCache.students.size} students, cache age reset to 0 minutes`)
   logger.info(`Memory used: ${process.memoryUsage().heapUsed / 1024 / 1024} MB`)

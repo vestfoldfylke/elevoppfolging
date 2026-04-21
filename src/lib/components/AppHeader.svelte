@@ -21,7 +21,7 @@
   }
 
   if (isSystemAdmin(page.data.authenticatedPrincipal, page.data.APP_INFO)) {
-    menuItems.push({ name: "Systemadministrator", href: "/system", hrefStartsWith: "/system" })
+    menuItems.push({ name: "Systemadministrasjon", href: "/system", hrefStartsWith: "/system" })
   }
 </script>
 

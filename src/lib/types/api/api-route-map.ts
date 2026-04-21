@@ -3,6 +3,7 @@ import type {
   DocumentInput,
   DocumentMessageInput,
   ManualAccessEntryInput,
+  MetricCount,
   NewManualStudentInput,
   NewSchool,
   ProgramAreaInput,
@@ -100,5 +101,9 @@ export interface ApiRouteMap {
   [key: `/api/programareas/${NoSlashString}`]: {
     DELETE: { res: { deletedProgramAreaId: string } }
     PATCH: { req: ProgramAreaInput; res: { updatedProgramAreaId: string } }
+  }
+
+  "/api/metrics": {
+    POST: { req: MetricCount; res: { incremented: boolean } }
   }
 }
