@@ -46,6 +46,12 @@ export const validateDocument = (documentData: DocumentInput): ValidationResult 
         }
         break
       }
+      case "checkboxGroup": {
+        if (!Array.isArray(contentItem.selectedValues) || contentItem.selectedValues.length === 0) {
+          return { valid: false, message: "Content item of type checkboxGroup is required but has no selected values." }
+        }
+        break
+      }
     }
   }
 

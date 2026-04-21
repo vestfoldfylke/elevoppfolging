@@ -162,7 +162,6 @@
 
     <div class="program-area-actions">
       {#if programArea}
-        <!-- TODO sjekk at det faktisk er endringer -->
         <AsyncButton disabled={!programAreaEdited} onClick={updateProgramArea} buttonText="Lagre endringer" iconName="save" reloadPageDataOnSuccess={true} callBackAfterReloadPageData={closeEditMode} />
         <AsyncButton onClick={deleteProgramArea} buttonText="Slett programområde" iconName="delete" color="danger" reloadPageDataOnSuccess={true} callBackAfterReloadPageData={closeEditMode} />
       {:else}

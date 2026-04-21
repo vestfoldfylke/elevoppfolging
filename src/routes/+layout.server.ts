@@ -33,7 +33,7 @@ const layoutLoad: ServerLoadNextFunction<RootLayoutData> = async ({ principal })
     }
   }
 
-  logger.info("NÅ HENTER JEG ELEVER") // TODO - indexer på felter, drit i å sjekke date.. Det kan vi ta i egen logikk (getStudentAccessInfo)
+  logger.info("NÅ HENTER JEG ELEVER")
   const now = Date.now()
   const studentsWithAccessInfo: PrincipalAccessStudent[] = await getStudentsFromCache(principalAccess)
   const timeTaken = Date.now() - now

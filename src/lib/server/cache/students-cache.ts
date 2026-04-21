@@ -31,7 +31,7 @@ export const updateStudentsCache = async () => {
   const dbClient = getDbClient()
 
   logger.info("Fetching all students from database to update cache")
-  const startTime = Date.now() // TODO remove date stuff when we know its ok
+  const startTime = Date.now()
   const students = await dbClient.getAllStudents()
   const endTime = Date.now()
   logger.info(`Fetched ${students.length} students from database in ${(endTime - startTime) / 1000}s, updating cache`)

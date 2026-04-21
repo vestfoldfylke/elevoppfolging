@@ -1,5 +1,6 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
+import { validateDocument } from "$lib/data-validation/document-validation"
 import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
 import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
 import { getStudentFromCache } from "$lib/server/cache/students-cache"
@@ -22,9 +23,6 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
     throw new HTTPError(400, "Student ID is missing in request parameters")
   }
 
-  const newDocumentData: AddDocumentBody = body
-  // TODO validate body
-
   // authorization check if principal has access to the student
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
@@ -39,6 +37,13 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
   const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, principalAccess)
   if (principalAccessForStudent.length === 0) {
     throw new HTTPError(403, noAccessMessage("No permission to add document"))
+  }
+
+  const newDocumentData: AddDocumentBody = body
+
+  const validationResult = validateDocument(newDocumentData)
+  if (!validationResult.valid) {
+    throw new HTTPError(400, `Invalid document data: ${validationResult.message}`)
   }
 
   if (!canCreateStudentDocument(principalAccessForStudent, newDocumentData)) {
