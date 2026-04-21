@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { DSSuggestionElement } from "@digdir/designsystemet-web"
   import { page } from "$app/state"
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import AsyncButton from "$lib/components/AsyncButton.svelte"
@@ -15,7 +14,6 @@
     ManageManualStudentsManualAccessEntry,
     ManualAccessEntryInput,
     NewManualStudentInput,
-    ProgramAreaInput,
     ProgramAreaManualAccessEntryInput,
     StudentManualAccessEntry
   } from "$lib/types/db/shared-types"
