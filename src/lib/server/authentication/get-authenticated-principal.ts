@@ -47,9 +47,9 @@ export const getAuthenticatedPrincipal = (headers: Headers): AuthenticatedPrinci
   }
 
   const principalClaims = getPrincipalClaims(base64EncodedHeaderValue)
-  const userId = principalClaims.claims.find((claim) => claim.typ === "http://schemas.microsoft.com/identity/claims/objectidentifier")?.val
-  if (!userId) {
-    throw new Error("User ID claim is missing in principal claims")
+  const objectId = principalClaims.claims.find((claim) => claim.typ === "http://schemas.microsoft.com/identity/claims/objectidentifier")?.val
+  if (!objectId) {
+    throw new Error("Object ID claim is missing in principal claims")
   }
   const preferredUserName = principalClaims.claims.find((claim) => claim.typ === "preferred_username")?.val || "unknown"
   const displayName = principalClaims.claims.find((claim) => claim.typ === "name")?.val
@@ -64,7 +64,7 @@ export const getAuthenticatedPrincipal = (headers: Headers): AuthenticatedPrinci
   const groups = principalClaims.claims.filter((claim) => claim.typ === "groups").map((claim) => claim.val)
 
   return {
-    id: userId,
+    id: objectId,
     preferredUserName,
     displayName,
     email,

@@ -8,7 +8,8 @@ export const APP_INFO: ApplicationInfo = {
   ENVIRONMENT: env.NODE_ENV || "development",
   ROLES: {
     EMPLOYEE: env.APP_ROLE_EMPLOYEE || "employee",
-    ADMIN: env.APP_ROLE_ADMIN || "admin"
+    ADMIN: env.APP_ROLE_ADMIN || "admin",
+    METRICS: env.APP_ROLE_METRICS || "metrics"
   },
   STUDENT_ACCESS_BEFORE_ACTIVE_DAYS: Number(env.STUDENT_ACCESS_BEFORE_ACTIVE_DAYS) || 0,
   STUDENT_ACCESS_AFTER_EXPIRE_DAYS: Number(env.STUDENT_ACCESS_AFTER_EXPIRE_DAYS) || 0,

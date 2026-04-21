@@ -98,6 +98,7 @@ export type ApplicationInfo = {
   ROLES: {
     EMPLOYEE: string
     ADMIN: string
+    METRICS: string
   }
   STUDENT_ACCESS_BEFORE_ACTIVE_DAYS: number
   STUDENT_ACCESS_AFTER_EXPIRE_DAYS: number
