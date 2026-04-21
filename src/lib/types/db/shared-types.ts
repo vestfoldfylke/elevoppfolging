@@ -623,3 +623,18 @@ export type DbStudentDataSharingConsent = StudentDataSharingConsentBase &
       _id: ObjectId
     }
   }
+
+export type MetricLabel = [labelName: string, labelValue: string]
+
+export type MetricCount = {
+  name: string
+  description: string
+  labels?: MetricLabel[]
+}
+
+export type MetricGauge = {
+  name: string
+  description: string
+  value: number
+  labels?: MetricLabel[]
+}

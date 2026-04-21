@@ -29,7 +29,7 @@ const deleteStudentCheckBox: ApiNextFunction<DeleteStudentCheckBoxResponse> = as
     throw new HTTPError(404, "Student check box not found. Cannot delete non-existing check box.")
   }
 
-  await dbClient.deleteStudentCheckBox(checkBoxId)
+  await dbClient.deleteStudentCheckBox(studentCheckBoxToDelete)
 
   return {
     deletedCheckBoxId: checkBoxId

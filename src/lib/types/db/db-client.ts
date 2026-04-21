@@ -79,6 +79,6 @@ export interface IDbClient {
 
   getStudentCheckBoxes(): Promise<StudentCheckBox[]>
   createStudentCheckBox(studentCheckBox: NewStudentCheckBox): Promise<string>
-  deleteStudentCheckBox(studentCheckBoxId: string): Promise<void>
+  deleteStudentCheckBox(studentCheckBox: StudentCheckBox): Promise<void>
   updateStudentCheckBox(studentCheckBoxId: string, studentCheckBox: NewStudentCheckBox): Promise<string>
 }

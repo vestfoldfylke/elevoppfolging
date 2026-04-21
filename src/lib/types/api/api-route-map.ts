@@ -3,6 +3,7 @@ import type {
   DocumentInput,
   DocumentMessageInput,
   ManualAccessEntryInput,
+  MetricCount,
   NewManualStudentInput,
   NewSchool,
   StudentCheckBoxInput,
@@ -90,5 +91,9 @@ export interface ApiRouteMap {
   [key: `/api/studentcheckboxes/${NoSlashString}`]: {
     DELETE: { res: { deletedCheckBoxId: string } }
     PATCH: { req: StudentCheckBoxInput; res: { updatedCheckBoxId: string } }
+  }
+
+  "/api/metrics": {
+    POST: { req: MetricCount; res: { incremented: boolean } }
   }
 }

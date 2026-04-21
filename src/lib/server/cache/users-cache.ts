@@ -1,4 +1,5 @@
 import { logger } from "@vestfoldfylke/loglady"
+import { updateGauge } from "$lib/server/metrics/handle-metrics"
 import type { CachedAppUser } from "$lib/types/app-types"
 import { APP_INFO } from "../app-info"
 import { getDbClient } from "../db/get-db-client"
@@ -35,6 +36,19 @@ export const updateAppUserCache = async () => {
 
   appUserCache.updated = new Date()
   appUserCache.updateInProgress = false
+
+  updateGauge({
+    name: "AppUsersCache_Count",
+    description: "Number of app users in the cache",
+    value: users.length
+  })
+
+  updateGauge({
+    name: "AppUsersCache_UpdateInMilliseconds",
+    description: "Time taken to update the app users cache in milliseconds",
+    value: Date.now() - startTime
+  })
+
   logger.info(`Memory used: ${process.memoryUsage().heapUsed / 1024 / 1024} MB`)
 }
 

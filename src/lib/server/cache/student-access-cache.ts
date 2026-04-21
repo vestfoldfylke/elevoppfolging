@@ -9,7 +9,7 @@ type StudentAccessCache = Record<string, StudentAccessPerson[]>
 
 const studentAccessCache: StudentAccessCache = {}
 
-// TODO Refreshe access for en elev når det blir gitt tilgang eller fjernet tilgang der eleven er involverad (mulig bare wipe hele cachen når noen gjør tilgangsendringer)
+// TODO Refresh access for en elev når det blir gitt tilgang eller fjernet tilgang der eleven er involverad (mulig bare wipe hele cachen når noen gjør tilgangsendringer)
 
 export const getStudentAccessPersonsFromCache = async (studentId: string): Promise<StudentAccessPerson[]> => {
   const cacheEntry = studentAccessCache[studentId]
