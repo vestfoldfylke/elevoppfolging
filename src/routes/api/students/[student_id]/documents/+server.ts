@@ -1,5 +1,6 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
+import { validateDocument } from "$lib/data-validation/document-validation"
 import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
 import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
 import { getStudentFromCache } from "$lib/server/cache/students-cache"
@@ -12,7 +13,6 @@ import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent 
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { EditorData, NewStudentDocument } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
-import { validateDocument } from "$lib/data-validation/document-validation"
 
 type AddDocumentResponse = ApiRouteMap[`/api/students/${NoSlashString}/documents`]["POST"]["res"]
 type AddDocumentBody = ApiRouteMap[`/api/students/${NoSlashString}/documents`]["POST"]["req"]
