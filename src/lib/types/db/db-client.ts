@@ -67,6 +67,7 @@ export interface IDbClient {
   updateManualStudent(manualStudent: UpdateAppStudent): Promise<string>
 
   addDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<string>
+  updateDocumentMessage(documentId: string, messageId: string, messageUpdate: NewDocumentMessage): Promise<string>
 
   getStudentsImportantStuff(studentIds: string[]): Promise<Record<string, Record<string, StudentImportantStuff>>>
   getStudentImportantStuff(studentId: string, schoolNumbers: string[]): Promise<StudentImportantStuff[]>

@@ -1236,6 +1236,43 @@ export class MongoDbClient implements IDbClient {
     return encryptedMessageWithId.messageId
   }
 
+  async updateDocumentMessage(documentId: string, messageId: string, messageUpdate: NewDocumentMessage): Promise<string> {
+    const db = await this.getDb()
+    const documentsCollection = db.collection<DbEncryptedStudentDocument>(this.documentsCollectionName)
+    const encryption = await this.getEncryptionClient()
+
+    const encryptedMessageWithId: DbEncryptedDocumentMessage = {
+      ...messageUpdate,
+      content: await encryption.client.encrypt(messageUpdate.content, encryption.encryptionOptions),
+      messageId
+    }
+
+    const document = (await documentsCollection.findOneAndUpdate({ _id: new ObjectId(documentId), "messages.messageId": messageId }, { $set: { "messages.$": encryptedMessageWithId } })) as DbStudentDocument | null // Db client decrypts for us, so we can cast it to DbStudentDocument
+
+    const metricBody: MetricCount = {
+      name: "StudentDocumentMessage_Update",
+      description: "Number of document messages updated"
+    }
+
+    if (!document?._id) {
+      incrementCount({
+        ...metricBody,
+        labels: [[metricResultName, metricResultFailure]]
+      })
+
+      throw new Error("Failed to update message in document")
+    }
+
+    incrementCount({
+      ...metricBody,
+      labels: [[metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
+
+    return messageId
+  }
+
   async getStudentsImportantStuff(studentIds: string[]): Promise<Record<string, Record<string, StudentImportantStuff>>> {
     const db = await this.getDb()
 

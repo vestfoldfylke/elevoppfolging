@@ -18,33 +18,31 @@
 
   let { documentId, message, editMode, studentId, groupId, callback }: PageProps = $props()
 
-  let savedEditableMessage: DocumentMessageInput = $derived.by(() => {
-    switch (message.type) {
-      case "comment":
-        return {
-          type: "comment",
-          content: {
-            text: message.content.text
-          }
-        }
-      case "update":
-        return {
-          type: "update",
-          content: {
-            title: message.content.title,
-            text: message.content.text
-          }
-        }
+  // svelte-ignore state_referenced_locally (we don't want to modify the original), remember key on the outside
+  let editableMessage: DocumentMessageInput = $state({
+    type: message.type,
+    content: {
+      title: message.content.title,
+      text: message.content.text
     }
   })
 
-  // svelte-ignore state_referenced_locally (we don't want to modify the original)
-  let editableMessage: DocumentMessageInput = $state(savedEditableMessage)
+  let messageEdited = $derived.by(() => {
+    return editableMessage.type !== message.type ||
+      editableMessage.content.title !== message.content.title ||
+      editableMessage.content.text !== message.content.text
+  })
 
   let messageForm: HTMLFormElement | undefined = $state()
 
   const callBackOnSuccessOrCancel = () => {
-    editableMessage = $state.snapshot(savedEditableMessage)
+    editableMessage = {
+      type: message.type,
+      content: {
+        title: message.content.title,
+        text: message.content.text
+      }
+    }
     if (callback) {
       callback()
     }
@@ -71,6 +69,33 @@
 
     await apiFetch(createMessageRoute, {
       method: "POST",
+      body: editableMessage,
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+  }
+
+  const updateMessage = async (): Promise<void> => {
+    if (!messageForm) {
+      throw new Error("Message form not found")
+    }
+    const formIsValid = messageForm.reportValidity()
+    if (!formIsValid) {
+      throw new Error(INVALID_FORM_MESSAGE)
+    }
+
+    if (groupId) {
+      throw new Error("Updating messages for groups is not supported yet")
+    }
+    if (!groupId && !studentId) {
+      throw new Error("studentId or groupId must be provided")
+    }
+
+    const updateMessageRoute = `/api/students/${studentId as NoSlashString}/documents/${documentId as NoSlashString}/messages/${message.messageId as NoSlashString}` as const
+
+    await apiFetch(updateMessageRoute, {
+      method: "PATCH",
       body: editableMessage,
       headers: {
         "Content-Type": "application/json"
@@ -114,8 +139,7 @@
     {#if !message.messageId}
       <AsyncButton buttonText="Lagre" onClick={newMessage} reloadPageDataOnSuccess={true} callBackAfterReloadPageData={callBackOnSuccessOrCancel} iconName="save" />
     {:else}
-      Lag "lagre endringer" knapp...
-      <!--Og husk å legge til metrics i update som følger med-->
+      <AsyncButton disabled={!messageEdited} buttonText="Lagre endringer" onClick={updateMessage} reloadPageDataOnSuccess={true} callBackAfterReloadPageData={callBackOnSuccessOrCancel} iconName="save" />
     {/if}
     <button class="ds-button" data-variant="secondary" onclick={callBackOnSuccessOrCancel}><span class="material-symbols-outlined">close</span>Avbryt</button>
   </div>
