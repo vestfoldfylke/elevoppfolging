@@ -1,4 +1,5 @@
 import type { RequestHandler } from "@sveltejs/kit"
+import { logger } from "@vestfoldfylke/loglady"
 import { validateDocumentMessage } from "$lib/data-validation/document-message-validation"
 import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
 import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
@@ -104,7 +105,17 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
 
   const messageId = await dbClient.addDocumentMessage(documentId, newMessage)
 
-  // TODO update lastActivityTimestamp for the student
+  try {
+    await dbClient.updateStudentLastActivityTimestamp(studentId, currentDocument.school)
+  } catch (error) {
+    logger.errorException(
+      error,
+      "Failed to update student {feideName} last activity timestamp after adding document message on document {documentId} for school {schoolNumber}. Returning messageId regardless",
+      student.feideName,
+      documentId,
+      currentDocument.school
+    )
+  }
 
   return {
     messageId

@@ -1143,18 +1143,6 @@ export class MongoDbClient implements IDbClient {
       throw new Error("Failed to create student document")
     }
 
-    if (document.student?._id) {
-      try {
-        await this.updateStudentLastActivityTimestamp(document.student._id, document.school)
-      } catch (error) {
-        logger.errorException(
-          error,
-          "Failed to update student's latest activity timestamp after creating document. Document ID: {documentId}. OBS, returning document ID anyway",
-          result.insertedId.toString()
-        )
-      }
-    }
-
     incrementCount({
       ...metricBody,
       labels: [...labels, [metricResultName, metricResultSuccessful]]
@@ -1211,7 +1199,7 @@ export class MongoDbClient implements IDbClient {
     return updatedDocument._id.toString()
   }
 
-  async addDocumentMessage(documentId: string, message: NewDocumentMessage, studentId?: string): Promise<string> {
+  async addDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<string> {
     const db = await this.getDb()
     const documentsCollection = db.collection<DbEncryptedStudentDocument>(this.documentsCollectionName)
     const encryption = await this.getEncryptionClient()
@@ -1244,15 +1232,6 @@ export class MongoDbClient implements IDbClient {
     })
 
     // TODO: audit-implementation
-
-    // TODO - flytt denne ut, den hører ikke hjemme her - men der den blir påkalt fra
-    if (studentId) {
-      try {
-        await this.updateStudentLastActivityTimestamp(studentId, document.school)
-      } catch (error) {
-        logger.errorException(error, "Failed to update student's latest activity timestamp after adding document message. Document ID: {documentId}. OBS, returning message anyway", documentId)
-      }
-    }
 
     return encryptedMessageWithId.messageId
   }
