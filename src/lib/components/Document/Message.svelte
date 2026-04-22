@@ -102,20 +102,6 @@
           <textarea required class="ds-input" name="messageContent" id="message-content-{message.messageId || documentId}" rows={5} bind:value={editableMessage.content.text} placeholder="Skriv oppdateringen her..."></textarea>
         </ds-field>
       {/if}
-      <!--
-      {#if editableMessage.type === "comment"}
-        {#if !message.messageId}
-          <h2 class="ds-heading">Ny kommentar</h2>
-        {/if}
-        <ds-field class="ds-field content-item">
-          <label for="message-content-{message.messageId || documentId}" class="ds-label" data-weight="medium">
-            Kommentar
-            <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
-          </label>
-          <input class="ds-input" required name="messageContent" id="message-content-{message.messageId || documentId}" type="text" bind:value={editableMessage.content.text} placeholder="Skriv kommentaren her..." />
-        </ds-field>
-      {/if}
-      -->
     </form>
   {:else}
     <p class="ds-paragraph pre-wrap-whitespace content-item">

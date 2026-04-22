@@ -36,7 +36,7 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
 
   const student: CachedFrontendStudent | null = await getStudentFromCache(studentId)
   if (!student) {
-    throw new HTTPError(400, "Student not found. Cannot create document for non-existing student.")
+    throw new HTTPError(400, "Student not found. Cannot create document message for non-existing student.")
   }
 
   const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, principalAccess)
@@ -58,37 +58,13 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
     at: new Date()
   }
 
-  let newMessage: NewDocumentMessage
-
-  switch (newMessageData.type) {
-    case "comment": {
-      if (!newMessageData.content || typeof newMessageData.content.text !== "string") {
-        throw new HTTPError(400, "Comment text is required and must be a string.")
-      }
-      newMessage = {
-        type: "comment",
-        created: editorData,
-        modified: editorData,
-        content: {
-          text: newMessageData.content.text
-        }
-      }
-      break
-    }
-    case "update": {
-      if (!newMessageData.content || typeof newMessageData.content.text !== "string" || typeof newMessageData.content.title !== "string") {
-        throw new HTTPError(400, "Update title and text are required and must be strings.")
-      }
-      newMessage = {
-        type: "update",
-        created: editorData,
-        modified: editorData,
-        content: {
-          title: newMessageData.content.title,
-          text: newMessageData.content.text
-        }
-      }
-      break
+  const newMessage: NewDocumentMessage = {
+    type: "update",
+    created: editorData,
+    modified: editorData,
+    content: {
+      title: newMessageData.content.title,
+      text: newMessageData.content.text
     }
   }
 
