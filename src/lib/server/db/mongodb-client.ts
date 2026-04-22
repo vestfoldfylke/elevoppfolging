@@ -1247,7 +1247,10 @@ export class MongoDbClient implements IDbClient {
       messageId
     }
 
-    const document = (await documentsCollection.findOneAndUpdate({ _id: new ObjectId(documentId), "messages.messageId": messageId }, { $set: { "messages.$": encryptedMessageWithId } })) as DbStudentDocument | null // Db client decrypts for us, so we can cast it to DbStudentDocument
+    const document = (await documentsCollection.findOneAndUpdate(
+      { _id: new ObjectId(documentId), "messages.messageId": messageId },
+      { $set: { "messages.$": encryptedMessageWithId } }
+    )) as DbStudentDocument | null // Db client decrypts for us, so we can cast it to DbStudentDocument
 
     const metricBody: MetricCount = {
       name: "StudentDocumentMessage_Update",

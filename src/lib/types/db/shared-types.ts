@@ -389,8 +389,7 @@ export type DocumentUpdateInput = {
   }
 }
 
-export type DocumentMessageInput =  DocumentUpdateInput
-
+export type DocumentMessageInput = DocumentUpdateInput
 
 export type DocumentUpdate = DocumentMessageBase & DocumentUpdateInput
 

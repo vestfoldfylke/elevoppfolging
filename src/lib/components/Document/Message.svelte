@@ -28,9 +28,7 @@
   })
 
   let messageEdited = $derived.by(() => {
-    return editableMessage.type !== message.type ||
-      editableMessage.content.title !== message.content.title ||
-      editableMessage.content.text !== message.content.text
+    return editableMessage.type !== message.type || editableMessage.content.title !== message.content.title || editableMessage.content.text !== message.content.text
   })
 
   let messageForm: HTMLFormElement | undefined = $state()

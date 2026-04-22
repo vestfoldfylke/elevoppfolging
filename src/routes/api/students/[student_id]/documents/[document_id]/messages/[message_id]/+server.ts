@@ -62,7 +62,7 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
     throw new HTTPError(404, "Document not found, cannot add message to non-existing document...")
   }
 
-  const messageToUpdate = currentDocument.messages.find(message => message.messageId === messageId)
+  const messageToUpdate = currentDocument.messages.find((message) => message.messageId === messageId)
   if (!messageToUpdate) {
     throw new HTTPError(404, "Message not found, cannot update non-existing message...")
   }
