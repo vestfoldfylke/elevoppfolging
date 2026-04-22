@@ -40,10 +40,11 @@
     )
   }
 
-  const handleDocumentOpen = (): void => {
+  const handleDocumentOpen = (document: StudentDocument): void => {
     const metricBody: MetricCount = {
       name: "Document_Open",
-      description: "Number of times documents has been opened"
+      description: "Number of times documents has been opened",
+      labels: [["schoolNumber", document.school.schoolNumber]]
     }
 
     // we don't need to await this since we actually don't care if it goes through or not
@@ -67,7 +68,7 @@
 <div class="ds-card document-card" data-variant="tinted" data-color="accent" data-clickdelegatefor="document-modal-{document._id}-open">
   <div class="ds-card__block">
     <div class="ds-paragraph" data-size="xs" >{document.school.name}</div>
-    <button id="document-modal-{document._id}-open" class="ds-button card-button" onclick={() => handleDocumentOpen()} data-size="lg" command="show-modal" commandfor="document-modal-{document._id}" data-variant="tertiary">{document.template.name}: {editableDocument.title}</button>
+    <button id="document-modal-{document._id}-open" class="ds-button card-button" onclick={() => handleDocumentOpen(document)} data-size="lg" command="show-modal" commandfor="document-modal-{document._id}" data-variant="tertiary">{document.template.name}: {editableDocument.title}</button>
     <EditorInfo created={document.created} modified={document.modified} timestamp={true} modifiedIndicator={true} style="margin: 0;" />
   </div>
 </div>
