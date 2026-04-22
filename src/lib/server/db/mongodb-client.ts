@@ -1129,8 +1129,7 @@ export class MongoDbClient implements IDbClient {
 
     const metricBody: MetricCount = {
       name: "StudentDocument_Create",
-      description: "Number of student documents created",
-      splitMetricByLabels: true
+      description: "Number of student documents created"
     }
     const labels: MetricLabel[] = [["schoolNumber", document.school.schoolNumber]]
 
@@ -1173,8 +1172,7 @@ export class MongoDbClient implements IDbClient {
 
     const metricBody: MetricCount = {
       name: "StudentDocument_Update",
-      description: "Number of student documents updated",
-      splitMetricByLabels: true
+      description: "Number of student documents updated"
     }
     const labels: MetricLabel[] = [["schoolNumber", documentUpdate.school.schoolNumber]]
 
