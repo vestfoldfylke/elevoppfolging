@@ -619,9 +619,22 @@ export type DbStudentDataSharingConsent = StudentDataSharingConsentBase &
 export type MetricLabel = [labelName: string, labelValue: string]
 
 export type MetricCount = {
+  /** Will be the visible name in Prometheus.<br />
+   *  A system-wide prefix will be added. See <b>metricNamePrefix</b> in handle-metrics.ts.<br />
+   *  If <u>splitMetricByLabels</u> is true, "\_By\_%labelName%" will be appended */
   name: string
+  /** If <u>splitMetricByLabels</u> is true, " for %labelName%" will be appended */
   description: string
   labels?: MetricLabel[]
+  /** If set to true, the metric will be split into <u>x</u> metrics (<u>x</u> is the number of labels present (<b>metricResultName</b> not counted)) and "\_By\_%labelName%" will be appended to the metric name.<br />
+   *  If not set or set to false, all labels will be added to the metric as is.<br />
+   *  Default behavior: false*/
+  splitMetricByLabels?: boolean
+  /** Only applicable when <u>splitMetricByLabels</u> is <b>true</b>.<br />
+   *  If set to false, labels will not be added to the metric (<b>metricResultName</b> will be added anyway).<br />
+   *  If not set or set to true, splitted labels will be added to the metric (<b>metricResultName</b> will be added anyway).<br />
+   *  Default behavior: true */
+  includeLabelsInSplit?: boolean
 }
 
 export type MetricGauge = {

@@ -416,7 +416,8 @@ export class MongoDbClient implements IDbClient {
 
     const metricBody: MetricCount = {
       name: "AccessEntry_Create",
-      description: "Number of access entries created"
+      description: "Number of access entries created",
+      splitMetricByLabels: true
     }
     const labels: MetricLabel[] = [
       ["schoolNumber", accessEntry.schoolNumber],
@@ -466,7 +467,8 @@ export class MongoDbClient implements IDbClient {
 
     const metricBody: MetricCount = {
       name: "AccessEntry_Remove",
-      description: "Number of access entries removed"
+      description: "Number of access entries removed",
+      splitMetricByLabels: true
     }
     const labels: MetricLabel[] = [
       ["schoolNumber", accessEntry.schoolNumber],
@@ -585,7 +587,7 @@ export class MongoDbClient implements IDbClient {
       name: "ProgramArea_Create",
       description: "Number of program areas created"
     }
-    const labels: [labelName: string, labelValue: string][] = [["schoolNumber", programArea.schoolNumber]]
+    const labels: MetricLabel[] = [["schoolNumber", programArea.schoolNumber]]
 
     if (!result.insertedId) {
       incrementCount({
@@ -615,7 +617,7 @@ export class MongoDbClient implements IDbClient {
       name: "ProgramArea_Update",
       description: "Number of program areas updated"
     }
-    const labels: [labelName: string, labelValue: string][] = [["schoolNumber", programArea.schoolNumber]]
+    const labels: MetricLabel[] = [["schoolNumber", programArea.schoolNumber]]
 
     if (updateResult.matchedCount === 0) {
       incrementCount({
@@ -645,7 +647,7 @@ export class MongoDbClient implements IDbClient {
       name: "ProgramArea_Remove",
       description: "Number of program areas removed"
     }
-    const labels: [labelName: string, labelValue: string][] = [["schoolNumber", programArea.schoolNumber]]
+    const labels: MetricLabel[] = [["schoolNumber", programArea.schoolNumber]]
 
     if (deleteResult.deletedCount === 0) {
       incrementCount({
@@ -1127,12 +1129,10 @@ export class MongoDbClient implements IDbClient {
 
     const metricBody: MetricCount = {
       name: "StudentDocument_Create",
-      description: "Number of student documents created"
+      description: "Number of student documents created",
+      splitMetricByLabels: true
     }
-    const labels: MetricLabel[] = [
-      ["schoolNumber", document.school.schoolNumber],
-      ["templateName", document.template.name]
-    ]
+    const labels: MetricLabel[] = [["schoolNumber", document.school.schoolNumber]]
 
     if (!result.insertedId) {
       incrementCount({
@@ -1173,12 +1173,10 @@ export class MongoDbClient implements IDbClient {
 
     const metricBody: MetricCount = {
       name: "StudentDocument_Update",
-      description: "Number of student documents updated"
+      description: "Number of student documents updated",
+      splitMetricByLabels: true
     }
-    const labels: MetricLabel[] = [
-      ["schoolNumber", documentUpdate.school.schoolNumber],
-      ["templateName", documentUpdate.template.name]
-    ]
+    const labels: MetricLabel[] = [["schoolNumber", documentUpdate.school.schoolNumber]]
 
     if (!updatedDocument?._id) {
       incrementCount({
@@ -1458,12 +1456,19 @@ export class MongoDbClient implements IDbClient {
 
     const metricBody: MetricCount = {
       name: "DocumentTemplate_Create",
-      description: "Number of document templates created"
+      description: "Number of document templates created",
+      splitMetricByLabels: true,
+      includeLabelsInSplit: false
     }
-    const labels: MetricLabel[] = [
-      ["availableForClasses", template.availableForDocumentType.group.toString()],
-      ["availableForStudents", template.availableForDocumentType.student.toString()]
-    ]
+    const labels: MetricLabel[] = []
+
+    if (template.availableForDocumentType.group) {
+      labels.push(["availableForClasses", template.availableForDocumentType.group.toString()])
+    }
+
+    if (template.availableForDocumentType.student) {
+      labels.push(["availableForStudents", template.availableForDocumentType.student.toString()])
+    }
 
     if (!result.insertedId) {
       incrementCount({
@@ -1492,12 +1497,19 @@ export class MongoDbClient implements IDbClient {
 
     const metricBody: MetricCount = {
       name: "DocumentTemplate_Update",
-      description: "Number of document templates updated"
+      description: "Number of document templates updated",
+      splitMetricByLabels: true,
+      includeLabelsInSplit: false
     }
-    const labels: MetricLabel[] = [
-      ["availableForClasses", template.availableForDocumentType.group.toString()],
-      ["availableForStudents", template.availableForDocumentType.student.toString()]
-    ]
+    const labels: MetricLabel[] = []
+
+    if (template.availableForDocumentType.group) {
+      labels.push(["availableForClasses", template.availableForDocumentType.group.toString()])
+    }
+
+    if (template.availableForDocumentType.student) {
+      labels.push(["availableForStudents", template.availableForDocumentType.student.toString()])
+    }
 
     if (result.modifiedCount === 0) {
       incrementCount({
