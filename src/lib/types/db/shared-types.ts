@@ -381,13 +381,6 @@ export type DocumentMessageBase = {
   modified: EditorData
 }
 
-export type DocumentCommentInput = {
-  type: "comment"
-  content: {
-    text: string
-  }
-}
-
 export type DocumentUpdateInput = {
   type: "update"
   content: {
@@ -396,13 +389,11 @@ export type DocumentUpdateInput = {
   }
 }
 
-export type DocumentMessageInput = DocumentCommentInput | DocumentUpdateInput
-
-export type DocumentComment = DocumentMessageBase & DocumentCommentInput
+export type DocumentMessageInput = DocumentUpdateInput
 
 export type DocumentUpdate = DocumentMessageBase & DocumentUpdateInput
 
-export type NewDocumentMessage = DocumentComment | DocumentUpdate
+export type NewDocumentMessage = DocumentUpdate
 
 export type NewDbEncryptedDocumentMessage = Omit<NewDocumentMessage, "content"> & {
   content: Binary

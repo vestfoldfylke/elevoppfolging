@@ -85,6 +85,10 @@ export interface ApiRouteMap {
 
   [key: `/api/students/${NoSlashString}/documents/${NoSlashString}/messages`]: ApiDocumentsIdMessages
 
+  [key: `/api/students/${NoSlashString}/documents/${NoSlashString}/messages/${NoSlashString}`]: {
+    PATCH: { req: DocumentMessageInput; res: { updatedMessageId: string } }
+  }
+
   "/api/studentcheckboxes": {
     POST: { req: StudentCheckBoxInput; res: { checkBoxId: string } }
   }

@@ -18,33 +18,29 @@
 
   let { documentId, message, editMode, studentId, groupId, callback }: PageProps = $props()
 
-  let savedEditableMessage: DocumentMessageInput = $derived.by(() => {
-    switch (message.type) {
-      case "comment":
-        return {
-          type: "comment",
-          content: {
-            text: message.content.text
-          }
-        }
-      case "update":
-        return {
-          type: "update",
-          content: {
-            title: message.content.title,
-            text: message.content.text
-          }
-        }
+  // svelte-ignore state_referenced_locally (we don't want to modify the original), remember key on the outside
+  let editableMessage: DocumentMessageInput = $state({
+    type: message.type,
+    content: {
+      title: message.content.title,
+      text: message.content.text
     }
   })
 
-  // svelte-ignore state_referenced_locally (we don't want to modify the original)
-  let editableMessage: DocumentMessageInput = $state(savedEditableMessage)
+  let messageEdited = $derived.by(() => {
+    return editableMessage.type !== message.type || editableMessage.content.title !== message.content.title || editableMessage.content.text !== message.content.text
+  })
 
   let messageForm: HTMLFormElement | undefined = $state()
 
   const callBackOnSuccessOrCancel = () => {
-    editableMessage = $state.snapshot(savedEditableMessage)
+    editableMessage = {
+      type: message.type,
+      content: {
+        title: message.content.title,
+        text: message.content.text
+      }
+    }
     if (callback) {
       callback()
     }
@@ -77,6 +73,33 @@
       }
     })
   }
+
+  const updateMessage = async (): Promise<void> => {
+    if (!messageForm) {
+      throw new Error("Message form not found")
+    }
+    const formIsValid = messageForm.reportValidity()
+    if (!formIsValid) {
+      throw new Error(INVALID_FORM_MESSAGE)
+    }
+
+    if (groupId) {
+      throw new Error("Updating messages for groups is not supported yet")
+    }
+    if (!groupId && !studentId) {
+      throw new Error("studentId or groupId must be provided")
+    }
+
+    const updateMessageRoute = `/api/students/${studentId as NoSlashString}/documents/${documentId as NoSlashString}/messages/${message.messageId as NoSlashString}` as const
+
+    await apiFetch(updateMessageRoute, {
+      method: "PATCH",
+      body: editableMessage,
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+  }
 </script>
 
 <div class="message">
@@ -102,20 +125,6 @@
           <textarea required class="ds-input" name="messageContent" id="message-content-{message.messageId || documentId}" rows={5} bind:value={editableMessage.content.text} placeholder="Skriv oppdateringen her..."></textarea>
         </ds-field>
       {/if}
-      <!--
-      {#if editableMessage.type === "comment"}
-        {#if !message.messageId}
-          <h2 class="ds-heading">Ny kommentar</h2>
-        {/if}
-        <ds-field class="ds-field content-item">
-          <label for="message-content-{message.messageId || documentId}" class="ds-label" data-weight="medium">
-            Kommentar
-            <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
-          </label>
-          <input class="ds-input" required name="messageContent" id="message-content-{message.messageId || documentId}" type="text" bind:value={editableMessage.content.text} placeholder="Skriv kommentaren her..." />
-        </ds-field>
-      {/if}
-      -->
     </form>
   {:else}
     <p class="ds-paragraph pre-wrap-whitespace content-item">
@@ -128,8 +137,7 @@
     {#if !message.messageId}
       <AsyncButton buttonText="Lagre" onClick={newMessage} reloadPageDataOnSuccess={true} callBackAfterReloadPageData={callBackOnSuccessOrCancel} iconName="save" />
     {:else}
-      Lag "lagre endringer" knapp...
-      <!--Og husk å legge til metrics i update som følger med-->
+      <AsyncButton disabled={!messageEdited} buttonText="Lagre endringer" onClick={updateMessage} reloadPageDataOnSuccess={true} callBackAfterReloadPageData={callBackOnSuccessOrCancel} iconName="save" />
     {/if}
     <button class="ds-button" data-variant="secondary" onclick={callBackOnSuccessOrCancel}><span class="material-symbols-outlined">close</span>Avbryt</button>
   </div>

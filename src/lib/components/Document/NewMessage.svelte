@@ -11,7 +11,7 @@
 
   let { documentId, groupId, studentId }: PageProps = $props()
 
-  let messageType: "comment" | "update" | null = $state(null)
+  let messageType: "update" | null = $state(null)
 
   const mockEditor: EditorData = {
     by: {
@@ -19,16 +19,6 @@
       fallbackName: "Du"
     },
     at: new Date()
-  }
-
-  const newComment: DocumentMessage = {
-    messageId: "",
-    type: "comment",
-    content: {
-      text: ""
-    },
-    created: mockEditor,
-    modified: mockEditor
   }
 
   const newUpdate: DocumentMessage = {
@@ -57,14 +47,11 @@
 
 {#if messageType === null}
   <div class="new-message-actions">
-    <!--<button class="ds-button" data-variant="secondary" data-size="sm" onclick={() => messageType = "comment"}><span class="material-symbols-outlined">add_comment</span>Ny kommentar</button>-->
     <button class="ds-button" data-variant="primary" data-size="sm" onclick={() => { messageType = "update"; scrollToNewMessage(); }}><span class="material-symbols-outlined">info</span>Ny oppfølging/ny informasjon (eller no sånt)</button>
   </div>
 {:else}
   <div id="new-message-container">
-    {#if messageType === "comment"}
-      <Message {studentId} {groupId} editMode={true} {documentId} message={newComment} callback={onNewMessageCreatedOrCancel} />
-    {:else if messageType === "update"}
+    {#if messageType === "update"}
       <Message {studentId} {groupId} editMode={true} {documentId} message={newUpdate} callback={onNewMessageCreatedOrCancel} />
     {/if}
   </div>

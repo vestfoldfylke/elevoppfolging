@@ -10,6 +10,15 @@ export const canAddMessageToStudentDocument = (accessToStudent: PrincipalAccessF
   return accessToStudent.some((access: PrincipalAccessForStudent) => access.schoolNumber === document.school.schoolNumber)
 }
 
+export const canUpdateMessageInStudentDocument = (
+  authenticatedPrincipal: AuthenticatedPrincipal,
+  accessToStudent: PrincipalAccessForStudent[],
+  document: StudentDocument,
+  message: DocumentMessage
+): boolean => {
+  return message.created.by.entraUserId === authenticatedPrincipal.id && accessToStudent.some((access: PrincipalAccessForStudent) => access.schoolNumber === document.school.schoolNumber)
+}
+
 export const canManageManualStudentsOnSchool = (principalAccess: Access, schoolNumber: string): boolean => {
   return (
     principalAccess.leaderForSchools.some((accessEntry: SchoolLeaderManualAccessEntry) => accessEntry.schoolNumber === schoolNumber) ||
