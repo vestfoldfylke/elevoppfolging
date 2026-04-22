@@ -1,4 +1,5 @@
 import type { RequestHandler } from "@sveltejs/kit"
+import { validateDocumentContentTemplate } from "$lib/data-validation/document-content-template-validation"
 import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
@@ -12,11 +13,14 @@ type AddDocumentContentTemplateResponse = ApiRouteMap["/api/templates"]["POST"][
 type AddDocumentContentTemplateBody = ApiRouteMap["/api/templates"]["POST"]["req"]
 
 const addDocumentContentTemplate: ApiNextFunction<AddDocumentContentTemplateResponse, AddDocumentContentTemplateBody> = async ({ principal, body }) => {
-  const newTemplateData: AddDocumentContentTemplateBody = body
-  // TODO validate body
-
   if (!isSystemAdmin(principal, APP_INFO)) {
     throw new HTTPError(403, noAccessMessage("No permission to add template"))
+  }
+
+  const newTemplateData: AddDocumentContentTemplateBody = body
+  const validationResult = validateDocumentContentTemplate(newTemplateData)
+  if (!validationResult.valid) {
+    throw new HTTPError(400, `Invalid template data: ${validationResult.message}`)
   }
 
   const editorData: EditorData = {
