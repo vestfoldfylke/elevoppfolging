@@ -585,7 +585,7 @@ export class MongoDbClient implements IDbClient {
       name: "ProgramArea_Create",
       description: "Number of program areas created"
     }
-    const labels: [labelName: string, labelValue: string][] = [["schoolNumber", programArea.schoolNumber]]
+    const labels: MetricLabel[] = [["schoolNumber", programArea.schoolNumber]]
 
     if (!result.insertedId) {
       incrementCount({
@@ -615,7 +615,7 @@ export class MongoDbClient implements IDbClient {
       name: "ProgramArea_Update",
       description: "Number of program areas updated"
     }
-    const labels: [labelName: string, labelValue: string][] = [["schoolNumber", programArea.schoolNumber]]
+    const labels: MetricLabel[] = [["schoolNumber", programArea.schoolNumber]]
 
     if (updateResult.matchedCount === 0) {
       incrementCount({
@@ -645,7 +645,7 @@ export class MongoDbClient implements IDbClient {
       name: "ProgramArea_Remove",
       description: "Number of program areas removed"
     }
-    const labels: [labelName: string, labelValue: string][] = [["schoolNumber", programArea.schoolNumber]]
+    const labels: MetricLabel[] = [["schoolNumber", programArea.schoolNumber]]
 
     if (deleteResult.deletedCount === 0) {
       incrementCount({
