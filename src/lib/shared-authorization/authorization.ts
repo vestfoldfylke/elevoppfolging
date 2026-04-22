@@ -66,7 +66,7 @@ export const canViewStudentDocument = (
     }
     return true
   }
-  
+
   // no consent - only documents from access schools
   const accessToStudentFromDocumentSchool: PrincipalAccessForStudent[] = accessToStudent.filter((access: PrincipalAccessForStudent) => access.schoolNumber === document.school.schoolNumber)
   if (accessToStudentFromDocumentSchool.length === 0) {

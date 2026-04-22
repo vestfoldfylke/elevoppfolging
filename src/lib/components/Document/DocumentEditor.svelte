@@ -24,7 +24,7 @@
   let documentEditorForm: HTMLFormElement | undefined = $state()
 
   const toggleSubjectTeacherAccess = (): void => {
-    currentDocument.documentAccess = currentDocument.documentAccess === "ALL_WITH_STUDENT_ACCESS" ? "EXCLUDE_SUBJECT_TEACHERS" : "ALL_WITH_STUDENT_ACCESS" 
+    currentDocument.documentAccess = currentDocument.documentAccess === "ALL_WITH_STUDENT_ACCESS" ? "EXCLUDE_SUBJECT_TEACHERS" : "ALL_WITH_STUDENT_ACCESS"
   }
 
   const newDocument = async (): Promise<void> => {
