@@ -82,7 +82,17 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
 
   logger.info(`Document created with ID ${documentId} by user ${principal.displayName} (${principal.id})`)
 
-  // TODO update lastActivityTimestamp for the student
+  try {
+    await dbClient.updateStudentLastActivityTimestamp(studentId, newDocumentData.school)
+  } catch (error) {
+    logger.errorException(
+      error,
+      "Failed to update student {feideName} last activity timestamp after adding document message on document {documentId} for school {schoolNumber}. Returning documentId regardless",
+      student.feideName,
+      documentId,
+      newDocumentData.school
+    )
+  }
 
   return {
     documentId

@@ -86,8 +86,17 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
 
   logger.info(`Document with ID ${documentId} updated by user ${principal.displayName} (${principal.id})`)
 
-  // TODO update lastActivityTimestamp for the student
-
+  try {
+    await dbClient.updateStudentLastActivityTimestamp(studentId, updateDocumentData.school)
+  } catch (error) {
+    logger.errorException(
+      error,
+      "Failed to update student {feideName} last activity timestamp after updating document {documentId} for school {schoolNumber}. Returning documentId regardless",
+      student.feideName,
+      documentId,
+      updateDocumentData.school
+    )
+  }
   return {
     documentId: updatedDocumentId
   }

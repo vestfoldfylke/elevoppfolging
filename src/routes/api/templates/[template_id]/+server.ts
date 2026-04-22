@@ -1,4 +1,5 @@
 import type { RequestHandler } from "@sveltejs/kit"
+import { validateDocumentContentTemplate } from "$lib/data-validation/document-content-template-validation"
 import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
@@ -18,11 +19,14 @@ const updateDocumentContentTemplate: ApiNextFunction<UpdateDocumentContentTempla
     throw new HTTPError(400, "template id from url params is missing?")
   }
 
-  const updateTemplateData: UpdateDocumentContentTemplateBody = body
-  // TODO validate body
-
   if (!isSystemAdmin(principal, APP_INFO)) {
     throw new HTTPError(403, noAccessMessage("No permission to update template"))
+  }
+
+  const updateTemplateData: UpdateDocumentContentTemplateBody = body
+  const validationResult = validateDocumentContentTemplate(updateTemplateData)
+  if (!validationResult.valid) {
+    throw new HTTPError(400, `Invalid template data: ${validationResult.message}`)
   }
 
   const dbClient = getDbClient()

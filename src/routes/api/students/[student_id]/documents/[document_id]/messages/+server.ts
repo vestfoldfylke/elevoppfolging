@@ -1,4 +1,6 @@
 import type { RequestHandler } from "@sveltejs/kit"
+import { logger } from "@vestfoldfylke/loglady"
+import { validateDocumentMessage } from "$lib/data-validation/document-message-validation"
 import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
 import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
 import { getStudentFromCache } from "$lib/server/cache/students-cache"
@@ -26,7 +28,7 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
     throw new HTTPError(400, "Document ID is missing in request parameters")
   }
 
-  // authorization check if principal has access to the student or group
+  // authorization check if principal has access to the student
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
     throw new HTTPError(403, noAccessMessage("No access found for principal"))
@@ -43,7 +45,10 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
   }
 
   const newMessageData: DocumentMessageInput = body
-  // TODO validate body
+  const validationResult = validateDocumentMessage(newMessageData)
+  if (!validationResult.valid) {
+    throw new HTTPError(400, `Invalid message data: ${validationResult.message}`)
+  }
 
   const editorData: EditorData = {
     by: {
@@ -100,7 +105,17 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
 
   const messageId = await dbClient.addDocumentMessage(documentId, newMessage)
 
-  // TODO update lastActivityTimestamp for the student
+  try {
+    await dbClient.updateStudentLastActivityTimestamp(studentId, currentDocument.school)
+  } catch (error) {
+    logger.errorException(
+      error,
+      "Failed to update student {feideName} last activity timestamp after adding document message on document {documentId} for school {schoolNumber}. Returning messageId regardless",
+      student.feideName,
+      documentId,
+      currentDocument.school
+    )
+  }
 
   return {
     messageId
