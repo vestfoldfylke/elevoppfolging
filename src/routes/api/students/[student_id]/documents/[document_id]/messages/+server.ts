@@ -75,7 +75,9 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
     throw new HTTPError(404, "Document not found, cannot add message to non-existing document...")
   }
 
-  if (!canAddMessageToStudentDocument(principalAccessForStudent, currentDocument)) {
+  const studentDataSharingConsent = await dbClient.getStudentDataSharingConsent(studentId)
+
+  if (!canAddMessageToStudentDocument(principal, principalAccessForStudent, currentDocument, studentDataSharingConsent)) {
     throw new HTTPError(403, noAccessMessage("No permission to add message to document"))
   }
 

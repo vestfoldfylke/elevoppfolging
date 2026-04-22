@@ -23,6 +23,14 @@
 
   let documentEditorForm: HTMLFormElement | undefined = $state()
 
+  const toggleSubjectTeacherAccess = (): void => {
+    if (currentDocument.documentAccess === "EXCLUDE_SUBJECT_TEACHERS") {
+      currentDocument.documentAccess = "ALL_WITH_STUDENT_ACCESS"
+    } else {
+      currentDocument.documentAccess = "EXCLUDE_SUBJECT_TEACHERS"
+    }
+  }
+
   const newDocument = async (): Promise<void> => {
     if (!documentEditorForm) {
       throw new Error("Document editor form not found")
@@ -121,12 +129,11 @@
     <fieldset class="ds-fieldset content-item">
       <legend class="ds-label" data-weight="medium">
         Tilgangsstyring
-        <span class="ds-tag" data-variant="outline" data-color="warning" data-size="xs" style="margin-left: var(--ds-size-1)">Obs! Denne gjør ingenting enda, bare for testing</span>
       </legend>
       <p class="ds-paragraph" data-variant="default">Som standard vil notatet være synlig for alle brukere med tilgang til eleven ved {currentDocument.school.name}, unntatt faglærere. Dersom du ønsker at også faglærere skal kunne se notatet, kan du krysse av for dette alternativet. I tillegg vil brukere ved andre skoler få tilgang til notatet dersom eleven har samtykket til deling av informasjon med andre skoler.</p>
       <ds-field class="ds-field">
-        <input id="availableForAll" class="ds-input" type="checkbox" value="email"/>
-        <label for="availableForAll" class="ds-label" data-weight="regular">Synlig for faglærere</label>
+        <input id="document-access-{documentId}" class="ds-input" type="checkbox" checked={currentDocument.documentAccess === "ALL_WITH_STUDENT_ACCESS"} onchange={toggleSubjectTeacherAccess}/>
+        <label for="document-access-{documentId}" class="ds-label" data-weight="regular">Synlig for faglærere</label>
       </ds-field>
     </fieldset>
 

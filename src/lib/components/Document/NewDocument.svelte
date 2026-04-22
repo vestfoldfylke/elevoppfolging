@@ -42,7 +42,8 @@
         name: template.name,
         version: template.version
       },
-      school: accessSchools[0]
+      school: accessSchools[0],
+      documentAccess: "EXCLUDE_SUBJECT_TEACHERS"
     }
   }
 

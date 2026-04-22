@@ -65,6 +65,7 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
     template: newDocumentData.template,
     content: newDocumentData.content,
     messages: [],
+    documentAccess: newDocumentData.documentAccess,
     student: {
       _id: studentId
     },

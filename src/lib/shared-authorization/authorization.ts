@@ -1,13 +1,30 @@
 import type { AccessEntry, ApplicationInfo, PrincipalAccessForStudent } from "$lib/types/app-types"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
-import type { Access, DocumentInput, DocumentMessage, ManageManualStudentsManualAccessEntry, SchoolLeaderManualAccessEntry, StudentDocument } from "$lib/types/db/shared-types"
+import type {
+  Access,
+  DocumentInput,
+  DocumentMessage,
+  ManageManualStudentsManualAccessEntry,
+  SchoolLeaderManualAccessEntry,
+  StudentDataSharingConsent,
+  StudentDocument
+} from "$lib/types/db/shared-types"
 
 export const isSystemAdmin = (authenticatedPrincipal: AuthenticatedPrincipal, APP_INFO: ApplicationInfo): boolean => {
   return authenticatedPrincipal.roles.includes(APP_INFO.ROLES.ADMIN)
 }
 
-export const canAddMessageToStudentDocument = (accessToStudent: PrincipalAccessForStudent[], document: StudentDocument): boolean => {
-  return accessToStudent.some((access: PrincipalAccessForStudent) => access.schoolNumber === document.school.schoolNumber)
+export const canAddMessageToStudentDocument = (
+  authenticatedPrincipal: AuthenticatedPrincipal,
+  accessToStudent: PrincipalAccessForStudent[],
+  document: StudentDocument,
+  studentDataSharingConsent: StudentDataSharingConsent | null
+): boolean => {
+  // Hvis du kan åpne det kan du legge til melding på det
+  return (
+    canViewStudentDocument(authenticatedPrincipal, accessToStudent, document, studentDataSharingConsent) &&
+    accessToStudent.some((access: PrincipalAccessForStudent) => access.schoolNumber === document.school.schoolNumber)
+  )
 }
 
 export const canUpdateMessageInStudentDocument = (
@@ -24,6 +41,42 @@ export const canManageManualStudentsOnSchool = (principalAccess: Access, schoolN
     principalAccess.leaderForSchools.some((accessEntry: SchoolLeaderManualAccessEntry) => accessEntry.schoolNumber === schoolNumber) ||
     principalAccess.manageManualStudentsForSchools.some((accessEntry: ManageManualStudentsManualAccessEntry) => accessEntry.schoolNumber === schoolNumber)
   )
+}
+
+const isOnlySubjectTeacher = (accessToStudent: PrincipalAccessForStudent[]): boolean => {
+  return accessToStudent.every((accessEntry) => accessEntry.type === "AUTOMATISK-UNDERVISNINGSGRUPPE-TILGANG" || accessEntry.type === "AUTOMATISK-KLASSE-TILGANG")
+}
+
+export const canViewStudentDocument = (
+  authenticatedPrincipal: AuthenticatedPrincipal,
+  accessToStudent: PrincipalAccessForStudent[],
+  document: StudentDocument,
+  studentDataSharingConsent: StudentDataSharingConsent | null
+): boolean => {
+  if (accessToStudent.length === 0) {
+    return false
+  }
+  if (studentDataSharingConsent?.consent) {
+    if (authenticatedPrincipal.id === document.created.by.entraUserId) {
+      return true // man skal kunne se dokumentene man har opprettet selv hvis det foreligger samtykke, hvis man har tilgang til eleven
+    }
+    if (document.documentAccess === "EXCLUDE_SUBJECT_TEACHERS" && isOnlySubjectTeacher(accessToStudent)) {
+      return false
+    }
+    return true
+  }
+  // no consent - only documents from access schools
+  const accessToStudentFromDocumentSchool: PrincipalAccessForStudent[] = accessToStudent.filter((access: PrincipalAccessForStudent) => access.schoolNumber === document.school.schoolNumber)
+  if (accessToStudentFromDocumentSchool.length === 0) {
+    return false
+  }
+  if (document.created.by.entraUserId === authenticatedPrincipal.id) {
+    return true // man skal kunne se dokumentene man har opprettet selv hvis man har tilgang til eleven ved gitt skole
+  }
+  if (document.documentAccess === "EXCLUDE_SUBJECT_TEACHERS" && isOnlySubjectTeacher(accessToStudentFromDocumentSchool)) {
+    return false
+  }
+  return true
 }
 
 export const canCreateStudentDocument = (accessToStudent: PrincipalAccessForStudent[], newDocument: DocumentInput): boolean => {
@@ -55,13 +108,15 @@ export const canGrantAndRemoveAccessForSchool = (schoolNumber: string, principal
 }
 
 export const canEditStudentDataSharingConsent = (accessToStudent: PrincipalAccessForStudent[]): boolean => {
-  return accessToStudent.some((accessEntry) => accessEntry.type !== "AUTOMATISK-UNDERVISNINGSGRUPPE-TILGANG" && accessEntry.type !== "AUTOMATISK-KLASSE-TILGANG")
+  return !isOnlySubjectTeacher(accessToStudent)
 }
 
 export const canEditStudentImportantStuff = (importantStuffSchoolNumber: string, accessToStudent: PrincipalAccessForStudent[]): boolean => {
-  return accessToStudent.some(
-    (accessEntry) => accessEntry.type !== "AUTOMATISK-UNDERVISNINGSGRUPPE-TILGANG" && accessEntry.type !== "AUTOMATISK-KLASSE-TILGANG" && accessEntry.schoolNumber === importantStuffSchoolNumber
-  )
+  const accessForImportantStuffSchool = accessToStudent.filter((access) => access.schoolNumber === importantStuffSchoolNumber)
+  if (accessForImportantStuffSchool.length === 0) {
+    return false
+  }
+  return !isOnlySubjectTeacher(accessForImportantStuffSchool)
 }
 
 export const noAccessMessage = (message?: string): string => {
