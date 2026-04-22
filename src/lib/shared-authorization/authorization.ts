@@ -56,6 +56,7 @@ export const canViewStudentDocument = (
   if (accessToStudent.length === 0) {
     return false
   }
+
   if (studentDataSharingConsent?.consent) {
     if (authenticatedPrincipal.id === document.created.by.entraUserId) {
       return true // man skal kunne se dokumentene man har opprettet selv hvis det foreligger samtykke, hvis man har tilgang til eleven
@@ -65,6 +66,7 @@ export const canViewStudentDocument = (
     }
     return true
   }
+  
   // no consent - only documents from access schools
   const accessToStudentFromDocumentSchool: PrincipalAccessForStudent[] = accessToStudent.filter((access: PrincipalAccessForStudent) => access.schoolNumber === document.school.schoolNumber)
   if (accessToStudentFromDocumentSchool.length === 0) {
