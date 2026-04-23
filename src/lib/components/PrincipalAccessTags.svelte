@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state"
+  import PrincipalAccessTag from "$lib/components/PrincipalAccessTag.svelte"
   import type { PrincipalAccessForStudent } from "$lib/types/app-types"
   import { ACCESS_TYPE_DISPLAY_NAMES } from "$lib/utils/access-constants"
 
@@ -19,7 +20,5 @@
 </script>
 
 {#each principalAccessForStudent as principalAccess}
-  <span class="ds-tag" data-variant="outline" data-color={principalAccess.source === "AUTO" ? "accent" : "brand1"} data-size="xs" style="margin-left: var(--ds-size-1)">
-    {ACCESS_TYPE_DISPLAY_NAMES[principalAccess.type]}{principalAccess.accessThroughResource ? ` ${principalAccess.accessThroughResource.name}` : ""} ved {getSchoolName(principalAccess.schoolNumber)}
-  </span>
+  <PrincipalAccessTag source={principalAccess.source} name={`${ACCESS_TYPE_DISPLAY_NAMES[principalAccess.type]}${principalAccess.accessThroughResource ? ` ${principalAccess.accessThroughResource.name}` : ""} ved ${getSchoolName(principalAccess.schoolNumber)}`} />
 {/each}
