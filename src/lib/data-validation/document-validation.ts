@@ -23,6 +23,9 @@ export const validateDocument = (documentData: DocumentInput): ValidationResult 
   if (typeof documentData.template.version !== "number") {
     return { valid: false, message: "Template version is required and must be a number." }
   }
+  if (!documentData.documentAccess || (documentData.documentAccess !== "EXCLUDE_SUBJECT_TEACHERS" && documentData.documentAccess !== "ALL_WITH_STUDENT_ACCESS")) {
+    return { valid: false, message: "Document access is required and must be either 'EXCLUDE_TEACHING_GROUP_ACCESS' or 'ALL_WITH_STUDENT_ACCESS'." }
+  }
   if (!Array.isArray(documentData.content)) {
     return { valid: false, message: "Document content is required and must be an array." }
   }

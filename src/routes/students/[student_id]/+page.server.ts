@@ -5,7 +5,7 @@ import { getStudentFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
-import { noAccessMessage } from "$lib/shared-authorization/authorization"
+import { canViewStudentDocument, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent, StudentAccessPerson, StudentUnavailableSchoolDocuments } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { DocumentContentTemplate, SchoolInfo, StudentDataSharingConsent, StudentDocument, StudentImportantStuff } from "$lib/types/db/shared-types"
@@ -61,22 +61,18 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 
   const studentDataSharingConsent: StudentDataSharingConsent | null = await dbClient.getStudentDataSharingConsent(studentId)
 
-  // HVis eleven har consent - bare gi tilbake da! (men sjekk også tilgang på hvert dokument...)
-  const documents = allStudentDocuments.filter((document) => {
-    // Hvis eleven har samtykket til deling, kan vi vise alle dokumenter
-    if (studentDataSharingConsent?.consent) {
-      return true
-    }
+  const documents = allStudentDocuments.filter((document) => canViewStudentDocument(principal, principalAccessForStudent, document, studentDataSharingConsent))
 
-    // Hvis eleven ikke har samtykket til deling, kan vi kun vise dokumenter knyttet til skoler brukeren har tilgang til eleven på
-    // Og vi må etterhvert også sjekke at dokumentet er tilgjengelig for DEN tilgangstypen (for eksempel hvis dokumentet ikke er tilgjengelig for faglærere)
-    return principalAccessForStudent.some((accessType) => accessType.schoolNumber === document.school.schoolNumber)
+  const unavailableDocumentsAtOtherSchools: StudentDocument[] = allStudentDocuments.filter((document) => {
+    if (studentDataSharingConsent?.consent) {
+      return false // hvis det er samtykke, så er det ingen dokumenter som er utilgjengelige
+    }
+    // Hvis det ikke er samtykke, så er det kun dokumenter fra skoler man ikke har tilgang til som er utilgjengelige
+    return !principalAccessForStudent.some((access) => access.schoolNumber === document.school.schoolNumber)
   })
 
-  const unavailableDocuments = allStudentDocuments.filter((document) => !documents.some((availableDocument) => availableDocument._id === document._id))
-
   const unavailableSchoolDocumentsMap: Record<string, { school: SchoolInfo; numberOfDocuments: number }> = {}
-  for (const document of unavailableDocuments) {
+  for (const document of unavailableDocumentsAtOtherSchools) {
     if (!unavailableSchoolDocumentsMap[document.school.schoolNumber]) {
       unavailableSchoolDocumentsMap[document.school.schoolNumber] = {
         school: document.school,

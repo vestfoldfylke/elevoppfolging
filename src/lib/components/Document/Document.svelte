@@ -35,7 +35,8 @@
         content: document.content,
         school: document.school,
         template: document.template,
-        title: document.title
+        title: document.title,
+        documentAccess: document.documentAccess || "EXCLUDE_SUBJECT_TEACHERS" // defaultvalue, becuase old documents doesn't have this field, and we don't want to break the editor for those
       } as DocumentInput)
     )
   }
@@ -86,6 +87,17 @@
       {#each document.content as contentItem, index}
         <DocumentContent {contentItem} editMode={false} {index} />
       {/each}
+
+      <fieldset class="ds-fieldset content-item">
+        <legend class="ds-label" data-weight="medium">
+          Tilgangsstyring
+        </legend>
+        <ds-field class="ds-field">
+          <input id="document-access-{document._id}" class="ds-input" type="checkbox" checked={document.documentAccess === "ALL_WITH_STUDENT_ACCESS"} disabled={true} style={document.documentAccess === "ALL_WITH_STUDENT_ACCESS" ? "opacity: 1;" : ""} />
+          <label for="document-access-{document._id}" class="ds-label" data-weight="regular" style={document.documentAccess === "ALL_WITH_STUDENT_ACCESS" ? "opacity: 1;" : ""}>Synlig for faglærere</label>
+        </ds-field>
+      </fieldset>
+
     {:else}
       <!-- Add groupId when needed -->
       <DocumentEditor documentId={document._id} studentId={document.student._id} bind:currentDocument={editableDocument} {accessSchools} closeEditor={() => { editMode = false; editableDocument = editableDocumentFromDocument(); }} />

@@ -412,6 +412,8 @@ export type DocumentBase = {
   modified: EditorData
 }
 
+export type DocumentAccess = "ALL_WITH_STUDENT_ACCESS" | "EXCLUDE_SUBJECT_TEACHERS"
+
 export type DocumentInput = {
   school: SchoolInfo
   title: string
@@ -421,9 +423,7 @@ export type DocumentInput = {
     version: number
   }
   content: DocumentContentItem[]
-  /*
-  accessTypes: AccessEntry["type"][]
-  */
+  documentAccess: DocumentAccess
 }
 
 export type NewStudentDocument = DocumentBase &

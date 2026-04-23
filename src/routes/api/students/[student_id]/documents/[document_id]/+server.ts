@@ -78,6 +78,7 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
     school: updateDocumentData.school,
     template: currentDocument.template,
     content: updateDocumentData.content,
+    documentAccess: updateDocumentData.documentAccess,
     modified: editorData,
     created: currentDocument.created
   }
