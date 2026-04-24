@@ -581,6 +581,48 @@ export type DbEncryptedStudentImportantStuff = NewDbEncryptedStudentImportantStu
   }
 }
 
+export type GroupImportantStuffInput = {
+  school: SchoolInfo
+  importantInfo: string
+}
+
+export type NewGroupImportantStuff = ImportantStuffBase &
+  GroupImportantStuffInput & {
+    type: "GROUP"
+    lastActivityTimestamp: Date
+  }
+
+export type GroupImportantStuff = NewGroupImportantStuff & {
+  _id: string
+  group: {
+    systemId: string
+  }
+}
+
+export type NewDbGroupImportantStuff = NewGroupImportantStuff & {
+  group: {
+    systemId: string
+  }
+}
+
+export type NewDbEncryptedGroupImportantStuff = Omit<NewDbGroupImportantStuff, "importantInfo"> & {
+  importantInfo: Binary
+}
+
+export type DbGroupImportantStuff = NewGroupImportantStuff & {
+  _id: ObjectId
+  group: {
+    systemId: string
+  }
+}
+
+export type DbEncryptedGroupImportantStuff = NewDbEncryptedGroupImportantStuff & {
+  _id: ObjectId
+  group: {
+    systemId: string
+  }
+}
+
 // StudentDataSharingConsent
 
 export type StudentDataSharingConsentBase = {

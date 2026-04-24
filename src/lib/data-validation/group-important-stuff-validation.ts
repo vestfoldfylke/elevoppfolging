@@ -1,0 +1,14 @@
+import type { ValidationResult } from "$lib/types/data-validation"
+import type { GroupImportantStuffInput } from "$lib/types/db/shared-types"
+
+export const validateGroupImportantStuffData = (importantStuffData: GroupImportantStuffInput): ValidationResult => {
+  if (!importantStuffData.school || typeof importantStuffData.school.schoolNumber !== "string" || typeof importantStuffData.school.name !== "string") {
+    return { valid: false, message: "Invalid or missing 'school' information" }
+  }
+
+  if (typeof importantStuffData.importantInfo !== "string") {
+    return { valid: false, message: "'importantInfo' is required and must be a string" }
+  }
+
+  return { valid: true, message: "" }
+}

@@ -1,10 +1,14 @@
 <script lang="ts">
+  import { slide } from "svelte/transition"
   import { page } from "$app/state"
+  import ImportantGroupStuff from "$lib/components/ImportantGroupStuff.svelte"
   import PrincipalAccessTag from "$lib/components/PrincipalAccessTag.svelte"
   import type { EnrollmentWithinViewAccessWindow, FrontendOverviewStudent, PrincipalAccess, ProgramAreaPrincipalAccess } from "$lib/types/app-types"
-  import type { ClassAutoAccessEntry, ClassManualAccessEntry, SchoolLeaderManualAccessEntry, StudentClassGroup } from "$lib/types/db/shared-types"
+  import type { ClassAutoAccessEntry, ClassManualAccessEntry, GroupImportantStuff, GroupImportantStuffInput, SchoolLeaderManualAccessEntry, StudentClassGroup } from "$lib/types/db/shared-types"
   import { ACCESS_TYPE_DISPLAY_NAMES } from "$lib/utils/access-constants"
   import type { PageProps } from "./$types"
+
+  type ClassSummaryDetails = { groupImportantInfo: GroupImportantStuff | null } | undefined
 
   type ClassAccess = {
     classEntries: (ClassAutoAccessEntry | ClassManualAccessEntry)[]
@@ -17,7 +21,7 @@
   let sortBy = $state<"name">("name")
   let sortDirection = $state<"ascending" | "descending">("ascending")
 
-  const principalAccess: PrincipalAccess = $derived.by(() => {
+  let principalAccess: PrincipalAccess = $derived.by(() => {
     if (!data.principalAccess) {
       throw new Error("No access found for principal")
     }
@@ -29,7 +33,7 @@
     return data.principalAccess
   })
 
-  const classAccess: ClassAccess = $derived.by(() => {
+  let classAccess: ClassAccess = $derived.by(() => {
     const programAreas = principalAccess.programAreas.filter((programArea) => programArea.classSystemIds.includes(selectedClass.systemId))
     const classEntries = principalAccess.classes.filter((classEntry) => classEntry.systemId === selectedClass.systemId)
     const schools = principalAccess.leaderForSchools.filter((leaderForSchool) => leaderForSchool.schoolNumber === selectedClass.school.schoolNumber)
@@ -46,7 +50,7 @@
   })
 
   let selectedClass: StudentClassGroup = $derived.by(() => {
-    const classId: string | undefined = page.params.systemId
+    const classId: string | undefined = page.params.system_id
     if (!classId) {
       throw new Error("Klasse ID mangler")
     }
@@ -77,6 +81,21 @@
       }
     })
   })
+
+  let classSummaryDetails: ClassSummaryDetails = $derived.by(() => {
+    const groupImportantStuffToUse: GroupImportantStuff | null =
+      data.groupImportantStuff.find((importantStuff) => importantStuff.school.schoolNumber === selectedClass.school.schoolNumber) || data.groupImportantStuff[0] || null
+    if (!groupImportantStuffToUse) {
+      return undefined
+    }
+
+    const groupImportantInfo = groupImportantStuffToUse || null
+    if (!groupImportantInfo) {
+      return undefined
+    }
+
+    return { groupImportantInfo }
+  })
 </script>
 
 <div class="page-content">
@@ -106,6 +125,10 @@
     {/if}
   </div>
 
+  <div class="class-details" transition:slide>
+    <ImportantGroupStuff groupImportantStuff={classSummaryDetails?.groupImportantInfo || null} school={selectedClass.school} group={selectedClass} />
+  </div>
+
   <div class="class-table-container">
     <table class="ds-table">
       <thead>
@@ -130,13 +153,23 @@
 
 <style>
   .page-header {
-      padding-bottom: var(--ds-size-4);
+    padding-bottom: var(--ds-size-4);
   }
 
   .access-info {
-      display: flex;
-      gap: var(--ds-size-2);
-      flex-wrap: wrap;
-      padding-bottom: var(--ds-size-4);
+    display: flex;
+    gap: var(--ds-size-2);
+    flex-wrap: wrap;
+    padding-bottom: var(--ds-size-4);
+  }
+
+  .class-details {
+    margin: var(--ds-size-4) 0;
+  }
+
+  .class-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
   }
 </style>

@@ -1,4 +1,4 @@
-import type { FrontendOverviewStudent, PrincipalAccessStudent } from "$lib/types/app-types"
+import type { PrincipalAccessStudent } from "$lib/types/app-types"
 import type { Access, SchoolLeaderManualAccessEntry, StudentClassGroup } from "$lib/types/db/shared-types"
 
 export const getClassesFromStudents = (students: PrincipalAccessStudent[]): StudentClassGroup[] => {
@@ -20,7 +20,7 @@ export const getClassesFromStudents = (students: PrincipalAccessStudent[]): Stud
   return Array.from(classes.values())
 }
 
-export const getAccessibleClassesFromStudents = (principalAccess: Access, students: FrontendOverviewStudent[]): StudentClassGroup[] => {
+export const getAccessibleClassesFromStudents = (principalAccess: Access, students: PrincipalAccessStudent[]): StudentClassGroup[] => {
   const classes = new Map<string, StudentClassGroup>()
 
   for (const student of students) {

@@ -26,10 +26,12 @@ import type {
   DbAppStudent,
   DbDocumentContentTemplate,
   DbEncryptedDocumentMessage,
+  DbEncryptedGroupImportantStuff,
   DbEncryptedStudentCheckBox,
   DbEncryptedStudentDocument,
   DbEncryptedStudentDocumentUpdate,
   DbEncryptedStudentImportantStuff,
+  DbGroupImportantStuff,
   DbProgramArea,
   DbSchool,
   DbStudentCheckBox,
@@ -38,6 +40,7 @@ import type {
   DbStudentImportantStuff,
   DocumentContentTemplate,
   EditorData,
+  GroupImportantStuff,
   ManualAccessEntryInput,
   MetricCount,
   MetricLabel,
@@ -49,6 +52,7 @@ import type {
   NewDbStudentImportantStuff,
   NewDocumentContentTemplate,
   NewDocumentMessage,
+  NewGroupImportantStuff,
   NewProgramArea,
   NewSchool,
   NewStudentCheckBox,
@@ -1414,6 +1418,69 @@ export class MongoDbClient implements IDbClient {
     }
 
     return existingImportantStuff._id.toString()
+  }
+
+  async getGroupImportantStuff(systemId: string): Promise<GroupImportantStuff[]> {
+    const db = await this.getDb()
+
+    const importantStuffCollection = db.collection<DbGroupImportantStuff>(this.importantStuffCollectionName)
+    logger.info("Getting important stuff for group with systemId {systemId}", systemId)
+
+    const importantStuffForGroup = await importantStuffCollection.find({ "group.systemId": systemId }).toArray()
+    logger.info("Important stuff for group with systemId {systemId} exists: {importantStuffExists}", systemId, importantStuffForGroup.length > 0)
+
+    if (importantStuffForGroup.length === 0) {
+      return []
+    }
+
+    return importantStuffForGroup.map((importantStuff) => ({
+      ...importantStuff,
+      _id: importantStuff._id.toString()
+    }))
+  }
+
+  async upsertGroupImportantStuff(systemId: string, importantStuff: NewGroupImportantStuff): Promise<string> {
+    const db = await this.getDb()
+    const importantStuffCollection = db.collection<DbEncryptedGroupImportantStuff>(this.importantStuffCollectionName)
+    const encryption = await this.getEncryptionClient()
+
+    const result: DbGroupImportantStuff | null = (await importantStuffCollection.findOneAndUpdate(
+      { "group.systemId": systemId },
+      {
+        $set: {
+          ...importantStuff,
+          importantInfo: await encryption.client.encrypt(importantStuff.importantInfo, encryption.encryptionOptions),
+          group: {
+            systemId
+          }
+        }
+      },
+      { upsert: true, returnDocument: "after" }
+    )) as DbGroupImportantStuff | null // Db client decrypts for us, so we can cast it to DbGroupImportantStuff
+
+    const metricBody: MetricCount = {
+      name: "GroupImportantStuff_Upsert",
+      description: "Number of group important stuff upserted"
+    }
+    const labels: MetricLabel[] = [["schoolNumber", importantStuff.school.schoolNumber]]
+
+    if (!result?._id) {
+      incrementCount({
+        ...metricBody,
+        labels: [...labels, [metricResultName, metricResultFailure]]
+      })
+
+      throw new Error("Failed to upsert group important stuff")
+    }
+
+    incrementCount({
+      ...metricBody,
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
+
+    return result._id.toString()
   }
 
   async getDocumentContentTemplates(availableFor?: AvailableForDocumentType): Promise<DocumentContentTemplate[]> {

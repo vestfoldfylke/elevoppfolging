@@ -5,11 +5,13 @@ import type {
   AppUser,
   AvailableForDocumentType,
   DocumentContentTemplate,
+  GroupImportantStuff,
   ManualAccessEntryInput,
   NewAccess,
   NewAppStudent,
   NewDocumentContentTemplate,
   NewDocumentMessage,
+  NewGroupImportantStuff,
   NewProgramArea,
   NewSchool,
   NewStudentCheckBox,
@@ -73,6 +75,11 @@ export interface IDbClient {
   getStudentImportantStuff(studentId: string, schoolNumbers: string[]): Promise<StudentImportantStuff[]>
   upsertStudentImportantStuff(studentId: string, importantStuff: NewStudentImportantStuff): Promise<string>
   updateStudentLastActivityTimestamp(studentId: string, school: SchoolInfo): Promise<string>
+
+  /** We need to query by systemId since classes only exists on students and don't have a db record themselves */
+  getGroupImportantStuff(systemId: string): Promise<GroupImportantStuff[]>
+  /** We need to query by systemId since classes only exists on students and don't have a db record themselves */
+  upsertGroupImportantStuff(systemId: string, importantStuff: NewGroupImportantStuff): Promise<string>
 
   getDocumentContentTemplates(availableFor?: AvailableForDocumentType): Promise<DocumentContentTemplate[]>
   getDocumentContentTemplateById(templateId: string): Promise<DocumentContentTemplate | null>

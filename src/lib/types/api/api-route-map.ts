@@ -2,6 +2,7 @@ import type {
   DocumentContentTemplate,
   DocumentInput,
   DocumentMessageInput,
+  GroupImportantStuffInput,
   ManualAccessEntryInput,
   MetricCount,
   NewManualStudentInput,
@@ -109,5 +110,9 @@ export interface ApiRouteMap {
 
   "/api/metrics": {
     POST: { req: MetricCount; res: { incremented: boolean } }
+  }
+
+  [key: `/api/classes/${NoSlashString}/importantstuff`]: {
+    PATCH: { req: GroupImportantStuffInput; res: { importantStuffId: string } }
   }
 }
