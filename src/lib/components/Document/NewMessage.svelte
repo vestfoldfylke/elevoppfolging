@@ -26,7 +26,6 @@
       title: "",
       text: ""
     },
-    emailAlertReceivers: [],
     created: mockEditor,
     modified: mockEditor
   }
