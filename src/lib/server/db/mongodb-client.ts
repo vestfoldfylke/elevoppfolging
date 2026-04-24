@@ -1543,14 +1543,11 @@ export class MongoDbClient implements IDbClient {
   async getDocumentContentTemplates(availableFor?: AvailableForDocumentType): Promise<DocumentContentTemplate[]> {
     const db = await this.getDb()
     const documentContentTemplatesCollection = db.collection<DbDocumentContentTemplate>(this.documentContentTemplatesCollectionName)
-    
+
     const availableForQuery: Record<string, any> = {}
 
     if (availableFor?.student && availableFor?.group) {
-      availableForQuery.$or = [
-        { "availableForDocumentType.student": availableFor.student },
-        { "availableForDocumentType.group": availableFor.group }
-      ]
+      availableForQuery.$or = [{ "availableForDocumentType.student": availableFor.student }, { "availableForDocumentType.group": availableFor.group }]
     } else if (availableFor?.student) {
       availableForQuery["availableForDocumentType.student"] = availableFor.student
     } else if (availableFor?.group) {

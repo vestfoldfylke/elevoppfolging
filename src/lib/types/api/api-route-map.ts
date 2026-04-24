@@ -111,7 +111,7 @@ export interface ApiRouteMap {
   "/api/metrics": {
     POST: { req: MetricCount; res: { incremented: boolean } }
   }
-  
+
   [key: `/api/classes/${NoSlashString}/documents`]: {
     POST: { req: DocumentInput; res: { documentId: string } }
   }

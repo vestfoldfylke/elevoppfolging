@@ -6,7 +6,7 @@
   import DataSharingConsent from "$lib/components/StudentBoxes/DataSharingConsent.svelte"
   import ImportantStuff from "$lib/components/StudentBoxes/ImportantStuff.svelte"
   import { canEditStudentDataSharingConsent, canEditStudentDocument, canEditStudentImportantStuff } from "$lib/shared-authorization/authorization"
-  import type {EnrollmentDetails, PeriodDetails, TemplateInfo} from "$lib/types/app-types"
+  import type { EnrollmentDetails, PeriodDetails, TemplateInfo } from "$lib/types/app-types"
   import type { Period, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
   import { getEnrollmentDetails, getFrontendStudentMainDetails } from "$lib/utils/frontend-student-details"
   import { prettifyDate } from "$lib/utils/prettify-date"

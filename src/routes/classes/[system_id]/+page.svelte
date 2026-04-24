@@ -1,21 +1,14 @@
 <script lang="ts">
   import { slide } from "svelte/transition"
   import { page } from "$app/state"
+  import DocumentComponent from "$lib/components/Document/Document.svelte"
+  import NewDocument from "$lib/components/Document/NewDocument.svelte"
   import ImportantGroupStuff from "$lib/components/ImportantGroupStuff.svelte"
   import PrincipalAccessTag from "$lib/components/PrincipalAccessTag.svelte"
-  import type {EnrollmentWithinViewAccessWindow, FrontendOverviewStudent, PrincipalAccess, ProgramAreaPrincipalAccess, TemplateInfo} from "$lib/types/app-types"
-  import type {
-    ClassAutoAccessEntry,
-    ClassManualAccessEntry,
-    GroupImportantStuff,
-    SchoolLeaderManualAccessEntry,
-    StudentClassGroup,
-    StudentDocument
-  } from "$lib/types/db/shared-types"
+  import type { EnrollmentWithinViewAccessWindow, FrontendOverviewStudent, PrincipalAccess, ProgramAreaPrincipalAccess, TemplateInfo } from "$lib/types/app-types"
+  import type { ClassAutoAccessEntry, ClassManualAccessEntry, GroupImportantStuff, SchoolLeaderManualAccessEntry, StudentClassGroup, StudentDocument } from "$lib/types/db/shared-types"
   import { ACCESS_TYPE_DISPLAY_NAMES } from "$lib/utils/access-constants"
   import type { PageProps } from "./$types"
-  import DocumentComponent from "$lib/components/Document/Document.svelte";
-  import NewDocument from "$lib/components/Document/NewDocument.svelte";
 
   type ClassSummaryDetails = { groupImportantInfo: GroupImportantStuff | null } | undefined
 

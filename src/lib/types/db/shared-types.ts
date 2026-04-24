@@ -477,11 +477,11 @@ export type DbEncryptedStudentDocument = NewDbEncryptedStudentDocument & {
 
 export type NewGroupDocument = DocumentBase &
   DocumentInput & {
-  messages: DocumentMessage[]
-  group: {
-    systemId: string
+    messages: DocumentMessage[]
+    group: {
+      systemId: string
+    }
   }
-}
 
 export type GroupDocumentUpdate = DocumentBase & DocumentInput
 
