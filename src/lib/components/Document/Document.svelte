@@ -1,8 +1,6 @@
 <script lang="ts">
-  import { page } from "$app/state"
   import { apiFetch } from "$lib/api-fetch/api-fetch"
-  import { canEditStudentDocument } from "$lib/shared-authorization/authorization"
-  import type { PrincipalAccessForStudent } from "$lib/types/app-types"
+  import type { StudentAccessPerson } from "$lib/types/app-types"
   import type { DocumentInput, MetricCount, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
   import EditorInfo from "../EditorInfo.svelte"
   import DocumentContent from "./DocumentContentItem.svelte"
@@ -12,22 +10,15 @@
 
   type PageProps = {
     document: StudentDocument // Add GroupDocument union when needed
-    principalAccessForStudent: PrincipalAccessForStudent[]
+    accessSchools: SchoolInfo[]
+    canEditDocument: boolean
     studentName?: string
     groupName?: string
+    studentDataSharingConsent?: boolean
+    studentAccessPersons?: StudentAccessPerson[]
   }
 
-  let { document, principalAccessForStudent: principalAccessEntriesForStudent, studentName, groupName }: PageProps = $props()
-
-  let accessSchools: SchoolInfo[] = $derived.by(() => {
-    return principalAccessEntriesForStudent.map((access) => {
-      const school = page.data.schools.find((school) => school.schoolNumber === access.schoolNumber)
-      if (!school) {
-        throw new Error(`School not found for access with school number ${access.schoolNumber}, something wrong here gitt`)
-      }
-      return school
-    })
-  })
+  let { document, accessSchools, canEditDocument, studentName, groupName, studentDataSharingConsent, studentAccessPersons }: PageProps = $props()
 
   const editableDocumentFromDocument = () => {
     return JSON.parse(
@@ -103,7 +94,7 @@
       <DocumentEditor documentId={document._id} studentId={document.student._id} bind:currentDocument={editableDocument} {accessSchools} closeEditor={() => { editMode = false; editableDocument = editableDocumentFromDocument(); }} />
     {/if}
 
-    {#if !editMode && canEditStudentDocument(page.data.authenticatedPrincipal, principalAccessEntriesForStudent, document)}
+    {#if !editMode && canEditDocument}
       <div class="document-actions">
         <button class="ds-button" data-variant="secondary" data-size="sm" onclick={() => editMode = true}>
           <span class="material-symbols-outlined">{editMode ? "close" : "edit"}</span>
