@@ -59,7 +59,7 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
 
   const currentDocument = await dbClient.getStudentDocumentById(documentId)
   if (!currentDocument) {
-    throw new HTTPError(404, "Document not found, cannot add message to non-existing document...")
+    throw new HTTPError(404, "Document not found, cannot update message in non-existing document...")
   }
 
   const messageToUpdate = currentDocument.messages.find((message) => message.messageId === messageId)
@@ -68,7 +68,7 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
   }
 
   if (!canUpdateMessageInStudentDocument(principal, principalAccessForStudent, currentDocument, messageToUpdate)) {
-    throw new HTTPError(403, noAccessMessage("No permission to add message to document"))
+    throw new HTTPError(403, noAccessMessage("No permission to update message in document"))
   }
 
   const editorData: EditorData = {
@@ -86,7 +86,8 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
     content: {
       title: updateMessageData.content.title,
       text: updateMessageData.content.text
-    }
+    },
+    emailAlertReceivers: messageToUpdate.emailAlertReceivers || [] // in case the existing message doesn't have emailAlertReceivers
   }
 
   const updatedMessageId = await dbClient.updateDocumentMessage(documentId, messageId, updatedMessageData)

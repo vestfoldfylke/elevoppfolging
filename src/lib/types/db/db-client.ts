@@ -8,6 +8,7 @@ import type {
   ManualAccessEntryInput,
   NewAccess,
   NewAppStudent,
+  NewDbEmailAlert,
   NewDocumentContentTemplate,
   NewDocumentMessage,
   NewProgramArea,
@@ -88,4 +89,6 @@ export interface IDbClient {
   createStudentCheckBox(studentCheckBox: NewStudentCheckBox): Promise<string>
   deleteStudentCheckBox(studentCheckBox: StudentCheckBox): Promise<void>
   updateStudentCheckBox(studentCheckBoxId: string, studentCheckBox: NewStudentCheckBox): Promise<string>
+
+  createEmailAlert(emailAlert: NewDbEmailAlert): Promise<string>
 }

@@ -387,6 +387,7 @@ export type DocumentUpdateInput = {
     title: string
     text: string
   }
+  emailAlertReceivers: string[]
 }
 
 export type DocumentMessageInput = DocumentUpdateInput
@@ -424,6 +425,7 @@ export type DocumentInput = {
   }
   content: DocumentContentItem[]
   documentAccess: DocumentAccess
+  emailAlertReceivers: string[]
 }
 
 export type NewStudentDocument = DocumentBase &
@@ -615,6 +617,22 @@ export type DbStudentDataSharingConsent = StudentDataSharingConsentBase &
       _id: ObjectId
     }
   }
+
+// EMAIL ALERTS
+
+export type NewDbEmailAlert = {
+  type: "DOCUMENT_CREATED" | "DOCUMENT_MESSAGE_CREATED"
+  documentId: ObjectId
+  receivers: string[]
+  status: "QUEUED" | "SENT" | "FAILED"
+  created: EditorData
+}
+
+export type DbEmailAlert = NewDbEmailAlert & {
+  _id: ObjectId
+}
+
+// METRICS
 
 export type MetricLabel = [labelName: string, labelValue: string]
 
