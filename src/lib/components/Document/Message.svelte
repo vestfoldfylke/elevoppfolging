@@ -4,11 +4,11 @@
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import { canEditDocumentMessage } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
-  import type { DocumentMessage, DocumentMessageInput, StudentDocument } from "$lib/types/db/shared-types"
+  import type { DocumentMessage, DocumentMessageInput, GroupDocument, StudentDocument } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
 
   type PageProps = {
-    document: StudentDocument // Eller Group når det kommer
+    document: StudentDocument | GroupDocument
     message: DocumentMessage
     editMode: boolean
     callback?: () => void
@@ -39,9 +39,11 @@
         text: message.content.text
       }
     }
+
     if (callback) {
       callback()
     }
+
     editMode = false
   }
 
@@ -49,51 +51,78 @@
     if (!messageForm) {
       throw new Error("Message form not found")
     }
+
     const formIsValid = messageForm.reportValidity()
     if (!formIsValid) {
       throw new Error(INVALID_FORM_MESSAGE)
     }
 
-    if (!document.student._id) {
-      throw new Error("Group documents are not supported yet, studentId is missing")
+    if ("group" in document) {
+      const createMessageRoute = `/api/classes/${document.group.systemId as NoSlashString}/documents/${document._id as NoSlashString}/messages` as const
+
+      await apiFetch(createMessageRoute, {
+        method: "POST",
+        body: editableMessage,
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+
+      return
     }
 
-    const createMessageRoute = `/api/students/${document.student._id as NoSlashString}/documents/${document._id as NoSlashString}/messages` as const
+    if ("student" in document) {
+      const createMessageRoute = `/api/students/${document.student._id as NoSlashString}/documents/${document._id as NoSlashString}/messages` as const
 
-    await apiFetch(createMessageRoute, {
-      method: "POST",
-      body: editableMessage,
-      headers: {
-        "Content-Type": "application/json"
-      }
-    })
+      await apiFetch(createMessageRoute, {
+        method: "POST",
+        body: editableMessage,
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+    }
   }
 
   const updateMessage = async (): Promise<void> => {
     if (!messageForm) {
       throw new Error("Message form not found")
     }
+
     const formIsValid = messageForm.reportValidity()
     if (!formIsValid) {
       throw new Error(INVALID_FORM_MESSAGE)
     }
 
-    if (!document.student._id) {
-      throw new Error("Group documents are not supported yet, studentId is missing")
-    }
     if (!message.messageId) {
       throw new Error("messageId is required to update a message")
     }
 
-    const updateMessageRoute = `/api/students/${document.student._id as NoSlashString}/documents/${document._id as NoSlashString}/messages/${message.messageId as NoSlashString}` as const
+    if ("group" in document) {
+      const updateMessageRoute = `/api/classes/${document.group.systemId as NoSlashString}/documents/${document._id as NoSlashString}/messages/${message.messageId as NoSlashString}` as const
 
-    await apiFetch(updateMessageRoute, {
-      method: "PATCH",
-      body: editableMessage,
-      headers: {
-        "Content-Type": "application/json"
-      }
-    })
+      await apiFetch(updateMessageRoute, {
+        method: "PATCH",
+        body: editableMessage,
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+
+      return
+    }
+
+    if ("student" in document) {
+      const updateMessageRoute = `/api/students/${document.student._id as NoSlashString}/documents/${document._id as NoSlashString}/messages/${message.messageId as NoSlashString}` as const
+
+      await apiFetch(updateMessageRoute, {
+        method: "PATCH",
+        body: editableMessage,
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+    }
   }
 </script>
 

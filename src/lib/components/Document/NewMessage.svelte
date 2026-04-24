@@ -1,10 +1,10 @@
 <script lang="ts">
   import { tick } from "svelte"
-  import type { DocumentMessage, EditorData, StudentDocument } from "$lib/types/db/shared-types"
+  import type { DocumentMessage, EditorData, GroupDocument, StudentDocument } from "$lib/types/db/shared-types"
   import Message from "./Message.svelte"
 
   type PageProps = {
-    document: StudentDocument // Eller Group når det kommer
+    document: StudentDocument | GroupDocument
   }
 
   let { document }: PageProps = $props()
@@ -36,6 +36,7 @@
 
   const scrollToNewMessage = async () => {
     await tick()
+
     const newMessageElement = window.document.getElementById("new-message-container")
     if (newMessageElement) {
       newMessageElement.scrollIntoView({ behavior: "smooth" })

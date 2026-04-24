@@ -5,6 +5,8 @@ import type {
   AppUser,
   AvailableForDocumentType,
   DocumentContentTemplate,
+  GroupDocument,
+  GroupDocumentUpdate,
   GroupImportantStuff,
   ManualAccessEntryInput,
   NewAccess,
@@ -69,8 +71,8 @@ export interface IDbClient {
   createManualStudent(manualStudent: NewAppStudent): Promise<string>
   updateManualStudent(manualStudent: UpdateAppStudent): Promise<string>
 
-  addDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<string>
-  updateDocumentMessage(documentId: string, messageId: string, messageUpdate: NewDocumentMessage): Promise<string>
+  addStudentDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<string>
+  updateStudentDocumentMessage(documentId: string, messageId: string, messageUpdate: NewDocumentMessage): Promise<string>
 
   getStudentsImportantStuff(studentIds: string[]): Promise<Record<string, Record<string, StudentImportantStuff>>>
   getStudentImportantStuff(studentId: string, schoolNumbers: string[]): Promise<StudentImportantStuff[]>
@@ -82,7 +84,13 @@ export interface IDbClient {
   /** We need to query by systemId since classes only exists on students and don't have a db record themselves */
   upsertGroupImportantStuff(systemId: string, importantStuff: NewGroupImportantStuff): Promise<string>
 
+  getGroupDocuments(systemId: string): Promise<GroupDocument[]>
+  getGroupDocumentById(documentId: string): Promise<GroupDocument | null>
   createGroupDocument(document: NewGroupDocument): Promise<string>
+  updateGroupDocument(documentId: string, documentUpdate: GroupDocumentUpdate): Promise<string>
+
+  addGroupDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<string>
+  updateGroupDocumentMessage(documentId: string, messageId: string, messageUpdate: NewDocumentMessage): Promise<string>
 
   getDocumentContentTemplates(availableFor?: AvailableForDocumentType): Promise<DocumentContentTemplate[]>
   getDocumentContentTemplateById(templateId: string): Promise<DocumentContentTemplate | null>

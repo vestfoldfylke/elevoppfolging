@@ -12,11 +12,6 @@
   import { prettifyDate } from "$lib/utils/prettify-date"
   import type { PageProps } from "./$types"
 
-  type TemplateInfo = {
-    id: string
-    name: string
-  }
-
   let { data }: PageProps = $props()
 
   let expandedStudentDetails = $state(false)

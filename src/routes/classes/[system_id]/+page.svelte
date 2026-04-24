@@ -6,7 +6,7 @@
   import ImportantGroupStuff from "$lib/components/ImportantGroupStuff.svelte"
   import PrincipalAccessTag from "$lib/components/PrincipalAccessTag.svelte"
   import type { EnrollmentWithinViewAccessWindow, FrontendOverviewStudent, PrincipalAccess, ProgramAreaPrincipalAccess, TemplateInfo } from "$lib/types/app-types"
-  import type { ClassAutoAccessEntry, ClassManualAccessEntry, GroupImportantStuff, SchoolLeaderManualAccessEntry, StudentClassGroup, StudentDocument } from "$lib/types/db/shared-types"
+  import type { ClassAutoAccessEntry, ClassManualAccessEntry, GroupDocument, GroupImportantStuff, SchoolLeaderManualAccessEntry, StudentClassGroup } from "$lib/types/db/shared-types"
   import { ACCESS_TYPE_DISPLAY_NAMES } from "$lib/utils/access-constants"
   import type { PageProps } from "./$types"
 
@@ -101,7 +101,7 @@
 
   let documentTypes: TemplateInfo[] = $derived.by(() => {
     const templates: Map<string, string> = new Map()
-    data.documents.forEach((document: StudentDocument) => {
+    data.documents.forEach((document: GroupDocument) => {
       if (templates.has(document.template._id)) {
         return
       }
@@ -116,12 +116,12 @@
 
   let selectedDocumentTypes: string[] = $state([])
 
-  let filteredDocuments: StudentDocument[] = $derived.by(() => {
+  let filteredDocuments: GroupDocument[] = $derived.by(() => {
     if (selectedDocumentTypes.length === 0) {
       return data.documents
     }
 
-    return data.documents.filter((document: StudentDocument) => selectedDocumentTypes.includes(document.template._id))
+    return data.documents.filter((document: GroupDocument) => selectedDocumentTypes.includes(document.template._id))
   })
 
   const removeDocumentsFilter = (templateId: string): void => {
@@ -232,8 +232,7 @@
         {/each}
       </div>
       {#each filteredDocuments as document (document._id)}
-        <!--<DocumentComponent {document} accessSchools={[selectedClass.school]} groupName={selectedClass.name} />-->
-        {document.title}<br />
+        <DocumentComponent {document} accessSchools={[selectedClass.school]} canEditDocument={true} groupName={selectedClass.name} />
       {/each}
     {/if}
   </div>

@@ -82,28 +82,37 @@
     if (!documentEditorForm) {
       throw new Error("Document editor form not found")
     }
+
     const formIsValid = documentEditorForm.reportValidity()
     if (!formIsValid) {
       throw new Error(INVALID_FORM_MESSAGE)
     }
 
     if (groupSystemId) {
-      throw new Error("Creating documents for groups is not supported yet")
+      const updateDocumentRoute = `/api/classes/${groupSystemId as NoSlashString}/documents/${documentId as NoSlashString}` as const
+
+      await apiFetch(updateDocumentRoute, {
+        method: "PATCH",
+        body: currentDocument,
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+
+      return
     }
 
-    if (!studentId) {
-      throw new Error("Student ID is required for updating a document")
+    if (studentId) {
+      const updateDocumentRoute = `/api/students/${studentId as NoSlashString}/documents/${documentId as NoSlashString}` as const
+
+      await apiFetch(updateDocumentRoute, {
+        method: "PATCH",
+        body: currentDocument,
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
     }
-
-    const updateDocumentRoute = `/api/students/${studentId as NoSlashString}/documents/${documentId as NoSlashString}` as const
-
-    await apiFetch(updateDocumentRoute, {
-      method: "PATCH",
-      body: currentDocument,
-      headers: {
-        "Content-Type": "application/json"
-      }
-    })
   }
 </script>
 
