@@ -39,7 +39,7 @@
     if (!emailAlertAvailable || !studentAccessPersons) {
       return []
     }
-    
+
     const accessPersonsWithRelevantSchoolAccess = studentAccessPersons
       .map((accessPerson: StudentAccessPerson) => {
         return {
