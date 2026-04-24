@@ -11,15 +11,16 @@
   type EditorProps = {
     documentId?: string
     studentId?: string
-    groupId?: string
+    groupSystemId?: string
     currentDocument: DocumentInput
     accessSchools: SchoolInfo[]
     studentDataSharingConsent?: boolean
     studentAccessPersons?: StudentAccessPerson[]
+    emailAlertAvailable?: boolean
     closeEditor: () => void
   }
 
-  let { documentId, studentId, groupId, accessSchools, currentDocument = $bindable(), studentDataSharingConsent, studentAccessPersons, closeEditor }: EditorProps = $props()
+  let { documentId, studentId, groupSystemId, accessSchools, currentDocument = $bindable(), studentDataSharingConsent, studentAccessPersons, emailAlertAvailable, closeEditor }: EditorProps = $props()
 
   let documentEditorForm: HTMLFormElement | undefined = $state()
 
@@ -36,7 +37,7 @@
       throw new Error(INVALID_FORM_MESSAGE)
     }
 
-    if (groupId) {
+    if (groupSystemId) {
       throw new Error("Creating documents for groups is not supported yet")
     }
 
@@ -68,7 +69,7 @@
       throw new Error(INVALID_FORM_MESSAGE)
     }
 
-    if (groupId) {
+    if (groupSystemId) {
       throw new Error("Creating documents for groups is not supported yet")
     }
 

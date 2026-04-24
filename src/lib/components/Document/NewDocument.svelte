@@ -106,7 +106,7 @@
       <br />
       <div class="ds-paragraph" data-size="sm">{newDocument.school.name}</div>
       <h2 class="ds-heading">{newDocument.template.name}: {newDocument.title}</h2>
-      <DocumentEditor {studentId} groupId={groupSystemId} {accessSchools} bind:currentDocument={newDocument} {studentDataSharingConsent} {studentAccessPersons} closeEditor={closeEditor} />
+      <DocumentEditor {studentId} {groupSystemId} {accessSchools} bind:currentDocument={newDocument} {studentDataSharingConsent} {studentAccessPersons} closeEditor={closeEditor} />
     {/if}
   </div>
 </dialog>
