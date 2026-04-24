@@ -5,7 +5,7 @@
   import PrincipalAccessTags from "$lib/components/PrincipalAccessTags.svelte"
   import DataSharingConsent from "$lib/components/StudentBoxes/DataSharingConsent.svelte"
   import ImportantStuff from "$lib/components/StudentBoxes/ImportantStuff.svelte"
-  import { canEditStudentDataSharingConsent, canEditStudentImportantStuff } from "$lib/shared-authorization/authorization"
+  import { canEditStudentDataSharingConsent, canEditStudentDocument, canEditStudentImportantStuff } from "$lib/shared-authorization/authorization"
   import type { EnrollmentDetails, PeriodDetails } from "$lib/types/app-types"
   import type { Period, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
   import { getEnrollmentDetails, getFrontendStudentMainDetails } from "$lib/utils/frontend-student-details"
@@ -337,7 +337,7 @@
         {/each}
       </div>
       {#each filteredDocuments as document (document._id)}
-        <DocumentComponent {document} principalAccessForStudent={data.principalAccessForStudent} studentName={data.student.name} />
+        <DocumentComponent {document} {accessSchools} canEditDocument={canEditStudentDocument(data.authenticatedPrincipal, data.principalAccessForStudent, document)} studentName={data.student.name} studentDataSharingConsent={data.studentDataSharingConsent?.consent} studentAccessPersons={data.studentAccessPersons} />
       {/each}
     {/if}
   </div>
