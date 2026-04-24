@@ -1,5 +1,6 @@
 import { logger } from "@vestfoldfylke/loglady"
 import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent, StudentAccessPerson, StudentMemberships } from "$lib/types/app-types"
+import { ACCESS_TYPE_PRIORITY } from "$lib/utils/access-constants"
 import { expandAccessWithProgramAreaNames } from "../authorization/principal-access"
 import { getPrincipalAccessForStudent } from "../authorization/student-access"
 import { getDbClient } from "../db/get-db-client"
@@ -61,5 +62,16 @@ export const getStudentAccessPersonsFromCache = async (studentId: string): Promi
 
   studentAccessCache[studentId] = studentAccessPersons
 
-  return studentAccessPersons
+  return studentAccessPersons.sort((a, b) => {
+    const aHighestAccessType = a.principalAccessForStudent[0].type
+    const bHighestAccessType = b.principalAccessForStudent[0].type
+
+    if (aHighestAccessType === bHighestAccessType) {
+      return a.entra.displayName.localeCompare(b.entra.displayName)
+    }
+    if (ACCESS_TYPE_PRIORITY[aHighestAccessType] === ACCESS_TYPE_PRIORITY[bHighestAccessType]) {
+      return aHighestAccessType.localeCompare(bHighestAccessType)
+    }
+    return ACCESS_TYPE_PRIORITY[aHighestAccessType] - ACCESS_TYPE_PRIORITY[bHighestAccessType]
+  })
 }

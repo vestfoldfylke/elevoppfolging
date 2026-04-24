@@ -1,6 +1,7 @@
 <script lang="ts">
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
+  import { isOnlySubjectTeacher } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { StudentAccessPerson } from "$lib/types/app-types"
   import type { DocumentInput, SchoolInfo } from "$lib/types/db/shared-types"
@@ -24,8 +25,43 @@
 
   let documentEditorForm: HTMLFormElement | undefined = $state()
 
+  let alertableAccessPersons = $derived.by(() => {
+    if (!emailAlertAvailable || !studentAccessPersons) {
+      return []
+    }
+    
+    const accessPersonsWithRelevantSchoolAccess = studentAccessPersons
+      .map((accessPerson: StudentAccessPerson) => {
+        return {
+          ...accessPerson,
+          principalAccessForStudent: studentDataSharingConsent
+            ? accessPerson.principalAccessForStudent
+            : accessPerson.principalAccessForStudent.filter((access) => access.schoolNumber === currentDocument.school.schoolNumber)
+        }
+      })
+      .filter((accessPerson) => accessPerson.principalAccessForStudent.length > 0)
+
+    const alertableAccessPersons = accessPersonsWithRelevantSchoolAccess.filter((accessPerson) => {
+      if (currentDocument.documentAccess === "ALL_WITH_STUDENT_ACCESS") {
+        return true
+      }
+      return !isOnlySubjectTeacher(accessPerson.principalAccessForStudent)
+    })
+
+    return alertableAccessPersons
+  })
+
+  const uncheckNonAlertableAccessPersons = (): void => {
+    currentDocument.emailAlertReceivers = currentDocument.emailAlertReceivers.filter((userPrincipalName) => {
+      return alertableAccessPersons.some((accessPerson) => accessPerson.entra.userPrincipalName === userPrincipalName)
+    })
+  }
+
   const toggleSubjectTeacherAccess = (): void => {
     currentDocument.documentAccess = currentDocument.documentAccess === "ALL_WITH_STUDENT_ACCESS" ? "EXCLUDE_SUBJECT_TEACHERS" : "ALL_WITH_STUDENT_ACCESS"
+    if (emailAlertAvailable) {
+      uncheckNonAlertableAccessPersons()
+    }
   }
 
   const newDocument = async (): Promise<void> => {
@@ -140,19 +176,19 @@
 
     <hr aria-hidden="true" class="ds-divider"/>
 
-    {#if studentAccessPersons && studentAccessPersons.length > 0}
+    {#if emailAlertAvailable && alertableAccessPersons.length > 0}
       <fieldset class="ds-fieldset content-item">
         <legend class="ds-label" data-weight="medium">
           Følgende personer skal varsles på e-post når notatet lagres
           <span class="ds-tag" data-variant="outline" data-color="warning" data-size="xs" style="margin-left: var(--ds-size-1)">Obs! Denne gjør ingenting enda, bare for testing</span>
         </legend>
 
-        {#each studentAccessPersons as accessPerson}
+        {#each alertableAccessPersons as alertableAccessPerson}
           <ds-field class="ds-field">
-            <input id={accessPerson.entra.id} class="ds-input" type="checkbox" value="email"/>
-            <label for={accessPerson.entra.id} class="ds-label" data-weight="regular">
-              {accessPerson.entra.displayName}
-              <PrincipalAccessTags principalAccessForStudent={accessPerson.principalAccessForStudent} />
+            <input id="email-alert-{documentId}-{alertableAccessPerson.entra.id}" class="ds-input" type="checkbox" name="email-alert-{documentId}" value={alertableAccessPerson.entra.userPrincipalName} bind:group={currentDocument.emailAlertReceivers} />
+            <label for="email-alert-{documentId}-{alertableAccessPerson.entra.id}" class="ds-label" data-weight="regular">
+              {alertableAccessPerson.entra.displayName}
+              <PrincipalAccessTags principalAccessForStudent={alertableAccessPerson.principalAccessForStudent} />
             </label>
           </ds-field>
         {/each}

@@ -2,19 +2,24 @@
   import { page } from "$app/state"
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
-  import { canEditDocumentMessage } from "$lib/shared-authorization/authorization"
+  import { canEditDocumentMessage, isOnlySubjectTeacher } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
+  import type { StudentAccessPerson } from "$lib/types/app-types"
   import type { DocumentMessage, DocumentMessageInput, StudentDocument } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
+  import PrincipalAccessTags from "../PrincipalAccessTags.svelte"
 
   type PageProps = {
     document: StudentDocument // Eller Group når det kommer
     message: DocumentMessage
     editMode: boolean
+    studentDataSharingConsent?: boolean
+    studentAccessPersons?: StudentAccessPerson[]
+    emailAlertAvailable?: boolean
     callback?: () => void
   }
 
-  let { document, message, editMode, callback }: PageProps = $props()
+  let { document, message, editMode, studentDataSharingConsent, studentAccessPersons, emailAlertAvailable, callback }: PageProps = $props()
 
   // svelte-ignore state_referenced_locally (we don't want to modify the original), remember key on the outside
   let editableMessage: DocumentMessageInput = $state({
@@ -22,11 +27,38 @@
     content: {
       title: message.content.title,
       text: message.content.text
-    }
+    },
+    emailAlertReceivers: message.emailAlertReceivers || []
   })
 
   let messageEdited = $derived.by(() => {
     return editableMessage.type !== message.type || editableMessage.content.title !== message.content.title || editableMessage.content.text !== message.content.text
+  })
+
+  let alertableAccessPersons = $derived.by(() => {
+    if (!emailAlertAvailable || !studentAccessPersons) {
+      return []
+    }
+    
+    const accessPersonsWithRelevantSchoolAccess = studentAccessPersons
+      .map((accessPerson: StudentAccessPerson) => {
+        return {
+          ...accessPerson,
+          principalAccessForStudent: studentDataSharingConsent
+            ? accessPerson.principalAccessForStudent
+            : accessPerson.principalAccessForStudent.filter((access) => access.schoolNumber === document.school.schoolNumber)
+        }
+      })
+      .filter((accessPerson) => accessPerson.principalAccessForStudent.length > 0)
+
+    const alertableAccessPersons = accessPersonsWithRelevantSchoolAccess.filter((accessPerson) => {
+      if (document.documentAccess === "ALL_WITH_STUDENT_ACCESS") {
+        return true
+      }
+      return !isOnlySubjectTeacher(accessPerson.principalAccessForStudent)
+    })
+
+    return alertableAccessPersons
   })
 
   let messageForm: HTMLFormElement | undefined = $state()
@@ -37,7 +69,8 @@
       content: {
         title: message.content.title,
         text: message.content.text
-      }
+      },
+      emailAlertReceivers: message.emailAlertReceivers || []
     }
     if (callback) {
       callback()
@@ -104,6 +137,7 @@
         {#if !message.messageId}
           <h2 class="ds-heading">Ny oppfølging</h2>
         {/if}
+
         <ds-field class="ds-field content-item">
           <label for="message-title-{message.messageId || document._id}" class="ds-label" data-weight="medium">
             Tittel
@@ -120,6 +154,28 @@
           <textarea required class="ds-input" name="messageContent" id="message-content-{message.messageId || document._id}" rows={5} bind:value={editableMessage.content.text} placeholder="Skriv oppdateringen her..."></textarea>
         </ds-field>
       {/if}
+
+      <hr aria-hidden="true" class="ds-divider"/>
+
+      {#if emailAlertAvailable && alertableAccessPersons.length > 0}
+        <fieldset class="ds-fieldset content-item">
+          <legend class="ds-label" data-weight="medium">
+            Følgende personer skal varsles på e-post når notatet lagres
+            <span class="ds-tag" data-variant="outline" data-color="warning" data-size="xs" style="margin-left: var(--ds-size-1)">Obs! Denne gjør ingenting enda, bare for testing</span>
+          </legend>
+
+          {#each alertableAccessPersons as alertableAccessPerson}
+            <ds-field class="ds-field">
+              <input id="email-alert-{message.messageId}-{document._id}-{alertableAccessPerson.entra.id}" class="ds-input" type="checkbox" name="email-alert-{document._id}" value={alertableAccessPerson.entra.userPrincipalName} bind:group={editableMessage.emailAlertReceivers} />
+              <label for="email-alert-{message.messageId}-{document._id}-{alertableAccessPerson.entra.id}" class="ds-label" data-weight="regular">
+                {alertableAccessPerson.entra.displayName}
+                <PrincipalAccessTags principalAccessForStudent={alertableAccessPerson.principalAccessForStudent} />
+              </label>
+            </ds-field>
+          {/each}
+        </fieldset>
+      {/if}
+
     </form>
   {:else}
     <p class="ds-paragraph pre-wrap-whitespace content-item">

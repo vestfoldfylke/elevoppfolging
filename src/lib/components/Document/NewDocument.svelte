@@ -10,10 +10,9 @@
     groupSystemId?: string
     studentDataSharingConsent?: boolean
     studentAccessPersons?: StudentAccessPerson[]
-    emailAlertAvailable?: boolean
   }
 
-  let { documentContentTemplates, accessSchools, studentId, groupSystemId, studentDataSharingConsent, studentAccessPersons, emailAlertAvailable }: PageProps = $props()
+  let { documentContentTemplates, accessSchools, studentId, groupSystemId, studentDataSharingConsent, studentAccessPersons }: PageProps = $props()
 
   // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounter ved endring av studentId/groupSystemId
   if (!studentId && !groupSystemId) {
@@ -44,7 +43,8 @@
         version: template.version
       },
       school: accessSchools[0],
-      documentAccess: "EXCLUDE_SUBJECT_TEACHERS"
+      documentAccess: "EXCLUDE_SUBJECT_TEACHERS",
+      emailAlertReceivers: []
     }
   }
 
@@ -106,7 +106,7 @@
       <br />
       <div class="ds-paragraph" data-size="sm">{newDocument.school.name}</div>
       <h2 class="ds-heading">{newDocument.template.name}: {newDocument.title}</h2>
-      <DocumentEditor {studentId} {groupSystemId} {accessSchools} bind:currentDocument={newDocument} {studentDataSharingConsent} {studentAccessPersons} closeEditor={closeEditor} />
+      <DocumentEditor {studentId} {groupSystemId} {accessSchools} bind:currentDocument={newDocument} {studentDataSharingConsent} {studentAccessPersons} emailAlertAvailable={true} closeEditor={closeEditor} />
     {/if}
   </div>
 </dialog>

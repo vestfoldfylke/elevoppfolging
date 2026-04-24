@@ -43,7 +43,7 @@ export const canManageManualStudentsOnSchool = (principalAccess: Access, schoolN
   )
 }
 
-const isOnlySubjectTeacher = (accessToStudent: PrincipalAccessForStudent[]): boolean => {
+export const isOnlySubjectTeacher = (accessToStudent: PrincipalAccessForStudent[]): boolean => {
   return accessToStudent.every((accessEntry) => accessEntry.type === "AUTOMATISK-UNDERVISNINGSGRUPPE-TILGANG" || accessEntry.type === "AUTOMATISK-KLASSE-TILGANG")
 }
 

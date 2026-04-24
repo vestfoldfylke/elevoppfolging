@@ -1,13 +1,16 @@
 <script lang="ts">
   import { tick } from "svelte"
+  import type { StudentAccessPerson } from "$lib/types/app-types"
   import type { DocumentMessage, EditorData, StudentDocument } from "$lib/types/db/shared-types"
   import Message from "./Message.svelte"
 
   type PageProps = {
     document: StudentDocument // Eller Group når det kommer
+    studentDataSharingConsent?: boolean
+    studentAccessPersons?: StudentAccessPerson[]
   }
 
-  let { document }: PageProps = $props()
+  let { document, studentDataSharingConsent, studentAccessPersons }: PageProps = $props()
 
   let messageType: "update" | null = $state(null)
 
@@ -27,7 +30,8 @@
       text: ""
     },
     created: mockEditor,
-    modified: mockEditor
+    modified: mockEditor,
+    emailAlertReceivers: []
   }
 
   const onNewMessageCreatedOrCancel = () => {
@@ -50,7 +54,7 @@
 {:else}
   <div id="new-message-container">
     {#if messageType === "update"}
-      <Message {document} editMode={true} message={newUpdate} callback={onNewMessageCreatedOrCancel} />
+      <Message {document} editMode={true} message={newUpdate} callback={onNewMessageCreatedOrCancel} {studentDataSharingConsent} {studentAccessPersons} emailAlertAvailable={true} />
     {/if}
   </div>
 {/if}

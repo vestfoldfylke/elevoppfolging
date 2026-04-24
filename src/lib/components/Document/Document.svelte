@@ -27,7 +27,8 @@
         school: document.school,
         template: document.template,
         title: document.title,
-        documentAccess: document.documentAccess || "EXCLUDE_SUBJECT_TEACHERS" // defaultvalue, becuase old documents doesn't have this field, and we don't want to break the editor for those
+        documentAccess: document.documentAccess || "EXCLUDE_SUBJECT_TEACHERS", // defaultvalue, becuase old documents doesn't have this field, and we don't want to break the editor for those
+        emailAlertReceivers: document.emailAlertReceivers || []
       } as DocumentInput)
     )
   }
@@ -118,7 +119,7 @@
     {/if}
   {/each}
   <div class="ds-dialog__block">
-    <NewMessage {document} />
+    <NewMessage {document} {studentDataSharingConsent} {studentAccessPersons} />
   </div>
 </dialog>
 
