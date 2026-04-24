@@ -854,6 +854,43 @@ export class MongoDbClient implements IDbClient {
     }
   }
 
+  async getStudentAccess(studentId: string, studentMemberships: StudentMemberships, studentProgramAreaIds: string[]): Promise<Access[]> {
+    const db = await this.getDb()
+    const accessCollection = db.collection<DbAccess>(this.accessCollectionName)
+
+    const query: Filter<DbAccess> = {
+      $or: [
+        { "leaderForSchools.schoolNumber": { $in: studentMemberships.schoolNumbers } },
+        { "classes.systemId": { $in: studentMemberships.classes.map((c) => c.systemId) } },
+        { "programAreas._id": { $in: studentProgramAreaIds.map((id) => new ObjectId(id)) } },
+        {
+          "contactTeacherGroups.systemId": { $in: studentMemberships.contactTeacherGroups.map((c) => c.systemId) }
+        },
+        {
+          "teachingGroups.systemId": { $in: studentMemberships.teachingGroups.map((c) => c.systemId) }
+        },
+        { "students._id": new ObjectId(studentId) }
+      ]
+    }
+
+    const accessList = await accessCollection.find(query).toArray()
+
+    return accessList.map((access) => {
+      return {
+        ...access,
+        _id: access._id.toString(),
+        programAreas: access.programAreas.map((programAreaAccessEntry) => ({
+          ...programAreaAccessEntry,
+          _id: programAreaAccessEntry._id.toString()
+        })),
+        students: access.students.map((studentAccessEntry) => ({
+          ...studentAccessEntry,
+          _id: studentAccessEntry._id.toString()
+        }))
+      }
+    })
+  }
+
   async getManualStudentById(studentId: string): Promise<AppStudent | null> {
     const db: Db = await this.getDb()
     const studentsCollection: Collection<DbAppStudent> = db.collection<DbAppStudent>(this.studentsCollectionName)
@@ -891,43 +928,6 @@ export class MongoDbClient implements IDbClient {
       modified: student.modified,
       source: student.source
     }
-  }
-
-  async getStudentAccess(studentId: string, studentMemberships: StudentMemberships, studentProgramAreaIds: string[]): Promise<Access[]> {
-    const db = await this.getDb()
-    const accessCollection = db.collection<DbAccess>(this.accessCollectionName)
-
-    const query: Filter<DbAccess> = {
-      $or: [
-        { "leaderForSchools.schoolNumber": { $in: studentMemberships.schoolNumbers } },
-        { "classes.systemId": { $in: studentMemberships.classes.map((c) => c.systemId) } },
-        { "programAreas._id": { $in: studentProgramAreaIds.map((id) => new ObjectId(id)) } },
-        {
-          "contactTeacherGroups.systemId": { $in: studentMemberships.contactTeacherGroups.map((c) => c.systemId) }
-        },
-        {
-          "teachingGroups.systemId": { $in: studentMemberships.teachingGroups.map((c) => c.systemId) }
-        },
-        { "students._id": new ObjectId(studentId) }
-      ]
-    }
-
-    const accessList = await accessCollection.find(query).toArray()
-
-    return accessList.map((access) => {
-      return {
-        ...access,
-        _id: access._id.toString(),
-        programAreas: access.programAreas.map((programAreaAccessEntry) => ({
-          ...programAreaAccessEntry,
-          _id: programAreaAccessEntry._id.toString()
-        })),
-        students: access.students.map((studentAccessEntry) => ({
-          ...studentAccessEntry,
-          _id: studentAccessEntry._id.toString()
-        }))
-      }
-    })
   }
 
   async createManualStudent(manualStudent: NewAppStudent): Promise<string> {

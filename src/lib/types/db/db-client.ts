@@ -54,7 +54,6 @@ export interface IDbClient {
   getStudents(access: Access): Promise<FrontendStudent[]>
   getStudentById(studentId: string): Promise<FrontendStudent | null>
   getStudentBySsn(ssn: string): Promise<FrontendStudent | null>
-  getManualStudentById(studentId: string): Promise<AppStudent | null>
 
   getStudentAccess(studentId: string, studentMemberships: StudentMemberships, studentProgramAreaIds: string[]): Promise<Access[]>
 
@@ -63,6 +62,7 @@ export interface IDbClient {
   createStudentDocument(document: NewStudentDocument): Promise<string>
   updateStudentDocument(documentId: string, documentUpdate: StudentDocumentUpdate): Promise<string>
 
+  getManualStudentById(studentId: string): Promise<AppStudent | null>
   createManualStudent(manualStudent: NewAppStudent): Promise<string>
   updateManualStudent(manualStudent: UpdateAppStudent): Promise<string>
 
