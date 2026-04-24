@@ -1,15 +1,13 @@
 <script lang="ts">
   import { tick } from "svelte"
-  import type { DocumentMessage, EditorData } from "$lib/types/db/shared-types"
+  import type { DocumentMessage, EditorData, StudentDocument } from "$lib/types/db/shared-types"
   import Message from "./Message.svelte"
 
   type PageProps = {
-    documentId: string
-    groupId?: string
-    studentId?: string
+    document: StudentDocument // Eller Group når det kommer
   }
 
-  let { documentId, groupId, studentId }: PageProps = $props()
+  let { document }: PageProps = $props()
 
   let messageType: "update" | null = $state(null)
 
@@ -28,6 +26,7 @@
       title: "",
       text: ""
     },
+    emailAlertReceivers: [],
     created: mockEditor,
     modified: mockEditor
   }
@@ -38,7 +37,7 @@
 
   const scrollToNewMessage = async () => {
     await tick()
-    const newMessageElement = document.getElementById("new-message-container")
+    const newMessageElement = window.document.getElementById("new-message-container")
     if (newMessageElement) {
       newMessageElement.scrollIntoView({ behavior: "smooth" })
     }
@@ -52,7 +51,7 @@
 {:else}
   <div id="new-message-container">
     {#if messageType === "update"}
-      <Message {studentId} {groupId} editMode={true} {documentId} message={newUpdate} callback={onNewMessageCreatedOrCancel} />
+      <Message {document} editMode={true} message={newUpdate} callback={onNewMessageCreatedOrCancel} />
     {/if}
   </div>
 {/if}
