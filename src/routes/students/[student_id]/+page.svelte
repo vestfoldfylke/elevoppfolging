@@ -6,7 +6,7 @@
   import DataSharingConsent from "$lib/components/StudentBoxes/DataSharingConsent.svelte"
   import ImportantStuff from "$lib/components/StudentBoxes/ImportantStuff.svelte"
   import { canEditStudentDataSharingConsent, canEditStudentDocument, canEditStudentImportantStuff } from "$lib/shared-authorization/authorization"
-  import type { EnrollmentDetails, PeriodDetails } from "$lib/types/app-types"
+  import type {EnrollmentDetails, PeriodDetails, TemplateInfo} from "$lib/types/app-types"
   import type { Period, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
   import { getEnrollmentDetails, getFrontendStudentMainDetails } from "$lib/utils/frontend-student-details"
   import { prettifyDate } from "$lib/utils/prettify-date"
@@ -370,16 +370,6 @@
     flex-wrap: wrap;
   }
 
-  #documents {
-    scroll-margin-top: var(--header-height);
-  }
-
-  .documents-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
   .documents {
     display: flex;
     flex-direction: column;
@@ -387,18 +377,25 @@
   }
 
   .documents-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: var(--ds-size-4);
   }
   
+  #documents {
+    scroll-margin-top: var(--header-height);
+  }
+  
   .documents-header-actions {
-      display: flex;
-      gap: var(--ds-size-2);
+    display: flex;
+    gap: var(--ds-size-2);
   }
 
   .documents-filter {
-      margin-bottom: var(--ds-size-4);
-      display: flex;
-      gap: var(--ds-size-1) var(--ds-size-2);
-      flex-wrap: wrap;
+    margin-bottom: var(--ds-size-4);
+    display: flex;
+    gap: var(--ds-size-1) var(--ds-size-2);
+    flex-wrap: wrap;
   }
 </style>

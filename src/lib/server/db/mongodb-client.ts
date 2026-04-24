@@ -46,12 +46,14 @@ import type {
   MetricLabel,
   NewAccess,
   NewAppStudent,
+  NewDbEncryptedGroupDocument,
   NewDbEncryptedStudentCheckBox,
   NewDbEncryptedStudentDocument,
   NewDbStudentDataSharingConsent,
   NewDbStudentImportantStuff,
   NewDocumentContentTemplate,
   NewDocumentMessage,
+  NewGroupDocument,
   NewGroupImportantStuff,
   NewProgramArea,
   NewSchool,
@@ -1483,13 +1485,79 @@ export class MongoDbClient implements IDbClient {
     return result._id.toString()
   }
 
+  async createGroupDocument(document: NewGroupDocument): Promise<string> {
+    const db = await this.getDb()
+    const documentsCollection = db.collection<NewDbEncryptedGroupDocument>(this.documentsCollectionName)
+
+    const encryption = await this.getEncryptionClient()
+
+    const encryptedDocumentMessages: DbEncryptedDocumentMessage[] = []
+
+    for (const message of document.messages) {
+      const encryptedMessageContent = await encryption.client.encrypt(message.content, encryption.encryptionOptions)
+      encryptedDocumentMessages.push({
+        ...message,
+        content: encryptedMessageContent
+      })
+    }
+
+    const documentToInsert: NewDbEncryptedGroupDocument = {
+      ...document,
+      content: await encryption.client.encrypt(document.content, encryption.encryptionOptions),
+      title: await encryption.client.encrypt(document.title, encryption.encryptionOptions),
+      template: {
+        _id: document.template._id,
+        name: await encryption.client.encrypt(document.template.name, encryption.encryptionOptions),
+        version: document.template.version
+      },
+      messages: encryptedDocumentMessages
+    }
+
+    const result = await documentsCollection.insertOne(documentToInsert)
+
+    const metricBody: MetricCount = {
+      name: "GroupDocument_Create",
+      description: "Number of group documents created"
+    }
+    const labels: MetricLabel[] = [["schoolNumber", document.school.schoolNumber]]
+
+    if (!result.insertedId) {
+      incrementCount({
+        ...metricBody,
+        labels: [...labels, [metricResultName, metricResultFailure]]
+      })
+
+      throw new Error("Failed to create group document")
+    }
+
+    incrementCount({
+      ...metricBody,
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
+
+    return result.insertedId.toString()
+  }
+
   async getDocumentContentTemplates(availableFor?: AvailableForDocumentType): Promise<DocumentContentTemplate[]> {
     const db = await this.getDb()
     const documentContentTemplatesCollection = db.collection<DbDocumentContentTemplate>(this.documentContentTemplatesCollectionName)
+    
+    const availableForQuery: Record<string, any> = {}
 
-    const query = availableFor ? { "availableForDocumentType.student": availableFor.student, "availableForDocumentType.group": availableFor.group } : {}
+    if (availableFor?.student && availableFor?.group) {
+      availableForQuery.$or = [
+        { "availableForDocumentType.student": availableFor.student },
+        { "availableForDocumentType.group": availableFor.group }
+      ]
+    } else if (availableFor?.student) {
+      availableForQuery["availableForDocumentType.student"] = availableFor.student
+    } else if (availableFor?.group) {
+      availableForQuery["availableForDocumentType.group"] = availableFor.group
+    }
 
-    const templates = await documentContentTemplatesCollection.find(query).toArray()
+    const templates = await documentContentTemplatesCollection.find(availableForQuery).toArray()
 
     return templates.map((template) => ({
       ...template,

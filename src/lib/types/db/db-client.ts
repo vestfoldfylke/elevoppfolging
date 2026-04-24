@@ -11,6 +11,7 @@ import type {
   NewAppStudent,
   NewDocumentContentTemplate,
   NewDocumentMessage,
+  NewGroupDocument,
   NewGroupImportantStuff,
   NewProgramArea,
   NewSchool,
@@ -80,6 +81,8 @@ export interface IDbClient {
   getGroupImportantStuff(systemId: string): Promise<GroupImportantStuff[]>
   /** We need to query by systemId since classes only exists on students and don't have a db record themselves */
   upsertGroupImportantStuff(systemId: string, importantStuff: NewGroupImportantStuff): Promise<string>
+
+  createGroupDocument(document: NewGroupDocument): Promise<string>
 
   getDocumentContentTemplates(availableFor?: AvailableForDocumentType): Promise<DocumentContentTemplate[]>
   getDocumentContentTemplateById(templateId: string): Promise<DocumentContentTemplate | null>

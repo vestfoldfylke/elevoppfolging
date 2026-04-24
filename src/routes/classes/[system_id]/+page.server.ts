@@ -34,7 +34,7 @@ const getClass: ServerLoadNextFunction<ClassPageData> = async ({ principal, requ
 
   //const documents = allStudentDocuments.filter((document) => canViewStudentDocument(principal, principalAccessForStudent, document, studentDataSharingConsent))
 
-  const documentContentTemplates: DocumentContentTemplate[] = await dbClient.getDocumentContentTemplates({ student: false, group: true })
+  const documentContentTemplates: DocumentContentTemplate[] = await dbClient.getDocumentContentTemplates({ group: true })
 
   return {
     data: {

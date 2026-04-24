@@ -158,3 +158,8 @@ export type NewManualAccessControl = {
   classId?: string
   studentId?: string
 }
+
+export type TemplateInfo = {
+  id: string
+  name: string
+}
