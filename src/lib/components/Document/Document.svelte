@@ -113,12 +113,12 @@
             <EditorInfo created={message.modified} modified={message.modified} timestamp={true} modifiedIndicator={true} />
           </div>
         </div>
-        <Message {message} editMode={false} documentId={document._id} studentId={document.student._id} />
+        <Message {message} editMode={false} {document} />
       </div>
     {/if}
   {/each}
   <div class="ds-dialog__block">
-    <NewMessage documentId={document._id} studentId={document.student._id} />
+    <NewMessage {document} />
   </div>
 </dialog>
 

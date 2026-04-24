@@ -4,19 +4,17 @@
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import { canEditDocumentMessage } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
-  import type { DocumentMessage, DocumentMessageInput } from "$lib/types/db/shared-types"
+  import type { DocumentMessage, DocumentMessageInput, StudentDocument } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
 
   type PageProps = {
-    documentId: string
+    document: StudentDocument // Eller Group når det kommer
     message: DocumentMessage
     editMode: boolean
-    studentId?: string
-    groupId?: string
     callback?: () => void
   }
 
-  let { documentId, message, editMode, studentId, groupId, callback }: PageProps = $props()
+  let { document, message, editMode, callback }: PageProps = $props()
 
   // svelte-ignore state_referenced_locally (we don't want to modify the original), remember key on the outside
   let editableMessage: DocumentMessageInput = $state({
@@ -56,14 +54,11 @@
       throw new Error(INVALID_FORM_MESSAGE)
     }
 
-    if (groupId) {
-      throw new Error("Creating messages for groups is not supported yet")
-    }
-    if (!groupId && !studentId) {
-      throw new Error("studentId or groupId must be provided")
+    if (!document.student._id) {
+      throw new Error("Group documents are not supported yet, studentId is missing")
     }
 
-    const createMessageRoute = `/api/students/${studentId as NoSlashString}/documents/${documentId as NoSlashString}/messages` as const
+    const createMessageRoute = `/api/students/${document.student._id as NoSlashString}/documents/${document._id as NoSlashString}/messages` as const
 
     await apiFetch(createMessageRoute, {
       method: "POST",
@@ -83,14 +78,14 @@
       throw new Error(INVALID_FORM_MESSAGE)
     }
 
-    if (groupId) {
-      throw new Error("Updating messages for groups is not supported yet")
+    if (!document.student._id) {
+      throw new Error("Group documents are not supported yet, studentId is missing")
     }
-    if (!groupId && !studentId) {
-      throw new Error("studentId or groupId must be provided")
+    if (!message.messageId) {
+      throw new Error("messageId is required to update a message")
     }
 
-    const updateMessageRoute = `/api/students/${studentId as NoSlashString}/documents/${documentId as NoSlashString}/messages/${message.messageId as NoSlashString}` as const
+    const updateMessageRoute = `/api/students/${document.student._id as NoSlashString}/documents/${document._id as NoSlashString}/messages/${message.messageId as NoSlashString}` as const
 
     await apiFetch(updateMessageRoute, {
       method: "PATCH",
@@ -110,19 +105,19 @@
           <h2 class="ds-heading">Ny oppfølging</h2>
         {/if}
         <ds-field class="ds-field content-item">
-          <label for="message-title-{message.messageId || documentId}" class="ds-label" data-weight="medium">
+          <label for="message-title-{message.messageId || document._id}" class="ds-label" data-weight="medium">
             Tittel
             <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
           </label>
-          <input autocomplete="off" class="ds-input" type="text" id="message-title-{message.messageId || documentId}" name="messageTitle" required bind:value={editableMessage.content.title} placeholder="Tittel på oppfølging" />
+          <input autocomplete="off" class="ds-input" type="text" id="message-title-{message.messageId || document._id}" name="messageTitle" required bind:value={editableMessage.content.title} placeholder="Tittel på oppfølging" />
         </ds-field>
         
         <ds-field class="ds-field content-item">
-          <label for="message-content-{message.messageId || documentId}" class="ds-label" data-weight="medium">
+          <label for="message-content-{message.messageId || document._id}" class="ds-label" data-weight="medium">
             Oppdatering
             <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
           </label>
-          <textarea required class="ds-input" name="messageContent" id="message-content-{message.messageId || documentId}" rows={5} bind:value={editableMessage.content.text} placeholder="Skriv oppdateringen her..."></textarea>
+          <textarea required class="ds-input" name="messageContent" id="message-content-{message.messageId || document._id}" rows={5} bind:value={editableMessage.content.text} placeholder="Skriv oppdateringen her..."></textarea>
         </ds-field>
       {/if}
     </form>
