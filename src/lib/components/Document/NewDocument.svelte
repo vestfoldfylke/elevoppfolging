@@ -10,9 +10,10 @@
     groupId?: string
     studentDataSharingConsent?: boolean
     studentAccessPersons?: StudentAccessPerson[]
+    emailAlertAvailable?: boolean
   }
 
-  let { documentContentTemplates, accessSchools, studentId, groupId, studentDataSharingConsent, studentAccessPersons }: PageProps = $props()
+  let { documentContentTemplates, accessSchools, studentId, groupId, studentDataSharingConsent, studentAccessPersons, emailAlertAvailable }: PageProps = $props()
 
   // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounter ved endring av studentId/groupId
   if (!studentId && !groupId) {
