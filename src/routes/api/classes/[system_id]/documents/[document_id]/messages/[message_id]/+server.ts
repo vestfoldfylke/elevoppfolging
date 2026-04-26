@@ -89,20 +89,6 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
 
   const updatedMessageId = await dbClient.updateGroupDocumentMessage(documentId, messageId, updatedMessageData)
 
-  // TODO: We could probably just put it on the groupImportantStuff like we do it on students. But do we need it? 🤔
-  /*try {
-    await dbClient.updateStudentLastActivityTimestamp(systemId, currentDocument.school)
-  } catch (error) {
-    logger.errorException(
-      error,
-      "Failed to update student {feideName} last activity timestamp after updating document message {messageId} on document {documentId} for school {schoolNumber}. Returning updatedMessageId regardless",
-      student.feideName,
-      messageId,
-      documentId,
-      currentDocument.school
-    )
-  }*/
-
   return {
     updatedMessageId
   }

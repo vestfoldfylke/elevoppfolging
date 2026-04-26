@@ -74,19 +74,6 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
 
   logger.info(`Document created with ID ${documentId} by user ${principal.displayName} (${principal.id})`)
 
-  // TODO: We could probably just put it on the groupImportantStuff like we do it on students. But do we need it? 🤔
-  /*try {
-    await dbClient.updateStudentLastActivityTimestamp(systemId, newDocumentData.school)
-  } catch (error) {
-    logger.errorException(
-      error,
-      "Failed to update student {feideName} last activity timestamp after adding document message on document {documentId} for school {schoolNumber}. Returning documentId regardless",
-      student.feideName,
-      documentId,
-      newDocumentData.school
-    )
-  }*/
-
   return {
     documentId
   }

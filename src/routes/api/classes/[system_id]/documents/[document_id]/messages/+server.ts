@@ -75,19 +75,6 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
 
   const messageId = await dbClient.addGroupDocumentMessage(documentId, newMessage)
 
-  // TODO: We could probably just put it on the groupImportantStuff like we do it on students. But do we need it? 🤔
-  /*try {
-    await dbClient.updateStudentLastActivityTimestamp(systemId, currentDocument.school)
-  } catch (error) {
-    logger.errorException(
-      error,
-      "Failed to update student {feideName} last activity timestamp after adding document message on document {documentId} for school {schoolNumber}. Returning messageId regardless",
-      student.feideName,
-      documentId,
-      currentDocument.school
-    )
-  }*/
-
   return {
     messageId
   }
