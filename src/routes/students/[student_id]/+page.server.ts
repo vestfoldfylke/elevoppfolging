@@ -85,7 +85,7 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 
   const unavailableSchoolDocuments = Object.values(unavailableSchoolDocumentsMap)
 
-  const documentContentTemplates: DocumentContentTemplate[] = await dbClient.getDocumentContentTemplates({ student: true, group: false })
+  const documentContentTemplates: DocumentContentTemplate[] = await dbClient.getDocumentContentTemplates({ student: true })
 
   const studentAccessPersons: StudentAccessPerson[] = await getStudentAccessPersonsFromCache(studentId)
 

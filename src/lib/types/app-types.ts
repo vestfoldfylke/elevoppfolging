@@ -66,8 +66,10 @@ export type AccessEntry =
   | ContactTeacherGroupAutoAccessEntry
   | TeachingGroupAutoAccessEntry
 
+export type ProgramAreaPrincipalAccess = ProgramAreaManualAccessEntry & { name: string; classSystemIds: string[] }
+
 export type PrincipalAccess = Omit<Access, "programAreas"> & {
-  programAreas: (ProgramAreaManualAccessEntry & { name: string; classSystemIds: string[] })[]
+  programAreas: ProgramAreaPrincipalAccess[]
 }
 
 export type PrincipalAccessForStudent = {
@@ -110,7 +112,7 @@ export type RootLayoutData = {
   APP_INFO: ApplicationInfo
   authenticatedPrincipal: AuthenticatedPrincipal
   classes: StudentClassGroup[]
-  principalAccess: Access | null
+  principalAccess: PrincipalAccess | null
   students: FrontendOverviewStudent[]
   studentCheckBoxes: StudentCheckBox[]
   schools: SchoolInfo[]
@@ -155,4 +157,9 @@ export type NewManualAccessControl = {
   programAreaId?: string
   classId?: string
   studentId?: string
+}
+
+export type TemplateInfo = {
+  id: string
+  name: string
 }

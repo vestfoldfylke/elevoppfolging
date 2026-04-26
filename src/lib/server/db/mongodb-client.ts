@@ -26,10 +26,15 @@ import type {
   DbAppStudent,
   DbDocumentContentTemplate,
   DbEncryptedDocumentMessage,
+  DbEncryptedGroupDocument,
+  DbEncryptedGroupDocumentUpdate,
+  DbEncryptedGroupImportantStuff,
   DbEncryptedStudentCheckBox,
   DbEncryptedStudentDocument,
   DbEncryptedStudentDocumentUpdate,
   DbEncryptedStudentImportantStuff,
+  DbGroupDocument,
+  DbGroupImportantStuff,
   DbProgramArea,
   DbSchool,
   DbStudentCheckBox,
@@ -38,17 +43,23 @@ import type {
   DbStudentImportantStuff,
   DocumentContentTemplate,
   EditorData,
+  GroupDocument,
+  GroupDocumentUpdate,
+  GroupImportantStuff,
   ManualAccessEntryInput,
   MetricCount,
   MetricLabel,
   NewAccess,
   NewAppStudent,
+  NewDbEncryptedGroupDocument,
   NewDbEncryptedStudentCheckBox,
   NewDbEncryptedStudentDocument,
   NewDbStudentDataSharingConsent,
   NewDbStudentImportantStuff,
   NewDocumentContentTemplate,
   NewDocumentMessage,
+  NewGroupDocument,
+  NewGroupImportantStuff,
   NewProgramArea,
   NewSchool,
   NewStudentCheckBox,
@@ -854,6 +865,43 @@ export class MongoDbClient implements IDbClient {
     }
   }
 
+  async getStudentAccess(studentId: string, studentMemberships: StudentMemberships, studentProgramAreaIds: string[]): Promise<Access[]> {
+    const db = await this.getDb()
+    const accessCollection = db.collection<DbAccess>(this.accessCollectionName)
+
+    const query: Filter<DbAccess> = {
+      $or: [
+        { "leaderForSchools.schoolNumber": { $in: studentMemberships.schoolNumbers } },
+        { "classes.systemId": { $in: studentMemberships.classes.map((c) => c.systemId) } },
+        { "programAreas._id": { $in: studentProgramAreaIds.map((id) => new ObjectId(id)) } },
+        {
+          "contactTeacherGroups.systemId": { $in: studentMemberships.contactTeacherGroups.map((c) => c.systemId) }
+        },
+        {
+          "teachingGroups.systemId": { $in: studentMemberships.teachingGroups.map((c) => c.systemId) }
+        },
+        { "students._id": new ObjectId(studentId) }
+      ]
+    }
+
+    const accessList = await accessCollection.find(query).toArray()
+
+    return accessList.map((access) => {
+      return {
+        ...access,
+        _id: access._id.toString(),
+        programAreas: access.programAreas.map((programAreaAccessEntry) => ({
+          ...programAreaAccessEntry,
+          _id: programAreaAccessEntry._id.toString()
+        })),
+        students: access.students.map((studentAccessEntry) => ({
+          ...studentAccessEntry,
+          _id: studentAccessEntry._id.toString()
+        }))
+      }
+    })
+  }
+
   async getManualStudentById(studentId: string): Promise<AppStudent | null> {
     const db: Db = await this.getDb()
     const studentsCollection: Collection<DbAppStudent> = db.collection<DbAppStudent>(this.studentsCollectionName)
@@ -891,43 +939,6 @@ export class MongoDbClient implements IDbClient {
       modified: student.modified,
       source: student.source
     }
-  }
-
-  async getStudentAccess(studentId: string, studentMemberships: StudentMemberships, studentProgramAreaIds: string[]): Promise<Access[]> {
-    const db = await this.getDb()
-    const accessCollection = db.collection<DbAccess>(this.accessCollectionName)
-
-    const query: Filter<DbAccess> = {
-      $or: [
-        { "leaderForSchools.schoolNumber": { $in: studentMemberships.schoolNumbers } },
-        { "classes.systemId": { $in: studentMemberships.classes.map((c) => c.systemId) } },
-        { "programAreas._id": { $in: studentProgramAreaIds.map((id) => new ObjectId(id)) } },
-        {
-          "contactTeacherGroups.systemId": { $in: studentMemberships.contactTeacherGroups.map((c) => c.systemId) }
-        },
-        {
-          "teachingGroups.systemId": { $in: studentMemberships.teachingGroups.map((c) => c.systemId) }
-        },
-        { "students._id": new ObjectId(studentId) }
-      ]
-    }
-
-    const accessList = await accessCollection.find(query).toArray()
-
-    return accessList.map((access) => {
-      return {
-        ...access,
-        _id: access._id.toString(),
-        programAreas: access.programAreas.map((programAreaAccessEntry) => ({
-          ...programAreaAccessEntry,
-          _id: programAreaAccessEntry._id.toString()
-        })),
-        students: access.students.map((studentAccessEntry) => ({
-          ...studentAccessEntry,
-          _id: studentAccessEntry._id.toString()
-        }))
-      }
-    })
   }
 
   async createManualStudent(manualStudent: NewAppStudent): Promise<string> {
@@ -1076,7 +1087,7 @@ export class MongoDbClient implements IDbClient {
         }
         return studentDocument
       })
-      .sort((a, b) => new Date(b.created.at).getTime() - new Date(a.created.at).getTime()) // Sort by created date descending
+      .sort((a: StudentDocument, b: StudentDocument) => b.created.at.getTime() - a.created.at.getTime()) // Sort by created date descending
   }
 
   async getStudentDocumentById(documentId: string): Promise<StudentDocument | null> {
@@ -1195,7 +1206,7 @@ export class MongoDbClient implements IDbClient {
     return updatedDocument._id.toString()
   }
 
-  async addDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<string> {
+  async addStudentDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<string> {
     const db = await this.getDb()
     const documentsCollection = db.collection<DbEncryptedStudentDocument>(this.documentsCollectionName)
     const encryption = await this.getEncryptionClient()
@@ -1210,7 +1221,7 @@ export class MongoDbClient implements IDbClient {
 
     const metricBody: MetricCount = {
       name: "StudentDocumentMessage_Create",
-      description: "Number of document messages created"
+      description: "Number of student document messages created"
     }
 
     if (!document?._id) {
@@ -1219,7 +1230,7 @@ export class MongoDbClient implements IDbClient {
         labels: [[metricResultName, metricResultFailure]]
       })
 
-      throw new Error("Failed to add message to document")
+      throw new Error("Failed to add message to student document")
     }
 
     incrementCount({
@@ -1232,7 +1243,7 @@ export class MongoDbClient implements IDbClient {
     return encryptedMessageWithId.messageId
   }
 
-  async updateDocumentMessage(documentId: string, messageId: string, messageUpdate: NewDocumentMessage): Promise<string> {
+  async updateStudentDocumentMessage(documentId: string, messageId: string, messageUpdate: NewDocumentMessage): Promise<string> {
     const db = await this.getDb()
     const documentsCollection = db.collection<DbEncryptedStudentDocument>(this.documentsCollectionName)
     const encryption = await this.getEncryptionClient()
@@ -1250,7 +1261,7 @@ export class MongoDbClient implements IDbClient {
 
     const metricBody: MetricCount = {
       name: "StudentDocumentMessage_Update",
-      description: "Number of document messages updated"
+      description: "Number of student document messages updated"
     }
 
     if (!document?._id) {
@@ -1259,7 +1270,7 @@ export class MongoDbClient implements IDbClient {
         labels: [[metricResultName, metricResultFailure]]
       })
 
-      throw new Error("Failed to update message in document")
+      throw new Error("Failed to update message in student document")
     }
 
     incrementCount({
@@ -1416,13 +1427,333 @@ export class MongoDbClient implements IDbClient {
     return existingImportantStuff._id.toString()
   }
 
+  async getGroupImportantStuff(systemId: string): Promise<GroupImportantStuff[]> {
+    const db = await this.getDb()
+
+    const importantStuffCollection = db.collection<DbGroupImportantStuff>(this.importantStuffCollectionName)
+    logger.info("Getting important stuff for group with systemId {systemId}", systemId)
+
+    const importantStuffForGroup = await importantStuffCollection.find({ "group.systemId": systemId }).toArray()
+    logger.info("Important stuff for group with systemId {systemId} exists: {importantStuffExists}", systemId, importantStuffForGroup.length > 0)
+
+    if (importantStuffForGroup.length === 0) {
+      return []
+    }
+
+    return importantStuffForGroup.map((importantStuff) => ({
+      ...importantStuff,
+      _id: importantStuff._id.toString()
+    }))
+  }
+
+  async upsertGroupImportantStuff(systemId: string, importantStuff: NewGroupImportantStuff): Promise<string> {
+    const db = await this.getDb()
+    const importantStuffCollection = db.collection<DbEncryptedGroupImportantStuff>(this.importantStuffCollectionName)
+    const encryption = await this.getEncryptionClient()
+
+    const result: DbGroupImportantStuff | null = (await importantStuffCollection.findOneAndUpdate(
+      { "group.systemId": systemId },
+      {
+        $set: {
+          ...importantStuff,
+          importantInfo: await encryption.client.encrypt(importantStuff.importantInfo, encryption.encryptionOptions),
+          group: {
+            systemId
+          }
+        }
+      },
+      { upsert: true, returnDocument: "after" }
+    )) as DbGroupImportantStuff | null // Db client decrypts for us, so we can cast it to DbGroupImportantStuff
+
+    const metricBody: MetricCount = {
+      name: "GroupImportantStuff_Upsert",
+      description: "Number of group important stuff upserted"
+    }
+    const labels: MetricLabel[] = [["schoolNumber", importantStuff.school.schoolNumber]]
+
+    if (!result?._id) {
+      incrementCount({
+        ...metricBody,
+        labels: [...labels, [metricResultName, metricResultFailure]]
+      })
+
+      throw new Error("Failed to upsert group important stuff")
+    }
+
+    incrementCount({
+      ...metricBody,
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
+
+    return result._id.toString()
+  }
+
+  async getGroupDocuments(systemId: string): Promise<GroupDocument[]> {
+    const db = await this.getDb()
+    const documentsCollection = db.collection<DbGroupDocument>(this.documentsCollectionName)
+
+    type DocumentWithCreator = DbGroupDocument & {
+      tyler_the_creator?: {
+        entra: {
+          displayName: string
+        }
+      }[]
+    }
+
+    const documents: DocumentWithCreator[] = await documentsCollection
+      .aggregate<DocumentWithCreator>([
+        {
+          $match: {
+            "group.systemId": systemId
+          }
+        },
+        {
+          $lookup: {
+            from: this.usersCollectionName,
+            localField: "created.by.entraUserId",
+            foreignField: "entra.id",
+            as: "tyler_the_creator",
+            pipeline: [
+              {
+                $project: {
+                  "entra.displayName": 1
+                }
+              }
+            ]
+          }
+        }
+      ])
+      .toArray()
+
+    // Todo: Add projection to only include necessary fields - And authorization
+
+    return documents
+      .map((document: DocumentWithCreator): GroupDocument => {
+        const createdByDisplayName: string | undefined = document.tyler_the_creator && document.tyler_the_creator.length > 0 ? document.tyler_the_creator[0].entra.displayName : undefined
+        delete document.tyler_the_creator
+
+        const groupDocument: GroupDocument = {
+          ...document,
+          _id: document._id.toString()
+        }
+
+        if (createdByDisplayName) {
+          groupDocument.created.by.displayName = createdByDisplayName
+        }
+
+        return groupDocument
+      })
+      .sort((a: GroupDocument, b: GroupDocument) => b.created.at.getTime() - a.created.at.getTime()) // Sort by created date descending
+  }
+
+  async getGroupDocumentById(documentId: string): Promise<GroupDocument | null> {
+    const db = await this.getDb()
+    const documentsCollection = db.collection<DbGroupDocument>(this.documentsCollectionName)
+
+    const document = await documentsCollection.findOne({ _id: new ObjectId(documentId) })
+
+    if (!document) {
+      return null
+    }
+
+    return {
+      ...document,
+      _id: document._id.toString()
+    }
+  }
+
+  async createGroupDocument(document: NewGroupDocument): Promise<string> {
+    const db = await this.getDb()
+    const documentsCollection = db.collection<NewDbEncryptedGroupDocument>(this.documentsCollectionName)
+
+    const encryption = await this.getEncryptionClient()
+
+    const encryptedDocumentMessages: DbEncryptedDocumentMessage[] = []
+
+    for (const message of document.messages) {
+      const encryptedMessageContent = await encryption.client.encrypt(message.content, encryption.encryptionOptions)
+      encryptedDocumentMessages.push({
+        ...message,
+        content: encryptedMessageContent
+      })
+    }
+
+    const documentToInsert: NewDbEncryptedGroupDocument = {
+      ...document,
+      content: await encryption.client.encrypt(document.content, encryption.encryptionOptions),
+      title: await encryption.client.encrypt(document.title, encryption.encryptionOptions),
+      template: {
+        _id: document.template._id,
+        name: await encryption.client.encrypt(document.template.name, encryption.encryptionOptions),
+        version: document.template.version
+      },
+      messages: encryptedDocumentMessages
+    }
+
+    const result = await documentsCollection.insertOne(documentToInsert)
+
+    const metricBody: MetricCount = {
+      name: "GroupDocument_Create",
+      description: "Number of group documents created"
+    }
+    const labels: MetricLabel[] = [["schoolNumber", document.school.schoolNumber]]
+
+    if (!result.insertedId) {
+      incrementCount({
+        ...metricBody,
+        labels: [...labels, [metricResultName, metricResultFailure]]
+      })
+
+      throw new Error("Failed to create group document")
+    }
+
+    incrementCount({
+      ...metricBody,
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
+
+    return result.insertedId.toString()
+  }
+
+  async updateGroupDocument(documentId: string, documentUpdate: GroupDocumentUpdate): Promise<string> {
+    const db = await this.getDb()
+    const documentsCollection = db.collection<DbEncryptedGroupDocument>(this.documentsCollectionName)
+    const encryption = await this.getEncryptionClient()
+
+    const encryptedDocumentUpdate: DbEncryptedGroupDocumentUpdate = {
+      ...documentUpdate,
+      content: await encryption.client.encrypt(documentUpdate.content, encryption.encryptionOptions),
+      title: await encryption.client.encrypt(documentUpdate.title, encryption.encryptionOptions),
+      template: {
+        _id: documentUpdate.template._id,
+        name: await encryption.client.encrypt(documentUpdate.template.name, encryption.encryptionOptions),
+        version: documentUpdate.template.version
+      }
+    }
+
+    const updatedDocument: DbGroupDocument | null = (await documentsCollection.findOneAndUpdate({ _id: new ObjectId(documentId) }, { $set: encryptedDocumentUpdate })) as DbGroupDocument | null // Db client decrypts for us, so we can cast it to DbGroupDocument
+
+    const metricBody: MetricCount = {
+      name: "GroupDocument_Update",
+      description: "Number of group documents updated"
+    }
+    const labels: MetricLabel[] = [["schoolNumber", documentUpdate.school.schoolNumber]]
+
+    if (!updatedDocument?._id) {
+      incrementCount({
+        ...metricBody,
+        labels: [...labels, [metricResultName, metricResultFailure]]
+      })
+
+      throw new Error("Failed to update group document")
+    }
+
+    incrementCount({
+      ...metricBody,
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
+
+    return updatedDocument._id.toString()
+  }
+
+  async addGroupDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<string> {
+    const db = await this.getDb()
+    const documentsCollection = db.collection<DbEncryptedGroupDocument>(this.documentsCollectionName)
+    const encryption = await this.getEncryptionClient()
+
+    const encryptedMessageWithId: DbEncryptedDocumentMessage = {
+      ...message,
+      content: await encryption.client.encrypt(message.content, encryption.encryptionOptions),
+      messageId: new ObjectId().toString()
+    }
+
+    const document = (await documentsCollection.findOneAndUpdate({ _id: new ObjectId(documentId) }, { $push: { messages: encryptedMessageWithId } })) as DbGroupDocument | null // Db client decrypts for us, so we can cast it to DbGroupDocument
+
+    const metricBody: MetricCount = {
+      name: "GroupDocumentMessage_Create",
+      description: "Number of group document messages created"
+    }
+
+    if (!document?._id) {
+      incrementCount({
+        ...metricBody,
+        labels: [[metricResultName, metricResultFailure]]
+      })
+
+      throw new Error("Failed to add message to group document")
+    }
+
+    incrementCount({
+      ...metricBody,
+      labels: [[metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
+
+    return encryptedMessageWithId.messageId
+  }
+
+  async updateGroupDocumentMessage(documentId: string, messageId: string, messageUpdate: NewDocumentMessage): Promise<string> {
+    const db = await this.getDb()
+    const documentsCollection = db.collection<DbEncryptedGroupDocument>(this.documentsCollectionName)
+    const encryption = await this.getEncryptionClient()
+
+    const encryptedMessageWithId: DbEncryptedDocumentMessage = {
+      ...messageUpdate,
+      content: await encryption.client.encrypt(messageUpdate.content, encryption.encryptionOptions),
+      messageId
+    }
+
+    const document = (await documentsCollection.findOneAndUpdate(
+      { _id: new ObjectId(documentId), "messages.messageId": messageId },
+      { $set: { "messages.$": encryptedMessageWithId } }
+    )) as DbGroupDocument | null // Db client decrypts for us, so we can cast it to DbGroupDocument
+
+    const metricBody: MetricCount = {
+      name: "GroupDocumentMessage_Update",
+      description: "Number of group document messages updated"
+    }
+
+    if (!document?._id) {
+      incrementCount({
+        ...metricBody,
+        labels: [[metricResultName, metricResultFailure]]
+      })
+
+      throw new Error("Failed to update message in group document")
+    }
+
+    incrementCount({
+      ...metricBody,
+      labels: [[metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
+
+    return messageId
+  }
+
   async getDocumentContentTemplates(availableFor?: AvailableForDocumentType): Promise<DocumentContentTemplate[]> {
     const db = await this.getDb()
     const documentContentTemplatesCollection = db.collection<DbDocumentContentTemplate>(this.documentContentTemplatesCollectionName)
 
-    const query = availableFor ? { "availableForDocumentType.student": availableFor.student, "availableForDocumentType.group": availableFor.group } : {}
+    const availableForQuery: Record<string, unknown> = {}
 
-    const templates = await documentContentTemplatesCollection.find(query).toArray()
+    if (availableFor?.student && availableFor?.group) {
+      availableForQuery.$or = [{ "availableForDocumentType.student": availableFor.student }, { "availableForDocumentType.group": availableFor.group }]
+    } else if (availableFor?.student) {
+      availableForQuery["availableForDocumentType.student"] = availableFor.student
+    } else if (availableFor?.group) {
+      availableForQuery["availableForDocumentType.group"] = availableFor.group
+    }
+
+    const templates = await documentContentTemplatesCollection.find(availableForQuery).toArray()
 
     return templates.map((template) => ({
       ...template,

@@ -2,6 +2,7 @@ import type {
   DocumentContentTemplate,
   DocumentInput,
   DocumentMessageInput,
+  GroupImportantStuffInput,
   ManualAccessEntryInput,
   MetricCount,
   NewManualStudentInput,
@@ -109,5 +110,23 @@ export interface ApiRouteMap {
 
   "/api/metrics": {
     POST: { req: MetricCount; res: { incremented: boolean } }
+  }
+
+  [key: `/api/classes/${NoSlashString}/documents`]: {
+    POST: { req: DocumentInput; res: { documentId: string } }
+  }
+
+  [key: `/api/classes/${NoSlashString}/documents/${NoSlashString}`]: {
+    PATCH: { req: DocumentInput; res: { documentId: string } }
+  }
+
+  [key: `/api/classes/${NoSlashString}/documents/${NoSlashString}/messages`]: ApiDocumentsIdMessages
+
+  [key: `/api/classes/${NoSlashString}/documents/${NoSlashString}/messages/${NoSlashString}`]: {
+    PATCH: { req: DocumentMessageInput; res: { updatedMessageId: string } }
+  }
+
+  [key: `/api/classes/${NoSlashString}/importantstuff`]: {
+    PATCH: { req: GroupImportantStuffInput; res: { importantStuffId: string } }
   }
 }
