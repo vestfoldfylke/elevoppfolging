@@ -1087,7 +1087,7 @@ export class MongoDbClient implements IDbClient {
         }
         return studentDocument
       })
-      .sort((a, b) => new Date(b.created.at).getTime() - new Date(a.created.at).getTime()) // Sort by created date descending
+      .sort((a: StudentDocument, b: StudentDocument) => b.created.at.getTime() - a.created.at.getTime()) // Sort by created date descending
   }
 
   async getStudentDocumentById(documentId: string): Promise<StudentDocument | null> {
@@ -1545,7 +1545,7 @@ export class MongoDbClient implements IDbClient {
 
         return groupDocument
       })
-      .sort((a: GroupDocument, b: GroupDocument) => new Date(b.created.at).getTime() - new Date(a.created.at).getTime()) // Sort by created date descending
+      .sort((a: GroupDocument, b: GroupDocument) => b.created.at.getTime() - a.created.at.getTime()) // Sort by created date descending
   }
 
   async getGroupDocumentById(documentId: string): Promise<GroupDocument | null> {
