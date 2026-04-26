@@ -148,8 +148,6 @@
       <DocumentContentItem bind:contentItem={currentDocument.content[index]} {index} editMode={true} />
     {/each}
 
-    <hr aria-hidden="true" class="ds-divider"/>
-
     {#if studentId }
       <fieldset class="ds-fieldset content-item">
         <legend class="ds-label" data-weight="medium">
@@ -165,8 +163,6 @@
           <label for="document-access-{documentId}" class="ds-label" data-weight="regular">Synlig for faglærere</label>
         </ds-field>
       </fieldset>
-  
-      <hr aria-hidden="true" class="ds-divider"/>
     {/if}
 
     {#if studentAccessPersons && studentAccessPersons.length > 0}
