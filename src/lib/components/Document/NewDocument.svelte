@@ -16,11 +16,11 @@
 
   // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounter ved endring av studentId/groupSystemId
   if (!studentId && !groupSystemId) {
-    throw new Error("Student ID or Group ID is required to create a new document")
+    throw new Error("Student ID or Group System ID is required to create a new document")
   }
   // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounter ved endring av studentId/groupSystemId
   if (studentId && groupSystemId) {
-    throw new Error("Both Student ID and Group ID provided, only one should be provided")
+    throw new Error("Both Student ID and Group System ID provided, only one should be provided")
   }
   // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounter ved endring av studentId/groupSystemId
   if (accessSchools.length === 0) {
@@ -48,7 +48,7 @@
     }
   }
 
-  // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounter ved endring av studentId/groupId TODO - sjekk om det skal være derived
+  // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounter ved endring av studentId/groupSystemId TODO - sjekk om det skal være derived
   const newDocumentTemplates = documentContentTemplates.map((template) => newDocumentTemplate(template))
 
   let newDocument: DocumentInput | null = $state(null)

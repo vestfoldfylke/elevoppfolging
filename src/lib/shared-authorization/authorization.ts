@@ -4,6 +4,7 @@ import type {
   Access,
   DocumentInput,
   DocumentMessage,
+  GroupDocument,
   ManageManualStudentsManualAccessEntry,
   SchoolLeaderManualAccessEntry,
   StudentDataSharingConsent,
@@ -34,6 +35,10 @@ export const canUpdateMessageInStudentDocument = (
   message: DocumentMessage
 ): boolean => {
   return message.created.by.entraUserId === authenticatedPrincipal.id && accessToStudent.some((access: PrincipalAccessForStudent) => access.schoolNumber === document.school.schoolNumber)
+}
+
+export const canUpdateMessageInGroupDocument = (authenticatedPrincipal: AuthenticatedPrincipal, message: DocumentMessage): boolean => {
+  return message.created.by.entraUserId === authenticatedPrincipal.id
 }
 
 export const canManageManualStudentsOnSchool = (principalAccess: Access, schoolNumber: string): boolean => {
@@ -83,6 +88,10 @@ export const canViewStudentDocument = (
 
 export const canCreateStudentDocument = (accessToStudent: PrincipalAccessForStudent[], newDocument: DocumentInput): boolean => {
   return accessToStudent.some((access: PrincipalAccessForStudent) => access.schoolNumber === newDocument.school.schoolNumber)
+}
+
+export const canEditGroupDocument = (authenticatedPrincipal: AuthenticatedPrincipal, document: GroupDocument): boolean => {
+  return document.created.by.entraUserId === authenticatedPrincipal.id
 }
 
 export const canEditStudentDocument = (authenticatedPrincipal: AuthenticatedPrincipal, accessToStudent: PrincipalAccessForStudent[], document: StudentDocument): boolean => {

@@ -5,12 +5,17 @@ import type {
   AppUser,
   AvailableForDocumentType,
   DocumentContentTemplate,
+  GroupDocument,
+  GroupDocumentUpdate,
+  GroupImportantStuff,
   ManualAccessEntryInput,
   NewAccess,
   NewAppStudent,
   NewDbEmailAlert,
   NewDocumentContentTemplate,
   NewDocumentMessage,
+  NewGroupDocument,
+  NewGroupImportantStuff,
   NewProgramArea,
   NewSchool,
   NewStudentCheckBox,
@@ -55,7 +60,6 @@ export interface IDbClient {
   getStudents(access: Access): Promise<FrontendStudent[]>
   getStudentById(studentId: string): Promise<FrontendStudent | null>
   getStudentBySsn(ssn: string): Promise<FrontendStudent | null>
-  getManualStudentById(studentId: string): Promise<AppStudent | null>
 
   getStudentAccess(studentId: string, studentMemberships: StudentMemberships, studentProgramAreaIds: string[]): Promise<Access[]>
 
@@ -64,16 +68,30 @@ export interface IDbClient {
   createStudentDocument(document: NewStudentDocument): Promise<string>
   updateStudentDocument(documentId: string, documentUpdate: StudentDocumentUpdate): Promise<string>
 
+  getManualStudentById(studentId: string): Promise<AppStudent | null>
   createManualStudent(manualStudent: NewAppStudent): Promise<string>
   updateManualStudent(manualStudent: UpdateAppStudent): Promise<string>
 
-  addDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<string>
-  updateDocumentMessage(documentId: string, messageId: string, messageUpdate: NewDocumentMessage): Promise<string>
+  addStudentDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<string>
+  updateStudentDocumentMessage(documentId: string, messageId: string, messageUpdate: NewDocumentMessage): Promise<string>
 
   getStudentsImportantStuff(studentIds: string[]): Promise<Record<string, Record<string, StudentImportantStuff>>>
   getStudentImportantStuff(studentId: string, schoolNumbers: string[]): Promise<StudentImportantStuff[]>
   upsertStudentImportantStuff(studentId: string, importantStuff: NewStudentImportantStuff): Promise<string>
   updateStudentLastActivityTimestamp(studentId: string, school: SchoolInfo): Promise<string>
+
+  /** We need to query by systemId since classes only exists on students and don't have a db record themselves */
+  getGroupImportantStuff(systemId: string): Promise<GroupImportantStuff[]>
+  /** We need to query by systemId since classes only exists on students and don't have a db record themselves */
+  upsertGroupImportantStuff(systemId: string, importantStuff: NewGroupImportantStuff): Promise<string>
+
+  getGroupDocuments(systemId: string): Promise<GroupDocument[]>
+  getGroupDocumentById(documentId: string): Promise<GroupDocument | null>
+  createGroupDocument(document: NewGroupDocument): Promise<string>
+  updateGroupDocument(documentId: string, documentUpdate: GroupDocumentUpdate): Promise<string>
+
+  addGroupDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<string>
+  updateGroupDocumentMessage(documentId: string, messageId: string, messageUpdate: NewDocumentMessage): Promise<string>
 
   getDocumentContentTemplates(availableFor?: AvailableForDocumentType): Promise<DocumentContentTemplate[]>
   getDocumentContentTemplateById(templateId: string): Promise<DocumentContentTemplate | null>

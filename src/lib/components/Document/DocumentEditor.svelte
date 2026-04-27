@@ -23,6 +23,15 @@
 
   let { documentId, studentId, groupSystemId, accessSchools, currentDocument = $bindable(), studentDataSharingConsent, studentAccessPersons, emailAlertAvailable, closeEditor }: EditorProps = $props()
 
+  // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounter ved endring av studentId/groupSystemId
+  if (!studentId && !groupSystemId) {
+    throw new Error("Student ID or Group System ID is required to create a new document")
+  }
+  // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounter ved endring av studentId/groupSystemId
+  if (studentId && groupSystemId) {
+    throw new Error("Both Student ID and Group System ID provided, only one should be provided")
+  }
+
   let documentEditorForm: HTMLFormElement | undefined = $state()
 
   let alertableAccessPersons = $derived.by(() => {
@@ -68,28 +77,37 @@
     if (!documentEditorForm) {
       throw new Error("Document editor form not found")
     }
+
     const formIsValid = documentEditorForm.reportValidity()
     if (!formIsValid) {
       throw new Error(INVALID_FORM_MESSAGE)
     }
 
     if (groupSystemId) {
-      throw new Error("Creating documents for groups is not supported yet")
+      const createDocumentRoute = `/api/classes/${groupSystemId as NoSlashString}/documents` as const
+
+      await apiFetch(createDocumentRoute, {
+        method: "POST",
+        body: currentDocument,
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+
+      return
     }
 
-    if (!studentId) {
-      throw new Error("Student ID is required for creating a document")
+    if (studentId) {
+      const createDocumentRoute = `/api/students/${studentId as NoSlashString}/documents` as const
+
+      await apiFetch(createDocumentRoute, {
+        method: "POST",
+        body: currentDocument,
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
     }
-
-    const createDocumentRoute = `/api/students/${studentId as NoSlashString}/documents` as const
-
-    await apiFetch(createDocumentRoute, {
-      method: "POST",
-      body: currentDocument,
-      headers: {
-        "Content-Type": "application/json"
-      }
-    })
   }
 
   const updateDocument = async (): Promise<void> => {
@@ -100,28 +118,37 @@
     if (!documentEditorForm) {
       throw new Error("Document editor form not found")
     }
+
     const formIsValid = documentEditorForm.reportValidity()
     if (!formIsValid) {
       throw new Error(INVALID_FORM_MESSAGE)
     }
 
     if (groupSystemId) {
-      throw new Error("Creating documents for groups is not supported yet")
+      const updateDocumentRoute = `/api/classes/${groupSystemId as NoSlashString}/documents/${documentId as NoSlashString}` as const
+
+      await apiFetch(updateDocumentRoute, {
+        method: "PATCH",
+        body: currentDocument,
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+
+      return
     }
 
-    if (!studentId) {
-      throw new Error("Student ID is required for updating a document")
+    if (studentId) {
+      const updateDocumentRoute = `/api/students/${studentId as NoSlashString}/documents/${documentId as NoSlashString}` as const
+
+      await apiFetch(updateDocumentRoute, {
+        method: "PATCH",
+        body: currentDocument,
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
     }
-
-    const updateDocumentRoute = `/api/students/${studentId as NoSlashString}/documents/${documentId as NoSlashString}` as const
-
-    await apiFetch(updateDocumentRoute, {
-      method: "PATCH",
-      body: currentDocument,
-      headers: {
-        "Content-Type": "application/json"
-      }
-    })
   }
 </script>
 
@@ -157,24 +184,22 @@
       <DocumentContentItem bind:contentItem={currentDocument.content[index]} {index} editMode={true} />
     {/each}
 
-    <hr aria-hidden="true" class="ds-divider"/>
-
-    <fieldset class="ds-fieldset content-item">
-      <legend class="ds-label" data-weight="medium">
-        Tilgangsstyring
-      </legend>
-      <p class="ds-paragraph" data-variant="default">
-        Som standard vil notatet være synlig for alle brukere med tilgang til eleven ved {currentDocument.school.name}, unntatt faglærere. Dersom du ønsker at også faglærere skal kunne se notatet, kan du krysse av for dette alternativet.
-        I tillegg vil brukere ved andre skoler få tilgang til notatet dersom eleven har samtykket til deling av informasjon med andre skoler.
-        Du vil ha tilgang til notatet uavhengig av disse innstillingene, siden du oppretter notatet.
-      </p>
-      <ds-field class="ds-field">
-        <input id="document-access-{documentId}" class="ds-input" type="checkbox" checked={currentDocument.documentAccess === "ALL_WITH_STUDENT_ACCESS"} onchange={toggleSubjectTeacherAccess}/>
-        <label for="document-access-{documentId}" class="ds-label" data-weight="regular">Synlig for faglærere</label>
-      </ds-field>
-    </fieldset>
-
-    <hr aria-hidden="true" class="ds-divider"/>
+    {#if studentId }
+      <fieldset class="ds-fieldset content-item">
+        <legend class="ds-label" data-weight="medium">
+          Tilgangsstyring
+        </legend>
+        <p class="ds-paragraph" data-variant="default">
+          Som standard vil notatet være synlig for alle brukere med tilgang til eleven ved {currentDocument.school.name}, unntatt faglærere. Dersom du ønsker at også faglærere skal kunne se notatet, kan du krysse av for dette alternativet.
+          I tillegg vil brukere ved andre skoler få tilgang til notatet dersom eleven har samtykket til deling av informasjon med andre skoler.
+          Du vil ha tilgang til notatet uavhengig av disse innstillingene, siden du oppretter notatet.
+        </p>
+        <ds-field class="ds-field">
+          <input id="document-access-{documentId}" class="ds-input" type="checkbox" checked={currentDocument.documentAccess === "ALL_WITH_STUDENT_ACCESS"} onchange={toggleSubjectTeacherAccess}/>
+          <label for="document-access-{documentId}" class="ds-label" data-weight="regular">Synlig for faglærere</label>
+        </ds-field>
+      </fieldset>
+    {/if}
 
     {#if emailAlertAvailable && alertableAccessPersons.length > 0}
       <fieldset class="ds-fieldset content-item">

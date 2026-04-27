@@ -477,9 +477,58 @@ export type DbEncryptedStudentDocument = NewDbEncryptedStudentDocument & {
   _id: ObjectId
 }
 
+export type NewGroupDocument = DocumentBase &
+  DocumentInput & {
+    messages: DocumentMessage[]
+    group: {
+      systemId: string
+    }
+  }
+
+export type GroupDocumentUpdate = DocumentBase & DocumentInput
+
+export type DbEncryptedGroupDocumentUpdate = Omit<GroupDocumentUpdate, "title" | "content" | "template"> & {
+  template: {
+    _id: string
+    name: Binary
+    version: number
+  }
+  title: Binary
+  content: Binary
+}
+
+export type GroupDocument = NewGroupDocument & {
+  _id: string
+}
+
+export type NewDbGroupDocument = Omit<NewGroupDocument, "group"> & {
+  group: {
+    systemId: string
+  }
+}
+
+export type DbGroupDocument = NewDbGroupDocument & {
+  _id: ObjectId
+}
+
+export type NewDbEncryptedGroupDocument = Omit<NewDbGroupDocument, "title" | "content" | "messages" | "template"> & {
+  template: {
+    _id: string
+    name: Binary
+    version: number
+  }
+  title: Binary
+  content: Binary
+  messages: DbEncryptedDocumentMessage[]
+}
+
+export type DbEncryptedGroupDocument = NewDbEncryptedGroupDocument & {
+  _id: ObjectId
+}
+
 export type AvailableForDocumentType = {
-  student: boolean
-  group: boolean
+  student?: boolean
+  group?: boolean
 }
 
 // Document content templates
@@ -580,6 +629,48 @@ export type DbEncryptedStudentImportantStuff = NewDbEncryptedStudentImportantStu
   _id: ObjectId
   student: {
     _id: ObjectId
+  }
+}
+
+export type GroupImportantStuffInput = {
+  school: SchoolInfo
+  importantInfo: string
+}
+
+export type NewGroupImportantStuff = ImportantStuffBase &
+  GroupImportantStuffInput & {
+    type: "GROUP"
+    lastActivityTimestamp: Date
+  }
+
+export type GroupImportantStuff = NewGroupImportantStuff & {
+  _id: string
+  group: {
+    systemId: string
+  }
+}
+
+export type NewDbGroupImportantStuff = NewGroupImportantStuff & {
+  group: {
+    systemId: string
+  }
+}
+
+export type NewDbEncryptedGroupImportantStuff = Omit<NewDbGroupImportantStuff, "importantInfo"> & {
+  importantInfo: Binary
+}
+
+export type DbGroupImportantStuff = NewGroupImportantStuff & {
+  _id: ObjectId
+  group: {
+    systemId: string
+  }
+}
+
+export type DbEncryptedGroupImportantStuff = NewDbEncryptedGroupImportantStuff & {
+  _id: ObjectId
+  group: {
+    systemId: string
   }
 }
 

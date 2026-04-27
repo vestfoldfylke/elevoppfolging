@@ -1,7 +1,7 @@
 <script lang="ts">
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import type { StudentAccessPerson } from "$lib/types/app-types"
-  import type { DocumentInput, MetricCount, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
+  import type { DocumentInput, GroupDocument, MetricCount, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
   import EditorInfo from "../EditorInfo.svelte"
   import DocumentContent from "./DocumentContentItem.svelte"
   import DocumentEditor from "./DocumentEditor.svelte"
@@ -9,7 +9,7 @@
   import NewMessage from "./NewMessage.svelte"
 
   type PageProps = {
-    document: StudentDocument // Add GroupDocument union when needed
+    document: StudentDocument | GroupDocument
     accessSchools: SchoolInfo[]
     canEditDocument: boolean
     studentName?: string
@@ -27,16 +27,16 @@
         school: document.school,
         template: document.template,
         title: document.title,
-        documentAccess: document.documentAccess || "EXCLUDE_SUBJECT_TEACHERS", // defaultvalue, becuase old documents doesn't have this field, and we don't want to break the editor for those
+        documentAccess: document.documentAccess || "EXCLUDE_SUBJECT_TEACHERS", // default value, because old documents doesn't have this field, and we don't want to break the editor for those
         emailAlertReceivers: document.emailAlertReceivers || []
       } as DocumentInput)
     )
   }
 
-  const handleDocumentOpen = (document: StudentDocument): void => {
+  const handleDocumentOpen = (document: StudentDocument | GroupDocument): void => {
     const metricBody: MetricCount = {
-      name: "Document_Open",
-      description: "Number of times documents has been opened",
+      name: studentName ? "StudentDocument_Open" : "GroupDocument_Open",
+      description: `Number of times ${studentName ? "student" : "group"} documents has been opened`,
       labels: [["schoolNumber", document.school.schoolNumber]]
     }
 
@@ -80,19 +80,20 @@
         <DocumentContent {contentItem} editMode={false} {index} />
       {/each}
 
-      <fieldset class="ds-fieldset content-item">
-        <legend class="ds-label" data-weight="medium">
-          Tilgangsstyring
-        </legend>
-        <ds-field class="ds-field">
-          <input id="document-access-{document._id}" class="ds-input" type="checkbox" checked={document.documentAccess === "ALL_WITH_STUDENT_ACCESS"} disabled={true} style={document.documentAccess === "ALL_WITH_STUDENT_ACCESS" ? "opacity: 1;" : ""} />
-          <label for="document-access-{document._id}" class="ds-label" data-weight="regular" style={document.documentAccess === "ALL_WITH_STUDENT_ACCESS" ? "opacity: 1;" : ""}>Synlig for faglærere</label>
-        </ds-field>
-      </fieldset>
+      {#if studentName}
+        <fieldset class="ds-fieldset content-item">
+          <legend class="ds-label" data-weight="medium">
+            Tilgangsstyring
+          </legend>
+          <ds-field class="ds-field">
+            <input id="document-access-{document._id}" class="ds-input" type="checkbox" checked={document.documentAccess === "ALL_WITH_STUDENT_ACCESS"} disabled={true} style={document.documentAccess === "ALL_WITH_STUDENT_ACCESS" ? "opacity: 1;" : ""} />
+            <label for="document-access-{document._id}" class="ds-label" data-weight="regular" style={document.documentAccess === "ALL_WITH_STUDENT_ACCESS" ? "opacity: 1;" : ""}>Synlig for faglærere</label>
+          </ds-field>
+        </fieldset>
+      {/if}
 
     {:else}
-      <!-- Add groupId when needed -->
-      <DocumentEditor documentId={document._id} studentId={document.student._id} bind:currentDocument={editableDocument} {accessSchools} closeEditor={() => { editMode = false; editableDocument = editableDocumentFromDocument(); }} />
+      <DocumentEditor documentId={document._id} studentId={"student" in document ? document.student._id : undefined} groupSystemId={"group" in document ? document.group.systemId : undefined} bind:currentDocument={editableDocument} {accessSchools} closeEditor={() => { editMode = false; editableDocument = editableDocumentFromDocument(); }} />
     {/if}
 
     {#if !editMode && canEditDocument}

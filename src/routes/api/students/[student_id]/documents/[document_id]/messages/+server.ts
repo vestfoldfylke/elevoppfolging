@@ -92,7 +92,7 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
     throw new HTTPError(403, noAccessMessage("No permission to add message to document"))
   }
 
-  const messageId = await dbClient.addDocumentMessage(documentId, newMessage)
+  const messageId = await dbClient.addStudentDocumentMessage(documentId, newMessage)
 
   try {
     await dbClient.updateStudentLastActivityTimestamp(studentId, currentDocument.school)
