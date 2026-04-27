@@ -86,7 +86,8 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
     content: {
       title: updateMessageData.content.title,
       text: updateMessageData.content.text
-    }
+    },
+    emailAlertReceivers: messageToUpdate.emailAlertReceivers || [] // in case the existing message doesn't have emailAlertReceivers
   }
 
   const updatedMessageId = await dbClient.updateStudentDocumentMessage(documentId, messageId, updatedMessageData)

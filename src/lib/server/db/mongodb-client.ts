@@ -51,6 +51,7 @@ import type {
   MetricLabel,
   NewAccess,
   NewAppStudent,
+  NewDbEmailAlert,
   NewDbEncryptedGroupDocument,
   NewDbEncryptedStudentCheckBox,
   NewDbEncryptedStudentDocument,
@@ -101,6 +102,7 @@ export class MongoDbClient implements IDbClient {
   private readonly documentContentTemplatesCollectionName = "document-content-templates"
   private readonly studentDataSharingConsentsCollectionName = "student-data-sharing-consents"
   private readonly studentCheckBoxesCollectionName = "student-checkboxes"
+  private readonly emailAlertsCollectionName = "email-alerts"
 
   constructor() {
     if (!env.MONGODB_CONNECTION_STRING) {
@@ -2067,5 +2069,35 @@ export class MongoDbClient implements IDbClient {
     })
 
     // TODO: audit-implementation
+  }
+
+  async createEmailAlert(emailAlert: NewDbEmailAlert): Promise<string> {
+    const db = await this.getDb()
+    const emailAlertsCollection = db.collection<NewDbEmailAlert>(this.emailAlertsCollectionName)
+
+    const result = await emailAlertsCollection.insertOne(emailAlert)
+
+    const metricBody: MetricCount = {
+      name: "EmailAlert_Create",
+      description: "Number of email alerts created"
+    }
+
+    if (!result.insertedId) {
+      incrementCount({
+        ...metricBody,
+        labels: [[metricResultName, metricResultFailure]]
+      })
+
+      throw new Error("Failed to create email alert")
+    }
+
+    incrementCount({
+      ...metricBody,
+      labels: [[metricResultName, metricResultSuccessful]]
+    })
+
+    // TODO: audit-implementation
+
+    return result.insertedId.toString()
   }
 }

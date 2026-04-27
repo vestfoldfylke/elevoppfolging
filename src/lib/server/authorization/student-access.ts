@@ -1,7 +1,7 @@
 import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent } from "$lib/types/app-types"
 
 /**
- * Henter ut tilgangene en bruker har til en elev per skole basert på elevens elevforhold og tilgangene i Access-objektet. Tilgangene er sortert på prioritet per skole (høyeste tilgang først).
+ * Henter ut tilgangene en bruker har til en elev per skole basert på elevens elevforhold og tilgangene i Access-objektet. Tilgangene er sortert på prioritet (høyeste tilgang først).
  */
 export const getPrincipalAccessForStudent = (student: CachedFrontendStudent, principalAccess: PrincipalAccess): PrincipalAccessForStudent[] => {
   // Begynner med prioritert tilgang og går nedover derfra. Henter bare høyeste tilgangstype per skole, for å slippe å måtte håndtere flere access entries for samme skole i resten av logikken

@@ -11,6 +11,9 @@ export const validateDocumentMessage = (messageData: DocumentMessageInput): Vali
   if (!messageData.content.text || typeof messageData.content.text !== "string") {
     return { valid: false, message: "Message text is required and must be a string." }
   }
+  if (!Array.isArray(messageData.emailAlertReceivers)) {
+    return { valid: false, message: "Email alert receivers must be an array of strings." }
+  }
 
   return { valid: true, message: "" }
 }

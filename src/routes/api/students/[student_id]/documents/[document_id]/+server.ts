@@ -80,7 +80,8 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
     content: updateDocumentData.content,
     documentAccess: updateDocumentData.documentAccess,
     modified: editorData,
-    created: currentDocument.created
+    created: currentDocument.created,
+    emailAlertReceivers: currentDocument.emailAlertReceivers || [] // in case the existing document doesn't have emailAlertReceivers
   }
 
   const updatedDocumentId = await dbClient.updateStudentDocument(documentId, updatedDocument)

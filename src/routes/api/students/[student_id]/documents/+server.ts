@@ -1,6 +1,8 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
+import { ObjectId } from "mongodb"
 import { validateDocument } from "$lib/data-validation/document-validation"
+import { isValidEmail } from "$lib/data-validation/email-validation"
 import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
 import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
 import { getStudentFromCache } from "$lib/server/cache/students-cache"
@@ -11,7 +13,7 @@ import { canCreateStudentDocument, noAccessMessage } from "$lib/shared-authoriza
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { EditorData, NewStudentDocument } from "$lib/types/db/shared-types"
+import type { EditorData, NewDbEmailAlert, NewStudentDocument } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
 type AddDocumentResponse = ApiRouteMap[`/api/students/${NoSlashString}/documents`]["POST"]["res"]
@@ -59,6 +61,14 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
     at: new Date()
   }
 
+  const validEmailAlertReceivers = newDocumentData.emailAlertReceivers.filter((email) => {
+    if (!isValidEmail(email)) {
+      logger.warn(`Invalid email address "${email.replace(/[^a-zA-Z0-9@. ]/g, "")}" in emailAlertReceivers for new document for student ${studentId}. This email address will be ignored.`)
+      return false
+    }
+    return true
+  })
+
   const newDocument: NewStudentDocument = {
     title: newDocumentData.title,
     school: newDocumentData.school,
@@ -70,7 +80,8 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
       _id: studentId
     },
     created: editorData,
-    modified: editorData
+    modified: editorData,
+    emailAlertReceivers: validEmailAlertReceivers
   }
 
   if (!newDocument.student?._id) {
@@ -93,6 +104,22 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
       documentId,
       newDocumentData.school
     )
+  }
+
+  if (newDocument.emailAlertReceivers.length > 0) {
+    const emailAlert: NewDbEmailAlert = {
+      type: "DOCUMENT_CREATED",
+      documentId: new ObjectId(documentId),
+      receivers: newDocument.emailAlertReceivers,
+      status: "QUEUED",
+      created: editorData
+    }
+
+    try {
+      await dbClient.createEmailAlert(emailAlert)
+    } catch (error) {
+      logger.errorException(error, "Failed to create email alert for document {documentId} for student {studentId}. Returning documentId regardless, alert will not be sent...", documentId, studentId)
+    }
   }
 
   return {

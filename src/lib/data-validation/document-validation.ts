@@ -29,6 +29,9 @@ export const validateDocument = (documentData: DocumentInput): ValidationResult 
   if (!Array.isArray(documentData.content)) {
     return { valid: false, message: "Document content is required and must be an array." }
   }
+  if (!Array.isArray(documentData.emailAlertReceivers)) {
+    return { valid: false, message: "Email alert receivers must be an array of strings." }
+  }
 
   // Content item validation
   for (const contentItem of documentData.content) {
