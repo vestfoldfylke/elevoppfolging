@@ -79,6 +79,7 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
     template: currentDocument.template,
     content: updateDocumentData.content,
     documentAccess: updateDocumentData.documentAccess,
+    emailAlertReceivers: currentDocument.emailAlertReceivers || [],
     modified: editorData,
     created: currentDocument.created
   }

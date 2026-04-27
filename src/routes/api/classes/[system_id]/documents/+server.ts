@@ -64,6 +64,7 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
     group: {
       systemId
     },
+    emailAlertReceivers: newDocumentData.emailAlertReceivers || [],
     created: editorData,
     modified: editorData
   }
