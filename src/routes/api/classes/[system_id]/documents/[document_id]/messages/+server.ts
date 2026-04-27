@@ -63,7 +63,8 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
     content: {
       title: newMessageData.content.title,
       text: newMessageData.content.text
-    }
+    },
+    emailAlertReceivers: newMessageData.emailAlertReceivers || []
   }
 
   const dbClient: IDbClient = getDbClient()
