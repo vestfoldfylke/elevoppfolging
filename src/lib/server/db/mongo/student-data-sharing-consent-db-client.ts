@@ -1,7 +1,7 @@
 import { type Collection, type Db, ObjectId } from "mongodb"
 import type { IStudentDataSharingConsentsDbClient } from "$lib/types/db/db-client"
 import type { DbStudentDataSharingConsent, MetricCount, NewDbStudentDataSharingConsent, NewStudentDataSharingConsent, StudentDataSharingConsent } from "$lib/types/db/shared-types"
-import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../metrics/handle-metrics"
+import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
 
 export class StudentDataSharingConsentsDbClient implements IStudentDataSharingConsentsDbClient {
   private studentDataSharingConsentsCollection: Collection<DbStudentDataSharingConsent>

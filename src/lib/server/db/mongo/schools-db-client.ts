@@ -1,7 +1,7 @@
 import type { Collection, Db } from "mongodb"
 import type { ISchoolsDbClient } from "$lib/types/db/db-client"
 import type { MetricCount, NewSchool, School } from "$lib/types/db/shared-types"
-import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../metrics/handle-metrics"
+import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
 
 export class SchoolsDbClient implements ISchoolsDbClient {
   private schoolsCollection: Collection<NewSchool>

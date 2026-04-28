@@ -16,7 +16,7 @@ import type {
   SchoolInfo,
   StudentImportantStuff
 } from "$lib/types/db/shared-types"
-import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../metrics/handle-metrics"
+import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
 
 export class ImportantStuffDbClient implements IImportantStuffDbClient {
   private encryptionDb: Db

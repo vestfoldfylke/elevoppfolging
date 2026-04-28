@@ -1,7 +1,7 @@
 import { type Binary, type Db, ObjectId } from "mongodb"
 import type { IStudentCheckBoxDbClient } from "$lib/types/db/db-client"
 import type { DbEncryptedStudentCheckBox, DbStudentCheckBox, MetricCount, MetricLabel, NewDbEncryptedStudentCheckBox, NewStudentCheckBox, StudentCheckBox } from "$lib/types/db/shared-types"
-import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../metrics/handle-metrics"
+import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
 
 export class StudentCheckBoxDbClient implements IStudentCheckBoxDbClient {
   private encryptionDb: Db

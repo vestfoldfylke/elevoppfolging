@@ -2,7 +2,7 @@ import { type Collection, type Db, type Filter, ObjectId } from "mongodb"
 import type { AccessEntry, StudentMemberships } from "$lib/types/app-types"
 import type { IAccessDbClient } from "$lib/types/db/db-client"
 import type { Access, DbAccess, ManualAccessEntryInput, MetricCount, MetricLabel, NewAccess, NewDbAccess } from "$lib/types/db/shared-types"
-import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../metrics/handle-metrics"
+import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
 
 export class AccessDbClient implements IAccessDbClient {
   private accessCollection: Collection<NewDbAccess>

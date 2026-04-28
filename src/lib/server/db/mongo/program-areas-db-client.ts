@@ -1,7 +1,7 @@
 import { type Collection, type Db, ObjectId } from "mongodb"
 import type { IProgramAreasDbClient } from "$lib/types/db/db-client"
 import type { MetricCount, MetricLabel, NewProgramArea, ProgramArea } from "$lib/types/db/shared-types"
-import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../metrics/handle-metrics"
+import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
 
 export class ProgramAreasDbClient implements IProgramAreasDbClient {
   private programAreasCollection: Collection<NewProgramArea>

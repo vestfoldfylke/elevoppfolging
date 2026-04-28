@@ -1,7 +1,7 @@
 import { type Collection, type Db, ObjectId } from "mongodb"
 import type { IDocumentContentTemplatesDbClient } from "$lib/types/db/db-client"
 import type { AvailableForDocumentType, DocumentContentTemplate, MetricCount, MetricLabel, NewDocumentContentTemplate } from "$lib/types/db/shared-types"
-import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../metrics/handle-metrics"
+import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
 
 export class DocumentContentTemplatesDbClient implements IDocumentContentTemplatesDbClient {
   private documentContentTemplatesCollection: Collection<NewDocumentContentTemplate>

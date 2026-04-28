@@ -20,7 +20,7 @@ import type {
   StudentDocument,
   StudentDocumentUpdate
 } from "$lib/types/db/shared-types"
-import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../metrics/handle-metrics"
+import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
 
 export class DocumentsDbClient implements IDocumentsDbClient {
   private encryptionDb: Db

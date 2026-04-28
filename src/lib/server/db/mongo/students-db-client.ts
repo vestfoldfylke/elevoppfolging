@@ -4,8 +4,8 @@ import type { FrontendStudent } from "$lib/types/app-types"
 import type { IStudentsDbClient } from "$lib/types/db/db-client"
 import type { KeysToNumber } from "$lib/types/db/db-helpers"
 import type { AppStudent, DbAppStudent, MetricCount, MetricLabel, NewAppStudent, StudentEnrollment, UpdateAppStudent } from "$lib/types/db/shared-types"
-import { APP_INFO } from "../app-info"
-import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../metrics/handle-metrics"
+import { APP_INFO } from "../../app-info"
+import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
 
 export class StudentsDbClient implements IStudentsDbClient {
   private studentsCollection: Collection<NewAppStudent>
