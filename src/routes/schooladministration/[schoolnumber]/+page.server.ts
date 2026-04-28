@@ -20,7 +20,7 @@ const getSchoolAccessAdministrationData: ServerLoadNextFunction<SchoolAccessAdmi
 
   const dbClient: IDbClient = getDbClient()
 
-  const access: Access | null = await dbClient.getPrincipalAccess(principal.id)
+  const access: Access | null = await dbClient.access.getPrincipalAccess(principal.id)
   if (!access) {
     throw new HTTPError(404, noAccessMessage("No access found for principal"))
   }
@@ -39,8 +39,8 @@ const getSchoolAccessAdministrationData: ServerLoadNextFunction<SchoolAccessAdmi
     }
   }
 
-  const manualAccessForSchool: Access[] = await dbClient.getManualAccess(schoolNumber)
-  const programAreasForSchool: ProgramArea[] = await dbClient.getProgramAreasForSchool(schoolNumber)
+  const manualAccessForSchool: Access[] = await dbClient.access.getManualAccess(schoolNumber)
+  const programAreasForSchool: ProgramArea[] = await dbClient.programAreas.getProgramAreasForSchool(schoolNumber)
 
   return {
     data: {

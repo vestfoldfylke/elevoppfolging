@@ -29,7 +29,7 @@ const updateManualStudent: ApiNextFunction<UpdateManualStudentResponse, UpdateMa
   // authorization check if principal has access to the student
   const dbClient: IDbClient = getDbClient()
 
-  const access: Access | null = await dbClient.getPrincipalAccess(principal.id)
+  const access: Access | null = await dbClient.access.getPrincipalAccess(principal.id)
   if (!access) {
     throw new HTTPError(403, noAccessMessage("No access found for principal"))
   }
@@ -39,7 +39,7 @@ const updateManualStudent: ApiNextFunction<UpdateManualStudentResponse, UpdateMa
   }
 
   // fetch student
-  const student: AppStudent | null = await dbClient.getManualStudentById(updateManualStudentData.studentId)
+  const student: AppStudent | null = await dbClient.students.getManualStudentById(updateManualStudentData.studentId)
   if (!student) {
     throw new HTTPError(404, "Student not found")
   }
@@ -57,7 +57,7 @@ const updateManualStudent: ApiNextFunction<UpdateManualStudentResponse, UpdateMa
     }
 
     // trenger å sjekke om nytt ssn allerede er i bruk
-    const studentBySsn: FrontendStudent | null = await dbClient.getStudentBySsn(updateManualStudentData.ssn)
+    const studentBySsn: FrontendStudent | null = await dbClient.students.getStudentBySsn(updateManualStudentData.ssn)
     if (studentBySsn) {
       if (student.studentEnrollments.length === 0) {
         throw new HTTPError(500, "Fødselsnummer er allerede i bruk. Eleven dette tilhører har ingen elevforhold. Hvordan skal vi forholde oss til dette da? Ta kontakt med en voksen")
@@ -89,7 +89,7 @@ const updateManualStudent: ApiNextFunction<UpdateManualStudentResponse, UpdateMa
     studentEnrollments: student.studentEnrollments
   }
 
-  const studentId: string = await dbClient.updateManualStudent(updateAppStudent)
+  const studentId: string = await dbClient.students.updateManualStudent(updateAppStudent)
 
   logger.info("Updated manual student with Id {Id} by user {DisplayName} ({PrincipalId})", student._id, principal.displayName, principal.id)
 

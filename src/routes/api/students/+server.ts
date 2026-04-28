@@ -30,7 +30,7 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
   // authorization check if principal has access to the student or group
   const dbClient: IDbClient = getDbClient()
 
-  const access: Access | null = await dbClient.getPrincipalAccess(principal.id)
+  const access: Access | null = await dbClient.access.getPrincipalAccess(principal.id)
   if (!access) {
     throw new HTTPError(403, noAccessMessage("No access found for principal"))
   }
@@ -46,7 +46,7 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
     }
   }
 
-  const student: FrontendStudent | null = await dbClient.getStudentBySsn(newManualStudentData.ssn)
+  const student: FrontendStudent | null = await dbClient.students.getStudentBySsn(newManualStudentData.ssn)
   if (student) {
     if (student.studentEnrollments.length === 0) {
       throw new HTTPError(500, "Fødselsnummer er allerede i bruk. Eleven har ingen elevforhold. Hvordan skal vi forholde oss til dette da? Ta kontakt med en voksen")
@@ -110,7 +110,7 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
     ]
   }
 
-  const studentId: string = await dbClient.createManualStudent(newAppStudent)
+  const studentId: string = await dbClient.students.createManualStudent(newAppStudent)
 
   logger.info("Created manual student with Id {Id} by user {DisplayName} ({PrincipalId})", studentId, principal.displayName, principal.id)
 

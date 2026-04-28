@@ -45,7 +45,7 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
 
   const dbClient: IDbClient = getDbClient()
 
-  const currentDocument = await dbClient.getStudentDocumentById(documentId)
+  const currentDocument = await dbClient.documents.getStudentDocumentById(documentId)
   if (!currentDocument) {
     throw new HTTPError(404, "Document not found, cannot update non-existing document")
   }
@@ -84,12 +84,12 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
     emailAlertReceivers: currentDocument.emailAlertReceivers || [] // in case the existing document doesn't have emailAlertReceivers
   }
 
-  const updatedDocumentId = await dbClient.updateStudentDocument(documentId, updatedDocument)
+  const updatedDocumentId = await dbClient.documents.updateStudentDocument(documentId, updatedDocument)
 
   logger.info(`Document with ID ${documentId} updated by user ${principal.displayName} (${principal.id})`)
 
   try {
-    await dbClient.updateStudentLastActivityTimestamp(studentId, updateDocumentData.school)
+    await dbClient.importantStuff.updateStudentLastActivityTimestamp(studentId, updateDocumentData.school)
   } catch (error) {
     logger.errorException(
       error,

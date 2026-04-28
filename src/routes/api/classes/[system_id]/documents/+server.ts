@@ -71,7 +71,7 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
 
   const dbClient: IDbClient = getDbClient()
 
-  const documentId = await dbClient.createGroupDocument(newDocument)
+  const documentId = await dbClient.documents.createGroupDocument(newDocument)
 
   logger.info(`Document created with ID ${documentId} by user ${principal.displayName} (${principal.id})`)
 

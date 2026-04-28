@@ -30,7 +30,7 @@ const deleteProgramArea: ApiNextFunction<DeleteProgramAreaResponse> = async ({ p
 
   const dbClient = getDbClient()
 
-  const programAreaToDelete = await dbClient.getProgramArea(programAreaId)
+  const programAreaToDelete = await dbClient.programAreas.getProgramArea(programAreaId)
   if (!programAreaToDelete) {
     throw new HTTPError(404, "Program area not found. Cannot delete non-existing program area.")
   }
@@ -39,7 +39,7 @@ const deleteProgramArea: ApiNextFunction<DeleteProgramAreaResponse> = async ({ p
     throw new HTTPError(403, noAccessMessage("No access to school administration for this school"))
   }
 
-  await dbClient.deleteProgramArea(programAreaToDelete)
+  await dbClient.programAreas.deleteProgramArea(programAreaToDelete)
 
   // Invalidate cache entry
   invalidateProgramAreaCache(programAreaId)
@@ -81,7 +81,7 @@ const updateProgramArea: ApiNextFunction<UpdateProgramAreaResponse, UpdateProgra
 
   const dbClient = getDbClient()
 
-  const programAreaToUpdate = await dbClient.getProgramArea(programAreaId)
+  const programAreaToUpdate = await dbClient.programAreas.getProgramArea(programAreaId)
   if (!programAreaToUpdate) {
     throw new HTTPError(404, "Program area not found. Cannot update non-existing program area.")
   }
@@ -109,7 +109,7 @@ const updateProgramArea: ApiNextFunction<UpdateProgramAreaResponse, UpdateProgra
     source: programAreaToUpdate.source
   }
 
-  const updatedProgramAreaId = await dbClient.updateProgramArea(programAreaId, updatedProgramArea)
+  const updatedProgramAreaId = await dbClient.programAreas.updateProgramArea(programAreaId, updatedProgramArea)
 
   // Invalidate cache entry
   invalidateProgramAreaCache(programAreaId)

@@ -57,7 +57,7 @@ const getTemplate: ServerLoadNextFunction<TemplatePageData> = async ({ principal
   }
 
   const dbClient: IDbClient = getDbClient()
-  const template = await dbClient.getDocumentContentTemplateById(templateId)
+  const template = await dbClient.documentContentTemplates.getDocumentContentTemplateById(templateId)
 
   if (!template) {
     throw new HTTPError(404, "Template not found")

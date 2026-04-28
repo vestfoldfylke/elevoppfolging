@@ -18,7 +18,7 @@ const getTemplates: ServerLoadNextFunction<TemplatePageData> = async ({ principa
   }
 
   const dbClient: IDbClient = getDbClient()
-  const templates = await dbClient.getDocumentContentTemplates()
+  const templates = await dbClient.documentContentTemplates.getDocumentContentTemplates()
 
   return {
     data: {

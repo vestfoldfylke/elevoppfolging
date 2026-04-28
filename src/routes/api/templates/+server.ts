@@ -43,7 +43,7 @@ const addDocumentContentTemplate: ApiNextFunction<AddDocumentContentTemplateResp
 
   const dbClient = getDbClient()
 
-  const templateId = await dbClient.createDocumentContentTemplate(newDocument)
+  const templateId = await dbClient.documentContentTemplates.createDocumentContentTemplate(newDocument)
 
   return {
     templateId

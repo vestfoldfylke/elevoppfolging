@@ -52,7 +52,7 @@ const addProgramArea: ApiNextFunction<AddProgramAreaResponse, AddProgramAreaBody
     source: "MANUAL"
   }
 
-  const programAreaId = await dbClient.createProgramArea(newProgramArea)
+  const programAreaId = await dbClient.programAreas.createProgramArea(newProgramArea)
 
   return {
     programAreaId

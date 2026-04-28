@@ -23,13 +23,13 @@ const deleteStudentCheckBox: ApiNextFunction<DeleteStudentCheckBoxResponse> = as
 
   const dbClient = getDbClient()
 
-  const existingStudentCheckBoxes = await dbClient.getStudentCheckBoxes()
+  const existingStudentCheckBoxes = await dbClient.studentCheckBoxes.getStudentCheckBoxes()
   const studentCheckBoxToDelete = existingStudentCheckBoxes.find((checkBox) => checkBox._id === checkBoxId)
   if (!studentCheckBoxToDelete) {
     throw new HTTPError(404, "Student check box not found. Cannot delete non-existing check box.")
   }
 
-  await dbClient.deleteStudentCheckBox(studentCheckBoxToDelete)
+  await dbClient.studentCheckBoxes.deleteStudentCheckBox(studentCheckBoxToDelete)
 
   return {
     deletedCheckBoxId: checkBoxId
@@ -55,7 +55,7 @@ const updateStudentCheckBox: ApiNextFunction<UpdateStudentCheckBoxResponse, Upda
 
   const dbClient = getDbClient()
 
-  const existingStudentCheckBoxes = await dbClient.getStudentCheckBoxes()
+  const existingStudentCheckBoxes = await dbClient.studentCheckBoxes.getStudentCheckBoxes()
   const studentCheckBoxToUpdate = existingStudentCheckBoxes.find((checkBox) => checkBox._id === checkBoxId)
   if (!studentCheckBoxToUpdate) {
     throw new HTTPError(404, "Student check box not found. Cannot update non-existing check box.")
@@ -82,7 +82,7 @@ const updateStudentCheckBox: ApiNextFunction<UpdateStudentCheckBoxResponse, Upda
     created: studentCheckBoxToUpdate.created
   }
 
-  const updatedCheckBoxId = await dbClient.updateStudentCheckBox(checkBoxId, updatedStudentCheckBox)
+  const updatedCheckBoxId = await dbClient.studentCheckBoxes.updateStudentCheckBox(checkBoxId, updatedStudentCheckBox)
 
   return {
     updatedCheckBoxId

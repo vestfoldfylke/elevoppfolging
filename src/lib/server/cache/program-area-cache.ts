@@ -15,7 +15,7 @@ export const getProgramAreaFromCache = async (programAreaId: string): Promise<Pr
 
   const dbClient = await getDbClient()
 
-  const programArea = await dbClient.getProgramArea(programAreaId)
+  const programArea = await dbClient.programAreas.getProgramArea(programAreaId)
   if (!programArea) {
     throw new Error(`Program area with ID ${programAreaId} not found in cache`)
   }

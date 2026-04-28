@@ -69,12 +69,12 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
 
   const dbClient: IDbClient = getDbClient()
 
-  const currentDocument: GroupDocument | null = await dbClient.getGroupDocumentById(documentId)
+  const currentDocument: GroupDocument | null = await dbClient.documents.getGroupDocumentById(documentId)
   if (!currentDocument) {
     throw new HTTPError(404, "Document not found, cannot add message to non-existing document...")
   }
 
-  const messageId = await dbClient.addGroupDocumentMessage(documentId, newMessage)
+  const messageId = await dbClient.documents.addGroupDocumentMessage(documentId, newMessage)
 
   return {
     messageId

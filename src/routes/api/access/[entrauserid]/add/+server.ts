@@ -75,11 +75,11 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
     }
   }
 
-  const existingAccess: Access | null = await dbClient.getPrincipalAccess(entraUserId)
+  const existingAccess: Access | null = await dbClient.access.getPrincipalAccess(entraUserId)
 
   if (!existingAccess) {
     // Then we create empty
-    const appUser = await dbClient.getAppUser(entraUserId)
+    const appUser = await dbClient.appUsers.getAppUser(entraUserId)
     if (!appUser) {
       throw new HTTPError(404, "User not found")
     }
@@ -94,7 +94,7 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
       teachingGroups: [],
       students: []
     }
-    await dbClient.createAccess(newAccess)
+    await dbClient.access.createAccess(newAccess)
   } else {
     // If the same access entry already exists, we should not add it again
     switch (accessEntryInput.type) {
@@ -139,7 +139,7 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
   }
 
   // Then we can finally add the access entry
-  const updatedAccessId = await dbClient.addAccessEntry(entraUserId, accessEntryToAdd)
+  const updatedAccessId = await dbClient.access.addAccessEntry(entraUserId, accessEntryToAdd)
 
   // Invalidate cache
   invalidateStudentAccessCache()

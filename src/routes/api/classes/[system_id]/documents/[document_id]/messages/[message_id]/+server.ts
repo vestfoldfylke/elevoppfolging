@@ -55,7 +55,7 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
 
   const dbClient: IDbClient = getDbClient()
 
-  const currentDocument: GroupDocument | null = await dbClient.getGroupDocumentById(documentId)
+  const currentDocument: GroupDocument | null = await dbClient.documents.getGroupDocumentById(documentId)
   if (!currentDocument) {
     throw new HTTPError(404, "Document not found, cannot update message to non-existing document...")
   }
@@ -88,7 +88,7 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
     emailAlertReceivers: messageToUpdate.emailAlertReceivers || []
   }
 
-  const updatedMessageId = await dbClient.updateGroupDocumentMessage(documentId, messageId, updatedMessageData)
+  const updatedMessageId = await dbClient.documents.updateGroupDocumentMessage(documentId, messageId, updatedMessageData)
 
   return {
     updatedMessageId

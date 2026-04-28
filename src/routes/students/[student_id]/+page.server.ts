@@ -55,11 +55,11 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 
   const accessSchoolsForStudent: string[] = Array.from(new Set(principalAccessForStudent.map((accessEntry) => accessEntry.schoolNumber)))
 
-  const studentImportantStuff: StudentImportantStuff[] = await dbClient.getStudentImportantStuff(studentId, accessSchoolsForStudent) // Vi henter kun important stuff for skolene brukeren har tilgang til eleven på
+  const studentImportantStuff: StudentImportantStuff[] = await dbClient.importantStuff.getStudentImportantStuff(studentId, accessSchoolsForStudent) // Vi henter kun important stuff for skolene brukeren har tilgang til eleven på
 
-  const allStudentDocuments: StudentDocument[] = await dbClient.getStudentDocuments(studentId)
+  const allStudentDocuments: StudentDocument[] = await dbClient.documents.getStudentDocuments(studentId)
 
-  const studentDataSharingConsent: StudentDataSharingConsent | null = await dbClient.getStudentDataSharingConsent(studentId)
+  const studentDataSharingConsent: StudentDataSharingConsent | null = await dbClient.studentDataSharingConsents.getStudentDataSharingConsent(studentId)
 
   const documents = allStudentDocuments.filter((document) => canViewStudentDocument(principal, principalAccessForStudent, document, studentDataSharingConsent))
 
@@ -85,7 +85,7 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 
   const unavailableSchoolDocuments = Object.values(unavailableSchoolDocumentsMap)
 
-  const documentContentTemplates: DocumentContentTemplate[] = await dbClient.getDocumentContentTemplates({ student: true })
+  const documentContentTemplates: DocumentContentTemplate[] = await dbClient.documentContentTemplates.getDocumentContentTemplates({ student: true })
 
   const studentAccessPersons: StudentAccessPerson[] = await getStudentAccessPersonsFromCache(studentId)
 

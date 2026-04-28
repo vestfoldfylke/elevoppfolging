@@ -45,7 +45,7 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
 
   const dbClient: IDbClient = getDbClient()
 
-  const currentDocument: GroupDocument | null = await dbClient.getGroupDocumentById(documentId)
+  const currentDocument: GroupDocument | null = await dbClient.documents.getGroupDocumentById(documentId)
   if (!currentDocument) {
     throw new HTTPError(404, "Document not found, cannot update non-existing document")
   }
@@ -84,7 +84,7 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
     created: currentDocument.created
   }
 
-  const updatedDocumentId = await dbClient.updateGroupDocument(documentId, updatedDocument)
+  const updatedDocumentId = await dbClient.documents.updateGroupDocument(documentId, updatedDocument)
 
   logger.info(`Document with ID ${documentId} updated by user ${principal.displayName} (${principal.id})`)
 

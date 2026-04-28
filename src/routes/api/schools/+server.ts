@@ -24,7 +24,7 @@ const addSchool: ApiNextFunction<AddSchoolResponse, AddSchoolBody> = async ({ pr
   }
 
   const dbClient = getDbClient()
-  const allSchools = await dbClient.getSchools()
+  const allSchools = await dbClient.schools.getSchools()
 
   if (allSchools.some((school) => school.schoolNumber === newSchoolData.schoolNumber)) {
     throw new HTTPError(400, "A school with the same school number already exists.")
@@ -49,7 +49,7 @@ const addSchool: ApiNextFunction<AddSchoolResponse, AddSchoolBody> = async ({ pr
     modified: editorData
   }
 
-  const schoolId = await dbClient.createSchool(newSchool)
+  const schoolId = await dbClient.schools.createSchool(newSchool)
 
   return {
     schoolId
