@@ -137,7 +137,7 @@
 
 {#key data.student._id} <!-- Re-render entire student page when student-id change -->
   <h1 class="ds-heading student-name" data-size="lg">{data.student.name}</h1>
-  <span class="ds-paragraph" data-size="sm">{studentMainDetails.mainSchool?.name ?? "Ingen hovedskole"} - {studentMainDetails.mainClass?.name || "Ingen aktiv klasse ved hovedskole"}</span>
+  <span class="ds-paragraph" data-size="sm">{studentEnrollmentDetails.length > 1 ? "Hovedskole: " : ""}{studentMainDetails.mainSchool?.name ?? "Ingen hovedskole"} - {studentMainDetails.mainClass?.name || "Ingen aktiv klasse ved hovedskole"}</span>
 
   <p class="ds-paragraph" data-size="sm" style="margin-top: var(--ds-size-2);">Din tilgang til eleven</p>
   <div class="access-info">
