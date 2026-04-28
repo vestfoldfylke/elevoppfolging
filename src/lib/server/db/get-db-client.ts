@@ -2,22 +2,23 @@ import { logger } from "@vestfoldfylke/loglady"
 import { type Binary, ClientEncryption, type ClientEncryptionEncryptOptions, MongoClient, type UUID } from "mongodb"
 import { env } from "$env/dynamic/private"
 import type { IDbClient } from "$lib/types/db/db-client"
-import { AccessDbClient } from "./access-db-client"
-import { AppUsersDbClient } from "./appusers-db-client"
-import { DocumentContentTemplatesDbClient } from "./document-content-templates-db-client"
-import { DocumentsDbClient } from "./documents-db-client"
-import { EmailAlertsDbClient } from "./email-alerts-db-client"
-import { StudentCheckBoxDbClient } from "./importantstuff-db-client"
-import { ProgramAreasDbClient } from "./program-areas-db-client"
-import { SchoolsDbClient } from "./schools-db-client"
-import { StudentDataSharingConsentsDbClient } from "./student-data-sharing-consent-db-client"
-import { ImportantStuffDbClient } from "./studentcheckbox-db-client"
-import { StudentsDbClient } from "./students-db-client"
+import { mockDbClient } from "./mock/mock-db-client"
+import { AccessDbClient } from "./mongo/access-db-client"
+import { AppUsersDbClient } from "./mongo/appusers-db-client"
+import { DocumentContentTemplatesDbClient } from "./mongo/document-content-templates-db-client"
+import { DocumentsDbClient } from "./mongo/documents-db-client"
+import { EmailAlertsDbClient } from "./mongo/email-alerts-db-client"
+import { StudentCheckBoxDbClient } from "./mongo/importantstuff-db-client"
+import { ProgramAreasDbClient } from "./mongo/program-areas-db-client"
+import { SchoolsDbClient } from "./mongo/schools-db-client"
+import { StudentDataSharingConsentsDbClient } from "./mongo/student-data-sharing-consent-db-client"
+import { ImportantStuffDbClient } from "./mongo/studentcheckbox-db-client"
+import { StudentsDbClient } from "./mongo/students-db-client"
 
 let dbClient: IDbClient
 
 if (env.MOCK_DB === "true") {
-  throw new Error("Mock DB client is not implemented yet")
+  dbClient = mockDbClient
 } else {
   if (!env.MONGODB_CONNECTION_STRING) {
     throw new Error("MONGODB_CONNECTION_STRING is not set (du har glemt den)")
