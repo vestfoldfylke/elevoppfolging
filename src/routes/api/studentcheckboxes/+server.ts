@@ -24,7 +24,7 @@ const addStudentCheckBox: ApiNextFunction<AddStudentCheckBoxResponse, AddStudent
   }
 
   const dbClient = getDbClient()
-  const currentStudentCheckBoxes = await dbClient.getStudentCheckBoxes()
+  const currentStudentCheckBoxes = await dbClient.studentCheckBoxes.getStudentCheckBoxes()
 
   if (currentStudentCheckBoxes.some((checkBox) => checkBox.value === newStudentCheckBoxData.value)) {
     throw new HTTPError(400, "A student check box with the same value already exists.")
@@ -47,7 +47,7 @@ const addStudentCheckBox: ApiNextFunction<AddStudentCheckBoxResponse, AddStudent
     modified: editorData
   }
 
-  const checkBoxId = await dbClient.createStudentCheckBox(newStudentCheckBox)
+  const checkBoxId = await dbClient.studentCheckBoxes.createStudentCheckBox(newStudentCheckBox)
 
   return {
     checkBoxId

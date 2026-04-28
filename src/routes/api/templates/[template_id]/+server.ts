@@ -30,7 +30,7 @@ const updateDocumentContentTemplate: ApiNextFunction<UpdateDocumentContentTempla
   }
 
   const dbClient = getDbClient()
-  const currentTemplate = await dbClient.getDocumentContentTemplateById(templateId)
+  const currentTemplate = await dbClient.documentContentTemplates.getDocumentContentTemplateById(templateId)
 
   if (!currentTemplate) {
     throw new HTTPError(404, "Document content template not found, cannot update non-existing template...")
@@ -54,7 +54,7 @@ const updateDocumentContentTemplate: ApiNextFunction<UpdateDocumentContentTempla
     sort: updateTemplateData.sort
   }
 
-  const updatedTemplateId = await dbClient.updateDocumentContentTemplate(templateId, documentTemplate)
+  const updatedTemplateId = await dbClient.documentContentTemplates.updateDocumentContentTemplate(templateId, documentTemplate)
 
   return {
     updatedTemplateId
@@ -79,13 +79,13 @@ const deleteDocumentContentTemplate: ApiNextFunction<DeleteDocumentContentTempla
   }
 
   const dbClient = getDbClient()
-  const currentTemplate = await dbClient.getDocumentContentTemplateById(templateId)
+  const currentTemplate = await dbClient.documentContentTemplates.getDocumentContentTemplateById(templateId)
 
   if (!currentTemplate) {
     throw new HTTPError(404, "Document content template not found, cannot delete non-existing template...")
   }
 
-  await dbClient.deleteDocumentContentTemplate(templateId)
+  await dbClient.documentContentTemplates.deleteDocumentContentTemplate(templateId)
 
   return {
     deletedTemplateId: templateId

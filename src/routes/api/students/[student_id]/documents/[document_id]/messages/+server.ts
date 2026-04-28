@@ -81,21 +81,21 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
 
   const dbClient: IDbClient = getDbClient()
 
-  const currentDocument = await dbClient.getStudentDocumentById(documentId)
+  const currentDocument = await dbClient.documents.getStudentDocumentById(documentId)
   if (!currentDocument) {
     throw new HTTPError(404, "Document not found, cannot add message to non-existing document...")
   }
 
-  const studentDataSharingConsent = await dbClient.getStudentDataSharingConsent(studentId)
+  const studentDataSharingConsent = await dbClient.studentDataSharingConsents.getStudentDataSharingConsent(studentId)
 
   if (!canAddMessageToStudentDocument(principal, principalAccessForStudent, currentDocument, studentDataSharingConsent)) {
     throw new HTTPError(403, noAccessMessage("No permission to add message to document"))
   }
 
-  const messageId = await dbClient.addStudentDocumentMessage(documentId, newMessage)
+  const messageId = await dbClient.documents.addStudentDocumentMessage(documentId, newMessage)
 
   try {
-    await dbClient.updateStudentLastActivityTimestamp(studentId, currentDocument.school)
+    await dbClient.importantStuff.updateStudentLastActivityTimestamp(studentId, currentDocument.school)
   } catch (error) {
     logger.errorException(
       error,
@@ -116,7 +116,7 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
     }
 
     try {
-      await dbClient.createEmailAlert(emailAlert)
+      await dbClient.emailAlerts.createEmailAlert(emailAlert)
     } catch (error) {
       logger.errorException(
         error,

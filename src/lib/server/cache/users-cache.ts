@@ -28,7 +28,7 @@ export const updateAppUserCache = async () => {
 
   logger.info("Fetching all app users from database to update cache")
   const startTime = Date.now()
-  const users = await dbClient.getAllAppUsers()
+  const users = await dbClient.appUsers.getAllAppUsers()
   const endTime = Date.now()
   logger.info(`Fetched ${users.length} app users from database in ${(endTime - startTime) / 1000}s, updating cache`)
 

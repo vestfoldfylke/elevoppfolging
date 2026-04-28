@@ -57,7 +57,7 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
 
   const dbClient: IDbClient = getDbClient()
 
-  const currentDocument = await dbClient.getStudentDocumentById(documentId)
+  const currentDocument = await dbClient.documents.getStudentDocumentById(documentId)
   if (!currentDocument) {
     throw new HTTPError(404, "Document not found, cannot update message to non-existing document...")
   }
@@ -90,10 +90,10 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
     emailAlertReceivers: messageToUpdate.emailAlertReceivers || [] // in case the existing message doesn't have emailAlertReceivers
   }
 
-  const updatedMessageId = await dbClient.updateStudentDocumentMessage(documentId, messageId, updatedMessageData)
+  const updatedMessageId = await dbClient.documents.updateStudentDocumentMessage(documentId, messageId, updatedMessageData)
 
   try {
-    await dbClient.updateStudentLastActivityTimestamp(studentId, currentDocument.school)
+    await dbClient.importantStuff.updateStudentLastActivityTimestamp(studentId, currentDocument.school)
   } catch (error) {
     logger.errorException(
       error,

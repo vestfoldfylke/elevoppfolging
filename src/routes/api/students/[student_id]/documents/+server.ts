@@ -90,12 +90,12 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
 
   const dbClient: IDbClient = getDbClient()
 
-  const documentId = await dbClient.createStudentDocument(newDocument)
+  const documentId = await dbClient.documents.createStudentDocument(newDocument)
 
   logger.info(`Document created with ID ${documentId} by user ${principal.displayName} (${principal.id})`)
 
   try {
-    await dbClient.updateStudentLastActivityTimestamp(studentId, newDocumentData.school)
+    await dbClient.importantStuff.updateStudentLastActivityTimestamp(studentId, newDocumentData.school)
   } catch (error) {
     logger.errorException(
       error,
@@ -116,7 +116,7 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
     }
 
     try {
-      await dbClient.createEmailAlert(emailAlert)
+      await dbClient.emailAlerts.createEmailAlert(emailAlert)
     } catch (error) {
       logger.errorException(error, "Failed to create email alert for document {documentId} for student {studentId}. Returning documentId regardless, alert will not be sent...", documentId, studentId)
     }

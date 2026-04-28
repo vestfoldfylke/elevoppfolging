@@ -33,7 +33,7 @@ const removeAccess: ApiNextFunction<RemoveAccessResponse, RemoveAccessBody> = as
     }
   } else {
     // Get access for principal to check if they have access to grant access on their school
-    const principalAccess = await dbClient.getPrincipalAccess(principal.id)
+    const principalAccess = await dbClient.access.getPrincipalAccess(principal.id)
     if (!principalAccess) {
       throw new HTTPError(403, noAccessMessage("No access found for principal"))
     }
@@ -43,7 +43,7 @@ const removeAccess: ApiNextFunction<RemoveAccessResponse, RemoveAccessBody> = as
     }
   }
 
-  const existingAccess = await dbClient.getPrincipalAccess(entraUserId)
+  const existingAccess = await dbClient.access.getPrincipalAccess(entraUserId)
 
   if (!existingAccess) {
     throw new HTTPError(403, noAccessMessage("No access found for principal"))
@@ -74,7 +74,7 @@ const removeAccess: ApiNextFunction<RemoveAccessResponse, RemoveAccessBody> = as
   }
 
   // Then we can finally remove the access entry
-  const updatedAccessId = await dbClient.removeAccessEntry(entraUserId, accessEntryToRemove)
+  const updatedAccessId = await dbClient.access.removeAccessEntry(entraUserId, accessEntryToRemove)
 
   // Invalidate cache
   invalidateStudentAccessCache()

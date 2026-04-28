@@ -16,7 +16,7 @@ type AdministrationAccessLayoutData = {
 const getAdministrationAccessData: ServerLoadNextFunction<AdministrationAccessLayoutData> = async ({ principal }) => {
   const dbClient: IDbClient = getDbClient()
 
-  const principalAccess = await dbClient.getPrincipalAccess(principal.id)
+  const principalAccess = await dbClient.access.getPrincipalAccess(principal.id)
   if (!principalAccess) {
     throw new HTTPError(403, noAccessMessage("No access found for principal"))
   }
@@ -25,7 +25,7 @@ const getAdministrationAccessData: ServerLoadNextFunction<AdministrationAccessLa
     throw new HTTPError(403, noAccessMessage("No permission to access school administration"))
   }
 
-  const schools = await dbClient.getSchools()
+  const schools = await dbClient.schools.getSchools()
   const allowedToAdministrateSchools = schools.filter(
     (school) => canGrantAndRemoveAccessForSchool(school.schoolNumber, principalAccess) || canManageManualStudentsOnSchool(principalAccess, school.schoolNumber)
   )

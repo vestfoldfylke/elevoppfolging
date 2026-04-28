@@ -41,13 +41,15 @@ const layoutLoad: ServerLoadNextFunction<RootLayoutData> = async ({ principal })
 
   logger.info("NÅ HENTER JEG IMPORTANT STUFF FOR ELEVENE JEG FANT")
   const now2 = Date.now()
-  const importantStuffByStudentId: Record<string, Record<string, StudentImportantStuff>> = await dbClient.getStudentsImportantStuff(studentsWithAccessInfo.map((student) => student._id))
+  const importantStuffByStudentId: Record<string, Record<string, StudentImportantStuff>> = await dbClient.importantStuff.getStudentsImportantStuff(studentsWithAccessInfo.map((student) => student._id))
   const timeTaken2 = Date.now() - now2
   logger.info(`Fant important stuff for ${Object.keys(importantStuffByStudentId).length} elever - brukte ${timeTaken2 / 1000} sekunder`)
 
   logger.info("NÅ HENTER JEG SHARING CONSENT FOR ELEVENE JEG FANT")
   const now3 = Date.now()
-  const sharingConsentByStudentId: Record<string, StudentDataSharingConsent> = await dbClient.getStudentsDataSharingConsent(studentsWithAccessInfo.map((student) => student._id))
+  const sharingConsentByStudentId: Record<string, StudentDataSharingConsent> = await dbClient.studentDataSharingConsents.getStudentsDataSharingConsent(
+    studentsWithAccessInfo.map((student) => student._id)
+  )
   const timeTaken3 = Date.now() - now3
   logger.info(`Fant sharing consent for ${Object.keys(sharingConsentByStudentId).length} elever - brukte ${timeTaken3 / 1000} sekunder`)
 
@@ -120,11 +122,11 @@ const layoutLoad: ServerLoadNextFunction<RootLayoutData> = async ({ principal })
   logger.info(`Totalt tid brukt på å hente og mappe elever: ${(timeTaken + timeTaken2 + timeTaken3 + timeTaken4) / 1000} sekunder`)
 
   logger.info("Fetching student check boxes")
-  const studentCheckBoxes = await dbClient.getStudentCheckBoxes()
+  const studentCheckBoxes = await dbClient.studentCheckBoxes.getStudentCheckBoxes()
   logger.info(`Found ${studentCheckBoxes.length} student check boxes`)
 
   logger.info("Fetching schools")
-  const schoolsFromDb = await dbClient.getSchools()
+  const schoolsFromDb = await dbClient.schools.getSchools()
   const schoolsInfo: SchoolInfo[] = schoolsFromDb.map((school) => ({
     name: school.name,
     schoolNumber: school.schoolNumber

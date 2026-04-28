@@ -61,7 +61,7 @@ const updateStudentDataSharingConsent: ApiNextFunction<PatchConsentResponse, Pat
 
   const dbClient = getDbClient()
 
-  const upsertedConsentId = await dbClient.upsertStudentDataSharingConsent(studentId, upsertConsentData)
+  const upsertedConsentId = await dbClient.studentDataSharingConsents.upsertStudentDataSharingConsent(studentId, upsertConsentData)
 
   return {
     consentId: upsertedConsentId

@@ -46,7 +46,7 @@ const updateGroupImportantStuff: ApiNextFunction<PatchGroupImportantStuffRespons
 
   const dbClient = getDbClient()
 
-  const currentImportantStuff = await dbClient.getGroupImportantStuff(systemId)
+  const currentImportantStuff = await dbClient.importantStuff.getGroupImportantStuff(systemId)
 
   const editor: EditorData = {
     by: {
@@ -65,7 +65,7 @@ const updateGroupImportantStuff: ApiNextFunction<PatchGroupImportantStuffRespons
     created: currentImportantStuff && currentImportantStuff.length > 0 ? currentImportantStuff[0].created : editor
   }
 
-  const importantStuffId: string = await dbClient.upsertGroupImportantStuff(systemId, upsertStudentImportantStuffData)
+  const importantStuffId: string = await dbClient.importantStuff.upsertGroupImportantStuff(systemId, upsertStudentImportantStuffData)
 
   return {
     importantStuffId

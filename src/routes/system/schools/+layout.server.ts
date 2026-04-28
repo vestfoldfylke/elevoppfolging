@@ -20,9 +20,9 @@ const getAdminSchoolsData: ServerLoadNextFunction<AdminSchoolsLayoutData> = asyn
   }
 
   const dbClient: IDbClient = getDbClient()
-  const schoolLeaderAccess = await dbClient.getSchoolLeaderAccess()
-  const appUsers = await dbClient.getAllAppUsers()
-  const schools = await dbClient.getSchools()
+  const schoolLeaderAccess = await dbClient.access.getSchoolLeaderAccess()
+  const appUsers = await dbClient.appUsers.getAllAppUsers()
+  const schools = await dbClient.schools.getSchools()
 
   return {
     data: {

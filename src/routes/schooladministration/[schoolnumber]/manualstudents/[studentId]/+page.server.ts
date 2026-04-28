@@ -24,7 +24,7 @@ const getSchoolAdministrationManualStudentManagementData: ServerLoadNextFunction
 
   const dbClient: IDbClient = getDbClient()
 
-  const access: Access | null = await dbClient.getPrincipalAccess(principal.id)
+  const access: Access | null = await dbClient.access.getPrincipalAccess(principal.id)
   if (!access) {
     throw new HTTPError(404, noAccessMessage("No access found for principal"))
   }
@@ -34,7 +34,7 @@ const getSchoolAdministrationManualStudentManagementData: ServerLoadNextFunction
   }
 
   // NOTE: Needs to be an AppStudent and not just a FrontendStudent since we need SSN
-  const manualStudent: AppStudent | null = await dbClient.getManualStudentById(studentId)
+  const manualStudent: AppStudent | null = await dbClient.students.getManualStudentById(studentId)
   if (!manualStudent) {
     throw new HTTPError(404, "Manual student not found")
   }

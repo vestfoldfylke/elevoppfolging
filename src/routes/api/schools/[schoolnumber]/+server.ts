@@ -23,7 +23,7 @@ const deleteSchool: ApiNextFunction<DeleteSchoolResponse> = async ({ principal, 
 
   const dbClient = getDbClient()
 
-  const existingSchools = await dbClient.getSchools()
+  const existingSchools = await dbClient.schools.getSchools()
   const schoolToDelete = existingSchools.find((school) => school.schoolNumber === schoolNumber)
   if (!schoolToDelete) {
     throw new HTTPError(404, "School not found. Cannot delete non-existing school.")
@@ -32,7 +32,7 @@ const deleteSchool: ApiNextFunction<DeleteSchoolResponse> = async ({ principal, 
     throw new HTTPError(400, "Only schools created manually can be deleted.")
   }
 
-  await dbClient.deleteSchool(schoolNumber)
+  await dbClient.schools.deleteSchool(schoolNumber)
 
   return {
     deletedSchoolNumber: schoolNumber
@@ -58,7 +58,7 @@ const updateSchool: ApiNextFunction<UpdateSchoolResponse, UpdateSchoolBody> = as
 
   const dbClient = getDbClient()
 
-  const existingSchools = await dbClient.getSchools()
+  const existingSchools = await dbClient.schools.getSchools()
   const schoolToUpdate = existingSchools.find((school) => school.schoolNumber === schoolNumber)
   if (!schoolToUpdate) {
     throw new HTTPError(404, "School not found. Cannot update non-existing school.")
@@ -91,7 +91,7 @@ const updateSchool: ApiNextFunction<UpdateSchoolResponse, UpdateSchoolBody> = as
     }
   }
 
-  const updatedSchoolId = await dbClient.updateSchool(schoolNumber, updatedSchool)
+  const updatedSchoolId = await dbClient.schools.updateSchool(schoolNumber, updatedSchool)
 
   return {
     updatedSchoolId

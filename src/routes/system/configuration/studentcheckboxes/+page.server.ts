@@ -18,7 +18,7 @@ const getStudentCheckBoxes: ServerLoadNextFunction<StudentCheckBoxesPageData> = 
   }
 
   const dbClient: IDbClient = getDbClient()
-  const checkBoxes = await dbClient.getStudentCheckBoxes()
+  const checkBoxes = await dbClient.studentCheckBoxes.getStudentCheckBoxes()
 
   return {
     data: {

@@ -52,7 +52,7 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
 
   const dbClient = getDbClient()
 
-  const allStudentCheckBoxes = await dbClient.getStudentCheckBoxes()
+  const allStudentCheckBoxes = await dbClient.studentCheckBoxes.getStudentCheckBoxes()
 
   for (const checkBoxId of studentImportantStuffData.followUp) {
     if (!allStudentCheckBoxes.some((checkBox) => checkBox._id === checkBoxId)) {
@@ -66,7 +66,7 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
     }
   }
 
-  const currentImportantStuff = await dbClient.getStudentImportantStuff(studentId, [studentImportantStuffData.school.schoolNumber])
+  const currentImportantStuff = await dbClient.importantStuff.getStudentImportantStuff(studentId, [studentImportantStuffData.school.schoolNumber])
 
   const editor: EditorData = {
     by: {
@@ -87,7 +87,7 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
     created: currentImportantStuff && currentImportantStuff.length > 0 ? currentImportantStuff[0].created : editor
   }
 
-  const importantStuffId = await dbClient.upsertStudentImportantStuff(studentId, upsertStudentImportantStuffData)
+  const importantStuffId = await dbClient.importantStuff.upsertStudentImportantStuff(studentId, upsertStudentImportantStuffData)
 
   return {
     importantStuffId

@@ -28,11 +28,11 @@ const getClassGroup: ServerLoadNextFunction<ClassPageData> = async ({ principal,
 
   const dbClient: IDbClient = getDbClient()
 
-  const groupImportantStuff: GroupImportantStuff[] = await dbClient.getGroupImportantStuff(systemId)
+  const groupImportantStuff: GroupImportantStuff[] = await dbClient.importantStuff.getGroupImportantStuff(systemId)
 
-  const groupDocuments: GroupDocument[] = await dbClient.getGroupDocuments(systemId)
+  const groupDocuments: GroupDocument[] = await dbClient.documents.getGroupDocuments(systemId)
 
-  const documentContentTemplates: DocumentContentTemplate[] = await dbClient.getDocumentContentTemplates({ group: true })
+  const documentContentTemplates: DocumentContentTemplate[] = await dbClient.documentContentTemplates.getDocumentContentTemplates({ group: true })
 
   return {
     data: {
