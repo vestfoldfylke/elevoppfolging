@@ -34,7 +34,7 @@
 </script>
 
 <div class="page-content">
-  <PageHeader title="Konfigurasjon av oppfølging/tilrettelegging-sjekkbokser (K.A.O.S)" />
+  <PageHeader title="Konfigurasjon av oppfølging/enkeltvedtak-sjekkbokser (K.A.O.S)" />
   <p>De som er i viktig informasjonsboksen på elevsiden</p>
   <h3>Oppfølging</h3>
   {#if data.checkBoxes.filter(checkBox => checkBox.type === "FOLLOW_UP").length === 0}
@@ -53,16 +53,16 @@
   </div>
 
 
-  <h3>Tilrettelegging</h3>
+  <h3>Enkeltvedtak</h3>
   {#if data.checkBoxes.filter(checkBox => checkBox.type === "FACILITATION").length === 0}
-    <p>Ingen tilretteleggings-sjekkbokser er lagt til enda</p>
+    <p>Ingen enkeltvedtak-sjekkbokser er lagt til enda</p>
   {/if}
   {#each data.checkBoxes.filter(checkBox => checkBox.type === "FACILITATION") as checkBox (checkBox._id)}
     <StudentCheckBoxComponent {checkBox} editMode={false} />
   {/each}
   <div class="add-student-checkbox">
     {#if !addStudentFacilitationCheckBoxOpen}
-      <button onclick={() => addStudentFacilitationCheckBoxOpen = true}>Legg til ny tilretteleggings-sjekkboks</button>
+      <button onclick={() => addStudentFacilitationCheckBoxOpen = true}>Legg til ny enkeltvedtak-sjekkboks</button>
     {/if}
     {#if addStudentFacilitationCheckBoxOpen}
       <StudentCheckBoxComponent checkBox={newStudentFacilitationCheckBox} editMode={true} callBackOnCancel={() => addStudentFacilitationCheckBoxOpen = false} callBackOnCreate={() => addStudentFacilitationCheckBoxOpen = false} />

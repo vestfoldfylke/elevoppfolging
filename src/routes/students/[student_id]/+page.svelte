@@ -168,7 +168,7 @@
         {#if studentSummaryDetails.facilitation.length > 0}
           <div>
             <p class="ds-paragraph">
-              <strong>Tilrettelegging</strong>
+              <strong>Enkeltvedtak</strong>
               <br />
               {studentSummaryDetails.facilitation.join(", ")}
             </p>

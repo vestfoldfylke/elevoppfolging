@@ -4,7 +4,7 @@
 
 <div class="page-content">
   <PageHeader title="Konfigurasjon" />
-  <a href={`/system/configuration/studentcheckboxes`}>Konfigurasjon av oppfølging/tilrettelegging-sjekkbokser (K.A.O.S)</a>
+  <a href={`/system/configuration/studentcheckboxes`}>Konfigurasjon av oppfølging/enkeltvedtak-sjekkbokser (K.A.O.S)</a>
 </div>
 
 

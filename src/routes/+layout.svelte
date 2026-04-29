@@ -198,7 +198,7 @@
 							{/if}
 							{#if facilitationStudentCheckBoxes.length > 0}
 								<div class="student-filters-facilitation">
-									<h2 class="ds-heading">Tilrettelegging</h2>
+									<h2 class="ds-heading">Enkeltvedtak</h2>
 									<hr class="ds-divider" />
 									<ul class="ds-list">
 										{#each facilitationStudentCheckBoxes as facilitationStudentCheckBox}
