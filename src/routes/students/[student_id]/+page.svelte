@@ -24,10 +24,6 @@
     return data.student.enrollmentsWithinViewAccessWindow.map(getEnrollmentDetails)
   })
 
-  let additionalSchool: SchoolInfo[] = $derived.by(() => {
-    return data.student.enrollmentsWithinViewAccessWindow.filter((enrollment) => !enrollment.mainSchool).map((enrollment) => enrollment.school)
-  })
-
   type StudentSummaryDetails =
     | {
         importantInfo: string | null
@@ -136,51 +132,67 @@
 </script>
 
 {#key data.student._id} <!-- Re-render entire student page when student-id change -->
-  <h1 class="ds-heading student-name" data-size="lg">{data.student.name}</h1>
-  <span class="ds-paragraph" data-size="sm">{studentEnrollmentDetails.length > 1 ? "Hovedskole: " : ""}{studentMainDetails.mainSchool?.name ?? "Ingen hovedskole"} - {studentMainDetails.mainClass?.name || "Ingen aktiv klasse ved hovedskole"}</span>
-
-  <p class="ds-paragraph" data-size="sm" style="margin-top: var(--ds-size-2);">Din tilgang til eleven</p>
-  <div class="access-info">
-    <PrincipalAccessTags principalAccessForStudent={data.principalAccessForStudent} />
+  <div>
+    <h1 class="ds-heading" data-size="lg" style="margin-bottom: 0;">{data.student.name}</h1>
+    <span class="ds-paragraph" data-size="sm">{studentEnrollmentDetails.length > 1 ? "Hovedskole: " : ""}{studentMainDetails.mainSchool?.name ?? "Ingen hovedskole"} - {studentMainDetails.mainClass?.name || "Ingen aktiv klasse ved hovedskole"}</span>
   </div>
   
-  {#if !expandedStudentDetails && (studentSummaryDetails || hasOtherSchoolInfoAndNotConsent)}
-    <div class="student-summary">
+  <div class="ds-card student-summary" data-variant="tinted" data-color="brand2">
+    <div class="summary-card-header ds-card__block">
+      <div class="card-title">
+        <span class="material-symbols-outlined">info</span>
+        <h2 class="ds-heading" data-size="sm">Elevinformasjon</h2>
+      </div>
+      <button class="ds-button" data-variant="secondary" type="button" data-size="sm" onclick={() => expandedStudentDetails = !expandedStudentDetails} style="margin-top: 0;">
+        <span class="material-symbols-outlined">{expandedStudentDetails ? "expand_circle_up" : "expand_circle_down"}</span>
+        {expandedStudentDetails ? "Skjul detaljer" : "Vis alle detaljer"}
+      </button>
+    </div>
+      
+    {#if !expandedStudentDetails}
       {#if studentSummaryDetails}
-        {#if studentSummaryDetails.importantInfo}
-          <div>
-            <p class="ds-paragraph">
-              <strong>Viktig informasjon</strong>
-              <br />
-              {studentSummaryDetails.importantInfo}
-            </p>
-          </div>
-        {/if}
-        {#if studentSummaryDetails.followUp.length > 0}
-          <div>
-            <p class="ds-paragraph">
-              <strong>Oppfølging</strong>
-              <br />
-              {studentSummaryDetails.followUp.join(", ")}              
-            </p>
-          </div>
-        {/if}
-        {#if studentSummaryDetails.facilitation.length > 0}
-          <div>
-            <p class="ds-paragraph">
-              <strong>Enkeltvedtak</strong>
-              <br />
-              {studentSummaryDetails.facilitation.join(", ")}
-            </p>
-          </div>
-        {/if}
+        <div class="ds-card__block student-summary-details">
+          {#if studentSummaryDetails.importantInfo}
+            <div style="flex: 1.2;">
+              <h3 class="ds-heading" data-size="xs">Informasjon</h3>
+              <p class="ds-paragraph" style="white-space: pre-wrap;">
+                {studentSummaryDetails.importantInfo}
+              </p>
+            </div>
+          {/if}
+          {#if studentSummaryDetails.followUp.length > 0 || studentSummaryDetails.facilitation.length > 0}
+            <div class="student-summary-checkboxes" style="margin-top: 0;">
+              {#if studentSummaryDetails.followUp.length > 0}
+                <div>
+                  <h3 class="ds-heading" data-size="xs">Oppfølging</h3>
+                  <ul class="ds-list">
+                    {#each studentSummaryDetails.followUp || [] as followUp}
+                      <li>{followUp}</li>
+                    {/each}
+                  </ul>
+                </div>
+              {/if}
+              {#if studentSummaryDetails.facilitation.length > 0}
+                <div>
+                  <h3 class="ds-heading" data-size="xs">Enkeltvedtak</h3>
+                  <ul class="ds-list">
+                    {#each studentSummaryDetails.facilitation || [] as facilitation}
+                      <li>{facilitation}</li>
+                    {/each}
+                  </ul>
+                </div>
+              {/if}
+            </div>
+          {/if}
+        </div>
       {/if}
+
       {#if hasOtherSchoolInfoAndNotConsent}
-        <div>
+        <div class="ds-card__block">
           <p class="ds-paragraph">
-            Eleven har ikke gitt samtykke til deling av data på tvers av skoler. 
-            {#if additionalSchool.length > 0}
-              Eleven har også elevforhold ved {additionalSchool.map(school => school.name).join(", ")}.
+            Eleven har ikke gitt samtykke til deling av data på tvers av skoler.
+            {#if additionalSchools.length > 0}
+              Eleven har også elevforhold ved {additionalSchools.map(school => school.name).join(", ")}.
             {/if}
             {#if data.unavailableSchoolDocuments.length > 0}
               Det finnes notater fra andre skoler som ikke er tilgjengelig for deg.
@@ -188,8 +200,14 @@
           </p>
         </div>
       {/if}
-    </div>
-  {/if}
+      <div class="ds-card__block">
+        <div class="access-info">
+          <p class="ds-paragraph">Din tilgang til eleven</p>
+          <PrincipalAccessTags principalAccessForStudent={data.principalAccessForStudent} />
+        </div>
+      </div>
+    {/if}
+  </div>
 
   {#snippet periodDetails(period: Period & PeriodDetails)}
     <p class="ds-paragraph" data-size="sm">
@@ -278,13 +296,7 @@
       {/each}
     </div>
   {/if}
-
-  <div class="show-details-container">
-    <button class="ds-button" data-variant="secondary" type="button" data-size="sm" onclick={() => expandedStudentDetails = !expandedStudentDetails}>
-      <span class="material-symbols-outlined">{expandedStudentDetails ? "expand_circle_up" : "expand_circle_down"}</span>
-      {expandedStudentDetails ? "Skjul detaljer" : "Vis detaljer"}
-    </button>
-  </div>
+  
 
   <hr aria-hidden="true" class="ds-divider"/>
 
@@ -339,24 +351,46 @@
 {/key}
 
 <style>
-  h1.student-name {
-    margin-bottom: 0;
-  }
-
   .access-info {
     display: flex;
     gap: var(--ds-size-2);
     flex-wrap: wrap;
-  }
-
-  .student-summary > div, .show-details-container, .student-details {
-    margin: var(--ds-size-4) 0;
+    align-items: center;
   }
 
   .student-details {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+  }
+
+  .summary-card-header {
+    display: flex;
+    gap: var(--ds-size-2);
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .student-summary, .student-details {
+    margin: var(--ds-size-4) 0;
+  }
+
+  .student-summary-details {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .student-summary-checkboxes {
+    margin-top: 0;
+    display: flex;
+    gap: var(--ds-size-4);
+    flex-wrap: wrap;
+  }
+
+  .student-summary-checkboxes ul > li {
+    margin: 0;
   }
 
   .consent-and-access-container {
