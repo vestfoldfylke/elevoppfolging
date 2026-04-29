@@ -68,47 +68,52 @@
 
 <dialog class="ds-dialog document-dialog" data-placement="center" id="document-modal-{document._id}">
   <button class="ds-button close-dialog-button" data-icon="true" data-variant="tertiary" type="button" aria-label="Lukk dialogvindu" data-color="neutral" command="close" commandfor="document-modal-{document._id}"></button>
-  <div class="ds-dialog__block document-dialog-header">
-    <div class="ds-paragraph" data-size="sm">{studentName || groupName} - {editableDocument.school.name}</div>
-    <h2 class="ds-heading">{document.template.name}: {editableDocument.title}</h2>
-    <EditorInfo created={document.created} modified={document.modified} timestamp={true} modifiedIndicator={true} />
-  </div>
   
   <div class="ds-dialog__block">
-    {#if !editMode}
-      {#each document.content as contentItem, index}
-        <DocumentContent {contentItem} editMode={false} {index} />
-      {/each}
+    <div class="document-dialog-header">
+      <div class="ds-paragraph" data-size="sm">{studentName || groupName} - {editableDocument.school.name}</div>
+      <h2 class="ds-heading">{document.template.name}: {editableDocument.title}</h2>
+      {#if !editMode}
+        <EditorInfo created={document.created} modified={document.modified} timestamp={true} modifiedIndicator={true} />
+      {/if}
+    </div>
+    
+    <div>
+      {#if !editMode}
+        {#each document.content as contentItem, index}
+          <DocumentContent {contentItem} editMode={false} {index} />
+        {/each}
 
-      {#if studentName}
-        <fieldset class="ds-fieldset content-item">
-          <legend class="ds-label" data-weight="medium">
-            Tilgangsstyring
-          </legend>
-          <ds-field class="ds-field">
-            <input id="document-access-{document._id}" class="ds-input" type="checkbox" checked={document.documentAccess === "ALL_WITH_STUDENT_ACCESS"} disabled={true} style={document.documentAccess === "ALL_WITH_STUDENT_ACCESS" ? "opacity: 1;" : ""} />
-            <label for="document-access-{document._id}" class="ds-label" data-weight="regular" style={document.documentAccess === "ALL_WITH_STUDENT_ACCESS" ? "opacity: 1;" : ""}>Synlig for faglærere</label>
-          </ds-field>
-        </fieldset>
+        {#if studentName}
+          <fieldset class="ds-fieldset content-item">
+            <legend class="ds-label" data-weight="medium">
+              Tilgangsstyring
+            </legend>
+            <ds-field class="ds-field">
+              <input id="document-access-{document._id}" class="ds-input" type="checkbox" checked={document.documentAccess === "ALL_WITH_STUDENT_ACCESS"} disabled={true} style={document.documentAccess === "ALL_WITH_STUDENT_ACCESS" ? "opacity: 1;" : ""} />
+              <label for="document-access-{document._id}" class="ds-label" data-weight="regular" style={document.documentAccess === "ALL_WITH_STUDENT_ACCESS" ? "opacity: 1;" : ""}>Synlig for faglærere</label>
+            </ds-field>
+          </fieldset>
+        {/if}
+
+      {:else}
+        <DocumentEditor documentId={document._id} studentId={"student" in document ? document.student._id : undefined} groupSystemId={"group" in document ? document.group.systemId : undefined} bind:currentDocument={editableDocument} {accessSchools} closeEditor={() => { editMode = false; editableDocument = editableDocumentFromDocument(); }} />
       {/if}
 
-    {:else}
-      <DocumentEditor documentId={document._id} studentId={"student" in document ? document.student._id : undefined} groupSystemId={"group" in document ? document.group.systemId : undefined} bind:currentDocument={editableDocument} {accessSchools} closeEditor={() => { editMode = false; editableDocument = editableDocumentFromDocument(); }} />
-    {/if}
-
-    {#if !editMode && canEditDocument}
-      <div class="document-actions">
-        <button class="ds-button" data-variant="secondary" data-size="sm" onclick={() => editMode = true}>
-          <span class="material-symbols-outlined">{editMode ? "close" : "edit"}</span>
-          Rediger
-        </button>
-      </div>
-    {/if}
+      {#if !editMode && canEditDocument}
+        <div class="document-actions">
+          <button class="ds-button" data-variant="secondary" data-size="sm" onclick={() => editMode = true}>
+            <span class="material-symbols-outlined">{editMode ? "close" : "edit"}</span>
+            Rediger
+          </button>
+        </div>
+      {/if}
+    </div>
   </div>
 
   {#each document.messages as message (message.messageId)}
     {#if message.type === "update"}
-      <div class="ds-dialog__block">
+      <div class="ds-dialog__block message-block">
         <div class="message-header">
           <div class="message-header-left">
             <h2 class="ds-heading" data-size="xs">{`Oppfølging: ${message.content.title}`}</h2>
@@ -133,6 +138,10 @@
     padding: 0;
     margin: 0;
     min-height: min-content;
+  }
+
+  .message-block:nth-child(odd) {
+    background-color: var(--ds-color-background-tinted);
   }
 
   .message-header {

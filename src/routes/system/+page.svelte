@@ -26,10 +26,10 @@
   <div class="ds-card" data-variant="default" data-color="neutral">
     <div class="ds-card__block">
       <h2 class="ds-heading">
-        <a class="ds-link" href="/system/configuration/studentcheckboxes">Oppfølging og tilrettelegging</a>
+        <a class="ds-link" href="/system/configuration/studentcheckboxes">Oppfølging og Enkeltvedtak</a>
       </h2>
       <p class="ds-paragraph" data-variant="default">
-        Her kan du se og redigere hvilke oppfølginger og tilrettelegginger som skal være tilgjengelige for lærere å krysse av på elevkortet, og som kan brukes i sortering på elevoversikten.
+        Her kan du se og redigere hvilke oppfølginger og Enkeltvedtak som skal være tilgjengelige for lærere å krysse av på elevkortet, og som kan brukes i sortering på elevoversikten.
       </p>
     </div>
   </div>

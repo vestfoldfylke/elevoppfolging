@@ -61,6 +61,18 @@
     return alertableAccessPersons
   })
 
+  const toggleSelectAllAlertableAccessPersons = (target: HTMLInputElement) => {
+    if (alertableAccessPersons.length === 0) {
+      return
+    }
+
+    if (target.checked) {
+      editableMessage.emailAlertReceivers = alertableAccessPersons.flatMap((accessPerson) => accessPerson.entra.userPrincipalName)
+    } else {
+      editableMessage.emailAlertReceivers = []
+    }
+  }
+
   let messageForm: HTMLFormElement | undefined = $state()
 
   const callBackOnSuccessOrCancel = () => {
@@ -164,7 +176,7 @@
     <form bind:this={messageForm}>
       {#if editableMessage.type === "update"}
         {#if !message.messageId}
-          <h2 class="ds-heading">Ny oppfølging</h2>
+          <h2 class="ds-heading">Ny oppfølging / informasjon</h2>
         {/if}
 
         <ds-field class="ds-field content-item">
@@ -172,15 +184,15 @@
             Tittel
             <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
           </label>
-          <input autocomplete="off" class="ds-input" type="text" id="message-title-{message.messageId || document._id}" name="messageTitle" required bind:value={editableMessage.content.title} placeholder="Tittel på oppfølging" />
+          <input autocomplete="off" class="ds-input" type="text" id="message-title-{message.messageId || document._id}" name="messageTitle" required bind:value={editableMessage.content.title} />
         </ds-field>
         
         <ds-field class="ds-field content-item">
           <label for="message-content-{message.messageId || document._id}" class="ds-label" data-weight="medium">
-            Oppdatering
+            Oppfølging / informasjon
             <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
           </label>
-          <textarea required class="ds-input" name="messageContent" id="message-content-{message.messageId || document._id}" rows={5} bind:value={editableMessage.content.text} placeholder="Skriv oppdateringen her..."></textarea>
+          <textarea required class="ds-input" name="messageContent" id="message-content-{message.messageId || document._id}" rows={5} bind:value={editableMessage.content.text}></textarea>
         </ds-field>
       {/if}
 
@@ -189,9 +201,16 @@
       {#if emailAlertAvailable && alertableAccessPersons.length > 0}
         <fieldset class="ds-fieldset content-item">
           <legend class="ds-label" data-weight="medium">
-            Følgende personer skal varsles på e-post når notatet lagres
+            Følgende personer skal varsles på e-post når oppfølgingen / informasjonen lagres
             <span class="ds-tag" data-variant="outline" data-color="warning" data-size="xs" style="margin-left: var(--ds-size-1)">Obs! Denne gjør ingenting enda, bare for testing</span>
           </legend>
+
+          <ds-field class="ds-field">
+            <input id="email-alert-{message.messageId}-{document._id}-choose-all" class="ds-input" type="checkbox" name="email-alert-{document._id}-choose-all" onchange={(e) => { toggleSelectAllAlertableAccessPersons(e.target as HTMLInputElement) }} />
+            <label for="email-alert-{message.messageId}-{document._id}-choose-all" class="ds-label" data-weight="regular">
+              Velg alle
+            </label>
+          </ds-field>
 
           {#each alertableAccessPersons as alertableAccessPerson}
             <ds-field class="ds-field">

@@ -111,7 +111,7 @@
         </div>
 
         <div class="checkboxes">
-          <h3 class="ds-heading" data-size="xs">Tilrettelegging</h3>
+          <h3 class="ds-heading" data-size="xs">Enkeltvedtak</h3>
           {#if editMode}
             <fieldset class="ds-fieldset">
               {#each studentCheckBoxes.filter(checkbox => checkbox.enabled && checkbox.type === "FACILITATION") as facilitationCheckbox}
@@ -123,7 +123,7 @@
             </fieldset>
           {:else}
             {#if savedEditableImportantStuff.facilitation.length === 0}
-              Ingen tilrettelegging
+              Ingen enkeltvedtak
             {:else}
               <ul class="ds-list">
                 {#each savedEditableImportantStuff.facilitation || [] as facilitationId}
