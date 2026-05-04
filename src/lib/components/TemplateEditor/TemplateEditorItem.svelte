@@ -69,15 +69,10 @@
     {/if}
 
     {#if contentItem.type === "info"}
+      <div class="ds-alert" data-color="info">
+        Når du skal legge inn en lenke i teksten, bruker du følgende format: [lenketekst](url). For eksempel: Søk opp ting hos [Google](https://www.google.com)
+      </div>
       <textarea class="ds-input" rows="8" id="info-{index}" bind:value={contentItem.value}></textarea>
-      <ds-field class="ds-field">
-        <label for="info-linkUrl-{index}" class="ds-label" data-weight="medium">Lenke URL (valgfritt)</label>
-        <input id="info-linkUrl-{index}" type="url" class="ds-input" bind:value={contentItem.link.url} />
-      </ds-field>
-      <ds-field class="ds-field">
-        <label for="info-linkText-{index}" class="ds-label" data-weight="medium">Lenketekst (valgfritt)</label>
-        <input id="info-linkText-{index}" class="ds-input" type="text" bind:value={contentItem.link.text} />
-      </ds-field>
     {/if}
 
     {#if contentItem.type === "inputText"}

@@ -25,6 +25,94 @@
       checkboxes[0].setCustomValidity("") // Ok, will not trigger validation error
     }
   })
+
+  type InfoTextItem = {
+    type: "text"
+    text: string
+  }
+  type InfoLinkItem = {
+    type: "link"
+    text: string
+    url: string
+  }
+  type ParsedInfoItem = InfoTextItem | InfoLinkItem
+
+  const parseInfoItemValue = (value: string): ParsedInfoItem[] => {
+    if (!value?.trim()) {
+      return []
+    }
+
+    const resultingInfoItems: ParsedInfoItem[] = []
+    let textBuffer = ""
+
+    const pushText = (text: string) => {
+      if (!text) {
+        return
+      }
+      const last = resultingInfoItems.at(-1)
+      if (last?.type === "text") {
+        last.text += text
+        return
+      }
+      resultingInfoItems.push({ type: "text", text })
+    }
+
+    for (let currentIndex = 0; currentIndex < value.length; ) {
+      // Normal character → collect as text
+      if (value[currentIndex] !== "[") {
+        textBuffer += value[currentIndex]
+        currentIndex++
+        continue
+      }
+
+      const labelEnd = value.indexOf("]", currentIndex + 1)
+      if (labelEnd === -1 || value[labelEnd + 1] !== "(") {
+        textBuffer += value[currentIndex]
+        currentIndex++
+        continue
+      }
+
+      // Parse URL, supporting nested parentheses
+      let parenthesesDepth = 1
+      let urlEndIndex = labelEnd + 2
+
+      while (urlEndIndex < value.length && parenthesesDepth > 0) {
+        if (value[urlEndIndex] === "(") {
+          parenthesesDepth++
+        } else if (value[urlEndIndex] === ")") {
+          parenthesesDepth--
+        }
+        urlEndIndex++
+      }
+
+      // Incomplete link → treat as text
+      if (parenthesesDepth > 0) {
+        textBuffer += value[currentIndex]
+        currentIndex++
+        continue
+      }
+
+      const linkText = value.slice(currentIndex + 1, labelEnd)
+      const url = value.slice(labelEnd + 2, urlEndIndex - 1)
+
+      pushText(textBuffer)
+      textBuffer = ""
+
+      // If valid url
+      if (url.startsWith("https://") && URL.canParse(url)) {
+        resultingInfoItems.push({ type: "link", text: linkText, url })
+        currentIndex = urlEndIndex
+        continue
+      }
+
+      // not valid url, treat whole thing as text
+      pushText(value.slice(currentIndex, urlEndIndex))
+      currentIndex = urlEndIndex
+    }
+
+    pushText(textBuffer)
+    return resultingInfoItems
+  }
 </script>
 
 {#snippet helpText(inputItem: DocumentInputItem)}
@@ -55,10 +143,21 @@
 
 {#if contentItem.type === "info" && (editMode || previewMode)}
   <div class="ds-card content-item" data-variant="tinted" data-color="accent">
+    <p class="ds-paragraph pre-wrap-whitespace">
+      {#each parseInfoItemValue(contentItem.value) as infoItem}
+        {#if infoItem.type === "text"}
+          {infoItem.text}
+        {:else if infoItem.type === "link"}
+          <a class="ds-link" href={infoItem.url} target="_blank" rel="noopener noreferrer">{infoItem.text}</a>
+        {/if}
+      {/each}
+    </p>
+    <!--
     <p class="ds-paragraph pre-wrap-whitespace">{contentItem.value}</p>
     {#if contentItem.link && contentItem.link.url && contentItem.link.text}
       <a class="ds-link" href={contentItem.link.url} target="_blank" rel="noopener noreferrer">{contentItem.link.text}</a>
     {/if}
+    -->
   </div>
 {/if}
 

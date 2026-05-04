@@ -320,10 +320,6 @@ export type DocumentParagraphItem = {
 export type DocumentInfoItem = {
   type: "info"
   value: string
-  link: {
-    url: string
-    text: string
-  }
 }
 
 export type DocumentTextInputItem = {
