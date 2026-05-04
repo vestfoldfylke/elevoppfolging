@@ -36,16 +36,17 @@
     url: string
   }
   type ParsedInfoItem = InfoTextItem | InfoLinkItem
-  type ParsedInfoItems = ParsedInfoItem[]
 
-  const parseInfoItemValue = (value: string): ParsedInfoItems => {
+  const parseInfoItemValue = (value: string): ParsedInfoItem[] => {
     if (!value?.trim()) return []
 
-    const resultingInfoItems: ParsedInfoItems = []
+    const resultingInfoItems: ParsedInfoItem[] = []
     let textBuffer = ""
 
     const pushText = (text: string) => {
-      if (!text) return
+      if (!text) {
+        return
+      }
       const last = resultingInfoItems.at(-1)
       if (last?.type === "text") {
         last.text += text
@@ -54,37 +55,43 @@
       resultingInfoItems.push({ type: "text", text })
     }
 
-    for (let cursor = 0; cursor < value.length; ) {
+    for (let currentIndex = 0; currentIndex < value.length; ) {
       // Normal character → collect as text
-      if (value[cursor] !== "[") {
-        textBuffer += value[cursor++]
+      if (value[currentIndex] !== "[") {
+        textBuffer += value[currentIndex]
+        currentIndex++
         continue
       }
 
-      const labelEnd = value.indexOf("]", cursor + 1)
+      const labelEnd = value.indexOf("]", currentIndex + 1)
       if (labelEnd === -1 || value[labelEnd + 1] !== "(") {
-        textBuffer += value[cursor++]
+        textBuffer += value[currentIndex]
+        currentIndex++
         continue
       }
 
       // Parse URL, supporting nested parentheses
       let parenthesesDepth = 1
-      let scan = labelEnd + 2
+      let urlEndIndex = labelEnd + 2
 
-      while (scan < value.length && parenthesesDepth > 0) {
-        if (value[scan] === "(") parenthesesDepth++
-        else if (value[scan] === ")") parenthesesDepth--
-        scan++
+      while (urlEndIndex < value.length && parenthesesDepth > 0) {
+        if (value[urlEndIndex] === "(") {
+          parenthesesDepth++
+        } else if (value[urlEndIndex] === ")") {
+          parenthesesDepth--
+        }
+        urlEndIndex++
       }
 
       // Incomplete link → treat as text
       if (parenthesesDepth > 0) {
-        textBuffer += value[cursor++]
+        textBuffer += value[currentIndex]
+        currentIndex++
         continue
       }
 
-      const linkText = value.slice(cursor + 1, labelEnd)
-      const url = value.slice(labelEnd + 2, scan - 1)
+      const linkText = value.slice(currentIndex + 1, labelEnd)
+      const url = value.slice(labelEnd + 2, urlEndIndex - 1)
 
       pushText(textBuffer)
       textBuffer = ""
@@ -92,13 +99,13 @@
       // If valid url
       if (url.startsWith("https://") && URL.canParse(url)) {
         resultingInfoItems.push({ type: "link", text: linkText, url })
-        cursor = scan
+        currentIndex = urlEndIndex
         continue
       }
 
       // not valid url, treat whole thing as text
-      pushText(value.slice(cursor, scan))
-      cursor = scan
+      pushText(value.slice(currentIndex, urlEndIndex))
+      currentIndex = urlEndIndex
     }
 
     pushText(textBuffer)
