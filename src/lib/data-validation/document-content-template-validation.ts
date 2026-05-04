@@ -52,17 +52,6 @@ export const validateDocumentContentTemplate = (templateData: DocumentContentTem
         if (!contentItem.value || typeof contentItem.value !== "string") {
           return { valid: false, message: `Content item of type ${contentItem.type} must have a valid value.` }
         }
-        if (contentItem.type === "info") {
-          if (!contentItem.link || typeof contentItem.link.url !== "string" || typeof contentItem.link.text !== "string") {
-            return { valid: false, message: `Content item of type info must have a link.url and link.text of type string.` }
-          }
-          if ((contentItem.link.url && !contentItem.link.text) || (!contentItem.link.url && contentItem.link.text)) {
-            return { valid: false, message: `Content item of type info must have both link.url and link.text or neither.` }
-          }
-          if (contentItem.link.url && !URL.canParse(contentItem.link.url)) {
-            return { valid: false, message: `Content item of type info has an invalid URL in link.url` }
-          }
-        }
         break
       }
       default: {

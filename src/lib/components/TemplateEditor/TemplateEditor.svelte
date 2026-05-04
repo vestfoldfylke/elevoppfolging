@@ -33,11 +33,8 @@
     },
     {
       type: "info",
-      value: "Dette er en informasjonsboks. Den kan brukes til å gi ekstra informasjon, tips eller advarsler til brukeren som skal fylle ut feltene i et notat.",
-      link: {
-        url: "https://designsystemet.no/no/components/docs/link/overview",
-        text: "F. eks: Les mer om rutine for oppfølgingsamtaler på Innsida"
-      }
+      value:
+        "Dette er en informasjonsboks. Den kan brukes til å gi ekstra informasjon, tips eller advarsler til brukeren som skal fylle ut feltene i et notat. Du kan også legge til lenker i teksten ved å bruke formatet [lenketekst](url). For eksempel: Søk opp ting hos [Google](https://www.google.com) for å finne mer informasjon."
     },
     {
       type: "inputText",
