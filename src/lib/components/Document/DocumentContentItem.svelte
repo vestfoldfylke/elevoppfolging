@@ -38,7 +38,9 @@
   type ParsedInfoItem = InfoTextItem | InfoLinkItem
 
   const parseInfoItemValue = (value: string): ParsedInfoItem[] => {
-    if (!value?.trim()) return []
+    if (!value?.trim()) {
+      return []
+    }
 
     const resultingInfoItems: ParsedInfoItem[] = []
     let textBuffer = ""
