@@ -2,12 +2,12 @@
   import { page } from "$app/state"
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
-  import { canEditDocumentMessage, isOnlySubjectTeacher } from "$lib/shared-authorization/authorization"
+  import { canEditDocumentMessage } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { StudentAccessPerson } from "$lib/types/app-types"
   import type { DocumentMessage, DocumentMessageInput, GroupDocument, StudentDocument } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
-  import PrincipalAccessTags from "../PrincipalAccessTags.svelte"
+  import EmailAlertSelector from "./EmailAlertSelector.svelte"
 
   type PageProps = {
     document: StudentDocument | GroupDocument
@@ -34,44 +34,6 @@
   let messageEdited = $derived.by(() => {
     return editableMessage.type !== message.type || editableMessage.content.title !== message.content.title || editableMessage.content.text !== message.content.text
   })
-
-  let alertableAccessPersons = $derived.by(() => {
-    if (!emailAlertAvailable || !studentAccessPersons) {
-      return []
-    }
-
-    const accessPersonsWithRelevantSchoolAccess = studentAccessPersons
-      .map((accessPerson: StudentAccessPerson) => {
-        return {
-          ...accessPerson,
-          principalAccessForStudent: studentDataSharingConsent
-            ? accessPerson.principalAccessForStudent
-            : accessPerson.principalAccessForStudent.filter((access) => access.schoolNumber === document.school.schoolNumber)
-        }
-      })
-      .filter((accessPerson) => accessPerson.principalAccessForStudent.length > 0)
-
-    const alertableAccessPersons = accessPersonsWithRelevantSchoolAccess.filter((accessPerson) => {
-      if (document.documentAccess === "ALL_WITH_STUDENT_ACCESS") {
-        return true
-      }
-      return !isOnlySubjectTeacher(accessPerson.principalAccessForStudent)
-    })
-
-    return alertableAccessPersons
-  })
-
-  const toggleSelectAllAlertableAccessPersons = (target: HTMLInputElement) => {
-    if (alertableAccessPersons.length === 0) {
-      return
-    }
-
-    if (target.checked) {
-      editableMessage.emailAlertReceivers = alertableAccessPersons.flatMap((accessPerson) => accessPerson.entra.userPrincipalName)
-    } else {
-      editableMessage.emailAlertReceivers = []
-    }
-  }
 
   let messageForm: HTMLFormElement | undefined = $state()
 
@@ -198,30 +160,16 @@
 
       <hr aria-hidden="true" class="ds-divider"/>
 
-      {#if emailAlertAvailable && alertableAccessPersons.length > 0}
-        <fieldset class="ds-fieldset content-item">
-          <legend class="ds-label" data-weight="medium">
-            Følgende personer skal varsles på e-post når oppfølgingen / informasjonen lagres
-            <span class="ds-tag" data-variant="outline" data-color="warning" data-size="xs" style="margin-left: var(--ds-size-1)">Obs! Denne gjør ingenting enda, bare for testing</span>
-          </legend>
-
-          <ds-field class="ds-field">
-            <input id="email-alert-{message.messageId}-{document._id}-choose-all" class="ds-input" type="checkbox" name="email-alert-{document._id}-choose-all" onchange={(e) => { toggleSelectAllAlertableAccessPersons(e.target as HTMLInputElement) }} />
-            <label for="email-alert-{message.messageId}-{document._id}-choose-all" class="ds-label" data-weight="regular">
-              Velg alle
-            </label>
-          </ds-field>
-
-          {#each alertableAccessPersons as alertableAccessPerson}
-            <ds-field class="ds-field">
-              <input id="email-alert-{message.messageId}-{document._id}-{alertableAccessPerson.entra.id}" class="ds-input" type="checkbox" name="email-alert-{document._id}" value={alertableAccessPerson.entra.userPrincipalName} bind:group={editableMessage.emailAlertReceivers} />
-              <label for="email-alert-{message.messageId}-{document._id}-{alertableAccessPerson.entra.id}" class="ds-label" data-weight="regular">
-                {alertableAccessPerson.entra.displayName}
-                <PrincipalAccessTags principalAccessForStudent={alertableAccessPerson.principalAccessForStudent} />
-              </label>
-            </ds-field>
-          {/each}
-        </fieldset>
+      {#if emailAlertAvailable && studentAccessPersons}
+        <EmailAlertSelector
+          id="email-alert-{message.messageId}-{document._id}"
+          legendText="Følgende personer skal varsles på e-post når oppfølgingen / informasjonen lagres"
+          {studentAccessPersons}
+          {studentDataSharingConsent}
+          schoolNumber={document.school.schoolNumber}
+          documentAccess={document.documentAccess}
+          bind:emailAlertReceivers={editableMessage.emailAlertReceivers}
+        />
       {/if}
 
     </form>
