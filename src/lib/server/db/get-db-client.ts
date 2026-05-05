@@ -9,11 +9,11 @@ import { AuditLogsDbClient } from "./mongo/audit-logs-db-client"
 import { DocumentContentTemplatesDbClient } from "./mongo/document-content-templates-db-client"
 import { DocumentsDbClient } from "./mongo/documents-db-client"
 import { EmailAlertsDbClient } from "./mongo/email-alerts-db-client"
-import { StudentCheckBoxDbClient } from "./mongo/importantstuff-db-client"
+import { ImportantStuffDbClient } from "./mongo/importantstuff-db-client"
 import { ProgramAreasDbClient } from "./mongo/program-areas-db-client"
 import { SchoolsDbClient } from "./mongo/schools-db-client"
 import { StudentDataSharingConsentsDbClient } from "./mongo/student-data-sharing-consent-db-client"
-import { ImportantStuffDbClient } from "./mongo/studentcheckbox-db-client"
+import { StudentCheckBoxDbClient } from "./mongo/studentcheckbox-db-client"
 import { StudentsDbClient } from "./mongo/students-db-client"
 
 let dbClient: IDbClient
