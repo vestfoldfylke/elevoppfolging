@@ -752,3 +752,60 @@ export type MetricGauge = {
   value: number
   labels?: MetricLabel[]
 }
+
+export type AuditEntryInput = {
+  created?: EditorData
+  action: "OPEN" | "CREATE" | "UPDATE" | "DELETE"
+  metaData?: {
+    parentResource: "Student" | "Group" | "School" | "SYSTEM"
+    parentResourceId?: string
+    schoolId?: string
+  }
+  resource:
+    | "Student"
+    // Student
+    | "StudentDocument"
+    | "StudentDocumentMessage"
+    | "ImportantStuff"
+    | "StudentDataSharingConsent"
+    // Group
+    | "GroupDocument"
+    | "GroupDocumentMessage"
+    // School
+    | "Access"
+    | "ProgramArea"
+    | "ManualUser"
+    // SYSTEM
+    | "StudentCheckBox"
+    | "Template"
+    | "School"
+  /** Required for all other than <b>OPEN</b> */
+  resourceId?: string
+}
+
+export type AuditEntry = Omit<AuditEntryInput, "created"> & {
+  created: EditorData
+  _id: string
+}
+
+export type NewDbAuditEntry = Omit<AuditEntry, "_id">
+
+export type AuditEntryResourceDisplayNameEntry = {
+  plural: string
+  single?: string
+}
+
+export type AuditSearchTerms = {
+  timeFrame: {
+    from: string
+    to: string
+  }
+  user: string
+  action: "" | AuditEntry["action"]
+  resource: "" | AuditEntry["resource"]
+}
+
+export type AuditSearchQueryResult = {
+  errorMessage?: string
+  entries: AuditEntry[]
+}

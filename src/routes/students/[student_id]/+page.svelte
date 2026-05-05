@@ -1,5 +1,6 @@
 <script lang="ts">
   import { slide } from "svelte/transition"
+  import { apiFetch } from "$lib/api-fetch/api-fetch"
   import DocumentComponent from "$lib/components/Document/Document.svelte"
   import NewDocument from "$lib/components/Document/NewDocument.svelte"
   import PrincipalAccessTags from "$lib/components/PrincipalAccessTags.svelte"
@@ -7,12 +8,28 @@
   import ImportantStuff from "$lib/components/StudentBoxes/ImportantStuff.svelte"
   import { canEditStudentDataSharingConsent, canEditStudentDocument, canEditStudentImportantStuff } from "$lib/shared-authorization/authorization"
   import type { EnrollmentDetails, PeriodDetails, TemplateInfo } from "$lib/types/app-types"
-  import type { Period, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
+  import type { AuditEntryInput, Period, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
+  import { prettifyDate } from "$lib/utils/dates"
   import { getEnrollmentDetails, getFrontendStudentMainDetails } from "$lib/utils/frontend-student-details"
-  import { prettifyDate } from "$lib/utils/prettify-date"
   import type { PageProps } from "./$types"
 
   let { data }: PageProps = $props()
+
+  $effect(() => {
+    const auditEntry: AuditEntryInput = {
+      action: "OPEN",
+      resource: "Student",
+      resourceId: data.student._id
+    }
+
+    apiFetch("/api/audit/insert", {
+      method: "POST",
+      body: auditEntry,
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+  })
 
   let expandedStudentDetails = $state(false)
 

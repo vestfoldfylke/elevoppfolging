@@ -1,7 +1,7 @@
 <script lang="ts">
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import type { StudentAccessPerson } from "$lib/types/app-types"
-  import type { DocumentInput, GroupDocument, MetricCount, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
+  import type { AuditEntryInput, DocumentInput, GroupDocument, MetricCount, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
   import EditorInfo from "../EditorInfo.svelte"
   import DocumentContent from "./DocumentContentItem.svelte"
   import DocumentEditor from "./DocumentEditor.svelte"
@@ -49,7 +49,24 @@
       }
     })
 
-    // TODO: audit-implementation
+    const auditEntry: AuditEntryInput = {
+      action: "OPEN",
+      metaData: {
+        parentResource: "student" in document ? "Student" : "Group",
+        parentResourceId: "student" in document ? document.student._id : document.group.systemId,
+        schoolId: document.school.schoolNumber
+      },
+      resource: "student" in document ? "StudentDocument" : "GroupDocument",
+      resourceId: document._id
+    }
+
+    apiFetch("/api/audit/insert", {
+      method: "POST",
+      body: auditEntry,
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
   }
 
   // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounts ved endring av document (ha en key på document i parent)
