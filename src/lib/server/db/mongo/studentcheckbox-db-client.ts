@@ -49,8 +49,6 @@ export class StudentCheckBoxDbClient implements IStudentCheckBoxDbClient {
       labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
 
-    // TODO: audit-implementation
-
     return result.insertedId.toString()
   }
 
@@ -79,8 +77,6 @@ export class StudentCheckBoxDbClient implements IStudentCheckBoxDbClient {
       labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
 
-    // TODO: audit-implementation
-
     return studentCheckBoxId
   }
 
@@ -107,7 +103,5 @@ export class StudentCheckBoxDbClient implements IStudentCheckBoxDbClient {
       ...metricBody,
       labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
-
-    // TODO: audit-implementation
   }
 }

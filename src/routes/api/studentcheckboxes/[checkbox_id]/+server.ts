@@ -1,4 +1,5 @@
 import type { RequestHandler } from "@sveltejs/kit"
+import { logger } from "@vestfoldfylke/loglady"
 import { validateStudentCheckBox } from "$lib/data-validation/student-check-box-validation"
 import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
@@ -30,6 +31,26 @@ const deleteStudentCheckBox: ApiNextFunction<DeleteStudentCheckBoxResponse> = as
   }
 
   await dbClient.studentCheckBoxes.deleteStudentCheckBox(studentCheckBoxToDelete)
+
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "DELETE",
+      resource: "StudentCheckBox",
+      resourceId: studentCheckBoxToDelete._id,
+      metaData: {
+        parentResource: "SYSTEM"
+      }
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when removing StudentCheckBoxId {StudentCheckBoxId}", studentCheckBoxToDelete._id)
+  }
 
   return {
     deletedCheckBoxId: checkBoxId
@@ -82,7 +103,27 @@ const updateStudentCheckBox: ApiNextFunction<UpdateStudentCheckBoxResponse, Upda
     created: studentCheckBoxToUpdate.created
   }
 
-  const updatedCheckBoxId = await dbClient.studentCheckBoxes.updateStudentCheckBox(checkBoxId, updatedStudentCheckBox)
+  const updatedCheckBoxId: string = await dbClient.studentCheckBoxes.updateStudentCheckBox(checkBoxId, updatedStudentCheckBox)
+
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "UPDATE",
+      resource: "StudentCheckBox",
+      resourceId: updatedCheckBoxId,
+      metaData: {
+        parentResource: "SYSTEM"
+      }
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when updating StudentCheckBoxId {StudentCheckBoxId}", updatedCheckBoxId)
+  }
 
   return {
     updatedCheckBoxId

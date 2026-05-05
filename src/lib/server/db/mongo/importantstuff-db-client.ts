@@ -106,8 +106,6 @@ export class ImportantStuffDbClient implements IImportantStuffDbClient {
       labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
 
-    // TODO: audit-implementation
-
     return result._id.toString()
   }
 
@@ -218,8 +216,6 @@ export class ImportantStuffDbClient implements IImportantStuffDbClient {
       ...metricBody,
       labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
-
-    // TODO: audit-implementation
 
     return result._id.toString()
   }

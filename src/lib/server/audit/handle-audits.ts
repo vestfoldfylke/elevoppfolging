@@ -5,7 +5,7 @@ import type { AuditEntry, AuditEntryInput, AuditSearchTerms, NewDbAuditEntry } f
 
 const dbClient: IDbClient = getDbClient()
 
-export const insertAuditEntry = async (auditEntry: AuditEntryInput): Promise<void> => {
+export const insertAuditEntry = async (auditEntry: AuditEntryInput, errorMessage: string, errorMessageObject: string | object): Promise<boolean> => {
   if (!auditEntry.created) {
     throw new Error("AuditEntryInput is missing required field 'created'")
   }
@@ -21,8 +21,10 @@ export const insertAuditEntry = async (auditEntry: AuditEntryInput): Promise<voi
 
   try {
     await dbClient.auditLogs.createAuditEntry(dbAuditEntry)
+    return true
   } catch (error) {
-    logger.errorException(error, "Failed to create audit entry in database. AuditEntry: {@AuditEntry}", dbAuditEntry)
+    logger.errorException(error, `Failed to create audit entry ${errorMessage}. AuditEntry: {@AuditEntry}`, errorMessageObject, dbAuditEntry)
+    return false
   }
 }
 

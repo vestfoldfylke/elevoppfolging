@@ -1,4 +1,5 @@
 import type { RequestHandler } from "@sveltejs/kit"
+import { logger } from "@vestfoldfylke/loglady"
 import { validateStudentImportantStuffData } from "$lib/data-validation/student-important-stuff-validation"
 import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
 import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
@@ -87,7 +88,57 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
     created: currentImportantStuff && currentImportantStuff.length > 0 ? currentImportantStuff[0].created : editor
   }
 
-  const importantStuffId = await dbClient.importantStuff.upsertStudentImportantStuff(studentId, upsertStudentImportantStuffData)
+  const importantStuffId: string = await dbClient.importantStuff.upsertStudentImportantStuff(studentId, upsertStudentImportantStuffData)
+
+  if (currentImportantStuff && currentImportantStuff.length > 0) {
+    try {
+      await dbClient.auditLogs.createAuditEntry({
+        created: {
+          by: {
+            entraUserId: principal.id,
+            fallbackName: principal.displayName
+          },
+          at: new Date()
+        },
+        action: "UPDATE",
+        resource: "ImportantStuff",
+        resourceId: importantStuffId,
+        metaData: {
+          parentResource: "Student",
+          parentResourceId: studentId,
+          schoolId: upsertStudentImportantStuffData.school.schoolNumber
+        }
+      })
+    } catch (error) {
+      logger.errorException(error, "Failed to create audit entry when updating ImportantStuffId {ImportantStuffId} for student", importantStuffId)
+    }
+
+    return {
+      importantStuffId
+    }
+  }
+
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "CREATE",
+      resource: "ImportantStuff",
+      resourceId: importantStuffId,
+      metaData: {
+        parentResource: "Student",
+        parentResourceId: studentId,
+        schoolId: upsertStudentImportantStuffData.school.schoolNumber
+      }
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when creating ImportantStuffId {ImportantStuffId} for student", importantStuffId)
+  }
 
   return {
     importantStuffId

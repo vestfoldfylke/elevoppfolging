@@ -1,4 +1,5 @@
 import type { RequestHandler } from "@sveltejs/kit"
+import { logger } from "@vestfoldfylke/loglady"
 import { validateDocumentContentTemplate } from "$lib/data-validation/document-content-template-validation"
 import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
@@ -54,7 +55,27 @@ const updateDocumentContentTemplate: ApiNextFunction<UpdateDocumentContentTempla
     sort: updateTemplateData.sort
   }
 
-  const updatedTemplateId = await dbClient.documentContentTemplates.updateDocumentContentTemplate(templateId, documentTemplate)
+  const updatedTemplateId: string = await dbClient.documentContentTemplates.updateDocumentContentTemplate(templateId, documentTemplate)
+
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "UPDATE",
+      resource: "Template",
+      resourceId: templateId,
+      metaData: {
+        parentResource: "SYSTEM"
+      }
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when updating TemplateId {TemplateId}", templateId)
+  }
 
   return {
     updatedTemplateId
@@ -86,6 +107,26 @@ const deleteDocumentContentTemplate: ApiNextFunction<DeleteDocumentContentTempla
   }
 
   await dbClient.documentContentTemplates.deleteDocumentContentTemplate(templateId)
+
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "DELETE",
+      resource: "Template",
+      resourceId: templateId,
+      metaData: {
+        parentResource: "SYSTEM"
+      }
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when deleting TemplateId {TemplateId}", templateId)
+  }
 
   return {
     deletedTemplateId: templateId

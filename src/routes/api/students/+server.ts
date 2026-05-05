@@ -128,6 +128,27 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
 
   await upsertStudentInCache(frontendStudent)
 
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "CREATE",
+      resource: "ManualUser",
+      resourceId: studentId,
+      metaData: {
+        parentResource: "School",
+        parentResourceId: newManualStudentData.school.schoolNumber
+      }
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when creating ManualStudentId {ManualStudentId}", studentId)
+  }
+
   return {
     studentId
   }

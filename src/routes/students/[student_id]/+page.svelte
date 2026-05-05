@@ -24,7 +24,11 @@
 
     apiFetch("/api/audit/insert", {
       method: "POST",
-      body: auditEntry,
+      body: {
+        auditEntry,
+        errorMessage: "when opening StudentId {StudentId}",
+        errorMessageObject: data.student._id
+      },
       headers: {
         "Content-Type": "application/json"
       }

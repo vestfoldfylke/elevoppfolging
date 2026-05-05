@@ -753,7 +753,9 @@ export type AuditEntryInput = {
   created?: EditorData
   action: "OPEN" | "CREATE" | "UPDATE" | "DELETE"
   metaData?: {
-    parentResource: "Student" | "Group" | "School" | "SYSTEM"
+    /** Can be a single string or a stringified JSON */
+    data?: string
+    parentResource: "Student" | "StudentDocument" | "StudentDocumentMessage" | "Group" | "GroupDocument" | "School" | "SYSTEM"
     parentResourceId?: string
     schoolId?: string
   }
@@ -767,6 +769,7 @@ export type AuditEntryInput = {
     // Group
     | "GroupDocument"
     | "GroupDocumentMessage"
+    | "EmailAlert"
     // School
     | "Access"
     | "ProgramArea"

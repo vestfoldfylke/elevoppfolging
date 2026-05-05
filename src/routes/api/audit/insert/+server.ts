@@ -1,36 +1,30 @@
 import type { RequestHandler } from "@sveltejs/kit"
-import { logger } from "@vestfoldfylke/loglady"
 import { insertAuditEntry } from "$lib/server/audit/handle-audits"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import type { ApiRouteMap } from "$lib/types/api/api-route-map"
+import type { AuditEntryInput } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
 type AuditEntryInputRequest = ApiRouteMap["/api/audit/insert"]["POST"]["req"]
 type AuditEntryInputResponse = ApiRouteMap["/api/audit/insert"]["POST"]["res"]
 
 const addAuditEntry: ApiNextFunction<AuditEntryInputResponse, AuditEntryInputRequest> = async ({ body, principal }) => {
-  try {
-    if (!body.created) {
-      body.created = {
-        by: {
-          entraUserId: principal.id,
-          fallbackName: principal.displayName
-        },
-        at: new Date()
-      }
-    }
+  const auditEntry: AuditEntryInput = body.auditEntry
 
-    await insertAuditEntry(body)
-
-    return {
-      inserted: true
+  if (!auditEntry.created) {
+    auditEntry.created = {
+      by: {
+        entraUserId: principal.id,
+        fallbackName: principal.displayName
+      },
+      at: new Date()
     }
-  } catch (error) {
-    logger.errorException(error, "Failed to insert audit entry with AuditEntryInput: {@AuditEntryInput}", body)
+  }
 
-    return {
-      inserted: false
-    }
+  const inserted: boolean = await insertAuditEntry(auditEntry, body.errorMessage, body.errorMessageObject)
+
+  return {
+    inserted
   }
 }
 

@@ -11,6 +11,9 @@ export const AUDIT_ENTRY_RESOURCE_DISPLAY_NAMES: Record<AuditEntry["resource"], 
   Access: {
     plural: "Tilgang"
   },
+  EmailAlert: {
+    plural: "Epostvarsel"
+  },
   GroupDocument: {
     plural: "Klassenotater",
     single: "Klassenotat"

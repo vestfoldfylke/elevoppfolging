@@ -60,9 +60,15 @@
       resourceId: document._id
     }
 
+    const errorMessageTemplateName: string = "student" in document ? "StudentDocumentId" : "GroupDocumentId"
+
     apiFetch("/api/audit/insert", {
       method: "POST",
-      body: auditEntry,
+      body: {
+        auditEntry,
+        errorMessage: `when opening ${errorMessageTemplateName} {${errorMessageTemplateName}}`,
+        errorMessageObject: document._id
+      },
       headers: {
         "Content-Type": "application/json"
       }

@@ -1,4 +1,5 @@
 import type { RequestHandler } from "@sveltejs/kit"
+import { logger } from "@vestfoldfylke/loglady"
 import { validateProgramAreaData } from "$lib/data-validation/program-area-validation"
 import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
 import { invalidateProgramAreaCache } from "$lib/server/cache/program-area-cache"
@@ -43,6 +44,28 @@ const deleteProgramArea: ApiNextFunction<DeleteProgramAreaResponse> = async ({ p
 
   // Invalidate cache entry
   invalidateProgramAreaCache(programAreaId)
+
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "DELETE",
+      resource: "ProgramArea",
+      resourceId: programAreaId,
+      metaData: {
+        parentResource: "School",
+        parentResourceId: programAreaToDelete.schoolNumber,
+        schoolId: programAreaToDelete.schoolNumber
+      }
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when removing ProgramAreaId {ProgramAreaId}", programAreaId)
+  }
 
   return {
     deletedProgramAreaId: programAreaId
@@ -109,10 +132,32 @@ const updateProgramArea: ApiNextFunction<UpdateProgramAreaResponse, UpdateProgra
     source: programAreaToUpdate.source
   }
 
-  const updatedProgramAreaId = await dbClient.programAreas.updateProgramArea(programAreaId, updatedProgramArea)
+  const updatedProgramAreaId: string = await dbClient.programAreas.updateProgramArea(programAreaId, updatedProgramArea)
 
   // Invalidate cache entry
   invalidateProgramAreaCache(programAreaId)
+
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "UPDATE",
+      resource: "ProgramArea",
+      resourceId: updatedProgramAreaId,
+      metaData: {
+        parentResource: "School",
+        parentResourceId: updatedProgramArea.schoolNumber,
+        schoolId: updatedProgramArea.schoolNumber
+      }
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when updating ProgramAreaId {ProgramAreaId}", updatedProgramAreaId)
+  }
 
   return {
     updatedProgramAreaId

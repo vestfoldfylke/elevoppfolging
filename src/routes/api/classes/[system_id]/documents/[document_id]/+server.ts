@@ -84,9 +84,31 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
     created: currentDocument.created
   }
 
-  const updatedDocumentId = await dbClient.documents.updateGroupDocument(documentId, updatedDocument)
+  const updatedDocumentId: string = await dbClient.documents.updateGroupDocument(documentId, updatedDocument)
 
-  logger.info(`Document with ID ${documentId} updated by user ${principal.displayName} (${principal.id})`)
+  logger.info(`Group document with ID ${documentId} updated by user ${principal.displayName} (${principal.id})`)
+
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "UPDATE",
+      resource: "GroupDocument",
+      resourceId: updatedDocumentId,
+      metaData: {
+        parentResource: "Group",
+        parentResourceId: systemId,
+        schoolId: currentDocument.school.schoolNumber
+      }
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when updating GroupDocumentId {GroupDocumentId}", updatedDocumentId)
+  }
 
   return {
     documentId: updatedDocumentId

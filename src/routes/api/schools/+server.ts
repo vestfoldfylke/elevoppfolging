@@ -1,4 +1,5 @@
 import type { RequestHandler } from "@sveltejs/kit"
+import { logger } from "@vestfoldfylke/loglady"
 import { validateSchoolData } from "$lib/data-validation/school-validation"
 import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
@@ -49,7 +50,24 @@ const addSchool: ApiNextFunction<AddSchoolResponse, AddSchoolBody> = async ({ pr
     modified: editorData
   }
 
-  const schoolId = await dbClient.schools.createSchool(newSchool)
+  const schoolId: string = await dbClient.schools.createSchool(newSchool)
+
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "CREATE",
+      resource: "School",
+      resourceId: schoolId
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when creating SchoolId {SchoolId}", schoolId)
+  }
 
   return {
     schoolId

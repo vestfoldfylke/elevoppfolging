@@ -116,7 +116,7 @@ export interface ApiRouteMap {
   }
 
   "/api/audit/insert": {
-    POST: { req: AuditEntryInput; res: { inserted: boolean } }
+    POST: { req: { auditEntry: AuditEntryInput; errorMessage: string; errorMessageObject: string | object }; res: { inserted: boolean } }
   }
 
   "/api/audit/query": {
