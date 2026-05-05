@@ -20,16 +20,12 @@
 
   $effect(() => {
     const interval = setInterval(() => {
-      console.log("Checking user activity", { navigatorUserActivation: navigator.userActivation?.isActive })
-      console.log("interval", screenSaverInterval, "ms")
-
       if (navigator.userActivation?.isActive) {
         lastActivityTimestamp = new Date()
         return
       }
 
       const inactivityDuration = (Date.now() - lastActivityTimestamp.getTime()) / 1000
-      console.log("Inactivity duration (seconds):", inactivityDuration)
       if (inactivityDuration > inactivityTimeoutSeconds) {
         showScreenSaverDialog()
       }
