@@ -141,7 +141,7 @@
   }
 
   .message-block:nth-child(odd) {
-    background-color: var(--ds-color-background-tinted);
+    background-color: var(--ds-color-surface-tinted);
   }
 
   .message-header {

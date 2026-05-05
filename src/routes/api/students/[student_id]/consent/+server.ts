@@ -44,7 +44,7 @@ const updateStudentDataSharingConsent: ApiNextFunction<PatchConsentResponse, Pat
   const validationResult = validateStudentDataSharingConsentData(body)
 
   if (!validationResult.valid) {
-    throw new HTTPError(400, "Invalid request body", { details: validationResult.message })
+    throw new HTTPError(400, `Invalid request body: ${validationResult.message}`)
   }
 
   const upsertConsentData: NewStudentDataSharingConsent = {
