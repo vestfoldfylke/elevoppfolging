@@ -1,5 +1,6 @@
 <script lang="ts">
   import { apiFetch } from "$lib/api-fetch/api-fetch"
+  import { studentDataSharingConsentMessageValidation } from "$lib/data-validation/student-consent-validation"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { FrontendStudent, StudentUnavailableSchoolDocuments } from "$lib/types/app-types"
@@ -81,7 +82,7 @@
           <div data-field="description">
             Hvor er samtykket dokumentert, eventuelt annen relevant informasjon om samtykket
           </div>
-          <textarea id="sharing-consent-message" rows="4" bind:value={editableSharingConsent.message} class="ds-input"></textarea>
+          <textarea id="sharing-consent-message" rows="4" required={editableSharingConsent.consent} minlength={editableSharingConsent.consent ? studentDataSharingConsentMessageValidation.minLength : 0} maxlength={studentDataSharingConsentMessageValidation.maxLength} bind:value={editableSharingConsent.message} class="ds-input"></textarea>
         </ds-field>
       </form>
     {:else}

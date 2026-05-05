@@ -10,12 +10,14 @@ export const validateStudentDataSharingConsentData = (consentData: StudentDataSh
   if (typeof consentData.consent !== "boolean") {
     return { valid: false, message: "'consent' must be a boolean" }
   }
-  if (
-    typeof consentData.message !== "string" ||
-    consentData.message.length < studentDataSharingConsentMessageValidation.minLength ||
-    consentData.message.length > studentDataSharingConsentMessageValidation.maxLength
-  ) {
-    return { valid: false, message: `'message' must be between ${studentDataSharingConsentMessageValidation.minLength} and ${studentDataSharingConsentMessageValidation.maxLength} characters` }
+  if (typeof consentData.message !== "string") {
+    return { valid: false, message: "'message' must be a string" }
+  }
+  if (consentData.consent && consentData.message.trim().length === 0) {
+    return { valid: false, message: "'message' cannot be empty when consent is given" }
+  }
+  if (consentData.message.length > studentDataSharingConsentMessageValidation.maxLength) {
+    return { valid: false, message: `'message' cannot be longer than ${studentDataSharingConsentMessageValidation.maxLength} characters` }
   }
 
   return { valid: true, message: "" }
