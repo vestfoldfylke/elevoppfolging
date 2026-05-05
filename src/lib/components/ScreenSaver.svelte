@@ -2,8 +2,8 @@
   import { page } from "$app/state"
 
   let lastActivityTimestamp: Date = $state(new Date())
-  let inactivityTimeoutSeconds: number = page.data.APP_INFO.SCREEN_SAVER_INACTIVITY_TIMEOUT_SECONDS
   let screenSaverDialog: HTMLDialogElement | undefined = $state()
+  const inactivityTimeoutSeconds: number = page.data.APP_INFO.SCREEN_SAVER_INACTIVITY_TIMEOUT_SECONDS
   const screenSaverInterval = Math.round(Math.min((inactivityTimeoutSeconds / 2) * 1000, 60 * 1000)) // check every half of the inactivity timeout, or every minute, whichever is shorter
 
   const showScreenSaverDialog = () => {
