@@ -18,5 +18,5 @@ export const insertAuditEntry = async (auditEntry: AuditEntryInput, errorMessage
 export const queryAuditEntries = async (searchTerms?: AuditSearchTerms): Promise<AuditEntry[]> => {
   const audits: AuditEntry[] = await dbClient.auditLogs.getAuditEntries(searchTerms)
 
-  return audits.sort((a: AuditEntry, b: AuditEntry) => a.created.at.getTime() - b.created.at.getTime())
+  return audits.sort((a: AuditEntry, b: AuditEntry) => b.created.at.getTime() - a.created.at.getTime())
 }

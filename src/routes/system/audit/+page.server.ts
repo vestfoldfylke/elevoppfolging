@@ -20,7 +20,7 @@ const getAudits: ServerLoadNextFunction<AuditPageData> = async ({ principal }) =
 
   return {
     data: {
-      audits: audits.sort((a: AuditEntry, b: AuditEntry) => a.created.at.getTime() - b.created.at.getTime())
+      audits
     },
     isAuthorized: true
   }
