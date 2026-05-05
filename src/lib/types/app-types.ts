@@ -106,6 +106,7 @@ export type ApplicationInfo = {
   STUDENT_ACCESS_AFTER_EXPIRE_DAYS: number
   STUDENT_CACHE_MAX_AGE_MINUTES: number
   APP_USER_CACHE_MAX_AGE_MINUTES: number
+  SCREEN_SAVER_INACTIVITY_TIMEOUT_SECONDS: number
 }
 
 export type RootLayoutData = {

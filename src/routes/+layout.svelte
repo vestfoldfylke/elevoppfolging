@@ -7,6 +7,7 @@
   import "../style.css" // Add global css (and make it hot reload)
   import { page } from "$app/state"
   import AppHeader from "$lib/components/AppHeader.svelte"
+  import ScreenSaver from "$lib/components/ScreenSaver.svelte"
   import type { FrontendOverviewStudent, FrontendStudentMainDetails } from "$lib/types/app-types.js"
   import type { StudentCheckBox } from "$lib/types/db/shared-types.js"
   import { getFrontendStudentMainDetails } from "$lib/utils/frontend-student-details.js"
@@ -136,6 +137,9 @@
 	<header>
 		<AppHeader />
 	</header>
+
+	<ScreenSaver />
+	
 	<main>
 		{#if showStudentOverview}
 			<div class="page-content">
