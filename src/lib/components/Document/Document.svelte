@@ -1,6 +1,7 @@
 <script lang="ts">
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import type { StudentAccessPerson } from "$lib/types/app-types"
+  import type { AuthenticatedPrincipal } from "$lib/types/authentication"
   import type { AuditEntryInput, DocumentInput, GroupDocument, MetricCount, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
   import EditorInfo from "../EditorInfo.svelte"
   import DocumentContent from "./DocumentContentItem.svelte"
@@ -9,6 +10,7 @@
   import NewMessage from "./NewMessage.svelte"
 
   type PageProps = {
+    authenticatedPrincipal: AuthenticatedPrincipal
     document: StudentDocument | GroupDocument
     accessSchools: SchoolInfo[]
     canEditDocument: boolean
@@ -18,7 +20,7 @@
     studentAccessPersons?: StudentAccessPerson[]
   }
 
-  let { document, accessSchools, canEditDocument, studentName, groupName, studentDataSharingConsent, studentAccessPersons }: PageProps = $props()
+  let { authenticatedPrincipal, document, accessSchools, canEditDocument, studentName, groupName, studentDataSharingConsent, studentAccessPersons }: PageProps = $props()
 
   const editableDocumentFromDocument = () => {
     return JSON.parse(
@@ -50,6 +52,13 @@
     })
 
     const auditEntry: AuditEntryInput = {
+      created: {
+        by: {
+          entraUserId: authenticatedPrincipal.id,
+          fallbackName: authenticatedPrincipal.displayName
+        },
+        at: new Date()
+      },
       action: "OPEN",
       metaData: {
         parentResource: "student" in document ? "Student" : "Group",
@@ -62,11 +71,12 @@
 
     const errorMessageTemplateName: string = "student" in document ? "StudentDocumentId" : "GroupDocumentId"
 
+    // we don't need to await this since we don't need to know if it goes through or not
     apiFetch("/api/audit/insert", {
       method: "POST",
       body: {
         auditEntry,
-        errorMessage: `when opening ${errorMessageTemplateName} {${errorMessageTemplateName}}`,
+        errorMessage: `opening ${errorMessageTemplateName} {${errorMessageTemplateName}}`,
         errorMessageObject: document._id
       },
       headers: {

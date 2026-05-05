@@ -750,7 +750,7 @@ export type MetricGauge = {
 }
 
 export type AuditEntryInput = {
-  created?: EditorData
+  created: EditorData
   action: "OPEN" | "CREATE" | "UPDATE" | "DELETE"
   metaData?: {
     /** Can be a single string or a stringified JSON */
@@ -761,33 +761,25 @@ export type AuditEntryInput = {
   }
   resource:
     | "Student"
-    // Student
     | "StudentDocument"
     | "StudentDocumentMessage"
     | "ImportantStuff"
     | "StudentDataSharingConsent"
-    // Group
     | "GroupDocument"
     | "GroupDocumentMessage"
     | "EmailAlert"
-    // School
     | "Access"
     | "ProgramArea"
     | "ManualUser"
-    // SYSTEM
     | "StudentCheckBox"
     | "Template"
     | "School"
-  /** Required for all other than <b>OPEN</b> */
-  resourceId?: string
+  resourceId: string
 }
 
-export type AuditEntry = Omit<AuditEntryInput, "created"> & {
-  created: EditorData
+export type AuditEntry = AuditEntryInput & {
   _id: string
 }
-
-export type NewDbAuditEntry = Omit<AuditEntry, "_id">
 
 export type AuditEntryResourceDisplayNameEntry = {
   plural: string

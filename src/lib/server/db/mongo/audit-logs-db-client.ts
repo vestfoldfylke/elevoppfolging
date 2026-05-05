@@ -1,39 +1,34 @@
 import { logger } from "@vestfoldfylke/loglady"
 import type { Collection, Db, Filter, InsertOneResult, WithId } from "mongodb"
 import type { IAuditLogsDbClient } from "$lib/types/db/db-client"
-import type { AuditEntry, AuditSearchTerms, NewDbAuditEntry } from "$lib/types/db/shared-types"
+import type { AuditEntry, AuditEntryInput, AuditSearchTerms } from "$lib/types/db/shared-types"
 import { getDateDaysAhead, getDateDaysBack, getDateValue, getEndOfDate, getStartOfDate } from "$lib/utils/dates"
 
 export class AuditLogsDbClient implements IAuditLogsDbClient {
-  private auditLogsCollection: Collection<NewDbAuditEntry>
+  private auditLogsCollection: Collection<AuditEntryInput>
 
   constructor(db: Db) {
-    this.auditLogsCollection = db.collection<NewDbAuditEntry>("audits")
+    this.auditLogsCollection = db.collection<AuditEntryInput>("audits")
   }
 
-  async createAuditEntry(auditEntry: NewDbAuditEntry): Promise<string> {
-    const result: InsertOneResult<NewDbAuditEntry> = await this.auditLogsCollection.insertOne(auditEntry)
+  async createAuditEntry(auditEntry: AuditEntryInput): Promise<string> {
+    const result: InsertOneResult<AuditEntryInput> = await this.auditLogsCollection.insertOne(auditEntry)
 
     if (!result.insertedId) {
       throw new Error("Failed to insert auditEntry")
     }
 
     const insertedId: string = result.insertedId.toString()
-    logger.info(
-      "Created audit entry for action {Action} with resource {Resource} and resource id {ResourceId}. AuditEntryId: {AuditEntryId}",
-      auditEntry.action,
-      auditEntry.resource,
-      auditEntry.resourceId,
-      insertedId
-    )
+    logger.info("Created audit entry for {Action} {Resource} with ResourceId {ResourceId}. AuditEntryId: {AuditEntryId}", auditEntry.action, auditEntry.resource, auditEntry.resourceId, insertedId)
 
     return insertedId
   }
 
   async getAuditEntries(searchTerms?: AuditSearchTerms): Promise<AuditEntry[]> {
-    const auditLogs: WithId<NewDbAuditEntry>[] = await this.auditLogsCollection.find(this.getAuditLogsFilter(searchTerms)).toArray()
+    const auditLogs: WithId<AuditEntryInput>[] = await this.auditLogsCollection.find(this.getAuditLogsFilter(searchTerms)).toArray()
+    logger.info("Found {AuditEntryCount} audit entries", auditLogs.length)
 
-    return auditLogs.map((auditLog: WithId<NewDbAuditEntry>) => {
+    return auditLogs.map((auditLog: WithId<AuditEntryInput>) => {
       return {
         ...auditLog,
         _id: auditLog._id.toString()
@@ -41,7 +36,7 @@ export class AuditLogsDbClient implements IAuditLogsDbClient {
     })
   }
 
-  private getAuditLogsFilter(searchTerms?: AuditSearchTerms): Filter<NewDbAuditEntry> {
+  private getAuditLogsFilter(searchTerms?: AuditSearchTerms): Filter<AuditEntryInput> {
     const isEmptyOrDefault: boolean =
       !searchTerms ||
       (searchTerms.timeFrame.from === getDateValue(new Date()) &&
@@ -59,7 +54,7 @@ export class AuditLogsDbClient implements IAuditLogsDbClient {
       }
     }
 
-    const filter: Filter<NewDbAuditEntry> = {
+    const filter: Filter<AuditEntryInput> = {
       "created.at": {
         $gte: getStartOfDate(new Date(searchTerms.timeFrame.from)),
         $lte: getEndOfDate(new Date(searchTerms.timeFrame.to))

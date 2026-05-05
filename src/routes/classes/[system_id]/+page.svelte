@@ -232,7 +232,7 @@
         {/each}
       </div>
       {#each filteredDocuments as document (document._id)}
-        <DocumentComponent {document} accessSchools={[selectedClass.school]} canEditDocument={true} groupName={selectedClass.name} />
+        <DocumentComponent authenticatedPrincipal={data.authenticatedPrincipal} {document} accessSchools={[selectedClass.school]} canEditDocument={true} groupName={selectedClass.name} />
       {/each}
     {/if}
   </div>

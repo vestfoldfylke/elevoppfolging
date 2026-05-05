@@ -11,15 +11,8 @@ type AuditEntryInputResponse = ApiRouteMap["/api/audit/insert"]["POST"]["res"]
 const addAuditEntry: ApiNextFunction<AuditEntryInputResponse, AuditEntryInputRequest> = async ({ body, principal }) => {
   const auditEntry: AuditEntryInput = body.auditEntry
 
-  if (!auditEntry.created) {
-    auditEntry.created = {
-      by: {
-        entraUserId: principal.id,
-        fallbackName: principal.displayName
-      },
-      at: new Date()
-    }
-  }
+  // NOTE: We need to reset auditEntry.created.at to a Date object since the client will send it as a string and we need it to be a Date object for our database operations
+  auditEntry.created.at = new Date(auditEntry.created.at)
 
   const inserted: boolean = await insertAuditEntry(auditEntry, body.errorMessage, body.errorMessageObject)
 

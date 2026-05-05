@@ -1,29 +1,16 @@
 import { logger } from "@vestfoldfylke/loglady"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { AuditEntry, AuditEntryInput, AuditSearchTerms, NewDbAuditEntry } from "$lib/types/db/shared-types"
+import type { AuditEntry, AuditEntryInput, AuditSearchTerms } from "$lib/types/db/shared-types"
 
 const dbClient: IDbClient = getDbClient()
 
 export const insertAuditEntry = async (auditEntry: AuditEntryInput, errorMessage: string, errorMessageObject: string | object): Promise<boolean> => {
-  if (!auditEntry.created) {
-    throw new Error("AuditEntryInput is missing required field 'created'")
-  }
-
-  if (auditEntry.action !== "CREATE" && !auditEntry.resourceId) {
-    throw new Error("AuditEntryInput is missing 'resourceId' for non-create action!")
-  }
-
-  const dbAuditEntry: NewDbAuditEntry = {
-    ...auditEntry,
-    created: auditEntry.created
-  }
-
   try {
-    await dbClient.auditLogs.createAuditEntry(dbAuditEntry)
+    await dbClient.auditLogs.createAuditEntry(auditEntry)
     return true
   } catch (error) {
-    logger.errorException(error, `Failed to create audit entry ${errorMessage}. AuditEntry: {@AuditEntry}`, errorMessageObject, dbAuditEntry)
+    logger.errorException(error, `Failed to create audit entry when ${errorMessage}. AuditEntry: {@AuditEntry}`, errorMessageObject, auditEntry)
     return false
   }
 }

@@ -4,6 +4,7 @@ import type {
   AppStudent,
   AppUser,
   AuditEntry,
+  AuditEntryInput,
   AuditSearchTerms,
   AvailableForDocumentType,
   DocumentContentTemplate,
@@ -13,7 +14,6 @@ import type {
   ManualAccessEntryInput,
   NewAccess,
   NewAppStudent,
-  NewDbAuditEntry,
   NewDbEmailAlert,
   NewDocumentContentTemplate,
   NewDocumentMessage,
@@ -131,7 +131,7 @@ export interface IEmailAlertsDbClient {
 }
 
 export interface IAuditLogsDbClient {
-  createAuditEntry(auditEntry: NewDbAuditEntry): Promise<string>
+  createAuditEntry(auditEntry: AuditEntryInput): Promise<string>
   getAuditEntries(searchTerms?: AuditSearchTerms): Promise<AuditEntry[]>
 }
 
