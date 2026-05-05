@@ -42,7 +42,7 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
   const validationResult = validateStudentImportantStuffData(studentImportantStuffData)
 
   if (!validationResult.valid) {
-    throw new HTTPError(400, "Invalid request body", { details: validationResult.message })
+    throw new HTTPError(400, `Invalid request body: ${validationResult.message}`)
   }
 
   const canEditImportantStuff = canEditStudentImportantStuff(studentImportantStuffData.school.schoolNumber, principalAccessForStudent)

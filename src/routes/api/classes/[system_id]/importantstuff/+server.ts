@@ -41,7 +41,7 @@ const updateGroupImportantStuff: ApiNextFunction<PatchGroupImportantStuffRespons
   const validationResult = validateGroupImportantStuffData(groupImportantStuffData)
 
   if (!validationResult.valid) {
-    throw new HTTPError(400, "Invalid request body", { details: validationResult.message })
+    throw new HTTPError(400, `Invalid request body: ${validationResult.message}`)
   }
 
   const dbClient = getDbClient()
