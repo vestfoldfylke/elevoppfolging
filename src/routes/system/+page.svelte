@@ -33,7 +33,6 @@
       </p>
     </div>
   </div>
-  <!-- TODO: Should there be a separate role to allow for audit log viewing? -->
   <div class="ds-card" data-variant="default" data-color="neutral">
     <div class="ds-card__block">
       <h2 class="ds-heading">
