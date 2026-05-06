@@ -71,8 +71,6 @@ export class StudentDataSharingConsentsDbClient implements IStudentDataSharingCo
       labels: [[metricResultName, metricResultSuccessful]]
     })
 
-    // TODO: audit-implementation
-
     return result._id.toString()
   }
 }

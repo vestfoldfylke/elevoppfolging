@@ -1,4 +1,5 @@
 import type { RequestHandler } from "@sveltejs/kit"
+import { logger } from "@vestfoldfylke/loglady"
 import { validateProgramAreaData } from "$lib/data-validation/program-area-validation"
 import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
 import { getDbClient } from "$lib/server/db/get-db-client"
@@ -52,7 +53,29 @@ const addProgramArea: ApiNextFunction<AddProgramAreaResponse, AddProgramAreaBody
     source: "MANUAL"
   }
 
-  const programAreaId = await dbClient.programAreas.createProgramArea(newProgramArea)
+  const programAreaId: string = await dbClient.programAreas.createProgramArea(newProgramArea)
+
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "CREATE",
+      resource: "ProgramArea",
+      resourceId: programAreaId,
+      metaData: {
+        parentResource: "School",
+        parentResourceId: newProgramArea.schoolNumber,
+        schoolId: newProgramArea.schoolNumber
+      }
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when creating ProgramAreaId {ProgramAreaId}", programAreaId)
+  }
 
   return {
     programAreaId

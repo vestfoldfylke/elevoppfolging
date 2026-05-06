@@ -143,8 +143,6 @@ export class StudentsDbClient implements IStudentsDbClient {
       labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
 
-    // TODO: audit-implementation
-
     return result.insertedId.toString()
   }
 
@@ -191,8 +189,6 @@ export class StudentsDbClient implements IStudentsDbClient {
       ...metricBody,
       labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
-
-    // TODO: audit-implementation
 
     logger.info("Manual student with Id {Id} updated", manualStudent._id)
     return manualStudent._id

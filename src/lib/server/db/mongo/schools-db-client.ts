@@ -47,8 +47,6 @@ export class SchoolsDbClient implements ISchoolsDbClient {
       labels: [[metricResultName, metricResultSuccessful]]
     })
 
-    // TODO: audit-implementation
-
     return result.insertedId.toString()
   }
 
@@ -83,8 +81,6 @@ export class SchoolsDbClient implements ISchoolsDbClient {
       labels: [[metricResultName, metricResultSuccessful]]
     })
 
-    // TODO: audit-implementation
-
     return schoolNumber
   }
 
@@ -109,7 +105,5 @@ export class SchoolsDbClient implements ISchoolsDbClient {
       ...metricBody,
       labels: [[metricResultName, metricResultSuccessful]]
     })
-
-    // TODO: audit-implementation
   }
 }

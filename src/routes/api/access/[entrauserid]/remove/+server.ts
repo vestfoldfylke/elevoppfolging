@@ -1,4 +1,5 @@
 import type { RequestHandler } from "@sveltejs/kit"
+import { logger } from "@vestfoldfylke/loglady"
 import { validateAccessEntryInput } from "$lib/data-validation/access-entry-validation"
 import { APP_INFO } from "$lib/server/app-info"
 import { invalidateStudentAccessCache } from "$lib/server/cache/student-access-cache"
@@ -74,7 +75,30 @@ const removeAccess: ApiNextFunction<RemoveAccessResponse, RemoveAccessBody> = as
   }
 
   // Then we can finally remove the access entry
-  const updatedAccessId = await dbClient.access.removeAccessEntry(entraUserId, accessEntryToRemove)
+  const updatedAccessId: string = await dbClient.access.removeAccessEntry(entraUserId, accessEntryToRemove)
+
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "DELETE",
+      resource: "Access",
+      resourceId: updatedAccessId,
+      metaData: {
+        data: JSON.stringify(accessEntryToRemove),
+        parentResource: "School",
+        parentResourceId: accessEntryToRemove.schoolNumber,
+        schoolId: accessEntryToRemove.schoolNumber
+      }
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when removing access {@AccessEntry}", accessEntryToRemove)
+  }
 
   // Invalidate cache
   invalidateStudentAccessCache()

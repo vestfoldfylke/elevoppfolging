@@ -1,47 +1,104 @@
+import { logger } from "@vestfoldfylke/loglady"
 import { type Binary, type Db, ObjectId } from "mongodb"
-import type { IStudentCheckBoxDbClient } from "$lib/types/db/db-client"
-import type { DbEncryptedStudentCheckBox, DbStudentCheckBox, MetricCount, MetricLabel, NewDbEncryptedStudentCheckBox, NewStudentCheckBox, StudentCheckBox } from "$lib/types/db/shared-types"
+import type { IImportantStuffDbClient } from "$lib/types/db/db-client"
+import type {
+  DbEncryptedGroupImportantStuff,
+  DbEncryptedStudentImportantStuff,
+  DbGroupImportantStuff,
+  DbStudentImportantStuff,
+  EditorData,
+  GroupImportantStuff,
+  MetricCount,
+  MetricLabel,
+  NewDbStudentImportantStuff,
+  NewGroupImportantStuff,
+  NewStudentImportantStuff,
+  SchoolInfo,
+  StudentImportantStuff
+} from "$lib/types/db/shared-types"
 import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
 
-export class StudentCheckBoxDbClient implements IStudentCheckBoxDbClient {
+export class ImportantStuffDbClient implements IImportantStuffDbClient {
   private encryptionDb: Db
   private encryptValue: (value: unknown) => Promise<Binary>
-  private studentCheckBoxesCollectionName = "student-checkboxes"
+  private importantStuffCollectionName = "important-stuff"
 
   constructor(encryptionDb: Db, encryptValue: (value: unknown) => Promise<Binary>) {
     this.encryptionDb = encryptionDb
     this.encryptValue = encryptValue
   }
 
-  async getStudentCheckBoxes(): Promise<StudentCheckBox[]> {
-    const studentCheckBoxesCollection = this.encryptionDb.collection<DbStudentCheckBox>(this.studentCheckBoxesCollectionName)
-    const checkBoxes = await studentCheckBoxesCollection.find().toArray()
-    return checkBoxes.map((checkBox) => ({
-      ...checkBox,
-      _id: checkBox._id.toString()
+  async getStudentsImportantStuff(studentIds: string[]): Promise<Record<string, Record<string, StudentImportantStuff>>> {
+    const importantStuffCollection = this.encryptionDb.collection<DbStudentImportantStuff>(this.importantStuffCollectionName)
+    const importantStuffList = await importantStuffCollection.find({ "student._id": { $in: studentIds.map((id) => new ObjectId(id)) } }).toArray()
+
+    return importantStuffList.reduce((acc: Record<string, Record<string, StudentImportantStuff>>, importantStuff: DbStudentImportantStuff) => {
+      const studentId = importantStuff.student._id.toString()
+      const schoolNumber = importantStuff.school.schoolNumber
+      acc[studentId] = {
+        ...acc[studentId],
+        [schoolNumber]: {
+          ...importantStuff,
+          _id: importantStuff._id.toString(),
+          student: {
+            _id: studentId
+          }
+        }
+      }
+      return acc
+    }, {})
+  }
+
+  async getStudentImportantStuff(studentId: string, schoolNumbers: string[]): Promise<StudentImportantStuff[]> {
+    const importantStuffCollection = this.encryptionDb.collection<DbStudentImportantStuff>(this.importantStuffCollectionName)
+    logger.info("Getting important stuff for student with _id {studentId} and schoolNumbers {schoolNumbers}", studentId, schoolNumbers.join(", "))
+
+    const importantStuffForStudent = await importantStuffCollection.find({ "student._id": new ObjectId(studentId), "school.schoolNumber": { $in: schoolNumbers } }).toArray()
+    logger.info("Important stuff for student with _id {studentId} exists: {importantStuffExists}", studentId, importantStuffForStudent.length > 0)
+
+    if (importantStuffForStudent.length === 0) {
+      return []
+    }
+
+    return importantStuffForStudent.map((importantStuff) => ({
+      ...importantStuff,
+      _id: importantStuff._id.toString(),
+      student: {
+        _id: importantStuff.student._id.toString()
+      }
     }))
   }
 
-  async createStudentCheckBox(studentCheckBox: NewStudentCheckBox): Promise<string> {
-    const studentCheckBoxesCollection = this.encryptionDb.collection<NewDbEncryptedStudentCheckBox>(this.studentCheckBoxesCollectionName)
-    const result = await studentCheckBoxesCollection.insertOne({
-      ...studentCheckBox,
-      value: await this.encryptValue(studentCheckBox.value)
-    })
+  async upsertStudentImportantStuff(studentId: string, importantStuff: NewStudentImportantStuff): Promise<string> {
+    const importantStuffCollection = this.encryptionDb.collection<DbEncryptedStudentImportantStuff>(this.importantStuffCollectionName)
+
+    const result: DbStudentImportantStuff | null = (await importantStuffCollection.findOneAndUpdate(
+      { "student._id": new ObjectId(studentId), "school.schoolNumber": importantStuff.school.schoolNumber },
+      {
+        $set: {
+          ...importantStuff,
+          importantInfo: await this.encryptValue(importantStuff.importantInfo),
+          student: {
+            _id: new ObjectId(studentId)
+          }
+        }
+      },
+      { upsert: true, returnDocument: "after" }
+    )) as DbStudentImportantStuff | null // Db client decrypts for us, so we can cast it to DbStudentImportantStuff
 
     const metricBody: MetricCount = {
-      name: "StudentCheckBox_Create",
-      description: "Number of student checkboxes created"
+      name: "StudentImportantStuff_Upsert",
+      description: "Number of student important stuff upserted"
     }
-    const labels: MetricLabel[] = [["type", studentCheckBox.type]]
+    const labels: MetricLabel[] = [["schoolNumber", importantStuff.school.schoolNumber]]
 
-    if (!result.acknowledged) {
+    if (!result?._id) {
       incrementCount({
         ...metricBody,
         labels: [...labels, [metricResultName, metricResultFailure]]
       })
 
-      throw new Error("Failed to create student check box")
+      throw new Error("Failed to upsert student important stuff")
     }
 
     incrementCount({
@@ -49,58 +106,110 @@ export class StudentCheckBoxDbClient implements IStudentCheckBoxDbClient {
       labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
 
-    // TODO: audit-implementation
-
-    return result.insertedId.toString()
+    return result._id.toString()
   }
 
-  async updateStudentCheckBox(studentCheckBoxId: string, studentCheckBox: NewStudentCheckBox): Promise<string> {
-    const studentCheckBoxesCollection = this.encryptionDb.collection<DbEncryptedStudentCheckBox>(this.studentCheckBoxesCollectionName)
+  async updateStudentLastActivityTimestamp(studentId: string, school: SchoolInfo): Promise<string> {
+    const importantStuffCollection = this.encryptionDb.collection<NewDbStudentImportantStuff>(this.importantStuffCollectionName)
 
-    const result = await studentCheckBoxesCollection.updateOne({ _id: new ObjectId(studentCheckBoxId) }, { $set: { ...studentCheckBox, value: await this.encryptValue(studentCheckBox.value) } })
+    const existingImportantStuff = await importantStuffCollection.findOne({ "student._id": new ObjectId(studentId), "school.schoolNumber": school.schoolNumber })
 
-    const metricBody: MetricCount = {
-      name: "StudentCheckBox_Update",
-      description: "Number of student checkboxes updated"
-    }
-    const labels: MetricLabel[] = [["type", studentCheckBox.type]]
+    if (!existingImportantStuff) {
+      const editor: EditorData = {
+        at: new Date(),
+        by: {
+          entraUserId: "SYSTEM",
+          fallbackName: "SYSTEM"
+        }
+      }
+      const newImportantStuff: NewStudentImportantStuff = {
+        type: "STUDENT",
+        created: editor,
+        school,
+        modified: editor,
+        facilitation: [],
+        followUp: [],
+        importantInfo: "",
+        lastActivityTimestamp: new Date()
+      }
 
-    if (result.matchedCount === 0) {
-      incrementCount({
-        ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+      const result = await importantStuffCollection.insertOne({
+        ...newImportantStuff,
+        student: {
+          _id: new ObjectId(studentId)
+        }
       })
 
-      throw new Error("Failed to update student check box")
+      if (!result.insertedId) {
+        throw new Error("Failed to insert new student important stuff")
+      }
+
+      return result.insertedId.toString()
     }
 
-    incrementCount({
-      ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
-    })
+    const result = await importantStuffCollection.updateOne(
+      { "student._id": new ObjectId(studentId), "school.schoolNumber": school.schoolNumber },
+      {
+        $set: {
+          lastActivityTimestamp: new Date()
+        }
+      }
+    )
 
-    // TODO: audit-implementation
+    if (!result.modifiedCount) {
+      throw new Error("Failed to update student's latest activity timestamp")
+    }
 
-    return studentCheckBoxId
+    return existingImportantStuff._id.toString()
   }
 
-  async deleteStudentCheckBox(studentCheckBox: StudentCheckBox): Promise<void> {
-    const studentCheckBoxesCollection = this.encryptionDb.collection<DbStudentCheckBox>(this.studentCheckBoxesCollectionName)
-    const result = await studentCheckBoxesCollection.deleteOne({ _id: new ObjectId(studentCheckBox._id) })
+  async getGroupImportantStuff(systemId: string): Promise<GroupImportantStuff[]> {
+    const importantStuffCollection = this.encryptionDb.collection<DbGroupImportantStuff>(this.importantStuffCollectionName)
+    logger.info("Getting important stuff for group with systemId {systemId}", systemId)
+
+    const importantStuffForGroup = await importantStuffCollection.find({ "group.systemId": systemId }).toArray()
+    logger.info("Important stuff for group with systemId {systemId} exists: {importantStuffExists}", systemId, importantStuffForGroup.length > 0)
+
+    if (importantStuffForGroup.length === 0) {
+      return []
+    }
+
+    return importantStuffForGroup.map((importantStuff) => ({
+      ...importantStuff,
+      _id: importantStuff._id.toString()
+    }))
+  }
+
+  async upsertGroupImportantStuff(systemId: string, importantStuff: NewGroupImportantStuff): Promise<string> {
+    const importantStuffCollection = this.encryptionDb.collection<DbEncryptedGroupImportantStuff>(this.importantStuffCollectionName)
+
+    const result: DbGroupImportantStuff | null = (await importantStuffCollection.findOneAndUpdate(
+      { "group.systemId": systemId },
+      {
+        $set: {
+          ...importantStuff,
+          importantInfo: await this.encryptValue(importantStuff.importantInfo),
+          group: {
+            systemId
+          }
+        }
+      },
+      { upsert: true, returnDocument: "after" }
+    )) as DbGroupImportantStuff | null // Db client decrypts for us, so we can cast it to DbGroupImportantStuff
 
     const metricBody: MetricCount = {
-      name: "StudentCheckBox_Remove",
-      description: "Number of student checkboxes removed"
+      name: "GroupImportantStuff_Upsert",
+      description: "Number of group important stuff upserted"
     }
-    const labels: MetricLabel[] = [["type", studentCheckBox.type]]
+    const labels: MetricLabel[] = [["schoolNumber", importantStuff.school.schoolNumber]]
 
-    if (result.deletedCount === 0) {
+    if (!result?._id) {
       incrementCount({
         ...metricBody,
         labels: [...labels, [metricResultName, metricResultFailure]]
       })
 
-      throw new Error("Failed to delete student check box")
+      throw new Error("Failed to upsert group important stuff")
     }
 
     incrementCount({
@@ -108,6 +217,6 @@ export class StudentCheckBoxDbClient implements IStudentCheckBoxDbClient {
       labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
 
-    // TODO: audit-implementation
+    return result._id.toString()
   }
 }

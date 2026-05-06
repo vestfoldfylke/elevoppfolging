@@ -1,4 +1,7 @@
 import type {
+  AuditEntryInput,
+  AuditSearchQueryResult,
+  AuditSearchTerms,
   DocumentContentTemplate,
   DocumentInput,
   DocumentMessageInput,
@@ -110,6 +113,14 @@ export interface ApiRouteMap {
 
   "/api/metrics": {
     POST: { req: MetricCount; res: { incremented: boolean } }
+  }
+
+  "/api/audit/insert": {
+    POST: { req: { auditEntry: AuditEntryInput; errorMessage: string; errorMessageObject: string | object }; res: { inserted: boolean } }
+  }
+
+  "/api/audit/query": {
+    POST: { req: AuditSearchTerms; res: AuditSearchQueryResult }
   }
 
   [key: `/api/classes/${NoSlashString}/documents`]: {

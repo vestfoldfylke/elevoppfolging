@@ -146,8 +146,6 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
 
-    // TODO: audit-implementation
-
     return result.insertedId.toString()
   }
 
@@ -187,8 +185,6 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
 
-    // TODO: audit-implementation
-
     return updatedDocument._id.toString()
   }
 
@@ -221,8 +217,6 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       ...metricBody,
       labels: [[metricResultName, metricResultSuccessful]]
     })
-
-    // TODO: audit-implementation
 
     return encryptedMessageWithId.messageId
   }
@@ -259,8 +253,6 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       ...metricBody,
       labels: [[metricResultName, metricResultSuccessful]]
     })
-
-    // TODO: audit-implementation
 
     return messageId
   }
@@ -384,8 +376,6 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
 
-    // TODO: audit-implementation
-
     return result.insertedId.toString()
   }
 
@@ -425,8 +415,6 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
 
-    // TODO: audit-implementation
-
     return updatedDocument._id.toString()
   }
 
@@ -459,8 +447,6 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       ...metricBody,
       labels: [[metricResultName, metricResultSuccessful]]
     })
-
-    // TODO: audit-implementation
 
     return encryptedMessageWithId.messageId
   }
@@ -497,8 +483,6 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       ...metricBody,
       labels: [[metricResultName, metricResultSuccessful]]
     })
-
-    // TODO: audit-implementation
 
     return messageId
   }

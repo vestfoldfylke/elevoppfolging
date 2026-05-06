@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { EditorData } from "$lib/types/db/shared-types"
-  import { prettifyDate, prettifyDateTime } from "$lib/utils/prettify-date"
+  import { prettifyDate, prettifyDateTime } from "$lib/utils/dates"
 
   type EditorInfoProps = {
     modified: EditorData

@@ -1,5 +1,7 @@
 <script lang="ts">
   import { slide } from "svelte/transition"
+  import { afterNavigate } from "$app/navigation"
+  import { apiFetch } from "$lib/api-fetch/api-fetch"
   import DocumentComponent from "$lib/components/Document/Document.svelte"
   import NewDocument from "$lib/components/Document/NewDocument.svelte"
   import PrincipalAccessTags from "$lib/components/PrincipalAccessTags.svelte"
@@ -7,12 +9,52 @@
   import ImportantStuff from "$lib/components/StudentBoxes/ImportantStuff.svelte"
   import { canEditStudentDataSharingConsent, canEditStudentDocument, canEditStudentImportantStuff } from "$lib/shared-authorization/authorization"
   import type { EnrollmentDetails, PeriodDetails, TemplateInfo } from "$lib/types/app-types"
-  import type { Period, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
+  import type { AuditEntryInput, Period, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
+  import { prettifyDate } from "$lib/utils/dates"
   import { getEnrollmentDetails, getFrontendStudentMainDetails } from "$lib/utils/frontend-student-details"
-  import { prettifyDate } from "$lib/utils/prettify-date"
   import type { PageProps } from "./$types"
 
   let { data }: PageProps = $props()
+
+  afterNavigate(({ from, to }) => {
+    // Same-page navigation (form action redirecting back to the same URL): skip
+    if (from !== null && from.url.pathname === to?.url.pathname) {
+      return
+    }
+
+    // When from === null the browser did a full page load (fresh visit or F5/⌘R reload).
+    // performance.getEntriesByType("navigation")[0].type is set by the browser for this specific
+    // page load and reliably returns "reload" on F5/⌘R
+    if (from === null && (performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined)?.type === "reload") {
+      return
+    }
+
+    const auditEntry: AuditEntryInput = {
+      created: {
+        by: {
+          entraUserId: data.authenticatedPrincipal.id,
+          fallbackName: data.authenticatedPrincipal.displayName
+        },
+        at: new Date()
+      },
+      action: "OPEN",
+      resource: "Student",
+      resourceId: data.student._id
+    }
+
+    // we don't need to await this since we don't need to know if it goes through or not
+    apiFetch("/api/audit/insert", {
+      method: "POST",
+      body: {
+        auditEntry,
+        errorMessage: "opening StudentId {StudentId}",
+        errorMessageObject: data.student._id
+      },
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+  })
 
   let expandedStudentDetails = $state(false)
 

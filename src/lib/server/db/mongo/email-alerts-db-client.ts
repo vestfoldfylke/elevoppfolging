@@ -32,8 +32,6 @@ export class EmailAlertsDbClient implements IEmailAlertsDbClient {
       labels: [[metricResultName, metricResultSuccessful]]
     })
 
-    // TODO: audit-implementation
-
     return result.insertedId.toString()
   }
 }

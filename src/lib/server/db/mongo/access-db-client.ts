@@ -111,8 +111,6 @@ export class AccessDbClient implements IAccessDbClient {
       labels: [[metricResultName, metricResultSuccessful]]
     })
 
-    // TODO: audit-implementation
-
     return result.insertedId.toString()
   }
 
@@ -162,8 +160,6 @@ export class AccessDbClient implements IAccessDbClient {
       labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
 
-    // TODO: audit-implementation
-
     return updateResult._id.toString()
   }
 
@@ -210,8 +206,6 @@ export class AccessDbClient implements IAccessDbClient {
       ...metricBody,
       labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
-
-    // TODO: audit-implementation
 
     return updatedAccess._id.toString()
   }
