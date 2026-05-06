@@ -386,7 +386,7 @@
         {/each}
       </div>
       {#each filteredDocuments as document (document._id)}
-        <DocumentComponent authenticatedPrincipal={data.authenticatedPrincipal} {document} {accessSchools} canEditDocument={canEditStudentDocument(data.authenticatedPrincipal, data.principalAccessForStudent, document)} studentName={data.student.name} studentDataSharingConsent={data.studentDataSharingConsent?.consent} studentAccessPersons={data.studentAccessPersons} />
+        <DocumentComponent {document} {accessSchools} canEditDocument={canEditStudentDocument(data.authenticatedPrincipal, data.principalAccessForStudent, document)} studentName={data.student.name} studentDataSharingConsent={data.studentDataSharingConsent?.consent} studentAccessPersons={data.studentAccessPersons} />
       {/each}
     {/if}
   </div>
