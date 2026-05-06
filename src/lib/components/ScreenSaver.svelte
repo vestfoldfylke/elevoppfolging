@@ -33,7 +33,10 @@
   let lastReset = 0
   const onActivity = () => {
     const now = Date.now()
-    if (now - lastReset < 1000) return
+    if (now - lastReset < 1000) {
+      return
+    }
+
     lastReset = now
     resetTimer()
   }
