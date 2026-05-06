@@ -45,7 +45,9 @@
   const allSelected = $derived(alertableAccessPersons.length > 0 && alertableAccessPersons.every((p) => emailAlertReceivers.includes(p.entra.userPrincipalName)))
 
   const toggleSelectAll = (target: HTMLInputElement) => {
-    if (alertableAccessPersons.length === 0) return
+    if (alertableAccessPersons.length === 0) {
+      return
+    }
     emailAlertReceivers = target.checked ? alertableAccessPersons.map((p) => p.entra.userPrincipalName) : []
   }
 </script>
