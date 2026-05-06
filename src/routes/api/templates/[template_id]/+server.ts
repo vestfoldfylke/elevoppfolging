@@ -69,6 +69,7 @@ const updateDocumentContentTemplate: ApiNextFunction<UpdateDocumentContentTempla
       action: "UPDATE",
       resource: "Template",
       resourceId: templateId,
+      resourceName: documentTemplate.name,
       metaData: {
         parentResource: "SYSTEM"
       }
@@ -120,9 +121,9 @@ const deleteDocumentContentTemplate: ApiNextFunction<DeleteDocumentContentTempla
       action: "DELETE",
       resource: "Template",
       resourceId: templateId,
+      resourceName: currentTemplate.name,
       metaData: {
         data: JSON.stringify({
-          name: currentTemplate.name,
           version: currentTemplate.version
         }),
         parentResource: "SYSTEM"

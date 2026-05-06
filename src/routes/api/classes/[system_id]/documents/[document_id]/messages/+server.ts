@@ -39,7 +39,12 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
   }
 
   const classes: StudentClassGroup[] = getAccessibleClassesFromStudents(principalAccess, students)
-  if (classes.length === 0 || !classes.find((classEntry: StudentClassGroup) => classEntry.systemId === systemId)) {
+  if (classes.length === 0) {
+    throw new HTTPError(404, noAccessMessage("No access to any class"))
+  }
+
+  const classEntry: StudentClassGroup | undefined = classes.find((classEntry: StudentClassGroup) => classEntry.systemId === systemId)
+  if (!classEntry) {
     throw new HTTPError(404, noAccessMessage("No access to class"))
   }
 
@@ -89,7 +94,11 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
       action: "CREATE",
       resource: "GroupDocumentMessage",
       resourceId: messageId,
+      resourceName: "",
       metaData: {
+        data: JSON.stringify({
+          groupName: classEntry.name
+        }),
         parentResource: "GroupDocument",
         parentResourceId: documentId,
         schoolId: currentDocument.school.schoolNumber

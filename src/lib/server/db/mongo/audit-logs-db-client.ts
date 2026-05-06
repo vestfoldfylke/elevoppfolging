@@ -43,7 +43,8 @@ export class AuditLogsDbClient implements IAuditLogsDbClient {
         searchTerms.timeFrame.to === getDateValue(getDateDaysAhead(7)) &&
         searchTerms.action === "" &&
         searchTerms.resource === "" &&
-        searchTerms.user === "")
+        searchTerms.user === "" &&
+        searchTerms.resourceIdentifier === "")
 
     // NOTE: TypeScript doesn't understand that searchTerms is handled above, so we need to check it here as well....
     if (!searchTerms || isEmptyOrDefault) {
@@ -74,6 +75,23 @@ export class AuditLogsDbClient implements IAuditLogsDbClient {
         $regex: searchTerms.user,
         $options: "i"
       }
+    }
+
+    if (searchTerms.resourceIdentifier !== "") {
+      filter.$or = [
+        {
+          resourceName: {
+            $regex: searchTerms.resourceIdentifier,
+            $options: "i"
+          }
+        },
+        {
+          resourceId: {
+            $regex: searchTerms.resourceIdentifier,
+            $options: "i"
+          }
+        }
+      ]
     }
 
     return filter

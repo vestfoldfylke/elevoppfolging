@@ -89,6 +89,7 @@ const removeAccess: ApiNextFunction<RemoveAccessResponse, RemoveAccessBody> = as
       action: "DELETE",
       resource: "Access",
       resourceId: updatedAccessId,
+      resourceName: accessEntryToRemove.type,
       metaData: {
         data: JSON.stringify(accessEntryToRemove),
         parentResource: "School",

@@ -65,7 +65,8 @@
         schoolId: document.school.schoolNumber
       },
       resource: "student" in document ? "StudentDocument" : "GroupDocument",
-      resourceId: document._id
+      resourceId: document._id,
+      resourceName: studentName || groupName || ""
     }
 
     const errorMessageTemplateName: string = "student" in document ? "StudentDocumentId" : "GroupDocumentId"

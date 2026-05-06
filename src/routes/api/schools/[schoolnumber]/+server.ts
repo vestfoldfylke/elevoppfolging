@@ -47,9 +47,9 @@ const deleteSchool: ApiNextFunction<DeleteSchoolResponse> = async ({ principal, 
       action: "DELETE",
       resource: "School",
       resourceId: schoolToDelete._id,
+      resourceName: schoolToDelete.name,
       metaData: {
         data: JSON.stringify({
-          schoolName: schoolToDelete.name,
           schoolNumber: schoolToDelete.schoolNumber,
           source: schoolToDelete.source
         }),
@@ -131,6 +131,7 @@ const updateSchool: ApiNextFunction<UpdateSchoolResponse, UpdateSchoolBody> = as
       action: "UPDATE",
       resource: "School",
       resourceId: updatedSchoolId,
+      resourceName: updatedSchool.name,
       metaData: {
         parentResource: "SYSTEM"
       }
