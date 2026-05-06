@@ -67,6 +67,7 @@ const addProgramArea: ApiNextFunction<AddProgramAreaResponse, AddProgramAreaBody
       action: "CREATE",
       resource: "ProgramArea",
       resourceId: programAreaId,
+      resourceName: newProgramArea.name,
       metaData: {
         parentResource: "School",
         parentResourceId: newProgramArea.schoolNumber,

@@ -58,6 +58,7 @@ const addDocumentContentTemplate: ApiNextFunction<AddDocumentContentTemplateResp
       action: "CREATE",
       resource: "Template",
       resourceId: templateId,
+      resourceName: newDocument.name,
       metaData: {
         parentResource: "SYSTEM"
       }

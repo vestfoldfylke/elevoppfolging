@@ -775,6 +775,7 @@ export type AuditEntryInput = {
     | "Template"
     | "School"
   resourceId: string
+  resourceName: string
 }
 
 export type AuditEntry = AuditEntryInput & {

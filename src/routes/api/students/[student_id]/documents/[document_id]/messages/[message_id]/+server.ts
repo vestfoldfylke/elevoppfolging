@@ -104,7 +104,11 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
       action: "UPDATE",
       resource: "StudentDocumentMessage",
       resourceId: updatedMessageId,
+      resourceName: "",
       metaData: {
+        data: JSON.stringify({
+          studentName: student.name
+        }),
         parentResource: "StudentDocument",
         parentResourceId: documentId,
         schoolId: currentDocument.school.schoolNumber

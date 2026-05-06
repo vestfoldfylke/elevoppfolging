@@ -79,7 +79,11 @@ const updateStudentDataSharingConsent: ApiNextFunction<PatchConsentResponse, Pat
         action: "UPDATE",
         resource: "StudentDataSharingConsent",
         resourceId: upsertedConsentId,
+        resourceName: "",
         metaData: {
+          data: JSON.stringify({
+            studentName: currentStudent.name
+          }),
           parentResource: "Student",
           parentResourceId: studentId
         }
@@ -105,7 +109,11 @@ const updateStudentDataSharingConsent: ApiNextFunction<PatchConsentResponse, Pat
       action: "CREATE",
       resource: "StudentDataSharingConsent",
       resourceId: upsertedConsentId,
+      resourceName: "",
       metaData: {
+        data: JSON.stringify({
+          studentName: currentStudent.name
+        }),
         parentResource: "Student",
         parentResourceId: studentId
       }

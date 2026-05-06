@@ -119,6 +119,7 @@ const updateManualStudent: ApiNextFunction<UpdateManualStudentResponse, UpdateMa
       action: "UPDATE",
       resource: "ManualUser",
       resourceId: studentId,
+      resourceName: updateAppStudent.name,
       metaData: {
         parentResource: "School",
         parentResourceId: student.studentEnrollments.find((studentEnrollment: StudentEnrollment) => studentEnrollment.mainSchool)?.school.schoolNumber

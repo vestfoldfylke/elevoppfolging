@@ -62,6 +62,7 @@ const addStudentCheckBox: ApiNextFunction<AddStudentCheckBoxResponse, AddStudent
       action: "CREATE",
       resource: "StudentCheckBox",
       resourceId: checkBoxId,
+      resourceName: newStudentCheckBox.value,
       metaData: {
         parentResource: "SYSTEM"
       }

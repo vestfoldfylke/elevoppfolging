@@ -140,6 +140,7 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
       action: "CREATE",
       resource: "ManualUser",
       resourceId: studentId,
+      resourceName: newAppStudent.name,
       metaData: {
         parentResource: "School",
         parentResourceId: newManualStudentData.school.schoolNumber
