@@ -45,6 +45,10 @@ const deleteStudentCheckBox: ApiNextFunction<DeleteStudentCheckBoxResponse> = as
       resource: "StudentCheckBox",
       resourceId: studentCheckBoxToDelete._id,
       metaData: {
+        data: JSON.stringify({
+          type: studentCheckBoxToDelete.type,
+          value: studentCheckBoxToDelete.value
+        }),
         parentResource: "SYSTEM"
       }
     })

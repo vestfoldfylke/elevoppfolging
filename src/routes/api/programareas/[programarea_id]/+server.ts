@@ -58,6 +58,10 @@ const deleteProgramArea: ApiNextFunction<DeleteProgramAreaResponse> = async ({ p
       resource: "ProgramArea",
       resourceId: programAreaId,
       metaData: {
+        data: JSON.stringify({
+          name: programAreaToDelete.name,
+          source: programAreaToDelete.source
+        }),
         parentResource: "School",
         parentResourceId: programAreaToDelete.schoolNumber,
         schoolId: programAreaToDelete.schoolNumber

@@ -121,6 +121,10 @@ const deleteDocumentContentTemplate: ApiNextFunction<DeleteDocumentContentTempla
       resource: "Template",
       resourceId: templateId,
       metaData: {
+        data: JSON.stringify({
+          name: currentTemplate.name,
+          version: currentTemplate.version
+        }),
         parentResource: "SYSTEM"
       }
     })

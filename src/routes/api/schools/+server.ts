@@ -63,7 +63,10 @@ const addSchool: ApiNextFunction<AddSchoolResponse, AddSchoolBody> = async ({ pr
       },
       action: "CREATE",
       resource: "School",
-      resourceId: schoolId
+      resourceId: schoolId,
+      metaData: {
+        parentResource: "SYSTEM"
+      }
     })
   } catch (error) {
     logger.errorException(error, "Failed to create audit entry when creating SchoolId {SchoolId}", schoolId)
