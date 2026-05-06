@@ -17,24 +17,24 @@
   "devDependencies": {
     "@biomejs/biome": "2.4.11",
     "@digdir/designsystemet-types": "^1.13.1",
-    "@sveltejs/kit": "^2.57.1",
+    "@sveltejs/kit": "^2.59.0",
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
     "@types/luxon": "^3.7.1",
     "@types/node": "^25.6.0",
-    "svelte": "^5.55.4",
-    "svelte-check": "^4.4.6",
+    "svelte": "^5.55.5",
+    "svelte-check": "^4.4.7",
     "typescript": "^5.9.3",
-    "vite": "^8.0.8"
+    "vite": "^8.0.10"
   },
   "dependencies": {
-    "@digdir/designsystemet-css": "^1.13.2",
-    "@digdir/designsystemet-web": "^1.13.2",
+    "@digdir/designsystemet-css": "^1.13.3",
+    "@digdir/designsystemet-web": "^1.13.3",
     "@navikt/fnrvalidator": "^2.2.1",
     "@sveltejs/adapter-node": "^5.5.4",
     "@vestfoldfylke/loglady": "^1.5.3",
     "@vestfoldfylke/vestfold-metrics": "^1.0.1",
     "luxon": "^3.7.2",
-    "mongodb": "^7.1.1",
+    "mongodb": "^7.2.0",
     "mongodb-client-encryption": "^7.0.0"
   }
 }
