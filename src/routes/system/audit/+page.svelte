@@ -68,6 +68,26 @@
     auditEntries = queriedAuditEntries.entries
     auditSearchError = queriedAuditEntries.errorMessage
   }
+
+  const getStringifiedMetadata = (metaData: AuditEntry["metaData"]): string => {
+    if (!metaData) {
+      return ""
+    }
+
+    if (!metaData.data) {
+      return JSON.stringify(metaData, null, 2)
+    }
+
+    try {
+      const d = JSON.parse(metaData.data)
+      return JSON.stringify({
+        ...metaData,
+        data: d
+      }, null, 2)
+    } catch {
+      return JSON.stringify(metaData, null, 2)
+    }
+  }
 </script>
 
 <div class="page-content">
@@ -134,8 +154,7 @@
           <th>Bruker</th>
           <th>Handling</th>
           <th>Ressurs</th>
-          <th>Ressurs Id</th>
-          <th>Meta data</th>
+          <th>RessursId</th>
         </tr>
       </thead>
       <tbody>
@@ -145,8 +164,19 @@
             <td>{auditEntry.created.by.fallbackName || auditEntry.created.by.entraUserId}</td>
             <td>{AUDIT_ENTRY_ACTION_DISPLAY_NAMES[auditEntry.action] || "Ukjent handling"}</td>
             <td>{AUDIT_ENTRY_RESOURCE_DISPLAY_NAMES[auditEntry.resource].single || AUDIT_ENTRY_RESOURCE_DISPLAY_NAMES[auditEntry.resource].plural || "Ukjent ressurs"}</td>
-            <td>{auditEntry.resourceId || "N/A"}</td>
-            <td><pre>{auditEntry.metaData ? JSON.stringify(auditEntry.metaData, null, 2) : ""}</pre></td>
+            <td>
+              {#if auditEntry.metaData}
+                <button data-popover="inline" popoverTarget={`resource-meta-data-${auditEntry._id}`}>
+                  {auditEntry.resourceId || "N/A"}
+                </button>
+                <div class="ds-popover" id={`resource-meta-data-${auditEntry._id}`} popover="auto" data-placement="top" data-variant="default" data-color="neutral">
+                  <h3>Metadata</h3>
+                  <pre>{getStringifiedMetadata(auditEntry.metaData)}</pre>
+                </div>
+              {:else}
+                {auditEntry.resourceId || "N/A"}
+              {/if}
+            </td>
           </tr>
         {/each}
       </tbody>
@@ -176,5 +206,9 @@
   
   .audit-search-container-error {
     margin-bottom: var(--ds-size-8);
+  }
+  
+  .ds-popover {
+      max-width: inherit;
   }
 </style>
