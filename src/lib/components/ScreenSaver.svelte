@@ -1,10 +1,8 @@
 <script lang="ts">
   import { page } from "$app/state"
 
-  let lastActivityTimestamp: Date = $state(new Date())
   let screenSaverDialog: HTMLDialogElement | undefined = $state()
   const inactivityTimeoutSeconds: number = page.data.APP_INFO.SCREEN_SAVER_INACTIVITY_TIMEOUT_SECONDS
-  const screenSaverInterval = Math.round(Math.min((inactivityTimeoutSeconds / 2) * 1000, 60 * 1000)) // check every half of the inactivity timeout, or every minute, whichever is shorter
 
   const showScreenSaverDialog = () => {
     if (screenSaverDialog && !screenSaverDialog.open) {
@@ -15,23 +13,55 @@
   const closeScreenSaverDialog = () => {
     if (screenSaverDialog?.open) {
       screenSaverDialog.close()
+      resetTimer()
     }
   }
 
+  let timeoutId: ReturnType<typeof setTimeout> | undefined
+
+  const resetTimer = () => {
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+    }
+
+    // Schedule the dialog to appear exactly after the timeout period
+    timeoutId = setTimeout(() => {
+      showScreenSaverDialog()
+    }, inactivityTimeoutSeconds * 1000)
+  }
+
+  let lastReset = 0
+  const onActivity = () => {
+    const now = Date.now()
+    if (now - lastReset < 1000) {
+      return
+    }
+
+    lastReset = now
+    resetTimer()
+  }
+
   $effect(() => {
-    const interval = setInterval(() => {
-      if (navigator.userActivation?.isActive) {
-        lastActivityTimestamp = new Date()
-        return
+    // Initialize the timer on mount
+    resetTimer()
+
+    // Add real user activity listeners to reset the timer
+    const activityEvents = ["mousedown", "mousemove", "keydown", "scroll", "touchstart"]
+
+    activityEvents.forEach((event) => {
+      window.addEventListener(event, onActivity, { passive: true })
+    })
+
+    // Clean up the timer and event listeners when the effect destroys
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId)
       }
 
-      const inactivityDuration = (Date.now() - lastActivityTimestamp.getTime()) / 1000
-      if (inactivityDuration > inactivityTimeoutSeconds) {
-        showScreenSaverDialog()
-      }
-    }, screenSaverInterval) // check at least every half of the inactivity timeout, but not more than every minute
-
-    return () => clearInterval(interval)
+      activityEvents.forEach((event) => {
+        window.removeEventListener(event, onActivity)
+      })
+    }
   })
 </script>
 
@@ -47,7 +77,7 @@
 
 <style>
   .ds-dialog::backdrop {
-		backdrop-filter: blur(10px); /* Blurs what's behind */
-  	-webkit-backdrop-filter: blur(10px); /* Safari support */
+		-webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
 	}
 </style>
