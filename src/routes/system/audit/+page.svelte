@@ -80,10 +80,14 @@
 
     try {
       const d = JSON.parse(metaData.data)
-      return JSON.stringify({
-        ...metaData,
-        data: d
-      }, null, 2)
+      return JSON.stringify(
+        {
+          ...metaData,
+          data: d
+        },
+        null,
+        2
+      )
     } catch {
       return JSON.stringify(metaData, null, 2)
     }

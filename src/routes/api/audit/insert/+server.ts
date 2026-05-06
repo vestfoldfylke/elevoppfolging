@@ -8,7 +8,7 @@ import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 type AuditEntryInputRequest = ApiRouteMap["/api/audit/insert"]["POST"]["req"]
 type AuditEntryInputResponse = ApiRouteMap["/api/audit/insert"]["POST"]["res"]
 
-const addAuditEntry: ApiNextFunction<AuditEntryInputResponse, AuditEntryInputRequest> = async ({ body, principal }) => {
+const addAuditEntry: ApiNextFunction<AuditEntryInputResponse, AuditEntryInputRequest> = async ({ body }) => {
   const auditEntry: AuditEntryInput = body.auditEntry
 
   // NOTE: We need to reset auditEntry.created.at to a Date object since the client will send it as a string and we need it to be a Date object for our database operations
