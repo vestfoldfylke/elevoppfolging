@@ -1,4 +1,5 @@
 import type { RequestHandler } from "@sveltejs/kit"
+import { logger } from "@vestfoldfylke/loglady"
 import { validateAccessEntryInput } from "$lib/data-validation/access-entry-validation"
 import { APP_INFO } from "$lib/server/app-info"
 import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
@@ -83,6 +84,7 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
     if (!appUser) {
       throw new HTTPError(404, "User not found")
     }
+
     const newAccess: NewAccess = {
       entraUserId,
       name: appUser.entra.displayName,
@@ -94,6 +96,7 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
       teachingGroups: [],
       students: []
     }
+
     await dbClient.access.createAccess(newAccess)
   } else {
     // If the same access entry already exists, we should not add it again
@@ -139,7 +142,30 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
   }
 
   // Then we can finally add the access entry
-  const updatedAccessId = await dbClient.access.addAccessEntry(entraUserId, accessEntryToAdd)
+  const updatedAccessId: string = await dbClient.access.addAccessEntry(entraUserId, accessEntryToAdd)
+
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "CREATE",
+      resource: "Access",
+      resourceId: updatedAccessId,
+      metaData: {
+        data: JSON.stringify(accessEntryInput),
+        parentResource: "School",
+        parentResourceId: accessEntryInput.schoolNumber,
+        schoolId: accessEntryInput.schoolNumber
+      }
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when granting access {@AccessEntry}", accessEntryToAdd)
+  }
 
   // Invalidate cache
   invalidateStudentAccessCache()

@@ -75,8 +75,6 @@ export class DocumentContentTemplatesDbClient implements IDocumentContentTemplat
       labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
 
-    // TODO: audit-implementation
-
     return result.insertedId.toString()
   }
 
@@ -113,8 +111,6 @@ export class DocumentContentTemplatesDbClient implements IDocumentContentTemplat
       labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
 
-    // TODO: audit-implementation
-
     return templateId
   }
 
@@ -139,7 +135,5 @@ export class DocumentContentTemplatesDbClient implements IDocumentContentTemplat
       ...metricBody,
       labels: [[metricResultName, metricResultSuccessful]]
     })
-
-    // TODO: audit-implementation
   }
 }

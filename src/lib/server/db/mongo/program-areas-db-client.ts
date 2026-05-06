@@ -64,8 +64,6 @@ export class ProgramAreasDbClient implements IProgramAreasDbClient {
       labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
 
-    // TODO: audit-implementation
-
     return result.insertedId.toString()
   }
 
@@ -92,8 +90,6 @@ export class ProgramAreasDbClient implements IProgramAreasDbClient {
       labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
 
-    // TODO: audit-implementation
-
     return programAreaId
   }
 
@@ -119,7 +115,5 @@ export class ProgramAreasDbClient implements IProgramAreasDbClient {
       ...metricBody,
       labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
-
-    // TODO: audit-implementation
   }
 }

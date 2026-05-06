@@ -81,5 +81,9 @@ export const mockDbClient: IDbClient = {
   },
   emailAlerts: {
     createEmailAlert: notImplemented
+  },
+  auditLogs: {
+    createAuditEntry: notImplemented,
+    getAuditEntries: notImplemented
   }
 }

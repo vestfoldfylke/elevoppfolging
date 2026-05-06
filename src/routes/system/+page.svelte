@@ -33,6 +33,16 @@
       </p>
     </div>
   </div>
+  <div class="ds-card" data-variant="default" data-color="neutral">
+    <div class="ds-card__block">
+      <h2 class="ds-heading">
+        <a class="ds-link" href="/system/audit">Audit</a>
+      </h2>
+      <p class="ds-paragraph" data-variant="default">
+        Her kan du se hva som skjer i systemet, og hvem som gjør hva. Dette inkluderer blant opprettelse og redigering av notater, redigering av oppfølging og tilrettelegging, og endringer i systemadministrasjonen.
+      </p>
+    </div>
+  </div>
 </div>
 
 <style>

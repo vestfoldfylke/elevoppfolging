@@ -1,7 +1,8 @@
 <script lang="ts">
+  import { page } from "$app/state"
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import type { StudentAccessPerson } from "$lib/types/app-types"
-  import type { DocumentInput, GroupDocument, MetricCount, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
+  import type { AuditEntryInput, DocumentInput, GroupDocument, MetricCount, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
   import EditorInfo from "../EditorInfo.svelte"
   import DocumentContent from "./DocumentContentItem.svelte"
   import DocumentEditor from "./DocumentEditor.svelte"
@@ -49,7 +50,38 @@
       }
     })
 
-    // TODO: audit-implementation
+    const auditEntry: AuditEntryInput = {
+      created: {
+        by: {
+          entraUserId: page.data.authenticatedPrincipal.id,
+          fallbackName: page.data.authenticatedPrincipal.displayName
+        },
+        at: new Date()
+      },
+      action: "OPEN",
+      metaData: {
+        parentResource: "student" in document ? "Student" : "Group",
+        parentResourceId: "student" in document ? document.student._id : document.group.systemId,
+        schoolId: document.school.schoolNumber
+      },
+      resource: "student" in document ? "StudentDocument" : "GroupDocument",
+      resourceId: document._id
+    }
+
+    const errorMessageTemplateName: string = "student" in document ? "StudentDocumentId" : "GroupDocumentId"
+
+    // we don't need to await this since we don't need to know if it goes through or not
+    apiFetch("/api/audit/insert", {
+      method: "POST",
+      body: {
+        auditEntry,
+        errorMessage: `opening ${errorMessageTemplateName} {${errorMessageTemplateName}}`,
+        errorMessageObject: document._id
+      },
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
   }
 
   // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounts ved endring av document (ha en key på document i parent)

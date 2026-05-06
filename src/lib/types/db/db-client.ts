@@ -3,6 +3,9 @@ import type {
   Access,
   AppStudent,
   AppUser,
+  AuditEntry,
+  AuditEntryInput,
+  AuditSearchTerms,
   AvailableForDocumentType,
   DocumentContentTemplate,
   GroupDocument,
@@ -127,6 +130,11 @@ export interface IEmailAlertsDbClient {
   createEmailAlert(emailAlert: NewDbEmailAlert): Promise<string>
 }
 
+export interface IAuditLogsDbClient {
+  createAuditEntry(auditEntry: AuditEntryInput): Promise<string>
+  getAuditEntries(searchTerms?: AuditSearchTerms): Promise<AuditEntry[]>
+}
+
 export interface IDbClient {
   appUsers: IAppUsersDbClient
   schools: ISchoolsDbClient
@@ -139,4 +147,5 @@ export interface IDbClient {
   studentDataSharingConsents: IStudentDataSharingConsentsDbClient
   studentCheckBoxes: IStudentCheckBoxDbClient
   emailAlerts: IEmailAlertsDbClient
+  auditLogs: IAuditLogsDbClient
 }

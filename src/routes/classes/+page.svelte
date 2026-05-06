@@ -50,8 +50,8 @@
       <input id="class-search" class="ds-input" placeholder="Søk etter klasse" type="text" bind:value={searchTerms.class} />
     </ds-field>
     <ds-field class="ds-field">
-      <label for="class-search" class="ds-label" data-weight="medium">Skole</label>
-      <input id="class-search" class="ds-input" placeholder="Søk etter skole" type="text" bind:value={searchTerms.school} />
+      <label for="class-school-search" class="ds-label" data-weight="medium">Skole</label>
+      <input id="class-school-search" class="ds-input" placeholder="Søk etter skole" type="text" bind:value={searchTerms.school} />
     </ds-field>
     <ds-field class="ds-field">
       <label for="class-teacher-search" class="ds-label" data-weight="medium">Kontaktlærer</label>

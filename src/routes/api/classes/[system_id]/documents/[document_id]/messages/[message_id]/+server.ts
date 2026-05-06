@@ -1,4 +1,5 @@
 import type { RequestHandler } from "@sveltejs/kit"
+import { logger } from "@vestfoldfylke/loglady"
 import { validateDocumentMessage } from "$lib/data-validation/document-message-validation"
 import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
 import { getStudentsFromCache } from "$lib/server/cache/students-cache"
@@ -88,7 +89,29 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
     emailAlertReceivers: messageToUpdate.emailAlertReceivers || []
   }
 
-  const updatedMessageId = await dbClient.documents.updateGroupDocumentMessage(documentId, messageId, updatedMessageData)
+  const updatedMessageId: string = await dbClient.documents.updateGroupDocumentMessage(documentId, messageId, updatedMessageData)
+
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "UPDATE",
+      resource: "GroupDocumentMessage",
+      resourceId: updatedMessageId,
+      metaData: {
+        parentResource: "GroupDocument",
+        parentResourceId: documentId,
+        schoolId: currentDocument.school.schoolNumber
+      }
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when updating GroupDocumentMessageId {GroupDocumentMessageId}", updatedMessageId)
+  }
 
   return {
     updatedMessageId

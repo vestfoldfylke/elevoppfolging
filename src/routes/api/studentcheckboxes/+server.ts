@@ -1,4 +1,5 @@
 import type { RequestHandler } from "@sveltejs/kit"
+import { logger } from "@vestfoldfylke/loglady"
 import { validateStudentCheckBox } from "$lib/data-validation/student-check-box-validation"
 import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
@@ -47,7 +48,27 @@ const addStudentCheckBox: ApiNextFunction<AddStudentCheckBoxResponse, AddStudent
     modified: editorData
   }
 
-  const checkBoxId = await dbClient.studentCheckBoxes.createStudentCheckBox(newStudentCheckBox)
+  const checkBoxId: string = await dbClient.studentCheckBoxes.createStudentCheckBox(newStudentCheckBox)
+
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "CREATE",
+      resource: "StudentCheckBox",
+      resourceId: checkBoxId,
+      metaData: {
+        parentResource: "SYSTEM"
+      }
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when creating StudentCheckBoxId {StudentCheckBoxId}", checkBoxId)
+  }
 
   return {
     checkBoxId

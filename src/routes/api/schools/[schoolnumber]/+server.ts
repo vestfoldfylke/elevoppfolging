@@ -1,4 +1,5 @@
 import type { RequestHandler } from "@sveltejs/kit"
+import { logger } from "@vestfoldfylke/loglady"
 import { validateSchoolData } from "$lib/data-validation/school-validation"
 import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
@@ -33,6 +34,31 @@ const deleteSchool: ApiNextFunction<DeleteSchoolResponse> = async ({ principal, 
   }
 
   await dbClient.schools.deleteSchool(schoolNumber)
+
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "DELETE",
+      resource: "School",
+      resourceId: schoolToDelete._id,
+      metaData: {
+        data: JSON.stringify({
+          schoolName: schoolToDelete.name,
+          schoolNumber: schoolToDelete.schoolNumber,
+          source: schoolToDelete.source
+        }),
+        parentResource: "SYSTEM"
+      }
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when removing SchoolId {SchoolId}", schoolNumber)
+  }
 
   return {
     deletedSchoolNumber: schoolNumber
@@ -91,7 +117,27 @@ const updateSchool: ApiNextFunction<UpdateSchoolResponse, UpdateSchoolBody> = as
     }
   }
 
-  const updatedSchoolId = await dbClient.schools.updateSchool(schoolNumber, updatedSchool)
+  const updatedSchoolId: string = await dbClient.schools.updateSchool(schoolNumber, updatedSchool)
+
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "UPDATE",
+      resource: "School",
+      resourceId: updatedSchoolId,
+      metaData: {
+        parentResource: "SYSTEM"
+      }
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when updating SchoolId {SchoolId}", updatedSchoolId)
+  }
 
   return {
     updatedSchoolId

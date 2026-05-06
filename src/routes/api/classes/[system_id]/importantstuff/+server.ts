@@ -1,4 +1,5 @@
 import type { RequestHandler } from "@sveltejs/kit"
+import { logger } from "@vestfoldfylke/loglady"
 import { validateGroupImportantStuffData } from "$lib/data-validation/group-important-stuff-validation"
 import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
 import { getStudentsFromCache } from "$lib/server/cache/students-cache"
@@ -66,6 +67,56 @@ const updateGroupImportantStuff: ApiNextFunction<PatchGroupImportantStuffRespons
   }
 
   const importantStuffId: string = await dbClient.importantStuff.upsertGroupImportantStuff(systemId, upsertStudentImportantStuffData)
+
+  if (currentImportantStuff && currentImportantStuff.length > 0) {
+    try {
+      await dbClient.auditLogs.createAuditEntry({
+        created: {
+          by: {
+            entraUserId: principal.id,
+            fallbackName: principal.displayName
+          },
+          at: new Date()
+        },
+        action: "UPDATE",
+        resource: "ImportantStuff",
+        resourceId: importantStuffId,
+        metaData: {
+          parentResource: "Group",
+          parentResourceId: systemId,
+          schoolId: upsertStudentImportantStuffData.school.schoolNumber
+        }
+      })
+    } catch (error) {
+      logger.errorException(error, "Failed to create audit entry when updating ImportantStuffId {ImportantStuffId} for group", importantStuffId)
+    }
+
+    return {
+      importantStuffId
+    }
+  }
+
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "CREATE",
+      resource: "ImportantStuff",
+      resourceId: importantStuffId,
+      metaData: {
+        parentResource: "Group",
+        parentResourceId: systemId,
+        schoolId: upsertStudentImportantStuffData.school.schoolNumber
+      }
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when creating ImportantStuffId {ImportantStuffId} for group", importantStuffId)
+  }
 
   return {
     importantStuffId

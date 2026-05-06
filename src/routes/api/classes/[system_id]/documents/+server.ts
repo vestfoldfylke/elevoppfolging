@@ -71,9 +71,31 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
 
   const dbClient: IDbClient = getDbClient()
 
-  const documentId = await dbClient.documents.createGroupDocument(newDocument)
+  const documentId: string = await dbClient.documents.createGroupDocument(newDocument)
 
-  logger.info(`Document created with ID ${documentId} by user ${principal.displayName} (${principal.id})`)
+  logger.info(`Group document created with ID ${documentId} by user ${principal.displayName} (${principal.id})`)
+
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "CREATE",
+      resource: "GroupDocument",
+      resourceId: documentId,
+      metaData: {
+        parentResource: "Group",
+        parentResourceId: systemId,
+        schoolId: newDocument.school.schoolNumber
+      }
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when creating GroupDocumentId {GroupDocumentId}", documentId)
+  }
 
   return {
     documentId

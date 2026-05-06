@@ -1,4 +1,5 @@
 import type { RequestHandler } from "@sveltejs/kit"
+import { logger } from "@vestfoldfylke/loglady"
 import { validateDocumentContentTemplate } from "$lib/data-validation/document-content-template-validation"
 import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
@@ -43,7 +44,27 @@ const addDocumentContentTemplate: ApiNextFunction<AddDocumentContentTemplateResp
 
   const dbClient = getDbClient()
 
-  const templateId = await dbClient.documentContentTemplates.createDocumentContentTemplate(newDocument)
+  const templateId: string = await dbClient.documentContentTemplates.createDocumentContentTemplate(newDocument)
+
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "CREATE",
+      resource: "Template",
+      resourceId: templateId,
+      metaData: {
+        parentResource: "SYSTEM"
+      }
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when creating TemplateId {TemplateId}", templateId)
+  }
 
   return {
     templateId

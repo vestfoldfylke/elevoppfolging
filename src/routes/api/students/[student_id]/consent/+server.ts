@@ -1,4 +1,5 @@
 import type { RequestHandler } from "@sveltejs/kit"
+import { logger } from "@vestfoldfylke/loglady"
 import { validateStudentDataSharingConsentData } from "$lib/data-validation/student-consent-validation"
 import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
 import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
@@ -8,7 +9,7 @@ import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canEditStudentDataSharingConsent, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { NewStudentDataSharingConsent } from "$lib/types/db/shared-types"
+import type { NewStudentDataSharingConsent, StudentDataSharingConsent } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
 type PatchConsentResponse = ApiRouteMap[`/api/students/${NoSlashString}/consent`]["PATCH"]["res"]
@@ -61,7 +62,57 @@ const updateStudentDataSharingConsent: ApiNextFunction<PatchConsentResponse, Pat
 
   const dbClient = getDbClient()
 
-  const upsertedConsentId = await dbClient.studentDataSharingConsents.upsertStudentDataSharingConsent(studentId, upsertConsentData)
+  const currentStudentDataSharingConsent: StudentDataSharingConsent | null = await dbClient.studentDataSharingConsents.getStudentDataSharingConsent(studentId)
+
+  const upsertedConsentId: string = await dbClient.studentDataSharingConsents.upsertStudentDataSharingConsent(studentId, upsertConsentData)
+
+  if (currentStudentDataSharingConsent) {
+    try {
+      await dbClient.auditLogs.createAuditEntry({
+        created: {
+          by: {
+            entraUserId: principal.id,
+            fallbackName: principal.displayName
+          },
+          at: new Date()
+        },
+        action: "UPDATE",
+        resource: "StudentDataSharingConsent",
+        resourceId: upsertedConsentId,
+        metaData: {
+          parentResource: "Student",
+          parentResourceId: studentId
+        }
+      })
+    } catch (error) {
+      logger.errorException(error, "Failed to create audit entry when updating StudentDataSharingConsentId {StudentDataSharingConsentId}", upsertedConsentId)
+    }
+
+    return {
+      consentId: upsertedConsentId
+    }
+  }
+
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "CREATE",
+      resource: "StudentDataSharingConsent",
+      resourceId: upsertedConsentId,
+      metaData: {
+        parentResource: "Student",
+        parentResourceId: studentId
+      }
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when creating StudentDataSharingConsentId {StudentDataSharingConsentId}", upsertedConsentId)
+  }
 
   return {
     consentId: upsertedConsentId

@@ -90,7 +90,29 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
     emailAlertReceivers: messageToUpdate.emailAlertReceivers || [] // in case the existing message doesn't have emailAlertReceivers
   }
 
-  const updatedMessageId = await dbClient.documents.updateStudentDocumentMessage(documentId, messageId, updatedMessageData)
+  const updatedMessageId: string = await dbClient.documents.updateStudentDocumentMessage(documentId, messageId, updatedMessageData)
+
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "UPDATE",
+      resource: "StudentDocumentMessage",
+      resourceId: updatedMessageId,
+      metaData: {
+        parentResource: "StudentDocument",
+        parentResourceId: documentId,
+        schoolId: currentDocument.school.schoolNumber
+      }
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when updating StudentDocumentMessageId {StudentDocumentMessageId}", updatedMessageId)
+  }
 
   try {
     await dbClient.importantStuff.updateStudentLastActivityTimestamp(studentId, currentDocument.school)

@@ -90,9 +90,31 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
 
   const dbClient: IDbClient = getDbClient()
 
-  const documentId = await dbClient.documents.createStudentDocument(newDocument)
+  const documentId: string = await dbClient.documents.createStudentDocument(newDocument)
 
-  logger.info(`Document created with ID ${documentId} by user ${principal.displayName} (${principal.id})`)
+  logger.info(`Student document created with ID ${documentId} by user ${principal.displayName} (${principal.id})`)
+
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "CREATE",
+      resource: "StudentDocument",
+      resourceId: documentId,
+      metaData: {
+        parentResource: "Student",
+        parentResourceId: studentId,
+        schoolId: newDocument.school.schoolNumber
+      }
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when creating StudentDocumentId {StudentDocumentId}", documentId)
+  }
 
   try {
     await dbClient.importantStuff.updateStudentLastActivityTimestamp(studentId, newDocumentData.school)
@@ -106,20 +128,46 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
     )
   }
 
-  if (newDocument.emailAlertReceivers.length > 0) {
-    const emailAlert: NewDbEmailAlert = {
-      type: "DOCUMENT_CREATED",
-      documentId: new ObjectId(documentId),
-      receivers: newDocument.emailAlertReceivers,
-      status: "QUEUED",
-      created: editorData
+  if (newDocument.emailAlertReceivers.length === 0) {
+    return {
+      documentId
     }
+  }
+
+  const emailAlert: NewDbEmailAlert = {
+    type: "DOCUMENT_CREATED",
+    documentId: new ObjectId(documentId),
+    receivers: newDocument.emailAlertReceivers,
+    status: "QUEUED",
+    created: editorData
+  }
+
+  try {
+    const emailAlertId: string = await dbClient.emailAlerts.createEmailAlert(emailAlert)
 
     try {
-      await dbClient.emailAlerts.createEmailAlert(emailAlert)
+      await dbClient.auditLogs.createAuditEntry({
+        created: {
+          by: {
+            entraUserId: principal.id,
+            fallbackName: principal.displayName
+          },
+          at: new Date()
+        },
+        action: "CREATE",
+        resource: "EmailAlert",
+        resourceId: emailAlertId,
+        metaData: {
+          parentResource: "StudentDocument",
+          parentResourceId: documentId,
+          schoolId: newDocument.school.schoolNumber
+        }
+      })
     } catch (error) {
-      logger.errorException(error, "Failed to create email alert for document {documentId} for student {studentId}. Returning documentId regardless, alert will not be sent...", documentId, studentId)
+      logger.errorException(error, "Failed to create audit entry when creating EmailAlertId {EmailAlertId} for new student document", emailAlertId)
     }
+  } catch (error) {
+    logger.errorException(error, "Failed to create email alert for document {documentId} for student {studentId}. Returning documentId regardless, alert will not be sent...", documentId, studentId)
   }
 
   return {

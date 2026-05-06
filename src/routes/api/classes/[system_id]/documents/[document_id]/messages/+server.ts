@@ -1,4 +1,5 @@
 import type { RequestHandler } from "@sveltejs/kit"
+import { logger } from "@vestfoldfylke/loglady"
 import { validateDocumentMessage } from "$lib/data-validation/document-message-validation"
 import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
 import { getStudentsFromCache } from "$lib/server/cache/students-cache"
@@ -74,7 +75,29 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
     throw new HTTPError(404, "Document not found, cannot add message to non-existing document...")
   }
 
-  const messageId = await dbClient.documents.addGroupDocumentMessage(documentId, newMessage)
+  const messageId: string = await dbClient.documents.addGroupDocumentMessage(documentId, newMessage)
+
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "CREATE",
+      resource: "GroupDocumentMessage",
+      resourceId: messageId,
+      metaData: {
+        parentResource: "GroupDocument",
+        parentResourceId: documentId,
+        schoolId: currentDocument.school.schoolNumber
+      }
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when creating GroupDocumentMessageId {GroupDocumentMessageId}", messageId)
+  }
 
   return {
     messageId
