@@ -103,7 +103,11 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
         action: "UPDATE",
         resource: "ImportantStuff",
         resourceId: importantStuffId,
+        resourceName: "",
         metaData: {
+          data: JSON.stringify({
+            studentName: currentStudent.name
+          }),
           parentResource: "Student",
           parentResourceId: studentId,
           schoolId: upsertStudentImportantStuffData.school.schoolNumber
@@ -130,7 +134,11 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
       action: "CREATE",
       resource: "ImportantStuff",
       resourceId: importantStuffId,
+      resourceName: "",
       metaData: {
+        data: JSON.stringify({
+          studentName: currentStudent.name
+        }),
         parentResource: "Student",
         parentResourceId: studentId,
         schoolId: upsertStudentImportantStuffData.school.schoolNumber

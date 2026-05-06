@@ -64,6 +64,7 @@ const addSchool: ApiNextFunction<AddSchoolResponse, AddSchoolBody> = async ({ pr
       action: "CREATE",
       resource: "School",
       resourceId: schoolId,
+      resourceName: newSchool.name,
       metaData: {
         parentResource: "SYSTEM"
       }

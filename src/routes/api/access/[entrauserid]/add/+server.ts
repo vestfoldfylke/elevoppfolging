@@ -156,6 +156,7 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
       action: "CREATE",
       resource: "Access",
       resourceId: updatedAccessId,
+      resourceName: accessEntryInput.type,
       metaData: {
         data: JSON.stringify(accessEntryInput),
         parentResource: "School",

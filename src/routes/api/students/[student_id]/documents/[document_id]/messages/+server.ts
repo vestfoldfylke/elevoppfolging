@@ -106,7 +106,11 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
       action: "CREATE",
       resource: "StudentDocumentMessage",
       resourceId: messageId,
+      resourceName: "",
       metaData: {
+        data: JSON.stringify({
+          studentName: student.name
+        }),
         parentResource: "StudentDocument",
         parentResourceId: documentId,
         schoolId: currentDocument.school.schoolNumber
@@ -157,8 +161,12 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
         action: "CREATE",
         resource: "EmailAlert",
         resourceId: emailAlertId,
+        resourceName: "",
         metaData: {
-          data: JSON.stringify({ documentId }),
+          data: JSON.stringify({
+            documentId,
+            studentName: student.name
+          }),
           parentResource: "StudentDocumentMessage",
           parentResourceId: messageId,
           schoolId: currentDocument.school.schoolNumber

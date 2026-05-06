@@ -106,7 +106,11 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
       action: "CREATE",
       resource: "StudentDocument",
       resourceId: documentId,
+      resourceName: "",
       metaData: {
+        data: JSON.stringify({
+          studentName: student.name
+        }),
         parentResource: "Student",
         parentResourceId: studentId,
         schoolId: newDocument.school.schoolNumber
@@ -157,7 +161,11 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
         action: "CREATE",
         resource: "EmailAlert",
         resourceId: emailAlertId,
+        resourceName: "",
         metaData: {
+          data: JSON.stringify({
+            studentName: student.name
+          }),
           parentResource: "StudentDocument",
           parentResourceId: documentId,
           schoolId: newDocument.school.schoolNumber

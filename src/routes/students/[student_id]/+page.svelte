@@ -39,7 +39,8 @@
       },
       action: "OPEN",
       resource: "Student",
-      resourceId: data.student._id
+      resourceId: data.student._id,
+      resourceName: data.student.name
     }
 
     // we don't need to await this since we don't need to know if it goes through or not
