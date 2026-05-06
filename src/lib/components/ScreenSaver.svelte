@@ -30,25 +30,33 @@
     }, inactivityTimeoutSeconds * 1000)
   }
 
+  let lastReset = 0
+  const onActivity = () => {
+    const now = Date.now()
+    if (now - lastReset < 1000) return
+    lastReset = now
+    resetTimer()
+  }
+
   $effect(() => {
-    // 1. Initialize the timer on mount
+    // Initialize the timer on mount
     resetTimer()
 
-    // 2. Add real user activity listeners to reset the timer
+    // Add real user activity listeners to reset the timer
     const activityEvents = ["mousedown", "mousemove", "keydown", "scroll", "touchstart"]
 
     activityEvents.forEach((event) => {
-      window.addEventListener(event, resetTimer, { passive: true })
+      window.addEventListener(event, onActivity, { passive: true })
     })
 
-    // 3. Clean up the timer and event listeners when the effect destroys
+    // Clean up the timer and event listeners when the effect destroys
     return () => {
       if (timeoutId) {
         clearTimeout(timeoutId)
       }
 
       activityEvents.forEach((event) => {
-        window.removeEventListener(event, resetTimer)
+        window.removeEventListener(event, onActivity)
       })
     }
   })
