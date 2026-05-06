@@ -31,7 +31,8 @@
     },
     user: "",
     action: "",
-    resource: ""
+    resource: "",
+    resourceIdentifier: ""
   })
 
   let isDisabled: DisabledSearch = $derived.by(() => {
@@ -131,13 +132,18 @@
           </ds-field>
       
           <ds-field class="ds-field">
-            <label for="audit-resource-search" class="ds-label" data-weight="medium">Velg ressurs</label>
+            <label for="audit-resource-search" class="ds-label" data-weight="medium">Velg ressurstype</label>
             <select id="audit-resource-search" class="ds-input" bind:value={searchTerms.resource}>
-              <option value="" selected>Alle ressurser</option>
+              <option value="" selected>Alle ressurstyper</option>
               {#each auditResourceDisplayNameEntries as auditResourceEntry}
                 <option value={auditResourceEntry[0]}>{auditResourceEntry[1].plural}</option>
               {/each}
             </select>
+          </ds-field>
+
+          <ds-field class="ds-field">
+            <label for="audit-resource-name-search" class="ds-label" data-weight="medium">RessursId / RessursNavn</label>
+            <input id="audit-resource-name-search" class="ds-input" placeholder="Søk etter Ressurs" type="text" bind:value={searchTerms.resourceIdentifier} />
           </ds-field>
         </div>
       </div>
@@ -157,8 +163,9 @@
           <th>Dato</th>
           <th>Bruker</th>
           <th>Handling</th>
-          <th>Ressurs</th>
+          <th>RessursType</th>
           <th>RessursId</th>
+          <th>RessursNavn</th>
         </tr>
       </thead>
       <tbody>
@@ -178,8 +185,11 @@
                   <pre>{getStringifiedMetadata(auditEntry.metaData)}</pre>
                 </div>
               {:else}
-                {auditEntry.resourceId || "N/A"}
+                {auditEntry.resourceId || ""}
               {/if}
+            </td>
+            <td>
+              {auditEntry.resourceName || ""}
             </td>
           </tr>
         {/each}

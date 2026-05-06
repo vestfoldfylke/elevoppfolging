@@ -795,6 +795,7 @@ export type AuditSearchTerms = {
   user: string
   action: "" | AuditEntry["action"]
   resource: "" | AuditEntry["resource"]
+  resourceIdentifier: string
 }
 
 export type AuditSearchQueryResult = {
