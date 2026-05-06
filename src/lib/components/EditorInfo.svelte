@@ -8,9 +8,10 @@
     timestamp?: boolean
     modifiedIndicator?: boolean
     style?: string
+    prefix?: string
   }
 
-  let { created, modified, timestamp = false, modifiedIndicator = false, style }: EditorInfoProps = $props()
+  let { created, modified, timestamp = false, modifiedIndicator = false, style, prefix }: EditorInfoProps = $props()
 </script>
 
-<div class="ds-paragraph" data-size="xs" style={style || ""}>{created?.by.fallbackName ?? modified.by.fallbackName} {timestamp ? prettifyDateTime(created?.at ?? modified.at) : prettifyDate(created?.at ?? modified.at)}{ modifiedIndicator && modified.at > (created?.at ?? modified.at) ? " Redigert" : ""}</div>
+<div class="ds-paragraph" data-size="xs" style={style || ""}>{prefix ?? ""}{created?.by.fallbackName ?? modified.by.fallbackName} {timestamp ? prettifyDateTime(created?.at ?? modified.at) : prettifyDate(created?.at ?? modified.at)}{ modifiedIndicator && modified.at > (created?.at ?? modified.at) ? " Redigert" : ""}</div>

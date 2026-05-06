@@ -96,6 +96,13 @@
     <button id="document-modal-{document._id}-open" class="ds-button card-button" onclick={() => handleDocumentOpen(document)} data-size="lg" command="show-modal" commandfor="document-modal-{document._id}" data-variant="tertiary">{document.template.name}: {editableDocument.title}</button>
     <EditorInfo created={document.created} modified={document.modified} timestamp={true} modifiedIndicator={true} style="margin: 0;" />
   </div>
+  {#if document.messages.length > 0}
+    <div class="ds-card__block">
+      <div class="ds-label" data-weight="medium" data-size="xs">
+        <EditorInfo created={document.messages[0].created} modified={document.messages[0].modified} timestamp={false} modifiedIndicator={false} style="margin: 0;" prefix="{document.messages.length} oppfølginger / ny informasjon. Siste oppfølging fra " />
+      </div>
+    </div>
+  {/if}
 </div>
 
 <dialog class="ds-dialog document-dialog" data-placement="center" id="document-modal-{document._id}">
