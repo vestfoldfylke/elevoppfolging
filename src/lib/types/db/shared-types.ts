@@ -2,7 +2,7 @@ import type { Binary, ObjectId } from "mongodb"
 
 /** Undervisningsforhold & Skoleressurs */
 export type Teacher = {
-  /** entra objectid knyttet til en bruker i Users-collection hvis læreren finnes der */
+  /** entra ObjectId knyttet til en bruker i Users-collection hvis læreren finnes der */
   entraUserId: string | null
   systemId: string
   feideName: string
@@ -105,7 +105,7 @@ export type MainSchool = SchoolInfo & {
 
 export type Source = "AUTO" | "MANUAL"
 
-/** En elev i db for denne appen */
+/** En elev i db for denne app */
 export type NewAppStudent = {
   /** FINT system-id for eleven */
   systemId: string
@@ -740,7 +740,7 @@ export type MetricCount = {
   splitMetricByLabels?: boolean
   /** Only applicable when <u>splitMetricByLabels</u> is <b>true</b>.<br />
    *  If set to false, labels will not be added to the metric (<b>metricResultName</b> will be added anyway).<br />
-   *  If not set or set to true, splitted labels will be added to the metric (<b>metricResultName</b> will be added anyway).<br />
+   *  If not set or set to true, split labels will be added to the metric (<b>metricResultName</b> will be added anyway).<br />
    *  Default behavior: true */
   includeLabelsInSplit?: boolean
 }

@@ -37,7 +37,6 @@
     await goto("/system/schools", { invalidateAll: true })
   }
 
-  let schoolLeaderForm: HTMLFormElement | undefined = $state()
   let selectedEntraUserId = $state("")
 
   const addSchoolLeaderAccess = async (): Promise<void> => {
@@ -88,7 +87,7 @@
     {/if}
     {#if addSchoolLeaderOpen}
       <h3>Legg til skoleleder</h3>
-      <form bind:this={schoolLeaderForm}>
+      <form>
         <div class="form-group">
           <!-- TODO - lag en people select med litt søk og fancy, og bind mulighet -->
           <label for="appUser">Velg bruker</label>
