@@ -7,6 +7,7 @@
   import type { StudentAccessPerson } from "$lib/types/app-types"
   import type { DocumentMessage, DocumentMessageInput, GroupDocument, StudentDocument } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
+    import EditorInfo from "../EditorInfo.svelte";
   import EmailAlertSelector from "./EmailAlertSelector.svelte"
 
   type PageProps = {
@@ -134,13 +135,17 @@
 </script>
 
 <div class="message">
+
+  <div class="message-header-tags">
+    <span class="ds-tag" data-color="accent">
+      <span class="material-symbols-outlined" style="margin-right: var(--ds-size-2);">chat_info</span>
+      {message.messageId ? "Oppdatering" : "Ny oppdatering"}
+    </span>
+  </div>
+
   {#if editMode}
     <form bind:this={messageForm}>
       {#if editableMessage.type === "update"}
-        {#if !message.messageId}
-          <h2 class="ds-heading">Ny oppfølging / informasjon</h2>
-        {/if}
-
         <ds-field class="ds-field content-item">
           <label for="message-title-{message.messageId || document._id}" class="ds-label" data-weight="medium">
             Tittel
@@ -151,19 +156,19 @@
         
         <ds-field class="ds-field content-item">
           <label for="message-content-{message.messageId || document._id}" class="ds-label" data-weight="medium">
-            Oppfølging / informasjon
+            Oppdatering
             <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
           </label>
           <textarea required class="ds-input" name="messageContent" id="message-content-{message.messageId || document._id}" rows={5} bind:value={editableMessage.content.text}></textarea>
         </ds-field>
       {/if}
 
-      <hr aria-hidden="true" class="ds-divider"/>
-
       {#if emailAlertAvailable && studentAccessPersons}
+        <hr aria-hidden="true" class="ds-divider"/>
+
         <EmailAlertSelector
           id="email-alert-{message.messageId}-{document._id}"
-          legendText="Følgende personer skal varsles på e-post når oppfølgingen / informasjonen lagres"
+          legendText="Følgende personer skal varsles på e-post når oppdateringen lagres"
           {studentAccessPersons}
           {studentDataSharingConsent}
           schoolNumber={document.school.schoolNumber}
@@ -171,9 +176,11 @@
           bind:emailAlertReceivers={editableMessage.emailAlertReceivers}
         />
       {/if}
-
     </form>
   {:else}
+    <h2 class="ds-heading" data-size="xs">{message.content.title}</h2>
+    <EditorInfo created={message.modified} modified={message.modified} timestamp={true} modifiedIndicator={true} />
+    
     <p class="ds-paragraph pre-wrap-whitespace content-item">
       {message.content.text}
     </p>
@@ -188,13 +195,39 @@
     {/if}
     <button class="ds-button" data-variant="secondary" onclick={callBackOnSuccessOrCancel}><span class="material-symbols-outlined">close</span>Avbryt</button>
   </div>
-{:else if canEditDocumentMessage(page.data.authenticatedPrincipal, message)}
-  <div class="message-actions">
+{:else if canEditDocumentMessage(page.data.authenticatedPrincipal, message) || message.emailAlertReceivers.length > 0}
+  <div class="message-footer">
+    <div class="message-info">
+      {#if message.emailAlertReceivers.length > 0}
+        <span class="ds-tag" data-color="neutral" data-size="sm">
+          <span class="material-symbols-outlined" style="margin-right: var(--ds-size-2);">mail</span>
+          <button data-popover="inline" popoverTarget="email-receivers-{document._id}-{message.messageId}">{message.emailAlertReceivers.length} person{message.emailAlertReceivers.length > 1 ? "er" : ""}</button>&nbsp;varslet på e-post
+        </span>
+
+        <div id="email-receivers-{document._id}-{message.messageId}" class="ds-popover" popover="manual" data-placement="top">
+          {#each message.emailAlertReceivers as emailReceiver}
+            <p class="ds-paragraph" data-size="xs">{emailReceiver}</p>
+          {/each}
+        </div>
+      {/if}
+    </div>
+    
     <button class="ds-button" data-variant="secondary" data-size="sm" onclick={() => editMode = true}><span class="material-symbols-outlined">edit</span>Rediger</button>
   </div>
 {/if}
 
 <style>
+  .message-header-tags {
+    margin-bottom: var(--ds-size-2);
+  }
+
+  .message-footer {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+  }
+
   .message-actions {
     display: flex;
     gap: 0.5rem;

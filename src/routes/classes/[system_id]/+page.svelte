@@ -219,7 +219,7 @@
             </ul>
           </div>
         </div>
-        <NewDocument accessSchools={[selectedClass.school]} documentContentTemplates={data.documentContentTemplates} groupSystemId={selectedClass.systemId} />
+        <NewDocument accessSchools={[selectedClass.school]} documentContentTemplates={data.documentContentTemplates} groupSystemId={selectedClass.systemId} groupName={selectedClass.name} />
       </div>
     </div>
 
