@@ -134,7 +134,7 @@
 {/snippet}
 
 {#if contentItem.type === "header"}
-  <p class="ds-heading content-item">{contentItem.value}</p>
+  <p class="ds-heading content-item" data-size="xs">{contentItem.value}</p>
 {/if}
 
 {#if contentItem.type === "paragraph"}
