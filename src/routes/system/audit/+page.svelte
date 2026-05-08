@@ -143,7 +143,7 @@
 
           <ds-field class="ds-field">
             <label for="audit-resource-name-search" class="ds-label" data-weight="medium">RessursId / RessursNavn</label>
-            <input id="audit-resource-name-search" class="ds-input" placeholder="Søk etter Ressurs" type="text" bind:value={searchTerms.resourceIdentifier} />
+            <input id="audit-resource-name-search" class="ds-input" placeholder="Søk etter ressurs" type="text" bind:value={searchTerms.resourceIdentifier} />
           </ds-field>
         </div>
       </div>
