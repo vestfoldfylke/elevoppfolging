@@ -7,7 +7,7 @@
   import type { StudentAccessPerson } from "$lib/types/app-types"
   import type { DocumentMessage, DocumentMessageInput, GroupDocument, StudentDocument } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
-    import EditorInfo from "../EditorInfo.svelte";
+  import EditorInfo from "../EditorInfo.svelte"
   import EmailAlertSelector from "./EmailAlertSelector.svelte"
 
   type PageProps = {
