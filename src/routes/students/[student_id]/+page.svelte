@@ -374,7 +374,7 @@
             </ul>
           </div>
         </div>
-        <NewDocument {accessSchools} documentContentTemplates={data.documentContentTemplates} studentId={data.student._id} studentDataSharingConsent={data.studentDataSharingConsent?.consent} studentAccessPersons={data.studentAccessPersons} />
+        <NewDocument {accessSchools} documentContentTemplates={data.documentContentTemplates} studentId={data.student._id} studentName={data.student.name} studentDataSharingConsent={data.studentDataSharingConsent?.consent} studentAccessPersons={data.studentAccessPersons} />
       </div>
     </div>
 

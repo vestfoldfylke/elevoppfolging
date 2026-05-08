@@ -148,7 +148,9 @@
       <DocumentContentItem bind:contentItem={currentDocument.content[index]} {index} editMode={true} />
     {/each}
 
-    {#if studentId }
+    {#if studentId}
+      <hr class="ds-divider" />
+
       <fieldset class="ds-fieldset content-item">
         <legend class="ds-label" data-weight="medium">
           Tilgangsstyring
@@ -166,6 +168,8 @@
     {/if}
 
     {#if emailAlertAvailable && studentAccessPersons}
+      <hr class="ds-divider" />
+      
       <EmailAlertSelector
         id="email-alert-{documentId}"
         legendText="Følgende personer skal varsles på e-post når notatet lagres"
