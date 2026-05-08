@@ -96,8 +96,9 @@
     <div class="ds-paragraph" data-size="xs" style="margin-bottom: var(--ds-size-2);">{document.school.name}</div>
     <button id="document-modal-{document._id}-open" class="ds-button card-button" onclick={() => handleDocumentOpen(document)} data-size="lg" command="show-modal" commandfor="document-modal-{document._id}" data-variant="tertiary" aria-label="{document.template.name}: {editableDocument.title}">{document.template.name}</button>
     <p class="ds-paragraph" style="margin: 0;">{document.title}</p>
-    <EditorInfo created={document.created} modified={document.modified} timestamp={true} modifiedIndicator={true} style="margin-top: var(--ds-size-2);" />
+    <EditorInfo created={document.created} modified={document.modified} timestamp={false} modifiedIndicator={true} style="margin-top: var(--ds-size-2);" />
   </div>
+
   {#if document.messages.length > 0}
     <div class="ds-card__block">
       <div class="ds-label" data-weight="medium" data-size="xs">
