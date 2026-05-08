@@ -109,10 +109,12 @@ export const getStudentsFromCache = async (principalAccess: PrincipalAccess): Pr
         name: student.name,
         source: student.source,
         enrollmentsWithinViewAccessWindow: student.enrollmentsWithinViewAccessWindow,
-        principalAccessForStudent: studentAccessInfo
+        principalAccessForStudent: studentAccessInfo,
+        hasBlockedAddress: student.hasBlockedAddress ?? false
       })
     }
   }
+
   return studentsWithAccessInfo
 }
 

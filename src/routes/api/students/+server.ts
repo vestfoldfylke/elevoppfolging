@@ -107,7 +107,8 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
         contactTeacherGroupMemberships: [],
         teachingGroupMemberships: []
       }
-    ]
+    ],
+    hasBlockedAddress: newManualStudentData.hasBlockedAddress ?? false
   }
 
   const studentId: string = await dbClient.students.createManualStudent(newAppStudent)
@@ -123,7 +124,8 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
     source: newAppStudent.source,
     studentEnrollments: newAppStudent.studentEnrollments,
     created: newAppStudent.created,
-    modified: newAppStudent.modified
+    modified: newAppStudent.modified,
+    hasBlockedAddress: newAppStudent.hasBlockedAddress ?? false
   }
 
   await upsertStudentInCache(frontendStudent)

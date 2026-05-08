@@ -28,6 +28,7 @@
   let updateManualStudentForm: HTMLFormElement | undefined = $state()
   let updateManualStudentFnr: string = $derived.by(() => data.manualStudent.ssn)
   let updateManualStudentName: string = $derived.by(() => data.manualStudent.name)
+  let updateManualStudentHasBlockedAddress: boolean = $derived.by(() => data.manualStudent.hasBlockedAddress ?? false)
 
   const updateManualStudent = async (): Promise<void> => {
     if (!updateManualStudentForm?.reportValidity()) {
@@ -45,6 +46,7 @@
     const updateManualStudentInput: UpdateManualStudentInput = {
       ssn: updateManualStudentFnr,
       name: updateManualStudentName,
+      hasBlockedAddress: updateManualStudentHasBlockedAddress,
       school: currentSchool,
       studentId: data.manualStudent._id
     }
@@ -64,6 +66,15 @@
     updateManualStudentEdit = false
     updateManualStudentFnr = data.manualStudent.ssn
     updateManualStudentName = data.manualStudent.name
+    updateManualStudentHasBlockedAddress = data.manualStudent.hasBlockedAddress ?? false
+  }
+
+  const isDisabled = (): boolean => {
+    return (
+      updateManualStudentFnr === data.manualStudent.ssn &&
+      updateManualStudentName === data.manualStudent.name &&
+      updateManualStudentHasBlockedAddress === (data.manualStudent.hasBlockedAddress ?? false)
+    )
   }
 </script>
 
@@ -83,7 +94,11 @@
         <h2 class="ds-heading">Fødselsnummer</h2>
         <p class="ds-paragraph">{updateManualStudentFnr}</p>
       </div>
-      <div class="manual-student-edit-action">
+      <div>
+        <h2 class="ds-heading">Adressesperre</h2>
+        <p class="ds-paragraph">{updateManualStudentHasBlockedAddress ? "Ja" : "Nei"}</p>
+      </div>
+      <div>
         <button onclick={() => updateManualStudentEdit = true} class="ds-button">
           <span class="material-symbols-outlined">edit</span>
           Rediger
@@ -112,23 +127,30 @@
             <input class="ds-input" type="text" id="name" pattern={nameValidation.pattern.source} minlength={nameValidation.minLength} maxlength={nameValidation.maxLength} bind:value={updateManualStudentName} required>
           </div>
         </ds-field>
+
+        <ds-field class="ds-field content-item">
+          <label class="ds-label" data-weight="medium" for="blockedAddress" data-clickdelegatefor="blockedAddress">Adressesperre</label>
+          <input class="ds-input" type="checkbox" id="blockedAddress" bind:checked={updateManualStudentHasBlockedAddress}>
+        </ds-field>
       </form>
 
       <div class="manual-student-save-actions">
-        <AsyncButton onClick={updateManualStudent} buttonText="Lagre" iconName="save" reloadPageDataOnSuccess={true} disabled={updateManualStudentFnr === data.manualStudent.ssn && updateManualStudentName === data.manualStudent.name} />
+        <AsyncButton onClick={updateManualStudent} buttonText="Lagre" iconName="save" reloadPageDataOnSuccess={true} disabled={isDisabled()} />
         <button class="ds-button" type="button" data-variant="secondary" onclick={abortUpdateManualStudent}><span class="material-symbols-outlined">close</span>Avbryt</button>
       </div>
     </div>
   {/if}
 </div>
 
-<style>  
-  .update-manual-student-link {
-      padding-bottom: var(--ds-size-4);
+<style>
+  .update-manual-student {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ds-size-4);
   }
 
-  .manual-student-edit-action {
-      padding-top: var(--ds-size-4);
+  .update-manual-student-link {
+      padding-bottom: var(--ds-size-4);
   }
 
   .manual-student-save-actions {

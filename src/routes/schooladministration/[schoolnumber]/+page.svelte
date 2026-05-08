@@ -414,6 +414,7 @@
   let addManualStudentForm: HTMLFormElement | undefined = $state()
   let newManualStudentFnr = $state("")
   let newManualStudentName = $state("")
+  let newManualStudentHasBlockedAddress = $state(false)
   let newManualStudentFormOpen = $state(false)
 
   const addNewManualStudent = async (): Promise<void> => {
@@ -432,6 +433,7 @@
     const newManualStudentInput: NewManualStudentInput = {
       ssn: newManualStudentFnr,
       name: newManualStudentName,
+      hasBlockedAddress: newManualStudentHasBlockedAddress,
       school: currentSchool
     }
 
@@ -467,6 +469,7 @@
     newManualStudentFormOpen = false
     newManualStudentFnr = ""
     newManualStudentName = ""
+    newManualStudentHasBlockedAddress = false
   }
 </script>
 
@@ -771,6 +774,11 @@
                   <input class="ds-input" type="text" id="name" pattern={nameValidation.pattern.source} minlength={nameValidation.minLength} maxlength={nameValidation.maxLength} bind:value={newManualStudentName} required>
                 </div>
               </ds-field>
+
+              <ds-field class="ds-field content-item">
+                <label class="ds-label" data-weight="medium" for="blockedAddress" data-clickdelegatefor="blockedAddress">Adressesperre</label>
+                <input class="ds-input" type="checkbox" id="blockedAddress" bind:checked={newManualStudentHasBlockedAddress}>
+              </ds-field>
             </form>
   
             <div class="manual-student-actions">
@@ -788,6 +796,7 @@
                   <th aria-sort="ascending">
                     <button type="button">Navn</button>
                   </th>
+                  <th>Adressesperre</th>
                   <th>
                     Rediger
                   </th>
@@ -798,6 +807,13 @@
                 <tr>
                   <td>
                     <a href={`/students/${manualStudent._id}`} class="ds-link" rel="noopener noreferrer">{manualStudent.name}</a>
+                  </td>
+                  <td>
+                    {#if manualStudent.hasBlockedAddress === true}
+                      <span class="ds-tag" data-color="danger">Ja</span>
+                    {:else}
+                      Nei
+                    {/if}
                   </td>
                   <td>
                     <a href={`${page.url.pathname}/manualstudents/${manualStudent._id}`} class="ds-link" rel="noopener noreferrer">Rediger</a>

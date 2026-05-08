@@ -103,7 +103,8 @@ const layoutLoad: ServerLoadNextFunction<RootLayoutData> = async ({ principal })
       enrollmentsWithinViewAccessWindow: student.enrollmentsWithinViewAccessWindow,
       dataSharingConsent: sharingConsentByStudentId[student._id]?.consent || false,
       importantStuff: [],
-      lastActivityTimestamp
+      lastActivityTimestamp,
+      hasBlockedAddress: student.hasBlockedAddress ?? false
     }
 
     // Add important stuff for schools the user has access to

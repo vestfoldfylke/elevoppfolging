@@ -50,6 +50,11 @@ body {
     "YTLC" 500;
 }
 
+/* Selector comes from designsystemet, but for some reason it doesn't work from the designsystemet alone. Is it being overridden somewhere? Can't find it... */
+.ds-field:has(input:is([type="radio"], [type="checkbox"])) > label {
+  padding-inline-start: var(--dsc-field-content-spacing);
+}
+
 .page-content {
   margin-top: var(--ds-size-8);
   flex: 1;

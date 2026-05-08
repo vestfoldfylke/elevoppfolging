@@ -118,6 +118,8 @@ export type NewAppStudent = {
   created: EditorData
   modified: EditorData
   source: Source
+  /** Based on elev.person.bostedsadresse.adresselinje from FINT */
+  hasBlockedAddress?: boolean
 }
 
 export type AppStudent = NewAppStudent & {
@@ -133,6 +135,7 @@ export type UpdateAppStudent = AppStudent
 export type NewManualStudentInput = {
   ssn: string
   name: string
+  hasBlockedAddress: boolean
   school: School
 }
 
