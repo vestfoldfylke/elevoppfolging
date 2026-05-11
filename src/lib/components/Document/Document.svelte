@@ -96,13 +96,13 @@
     <div class="ds-paragraph" data-size="xs" style="margin-bottom: var(--ds-size-2);">{document.school.name}</div>
     <button id="document-modal-{document._id}-open" class="ds-button card-button" onclick={() => handleDocumentOpen(document)} data-size="lg" command="show-modal" commandfor="document-modal-{document._id}" data-variant="tertiary" aria-label="{document.template.name}: {editableDocument.title}">{document.template.name}</button>
     <p class="ds-paragraph" style="margin: 0;">{document.title}</p>
-    <EditorInfo created={document.created} modified={document.modified} timestamp={false} modifiedIndicator={true} style="margin-top: var(--ds-size-2);" />
+    <EditorInfo editorInfo={document.created} isEdited={document.modified.at.getTime() > document.created.at.getTime()} timestamp={false} modifiedIndicator={true} style="margin-top: var(--ds-size-2);" />
   </div>
 
   {#if document.messages.length > 0}
     <div class="ds-card__block">
       <div class="ds-label" data-weight="medium" data-size="xs">
-        <EditorInfo created={document.messages[0].created} modified={document.messages[0].modified} timestamp={false} modifiedIndicator={false} style="margin: 0;" prefix="{document.messages.length} oppdatering{document.messages.length > 1 ? 'er' : ''}. Siste oppdatering fra " />
+        <EditorInfo editorInfo={document.messages[0].created} isEdited={document.messages[0].modified.at.getTime() > document.messages[0].created.at.getTime()} timestamp={false} modifiedIndicator={false} style="margin: 0;" prefix="{document.messages.length} oppdatering{document.messages.length > 1 ? 'er' : ''}. Siste oppdatering fra " />
       </div>
     </div>
   {/if}
@@ -126,7 +126,7 @@
 
       {#if !editMode}
         <h2 class="ds-heading">{editableDocument.title}</h2>
-        <EditorInfo created={document.created} modified={document.modified} timestamp={true} modifiedIndicator={true} />
+        <EditorInfo editorInfo={document.created} isEdited={document.modified.at.getTime() > document.created.at.getTime()} timestamp={true} modifiedIndicator={true} />
       {/if}
     </div>
     
