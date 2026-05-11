@@ -207,6 +207,8 @@
             <span class="material-symbols-outlined">filter_list</span>
           </button>
           <div id="documents-filter-action-container" class="ds-popover ds-dropdown" popover="auto" data-placement="bottom-end" data-variant="default">
+            <h2 class="ds-heading">Notattype filter</h2>
+            <hr class="ds-divider" />
             <ul class="ds-list">
               {#each documentTypes as documentType}
                 <li>
@@ -217,6 +219,8 @@
                 </li>
               {/each}
             </ul>
+            <hr class="ds-divider" />
+            <button class="ds-button" data-variant="tertiary" data-size="sm" type="button" onclick={() => selectedDocumentTypes = []} disabled={selectedDocumentTypes.length === 0}>Fjern alle filter</button>
           </div>
         </div>
         <NewDocument accessSchools={[selectedClass.school]} documentContentTemplates={data.documentContentTemplates} groupSystemId={selectedClass.systemId} groupName={selectedClass.name} />

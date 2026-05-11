@@ -198,6 +198,8 @@
 											</li>
 										{/each}
 									</ul>
+									<hr class="ds-divider" />
+									<button class="ds-button" data-variant="tertiary" data-size="sm" type="button" onclick={() => selectedFollowUpStudentCheckBoxes = []} disabled={selectedFollowUpStudentCheckBoxes.length === 0}>Fjern alle filter</button>
 								</div>
 							{/if}
 							{#if facilitationStudentCheckBoxes.length > 0}
@@ -214,6 +216,8 @@
 											</li>
 										{/each}
 									</ul>
+									<hr class="ds-divider" />
+									<button class="ds-button" data-variant="tertiary" data-size="sm" type="button" onclick={() => selectedFacilitationStudentCheckBoxes = []} disabled={selectedFacilitationStudentCheckBoxes.length === 0}>Fjern alle filter</button>
 								</div>
 							{/if}
 						</div>
