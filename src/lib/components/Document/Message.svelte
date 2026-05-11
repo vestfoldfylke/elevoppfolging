@@ -212,7 +212,9 @@
       {/if}
     </div>
     
-    <button class="ds-button" data-variant="secondary" data-size="sm" onclick={() => editMode = true}><span class="material-symbols-outlined">edit</span>Rediger</button>
+    {#if canEditDocumentMessage(page.data.authenticatedPrincipal, message)}
+      <button class="ds-button" data-variant="secondary" data-size="sm" onclick={() => editMode = true}><span class="material-symbols-outlined">edit</span>Rediger</button>
+    {/if}
   </div>
 {/if}
 
