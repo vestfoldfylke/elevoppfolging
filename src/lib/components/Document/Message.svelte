@@ -195,10 +195,10 @@
     {/if}
     <button class="ds-button" data-variant="secondary" onclick={callBackOnSuccessOrCancel}><span class="material-symbols-outlined">close</span>Avbryt</button>
   </div>
-{:else if canEditDocumentMessage(page.data.authenticatedPrincipal, message) || message.emailAlertReceivers.length > 0}
+{:else if canEditDocumentMessage(page.data.authenticatedPrincipal, message) || (message.emailAlertReceivers && message.emailAlertReceivers.length > 0)}
   <div class="message-footer">
     <div class="message-info">
-      {#if message.emailAlertReceivers.length > 0}
+      {#if message.emailAlertReceivers && message.emailAlertReceivers.length > 0}
         <span class="ds-tag" data-color="neutral" data-size="sm">
           <span class="material-symbols-outlined" style="margin-right: var(--ds-size-2);">mail</span>
           <button data-popover="inline" popoverTarget="email-receivers-{document._id}-{message.messageId}">{message.emailAlertReceivers.length} person{message.emailAlertReceivers.length > 1 ? "er" : ""}</button>&nbsp;varslet på e-post
