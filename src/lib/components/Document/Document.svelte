@@ -3,6 +3,7 @@
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import type { StudentAccessPerson } from "$lib/types/app-types"
   import type { AuditEntryInput, DocumentInput, GroupDocument, MetricCount, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
+  import { onMount } from "svelte";
   import EditorInfo from "../EditorInfo.svelte"
   import DocumentContent from "./DocumentContentItem.svelte"
   import DocumentEditor from "./DocumentEditor.svelte"
@@ -34,7 +35,18 @@
     )
   }
 
+  let documentDialog: HTMLDialogElement | undefined = $state()
+
+  onMount(() => {
+    if (documentDialog) {
+      window.document.body.appendChild(documentDialog) // Preserve dialog element, to avoid losing focus and backdrop
+    }
+    return () => documentDialog?.remove()
+  })
+
   const handleDocumentOpen = (document: StudentDocument | GroupDocument): void => {
+    documentDialog?.showModal()
+
     const metricBody: MetricCount = {
       name: studentName ? "StudentDocument_Open" : "GroupDocument_Open",
       description: `Number of times ${studentName ? "student" : "group"} documents has been opened`,
@@ -94,7 +106,7 @@
 <div class="ds-card document-card" data-variant="tinted" data-color="accent" data-clickdelegatefor="document-modal-{document._id}-open">
   <div class="ds-card__block">
     <div class="ds-paragraph" data-size="xs" style="margin-bottom: var(--ds-size-2);">{document.school.name}</div>
-    <button id="document-modal-{document._id}-open" class="ds-button card-button" onclick={() => handleDocumentOpen(document)} data-size="lg" command="show-modal" commandfor="document-modal-{document._id}" data-variant="tertiary" aria-label="{document.template.name}: {editableDocument.title}">{document.template.name}</button>
+    <button id="document-modal-{document._id}-open" class="ds-button card-button" onclick={() => handleDocumentOpen(document)} data-size="lg" data-variant="tertiary" aria-label="{document.template.name}: {editableDocument.title}">{document.template.name}</button>
     <p class="ds-paragraph" style="margin: 0;">{document.title}</p>
     <EditorInfo editorInfo={document.created} isEdited={document.modified.at.getTime() > document.created.at.getTime()} timestamp={false} modifiedIndicator={true} style="margin-top: var(--ds-size-2);" />
   </div>
@@ -108,7 +120,7 @@
   {/if}
 </div>
 
-<dialog class="ds-dialog document-dialog" data-placement="center" id="document-modal-{document._id}">
+<dialog bind:this={documentDialog} class="ds-dialog document-dialog" data-placement="center" id="document-modal-{document._id}">
   <button class="ds-button close-dialog-button" data-icon="true" data-variant="tertiary" type="button" aria-label="Lukk dialogvindu" data-color="neutral" command="close" commandfor="document-modal-{document._id}"></button>
   
   <div class="ds-dialog__block">
