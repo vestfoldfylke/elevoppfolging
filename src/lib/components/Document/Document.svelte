@@ -1,9 +1,9 @@
 <script lang="ts">
+  import { onMount } from "svelte"
   import { page } from "$app/state"
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import type { StudentAccessPerson } from "$lib/types/app-types"
   import type { AuditEntryInput, DocumentInput, GroupDocument, MetricCount, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
-  import { onMount } from "svelte";
   import EditorInfo from "../EditorInfo.svelte"
   import DocumentContent from "./DocumentContentItem.svelte"
   import DocumentEditor from "./DocumentEditor.svelte"
