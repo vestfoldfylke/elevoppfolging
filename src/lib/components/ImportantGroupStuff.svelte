@@ -91,7 +91,7 @@
   {:else}
     {#if groupImportantStuff?.modified && !editMode}
       <div class="card-footer-actions">
-        <EditorInfo created={groupImportantStuff.created} modified={groupImportantStuff.modified} />
+        <EditorInfo editorInfo={groupImportantStuff.modified} />
       </div>
     {/if}
   {/if}

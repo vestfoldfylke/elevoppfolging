@@ -3,15 +3,17 @@
   import { prettifyDate, prettifyDateTime } from "$lib/utils/dates"
 
   type EditorInfoProps = {
-    modified: EditorData
-    created?: EditorData
+    editorInfo: EditorData
+    isEdited?: boolean
     timestamp?: boolean
     modifiedIndicator?: boolean
     style?: string
     prefix?: string
   }
 
-  let { created, modified, timestamp = false, modifiedIndicator = false, style, prefix }: EditorInfoProps = $props()
+  let { editorInfo, isEdited = false, timestamp = false, modifiedIndicator = false, style, prefix }: EditorInfoProps = $props()
 </script>
 
-<div class="ds-paragraph" data-size="xs" style={style || ""}>{prefix ?? ""}{created?.by.fallbackName ?? modified.by.fallbackName} {timestamp ? prettifyDateTime(created?.at ?? modified.at) : prettifyDate(created?.at ?? modified.at)}{ modifiedIndicator && modified.at > (created?.at ?? modified.at) ? " Redigert" : ""}</div>
+<div class="ds-paragraph" data-size="xs" style={style || ""}>
+  {prefix ?? ""}{editorInfo.by.fallbackName} {timestamp ? prettifyDateTime(editorInfo.at) : prettifyDate(editorInfo.at)}{modifiedIndicator && isEdited ? " Redigert" : ""}
+</div>

@@ -110,7 +110,7 @@
   {:else}
     {#if studentDataSharingConsent?.modified && !editMode}
       <div class="card-footer-actions">
-        <EditorInfo created={studentDataSharingConsent.modified} modified={studentDataSharingConsent.modified} />
+        <EditorInfo editorInfo={studentDataSharingConsent.modified} />
       </div>
     {/if}
   {/if}
