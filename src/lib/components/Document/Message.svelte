@@ -179,7 +179,7 @@
     </form>
   {:else}
     <h2 class="ds-heading" data-size="xs">{message.content.title}</h2>
-    <EditorInfo created={message.modified} modified={message.modified} timestamp={true} modifiedIndicator={true} />
+    <EditorInfo created={message.created} modified={message.modified} timestamp={true} modifiedIndicator={true} />
     
     <p class="ds-paragraph pre-wrap-whitespace content-item">
       {message.content.text}
