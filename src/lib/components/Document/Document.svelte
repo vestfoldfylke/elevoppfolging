@@ -136,107 +136,109 @@
   let editMode = $state(false)
 </script>
 
-<div class="ds-card document-card" data-variant="tinted" data-color="accent" data-clickdelegatefor="document-modal-{document._id}-open">
-  <div class="ds-card__block">
-    <div class="ds-paragraph" data-size="xs" style="margin-bottom: var(--ds-size-2);">{document.school.name}</div>
-    <button id="document-modal-{document._id}-open" class="ds-button card-button" onclick={() => handleDocumentOpen(document)} data-size="lg" data-variant="tertiary" aria-label="{document.template.name}: {editableDocument.title}">{document.template.name}</button>
-    <p class="ds-paragraph" style="margin: 0;">{document.title}</p>
-    <EditorInfo editorInfo={document.created} isEdited={document.modified.at.getTime() > document.created.at.getTime()} timestamp={false} modifiedIndicator={true} style="margin-top: var(--ds-size-2);" />
-  </div>
-
-  {#if document.messages.length > 0}
+<div>
+  <div class="ds-card document-card" data-variant="tinted" data-color="accent" data-clickdelegatefor="document-modal-{document._id}-open">
     <div class="ds-card__block">
-      <div class="ds-label" data-weight="medium" data-size="xs">
-        <EditorInfo editorInfo={document.messages[0].created} isEdited={document.messages[0].modified.at.getTime() > document.messages[0].created.at.getTime()} timestamp={false} modifiedIndicator={false} style="margin: 0;" prefix="{document.messages.length} oppdatering{document.messages.length > 1 ? 'er' : ''}. Siste oppdatering fra " />
-      </div>
+      <div class="ds-paragraph" data-size="xs" style="margin-bottom: var(--ds-size-2);">{document.school.name}</div>
+      <button id="document-modal-{document._id}-open" class="ds-button card-button" onclick={() => handleDocumentOpen(document)} data-size="lg" data-variant="tertiary" aria-label="{document.template.name}: {editableDocument.title}">{document.template.name}</button>
+      <p class="ds-paragraph" style="margin: 0;">{document.title}</p>
+      <EditorInfo editorInfo={document.created} isEdited={document.modified.at.getTime() > document.created.at.getTime()} timestamp={false} modifiedIndicator={true} style="margin-top: var(--ds-size-2);" />
     </div>
-  {/if}
-</div>
 
-<dialog bind:this={documentDialog} class="ds-dialog document-dialog" data-placement="center" id="document-modal-{document._id}">
-  <button class="ds-button close-dialog-button" data-icon="true" data-variant="tertiary" type="button" aria-label="Lukk dialogvindu" data-color="neutral" command="close" commandfor="document-modal-{document._id}"></button>
-  
-  <div class="ds-dialog__block">
-    <div class="document-dialog-header">
-      <div class="document-dialog-header-tags">
-        <span class="ds-tag" data-color="accent" data-size="lg">
-          <span class="material-symbols-outlined" style="margin-right: var(--ds-size-2);">article</span>
-          {document.template.name}
-        </span>
-        <span class="ds-tag" data-color="brand1" data-size="lg">
-          <span class="material-symbols-outlined" style="margin-right: var(--ds-size-2);">school</span>
-          {studentName || groupName} - {editableDocument.school.name}
-        </span>
-      </div>
-
-      {#if !editMode}
-        <h2 class="ds-heading">{editableDocument.title}</h2>
-        <EditorInfo editorInfo={document.created} isEdited={document.modified.at.getTime() > document.created.at.getTime()} timestamp={true} modifiedIndicator={true} />
-      {/if}
-    </div>
-    
-    <div>
-      {#if !editMode}
-        {#each document.content as contentItem, index}
-          <DocumentContent {contentItem} editMode={false} {index} />
-        {/each}
-
-      {:else}
-        <DocumentEditor documentId={document._id} studentId={"student" in document ? document.student._id : undefined} groupSystemId={"group" in document ? document.group.systemId : undefined} bind:currentDocument={editableDocument} {accessSchools} closeEditor={() => { editMode = false; editableDocument = editableDocumentFromDocument(); }} />
-      {/if}
-
-      <div class="document-footer">
-        {#if !editMode}
-          <div class="document-metadata">
-            {#if !editMode && (studentName || (document.emailAlertReceivers && document.emailAlertReceivers.length > 0))}    
-              <div class="document-info">
-                {#if studentName}
-                  <span class="ds-tag" data-color="neutral" data-size="sm">
-                    <span class="material-symbols-outlined" style="margin-right: var(--ds-size-2);">{document.documentAccess === "ALL_WITH_STUDENT_ACCESS" ? "visibility" : "visibility_off"}</span>
-                    {document.documentAccess === "ALL_WITH_STUDENT_ACCESS" ? "Synlig for faglærere" : "Ikke synlig for faglærere"}
-                  </span>
-                {/if}
-
-                {#if document.emailAlertReceivers && document.emailAlertReceivers.length > 0}
-                  <span class="ds-tag" data-color="neutral" data-size="sm">
-                    <span class="material-symbols-outlined" style="margin-right: var(--ds-size-2);">mail</span>
-                    <button data-popover="inline" popoverTarget="email-receivers-{document._id}">{document.emailAlertReceivers.length} person{document.emailAlertReceivers.length > 1 ? "er" : ""}</button>&nbsp;varslet på e-post
-                  </span>
-
-                  <div id="email-receivers-{document._id}" class="ds-popover" popover="manual" data-placement="top">
-                    {#each document.emailAlertReceivers as emailReceiver}
-                      <p class="ds-paragraph" data-size="xs">{emailReceiver}</p>
-                    {/each}
-                  </div>
-                {/if}
-              </div>
-            {/if}
-          </div>
-
-          {#if canEditDocument}
-            <button class="ds-button" data-variant="secondary" data-size="sm" onclick={() => editMode = true}>
-              <span class="material-symbols-outlined">{editMode ? "close" : "edit"}</span>
-              Rediger
-            </button>
-          {/if}
-        {/if}
-      </div>
-    </div>
-  </div>
-
-  {#each document.messages as message (message.messageId)}
-    {#if message.type === "update"}
-      <div class="ds-dialog__block message-block">
-        <div class="message-container">
-          <Message {message} editMode={false} {document} />
+    {#if document.messages.length > 0}
+      <div class="ds-card__block">
+        <div class="ds-label" data-weight="medium" data-size="xs">
+          <EditorInfo editorInfo={document.messages[0].created} isEdited={document.messages[0].modified.at.getTime() > document.messages[0].created.at.getTime()} timestamp={false} modifiedIndicator={false} style="margin: 0;" prefix="{document.messages.length} oppdatering{document.messages.length > 1 ? 'er' : ''}. Siste oppdatering fra " />
         </div>
       </div>
     {/if}
-  {/each}
-  <div class="ds-dialog__block">
-    <NewMessage {document} {studentDataSharingConsent} {studentAccessPersons} />
   </div>
-</dialog>
+
+  <dialog bind:this={documentDialog} class="ds-dialog document-dialog" data-placement="center" id="document-modal-{document._id}">
+    <button class="ds-button close-dialog-button" data-icon="true" data-variant="tertiary" type="button" aria-label="Lukk dialogvindu" data-color="neutral" command="close" commandfor="document-modal-{document._id}"></button>
+    
+    <div class="ds-dialog__block">
+      <div class="document-dialog-header">
+        <div class="document-dialog-header-tags">
+          <span class="ds-tag" data-color="accent" data-size="lg">
+            <span class="material-symbols-outlined" style="margin-right: var(--ds-size-2);">article</span>
+            {document.template.name}
+          </span>
+          <span class="ds-tag" data-color="brand1" data-size="lg">
+            <span class="material-symbols-outlined" style="margin-right: var(--ds-size-2);">school</span>
+            {studentName || groupName} - {editableDocument.school.name}
+          </span>
+        </div>
+
+        {#if !editMode}
+          <h2 class="ds-heading">{editableDocument.title}</h2>
+          <EditorInfo editorInfo={document.created} isEdited={document.modified.at.getTime() > document.created.at.getTime()} timestamp={true} modifiedIndicator={true} />
+        {/if}
+      </div>
+      
+      <div>
+        {#if !editMode}
+          {#each document.content as contentItem, index}
+            <DocumentContent {contentItem} editMode={false} {index} />
+          {/each}
+
+        {:else}
+          <DocumentEditor documentId={document._id} studentId={"student" in document ? document.student._id : undefined} groupSystemId={"group" in document ? document.group.systemId : undefined} bind:currentDocument={editableDocument} {accessSchools} closeEditor={() => { editMode = false; editableDocument = editableDocumentFromDocument(); }} />
+        {/if}
+
+        <div class="document-footer">
+          {#if !editMode}
+            <div class="document-metadata">
+              {#if !editMode && (studentName || (document.emailAlertReceivers && document.emailAlertReceivers.length > 0))}    
+                <div class="document-info">
+                  {#if studentName}
+                    <span class="ds-tag" data-color="neutral" data-size="sm">
+                      <span class="material-symbols-outlined" style="margin-right: var(--ds-size-2);">{document.documentAccess === "ALL_WITH_STUDENT_ACCESS" ? "visibility" : "visibility_off"}</span>
+                      {document.documentAccess === "ALL_WITH_STUDENT_ACCESS" ? "Synlig for faglærere" : "Ikke synlig for faglærere"}
+                    </span>
+                  {/if}
+
+                  {#if document.emailAlertReceivers && document.emailAlertReceivers.length > 0}
+                    <span class="ds-tag" data-color="neutral" data-size="sm">
+                      <span class="material-symbols-outlined" style="margin-right: var(--ds-size-2);">mail</span>
+                      <button data-popover="inline" popoverTarget="email-receivers-{document._id}">{document.emailAlertReceivers.length} person{document.emailAlertReceivers.length > 1 ? "er" : ""}</button>&nbsp;varslet på e-post
+                    </span>
+
+                    <div id="email-receivers-{document._id}" class="ds-popover" popover="manual" data-placement="top">
+                      {#each document.emailAlertReceivers as emailReceiver}
+                        <p class="ds-paragraph" data-size="xs">{emailReceiver}</p>
+                      {/each}
+                    </div>
+                  {/if}
+                </div>
+              {/if}
+            </div>
+
+            {#if canEditDocument}
+              <button class="ds-button" data-variant="secondary" data-size="sm" onclick={() => editMode = true}>
+                <span class="material-symbols-outlined">{editMode ? "close" : "edit"}</span>
+                Rediger
+              </button>
+            {/if}
+          {/if}
+        </div>
+      </div>
+    </div>
+
+    {#each document.messages as message (message.messageId)}
+      {#if message.type === "update"}
+        <div class="ds-dialog__block message-block">
+          <div class="message-container">
+            <Message {message} editMode={false} {document} />
+          </div>
+        </div>
+      {/if}
+    {/each}
+    <div class="ds-dialog__block">
+      <NewMessage {document} {studentDataSharingConsent} {studentAccessPersons} />
+    </div>
+  </dialog>
+</div>
 
 <style>
   .document-card {
