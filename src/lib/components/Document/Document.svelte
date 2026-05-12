@@ -58,7 +58,7 @@
     if (!originalDialogParent) {
       throw new Error("Document dialog doesn't have a parent element, I expected it to have one...")
     }
-    
+
     documentDialog.addEventListener("close", () => {
       if (!originalDialogParent) {
         throw new Error("Original dialog parent is not defined, can't move dialog back to original parent")
