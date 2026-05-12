@@ -52,7 +52,7 @@ export type FrontendStudentMainDetails = {
   mainContactTeacherGroup: ContactTeacherGroup | null
 }
 
-export type CachedFrontendStudent = FrontendStudent & {
+export type CachedFrontendStudent = FrontendStudent & FrontendStudentMainDetails & {
   enrollmentsWithinViewAccessWindow: EnrollmentWithinViewAccessWindow[]
 }
 
@@ -164,3 +164,13 @@ export type TemplateInfo = {
   id: string
   name: string
 }
+
+export type FrontendOverviewStudentFilter = {
+  studentName: string
+  className: string
+  contactTeacherName: string
+  studentCheckBoxIds: string[]
+  sortBy: "name" | "class" | "teacher" | "lastActivity",
+  sortDirection: "ascending" | "descending"
+}
+

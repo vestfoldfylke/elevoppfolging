@@ -1,7 +1,7 @@
 import { logger } from "@vestfoldfylke/loglady"
 import { updateGauge } from "$lib/server/metrics/handle-metrics"
 import type { CachedFrontendStudent, FrontendStudent, PrincipalAccess, PrincipalAccessStudent, StudentMemberships } from "$lib/types/app-types"
-import { getEnrollmentsWithinViewAccessWindow } from "$lib/utils/frontend-student-details"
+import { getEnrollmentsWithinViewAccessWindow, getFrontendStudentMainDetails } from "$lib/utils/frontend-student-details"
 import { APP_INFO } from "../app-info"
 import { getPrincipalAccessForStudent } from "../authorization/student-access"
 import { getDbClient } from "../db/get-db-client"
@@ -39,9 +39,12 @@ export const updateStudentsCache = async () => {
   const tempStudentsMap: Map<string, CachedFrontendStudent> = new Map()
 
   for (const student of students) {
+    const enrollmentsWithinViewAccessWindow = getEnrollmentsWithinViewAccessWindow(student, APP_INFO)
+    const studentMainDetails = getFrontendStudentMainDetails(enrollmentsWithinViewAccessWindow)
     tempStudentsMap.set(student._id, {
       ...student,
-      enrollmentsWithinViewAccessWindow: getEnrollmentsWithinViewAccessWindow(student, APP_INFO)
+      enrollmentsWithinViewAccessWindow,
+      ...studentMainDetails
     })
   }
 
@@ -109,6 +112,9 @@ export const getStudentsFromCache = async (principalAccess: PrincipalAccess): Pr
         name: student.name,
         source: student.source,
         enrollmentsWithinViewAccessWindow: student.enrollmentsWithinViewAccessWindow,
+        mainClass: student.mainClass,
+        mainContactTeacherGroup: student.mainContactTeacherGroup,
+        mainSchool: student.mainSchool,
         principalAccessForStudent: studentAccessInfo
       })
     }
@@ -171,9 +177,13 @@ export const upsertStudentInCache = async (student: FrontendStudent): Promise<vo
   logger.info("Upserting student in cache")
   studentsCache.updateInProgress = true
 
+  const enrollmentsWithinViewAccessWindow = getEnrollmentsWithinViewAccessWindow(student, APP_INFO)
+  const studentMainDetails = getFrontendStudentMainDetails(enrollmentsWithinViewAccessWindow)
+
   const cachedStudent: CachedFrontendStudent = {
     ...student,
-    enrollmentsWithinViewAccessWindow: getEnrollmentsWithinViewAccessWindow(student, APP_INFO)
+    enrollmentsWithinViewAccessWindow,
+    ...studentMainDetails
   }
 
   studentsCache.students.set(student._id, cachedStudent)
