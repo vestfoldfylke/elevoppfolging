@@ -38,6 +38,21 @@
     errorMessage: null
   })
 
+  let errorElement: HTMLDivElement | null = $state(null)
+
+  $effect(() => {
+    const el = errorElement
+    if (!buttonState.errorMessage || !el) {
+      return
+    }
+
+    const timer = setTimeout(() => {
+      el.classList.add("slide-out")
+    }, 5000)
+
+    return () => clearTimeout(timer)
+  })
+
   const wrappedOnClick = async () => {
     buttonState.loading = true
 
@@ -88,15 +103,31 @@
   {/if}
 </button>
 
-<!--<div class="ds-alert" data-color="info">A message that is important for the user to see</div>-->
-
 {#if buttonState.errorMessage}
-  <p class="error">{buttonState.errorMessage}</p>
+  <div bind:this={errorElement} class="ds-alert error-message" data-color="danger">
+    {buttonState.errorMessage}
+  </div>
 {/if}
 
 <style>
-  .error {
-    color: red;
-    margin-top: 0.5rem;
+  .error-message {
+    position: fixed;
+    z-index: 10;
+    top: calc(10vh - 70px);
+    left: calc(100vw - 375px);
+    margin: 0;
+    max-width: 350px;
+    border-radius: 5px;
+  }
+
+  .error-message:global(.slide-out) {
+    animation: slideOutRight 0.5s forwards;
+  }
+
+  @keyframes slideOutRight {
+    to {
+      transform: translateX(120%);
+      opacity: 0;
+    }
   }
 </style>
