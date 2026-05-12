@@ -48,33 +48,47 @@
 
     try {
       await onClick()
-      if (reloadPageDataOnSuccess) {
-        await invalidateAll()
-        console.log("Page data invalidated successfully")
-        if (callBackAfterReloadPageData) {
-          callBackAfterReloadPageData()
-        }
+
+      if (!reloadPageDataOnSuccess) {
+        return
+      }
+
+      await invalidateAll()
+      console.log("Page data invalidated successfully")
+
+      if (callBackAfterReloadPageData) {
+        callBackAfterReloadPageData()
       }
     } catch (error) {
       console.error("Error in AsyncButton onClick:", error)
+
       buttonState.errorMessage = error instanceof Error ? error.message : "An error occurred. Please try again."
+
       if (typeof errorMessage === "string") {
         errorMessage = buttonState.errorMessage
       }
     }
+
     buttonState.loading = false
   }
 </script>
 
 <button type="button" class="ds-button" data-variant={variant} data-color={color} data-size={dataSize} onclick={wrappedOnClick} disabled={buttonState.loading || disabled}>
-  {#if iconName}
-    <span class="material-symbols-outlined">{iconName}</span>
+  {#if !buttonState.loading}
+    {#if iconName}
+      <span class="material-symbols-outlined">{iconName}</span>
+    {/if}
+    {buttonText}
+  {:else}
+    <svg aria-label="Laster..." class="ds-spinner" role="img" viewBox="0 0 50 50">
+      <circle class="ds-spinner__background" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+      <circle class="ds-spinner__circle" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+    </svg>
+    {buttonText}
   {/if}
-  {buttonState.loading ? "Laster..." : buttonText}
 </button>
 
 <!--<div class="ds-alert" data-color="info">A message that is important for the user to see</div>-->
-
 
 {#if buttonState.errorMessage}
   <p class="error">{buttonState.errorMessage}</p>
