@@ -37,15 +37,48 @@
 
   let documentDialog: HTMLDialogElement | undefined = $state()
 
-  onMount(() => {
-    if (documentDialog) {
-      window.document.body.appendChild(documentDialog) // Preserve dialog element, to avoid losing focus and backdrop
+  let originalDialogParent: HTMLElement | undefined = $state()
+
+  const openDialog = () => {
+    if (!documentDialog) {
+      throw new Error("Document dialog not found, I excpected it to be there...")
     }
-    return () => documentDialog?.remove()
+
+    window.document.body.appendChild(documentDialog) // To keep the dialog on server load, and not lose backdrop
+    documentDialog.showModal()
+  }
+
+  onMount(async () => {
+    if (!documentDialog) {
+      throw new Error("Document dialog not found, I excpected it to be there...")
+    }
+
+    originalDialogParent = documentDialog.parentElement || undefined
+
+    if (!originalDialogParent) {
+      throw new Error("Document dialog doesn't have a parent element, I expected it to have one...")
+    }
+    
+    documentDialog.addEventListener("close", () => {
+      if (!originalDialogParent) {
+        throw new Error("Original dialog parent is not defined, can't move dialog back to original parent")
+      }
+
+      if (!documentDialog) {
+        throw new Error("Document dialog not found, I expected it to be there...")
+      }
+
+      if (documentDialog.parentElement === originalDialogParent) {
+        // dialog is already in the original parent, no need to move it
+        return
+      }
+
+      originalDialogParent.appendChild(documentDialog) // Move back to original parent, to not mess with svelte too much
+    })
   })
 
   const handleDocumentOpen = (document: StudentDocument | GroupDocument): void => {
-    documentDialog?.showModal()
+    openDialog()
 
     const metricBody: MetricCount = {
       name: studentName ? "StudentDocument_Open" : "GroupDocument_Open",
