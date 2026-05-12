@@ -539,7 +539,7 @@
         {/if}
 
         <div class="new-manual-access-actions">
-          <AsyncButton onClick={() => addManualAccessEntry(newManualAccessControl)} reloadPageDataOnSuccess={true} buttonText="Legg til tilgang"  iconName="add" callBackAfterReloadPageData={() => { newManualAccessControl.classId = ""; newManualAccessControl.studentId = ""; }} />
+          <AsyncButton onClick={() => addManualAccessEntry(newManualAccessControl)} reloadPageDataOnSuccess={true} buttonText="Legg til tilgang" iconName="add" callBackAfterReloadPageData={() => { newManualAccessControl.classId = ""; newManualAccessControl.studentId = ""; }} />
 
           <button class="ds-button" type="button" data-variant="secondary" onclick={() => closeManualAccessControl(newManualAccessControl)}>
             <span class="material-symbols-outlined">close</span>Lukk
