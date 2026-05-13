@@ -32,7 +32,7 @@ export const expandAccessWithProgramAreaNames = async (principalAccess: Access):
 }
 
 export const getPrincipalAccess = async (entraUserId: string): Promise<PrincipalAccess | null> => {
-  const dbClient = await getDbClient()
+  const dbClient = getDbClient()
   const principalAccess = await dbClient.access.getPrincipalAccess(entraUserId)
 
   if (!principalAccess) {

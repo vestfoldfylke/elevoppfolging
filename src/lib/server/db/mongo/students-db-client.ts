@@ -24,7 +24,8 @@ export class StudentsDbClient implements IStudentsDbClient {
       created: 1,
       modified: 1,
       source: 1,
-      studentEnrollments: 1
+      studentEnrollments: 1,
+      hasBlockedAddress: 1
     }
 
     const endDateMustBeAfter = new Date()
@@ -53,7 +54,8 @@ export class StudentsDbClient implements IStudentsDbClient {
       systemId: 1,
       created: 1,
       modified: 1,
-      source: 1
+      source: 1,
+      hasBlockedAddress: 1
     }
 
     const student: WithId<DbAppStudent> | null = await this.studentsCollection.findOne({ ssn }, { projection })
@@ -72,7 +74,8 @@ export class StudentsDbClient implements IStudentsDbClient {
       systemId: student.systemId,
       created: student.created,
       modified: student.modified,
-      source: student.source
+      source: student.source,
+      hasBlockedAddress: student.hasBlockedAddress ?? false
     }
   }
 
@@ -89,7 +92,8 @@ export class StudentsDbClient implements IStudentsDbClient {
       systemId: 1,
       created: 1,
       modified: 1,
-      source: 1
+      source: 1,
+      hasBlockedAddress: 1
     }
 
     const student: WithId<DbAppStudent> | null = await this.studentsCollection.findOne({ _id: new ObjectId(studentId), source: "MANUAL" }, { projection })
@@ -109,7 +113,8 @@ export class StudentsDbClient implements IStudentsDbClient {
       systemId: student.systemId,
       created: student.created,
       modified: student.modified,
-      source: student.source
+      source: student.source,
+      hasBlockedAddress: student.hasBlockedAddress ?? false
     }
   }
 

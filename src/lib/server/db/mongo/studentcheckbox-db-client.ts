@@ -5,7 +5,7 @@ import { incrementCount, metricResultFailure, metricResultName, metricResultSucc
 
 export class StudentCheckBoxDbClient implements IStudentCheckBoxDbClient {
   private encryptionDb: Db
-  private encryptValue: (value: unknown) => Promise<Binary>
+  private readonly encryptValue: (value: unknown) => Promise<Binary>
   private studentCheckBoxesCollectionName = "student-checkboxes"
 
   constructor(encryptionDb: Db, encryptValue: (value: unknown) => Promise<Binary>) {

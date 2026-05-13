@@ -66,10 +66,8 @@ export const canViewStudentDocument = (
     if (authenticatedPrincipal.id === document.created.by.entraUserId) {
       return true // man skal kunne se dokumentene man har opprettet selv hvis det foreligger samtykke, hvis man har tilgang til eleven
     }
-    if (document.documentAccess === "EXCLUDE_SUBJECT_TEACHERS" && isOnlySubjectTeacher(accessToStudent)) {
-      return false
-    }
-    return true
+
+    return !(document.documentAccess === "EXCLUDE_SUBJECT_TEACHERS" && isOnlySubjectTeacher(accessToStudent))
   }
 
   // no consent - only documents from access schools
@@ -77,13 +75,12 @@ export const canViewStudentDocument = (
   if (accessToStudentFromDocumentSchool.length === 0) {
     return false
   }
+
   if (document.created.by.entraUserId === authenticatedPrincipal.id) {
     return true // man skal kunne se dokumentene man har opprettet selv hvis man har tilgang til eleven ved gitt skole
   }
-  if (document.documentAccess === "EXCLUDE_SUBJECT_TEACHERS" && isOnlySubjectTeacher(accessToStudentFromDocumentSchool)) {
-    return false
-  }
-  return true
+
+  return !(document.documentAccess === "EXCLUDE_SUBJECT_TEACHERS" && isOnlySubjectTeacher(accessToStudentFromDocumentSchool))
 }
 
 export const canCreateStudentDocument = (accessToStudent: PrincipalAccessForStudent[], newDocument: DocumentInput): boolean => {

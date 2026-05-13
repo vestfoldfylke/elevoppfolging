@@ -20,7 +20,7 @@
   let editMode = $state(false)
   let consentForm: HTMLFormElement | undefined = $state()
 
-  // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounter ved endring av student
+  // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounts ved endring av student
   const savedEditableSharingConsent: StudentDataSharingConsentInput = $derived.by(() => {
     return {
       consent: studentDataSharingConsent?.consent ?? false,

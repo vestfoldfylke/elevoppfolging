@@ -15,7 +15,7 @@
 
   let { template }: TemplateEditorProps = $props()
 
-  // svelte-ignore state_referenced_locally (vi vil ha en kopi her, så kan den resettes hvis det trengs via #key)
+  // svelte-ignore state_referenced_locally (vi vil ha en kopi her, så kan den bli satt tilbake hvis det trengs via #key)
   let editableTemplate = $state(template)
 
   let previewMode = $state(Boolean(editableTemplate._id))
