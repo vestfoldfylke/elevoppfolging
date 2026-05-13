@@ -166,11 +166,12 @@ export type TemplateInfo = {
 }
 
 export type FrontendOverviewStudentFilter = {
-  studentName: string
-  className: string
-  contactTeacherName: string
-  studentCheckBoxIds: string[]
-  sortBy: "name" | "class" | "teacher" | "lastActivity",
-  sortDirection: "ascending" | "descending"
+  studentName?: string
+  className?: string
+  contactTeacherName?: string
+  studentCheckBoxIds?: string[]
+  sortBy?: "studentName" | "className" | "contactTeacherName" | "lastActivity"
+  sortDirection?: "ascending" | "descending"
+  top?: number
 }
 

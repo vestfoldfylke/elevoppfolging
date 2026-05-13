@@ -8,13 +8,61 @@ import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canManageManualStudentsOnSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
-import type { ApiRouteMap } from "$lib/types/api/api-route-map"
-import type { FrontendStudent } from "$lib/types/app-types"
+import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
+import type { FrontendOverviewStudent, FrontendOverviewStudentFilter, FrontendStudent, PrincipalAccess } from "$lib/types/app-types"
 import type { ValidationResult } from "$lib/types/data-validation"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { Access, EditorData, NewAppStudent, Period, StudentEnrollment } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 import { generateUUID } from "$lib/utils/uuid"
+import { getPrincipalStudents } from "$lib/server/get-principal-students"
+import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
+
+type GetStudentsResponse = ApiRouteMap[`/api/students${NoSlashString}`]["GET"]["res"]
+
+const getStudents: ApiNextFunction<GetStudentsResponse, void> = async ({ principal, requestEvent }) => {
+  const sortBy = requestEvent.url.searchParams.get("sortBy")
+  const sortDirection = requestEvent.url.searchParams.get("sortDirection")
+
+  const validSortByValues: FrontendOverviewStudentFilter["sortBy"][] = ["studentName", "className", "contactTeacherName", "lastActivity"]
+  const validSortDirectionValues: FrontendOverviewStudentFilter["sortDirection"][] = ["ascending", "descending"]
+  
+  if (sortBy && !validSortByValues.includes(sortBy as FrontendOverviewStudentFilter["sortBy"])) {
+    throw new HTTPError(400, `Invalid sortBy value. Valid values are: ${validSortByValues.join(", ")}`)
+  }
+
+  if (sortDirection && !validSortDirectionValues.includes(sortDirection as FrontendOverviewStudentFilter["sortDirection"])) {
+    throw new HTTPError(400, `Invalid sortDirection value. Valid values are: ${validSortDirectionValues.join(", ")}`)
+  }
+
+  const studentFilter: FrontendOverviewStudentFilter = {
+    studentName: requestEvent.url.searchParams.get("studentName") || undefined,
+    className: requestEvent.url.searchParams.get("className") || undefined,
+    contactTeacherName: requestEvent.url.searchParams.get("contactTeacherName") || undefined,
+    studentCheckBoxIds: requestEvent.url.searchParams.getAll("studentCheckBoxIds"),
+    sortBy: sortBy as FrontendOverviewStudentFilter["sortBy"] || undefined,
+    sortDirection: sortDirection as FrontendOverviewStudentFilter["sortDirection"] || undefined,
+    top: Number(requestEvent.url.searchParams.get("top")) || undefined
+  }
+
+  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
+  if (!principalAccess) {
+    logger.info("No access found for principal returning no students")
+    return {
+      students: []
+    }
+  }
+
+  const frontendOverviewStudents: FrontendOverviewStudent[] = await getPrincipalStudents(principalAccess, studentFilter)
+
+  return {
+    students: frontendOverviewStudents
+  }
+}
+
+export const GET: RequestHandler = async (requestEvent) => {
+  return apiRequestMiddleware<GetStudentsResponse, void>(requestEvent, getStudents)
+}
 
 type AddManualStudentResponse = ApiRouteMap["/api/students"]["POST"]["res"]
 type AddManualStudentBody = ApiRouteMap["/api/students"]["POST"]["req"]
