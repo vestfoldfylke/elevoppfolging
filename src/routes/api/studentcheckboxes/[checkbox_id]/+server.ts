@@ -9,6 +9,7 @@ import { isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/author
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { NewStudentCheckBox } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
+import { STUDENT_CHECKBOX_DISPLAY_NAMES } from "$lib/utils/student-checkbox-constants"
 
 type DeleteStudentCheckBoxResponse = ApiRouteMap[`/api/studentcheckboxes/${NoSlashString}`]["DELETE"]["res"]
 
@@ -30,7 +31,15 @@ const deleteStudentCheckBox: ApiNextFunction<DeleteStudentCheckBoxResponse> = as
     throw new HTTPError(404, "Student check box not found. Cannot delete non-existing check box.")
   }
 
-  await dbClient.studentCheckBoxes.deleteStudentCheckBox(studentCheckBoxToDelete)
+  try {
+    await dbClient.studentCheckBoxes.deleteStudentCheckBox(studentCheckBoxToDelete)
+  } catch (error) {
+    throw new HTTPError(
+      500,
+      `Feilet ved sletting av ${STUDENT_CHECKBOX_DISPLAY_NAMES[studentCheckBoxToDelete.type].single?.toLowerCase() || STUDENT_CHECKBOX_DISPLAY_NAMES[studentCheckBoxToDelete.type].plural.toLowerCase()} sjekkboks`,
+      error
+    )
+  }
 
   try {
     await dbClient.auditLogs.createAuditEntry({
@@ -107,7 +116,17 @@ const updateStudentCheckBox: ApiNextFunction<UpdateStudentCheckBoxResponse, Upda
     created: studentCheckBoxToUpdate.created
   }
 
-  const updatedCheckBoxId: string = await dbClient.studentCheckBoxes.updateStudentCheckBox(checkBoxId, updatedStudentCheckBox)
+  let updatedCheckBoxId: string
+
+  try {
+    updatedCheckBoxId = await dbClient.studentCheckBoxes.updateStudentCheckBox(checkBoxId, updatedStudentCheckBox)
+  } catch (error) {
+    throw new HTTPError(
+      500,
+      `Feilet ved oppdatering av ${STUDENT_CHECKBOX_DISPLAY_NAMES[updatedStudentCheckBox.type].single?.toLowerCase() || STUDENT_CHECKBOX_DISPLAY_NAMES[updatedStudentCheckBox.type].plural.toLowerCase()} sjekkboks`,
+      error
+    )
+  }
 
   try {
     await dbClient.auditLogs.createAuditEntry({

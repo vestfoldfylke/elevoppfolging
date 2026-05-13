@@ -50,7 +50,13 @@ const addSchool: ApiNextFunction<AddSchoolResponse, AddSchoolBody> = async ({ pr
     modified: editorData
   }
 
-  const schoolId: string = await dbClient.schools.createSchool(newSchool)
+  let schoolId: string
+
+  try {
+    schoolId = await dbClient.schools.createSchool(newSchool)
+  } catch (error) {
+    throw new HTTPError(500, "Feilet ved opprettelse av skole", error)
+  }
 
   try {
     await dbClient.auditLogs.createAuditEntry({

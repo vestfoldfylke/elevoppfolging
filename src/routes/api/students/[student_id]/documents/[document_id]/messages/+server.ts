@@ -92,7 +92,13 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
     throw new HTTPError(403, noAccessMessage("No permission to add message to document"))
   }
 
-  const messageId: string = await dbClient.documents.addStudentDocumentMessage(documentId, newMessage)
+  let messageId: string
+
+  try {
+    messageId = await dbClient.documents.addStudentDocumentMessage(documentId, newMessage)
+  } catch (error) {
+    throw new HTTPError(500, "Feilet ved opprettelse av oppdatering på elevnotat", error)
+  }
 
   try {
     await dbClient.auditLogs.createAuditEntry({

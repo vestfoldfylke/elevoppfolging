@@ -76,7 +76,13 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
 
   const dbClient: IDbClient = getDbClient()
 
-  const documentId: string = await dbClient.documents.createGroupDocument(newDocument)
+  let documentId: string
+
+  try {
+    documentId = await dbClient.documents.createGroupDocument(newDocument)
+  } catch (error) {
+    throw new HTTPError(500, "Feilet ved opprettelse av klassenotat", error)
+  }
 
   logger.info(`Group document created with ID ${documentId} by user ${principal.displayName} (${principal.id})`)
 

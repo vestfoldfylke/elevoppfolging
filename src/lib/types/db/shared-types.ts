@@ -782,7 +782,7 @@ export type AuditEntry = AuditEntryInput & {
   _id: string
 }
 
-export type AuditEntryResourceDisplayNameEntry = {
+export type ConstantDisplayNameEntry = {
   plural: string
   single?: string
 }

@@ -31,14 +31,17 @@ export const apiFetch = async <
   } catch (error) {
     throw new Error(`Network error while fetching ${route}: ${error instanceof Error ? error.message : String(error)}`)
   }
+
   if (!response.ok) {
     let errorData: unknown
+
     try {
       errorData = await response.json()
     } catch (error) {
       throw new Error(`API request failed with status ${response.status} and could not parse error response: ${error instanceof Error ? error.message : String(error)}`)
     }
-    throw new Error(`API request failed: ${typeof errorData === "object" && errorData !== null && "message" in errorData ? errorData.message : response.statusText}`)
+
+    throw new Error(`${typeof errorData === "object" && errorData !== null && "message" in errorData ? errorData.message : response.statusText}`)
   }
 
   try {

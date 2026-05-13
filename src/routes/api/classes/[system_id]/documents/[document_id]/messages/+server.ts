@@ -80,7 +80,13 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
     throw new HTTPError(404, "Document not found, cannot add message to non-existing document...")
   }
 
-  const messageId: string = await dbClient.documents.addGroupDocumentMessage(documentId, newMessage)
+  let messageId: string
+
+  try {
+    messageId = await dbClient.documents.addGroupDocumentMessage(documentId, newMessage)
+  } catch (error) {
+    throw new HTTPError(500, "Feilet ved opprettelse av oppdatering på klassenotat", error)
+  }
 
   try {
     await dbClient.auditLogs.createAuditEntry({

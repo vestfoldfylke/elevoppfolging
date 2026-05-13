@@ -90,7 +90,13 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
 
   const dbClient: IDbClient = getDbClient()
 
-  const documentId: string = await dbClient.documents.createStudentDocument(newDocument)
+  let documentId: string
+
+  try {
+    documentId = await dbClient.documents.createStudentDocument(newDocument)
+  } catch (error) {
+    throw new HTTPError(500, "Feilet ved opprettelse av elevnotat", error)
+  }
 
   logger.info(`Student document created with ID ${documentId} by user ${principal.displayName} (${principal.id})`)
 
