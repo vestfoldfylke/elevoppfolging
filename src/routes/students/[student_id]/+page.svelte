@@ -12,6 +12,7 @@
   import type { AuditEntryInput, Period, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
   import { prettifyDate } from "$lib/utils/dates"
   import { getEnrollmentDetails, getFrontendStudentMainDetails } from "$lib/utils/frontend-student-details"
+  import { STUDENT_CHECKBOX_DISPLAY_NAMES } from "$lib/utils/student-checkbox-constants"
   import type { PageProps } from "./$types"
 
   let { data }: PageProps = $props()
@@ -212,7 +213,7 @@
             <div class="student-summary-checkboxes" style="margin-top: 0;">
               {#if studentSummaryDetails.followUp.length > 0}
                 <div>
-                  <h3 class="ds-heading" data-size="xs">Oppfølging</h3>
+                  <h3 class="ds-heading" data-size="xs">{STUDENT_CHECKBOX_DISPLAY_NAMES.FOLLOW_UP.single}</h3>
                   <ul class="ds-list">
                     {#each studentSummaryDetails.followUp || [] as followUp}
                       <li>{followUp}</li>
@@ -222,7 +223,7 @@
               {/if}
               {#if studentSummaryDetails.facilitation.length > 0}
                 <div>
-                  <h3 class="ds-heading" data-size="xs">Enkeltvedtak</h3>
+                  <h3 class="ds-heading" data-size="xs">{STUDENT_CHECKBOX_DISPLAY_NAMES.FACILITATION.plural}</h3>
                   <ul class="ds-list">
                     {#each studentSummaryDetails.facilitation || [] as facilitation}
                       <li>{facilitation}</li>

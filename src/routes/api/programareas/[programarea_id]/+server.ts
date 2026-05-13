@@ -40,7 +40,11 @@ const deleteProgramArea: ApiNextFunction<DeleteProgramAreaResponse> = async ({ p
     throw new HTTPError(403, noAccessMessage("No access to school administration for this school"))
   }
 
-  await dbClient.programAreas.deleteProgramArea(programAreaToDelete)
+  try {
+    await dbClient.programAreas.deleteProgramArea(programAreaToDelete)
+  } catch (error) {
+    throw new HTTPError(500, "Feilet ved sletting av programområde", error)
+  }
 
   // Invalidate cache entry
   invalidateProgramAreaCache(programAreaId)
@@ -133,7 +137,13 @@ const updateProgramArea: ApiNextFunction<UpdateProgramAreaResponse, UpdateProgra
     source: programAreaToUpdate.source
   }
 
-  const updatedProgramAreaId: string = await dbClient.programAreas.updateProgramArea(programAreaId, updatedProgramArea)
+  let updatedProgramAreaId: string
+
+  try {
+    updatedProgramAreaId = await dbClient.programAreas.updateProgramArea(programAreaId, updatedProgramArea)
+  } catch (error) {
+    throw new HTTPError(500, "Feilet ved oppdatering av programområde", error)
+  }
 
   // Invalidate cache entry
   invalidateProgramAreaCache(programAreaId)

@@ -53,7 +53,13 @@ const addProgramArea: ApiNextFunction<AddProgramAreaResponse, AddProgramAreaBody
     source: "MANUAL"
   }
 
-  const programAreaId: string = await dbClient.programAreas.createProgramArea(newProgramArea)
+  let programAreaId: string
+
+  try {
+    programAreaId = await dbClient.programAreas.createProgramArea(newProgramArea)
+  } catch (error) {
+    throw new HTTPError(500, "Feilet ved opprettelse av programområde", error)
+  }
 
   try {
     await dbClient.auditLogs.createAuditEntry({

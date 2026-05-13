@@ -94,7 +94,13 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
     emailAlertReceivers: messageToUpdate.emailAlertReceivers || []
   }
 
-  const updatedMessageId: string = await dbClient.documents.updateGroupDocumentMessage(documentId, messageId, updatedMessageData)
+  let updatedMessageId: string
+
+  try {
+    updatedMessageId = await dbClient.documents.updateGroupDocumentMessage(documentId, messageId, updatedMessageData)
+  } catch (error) {
+    throw new HTTPError(500, "Feilet ved oppdatering av oppdatering på klassenotat", error)
+  }
 
   try {
     await dbClient.auditLogs.createAuditEntry({

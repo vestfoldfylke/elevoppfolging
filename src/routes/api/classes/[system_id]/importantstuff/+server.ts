@@ -71,7 +71,17 @@ const updateGroupImportantStuff: ApiNextFunction<PatchGroupImportantStuffRespons
     created: currentImportantStuff && currentImportantStuff.length > 0 ? currentImportantStuff[0].created : editor
   }
 
-  const importantStuffId: string = await dbClient.importantStuff.upsertGroupImportantStuff(systemId, upsertStudentImportantStuffData)
+  let importantStuffId: string
+
+  try {
+    importantStuffId = await dbClient.importantStuff.upsertGroupImportantStuff(systemId, upsertStudentImportantStuffData)
+  } catch (error) {
+    if (currentImportantStuff && currentImportantStuff.length > 0) {
+      throw new HTTPError(500, "Feilet ved oppdatering av viktig informasjon for klasse", error)
+    }
+
+    throw new HTTPError(500, "Feilet ved opprettelse av viktig informasjon for klasse", error)
+  }
 
   if (currentImportantStuff && currentImportantStuff.length > 0) {
     try {

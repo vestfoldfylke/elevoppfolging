@@ -75,7 +75,13 @@ const removeAccess: ApiNextFunction<RemoveAccessResponse, RemoveAccessBody> = as
   }
 
   // Then we can finally remove the access entry
-  const updatedAccessId: string = await dbClient.access.removeAccessEntry(entraUserId, accessEntryToRemove)
+  let updatedAccessId: string
+
+  try {
+    updatedAccessId = await dbClient.access.removeAccessEntry(entraUserId, accessEntryToRemove)
+  } catch (error) {
+    throw new HTTPError(500, "Feilet ved fjerning av tilgang", error)
+  }
 
   try {
     await dbClient.auditLogs.createAuditEntry({

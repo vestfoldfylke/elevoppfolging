@@ -89,7 +89,13 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
     created: currentDocument.created
   }
 
-  const updatedDocumentId: string = await dbClient.documents.updateGroupDocument(documentId, updatedDocument)
+  let updatedDocumentId: string
+
+  try {
+    updatedDocumentId = await dbClient.documents.updateGroupDocument(documentId, updatedDocument)
+  } catch (error) {
+    throw new HTTPError(500, "Feilet ved oppdatering av klassenotat", error)
+  }
 
   logger.info(`Group document with ID ${documentId} updated by user ${principal.displayName} (${principal.id})`)
 

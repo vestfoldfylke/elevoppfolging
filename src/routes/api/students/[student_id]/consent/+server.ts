@@ -64,7 +64,17 @@ const updateStudentDataSharingConsent: ApiNextFunction<PatchConsentResponse, Pat
 
   const currentStudentDataSharingConsent: StudentDataSharingConsent | null = await dbClient.studentDataSharingConsents.getStudentDataSharingConsent(studentId)
 
-  const upsertedConsentId: string = await dbClient.studentDataSharingConsents.upsertStudentDataSharingConsent(studentId, upsertConsentData)
+  let upsertedConsentId: string
+
+  try {
+    upsertedConsentId = await dbClient.studentDataSharingConsents.upsertStudentDataSharingConsent(studentId, upsertConsentData)
+  } catch (error) {
+    if (currentStudentDataSharingConsent) {
+      throw new HTTPError(500, "Feilet ved oppdatering av samtykke til deling av notater for elev", error)
+    }
+
+    throw new HTTPError(500, "Feilet ved opprettelse av samtykke til deling av notater for elev", error)
+  }
 
   if (currentStudentDataSharingConsent) {
     try {

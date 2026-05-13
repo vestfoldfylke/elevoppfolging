@@ -41,7 +41,7 @@
 
   const openDialog = () => {
     if (!documentDialog) {
-      throw new Error("Document dialog not found, I excpected it to be there...")
+      throw new Error("Document dialog not found, I expected it to be there...")
     }
 
     window.document.body.appendChild(documentDialog) // To keep the dialog on server load, and not lose backdrop
@@ -50,7 +50,7 @@
 
   onMount(async () => {
     if (!documentDialog) {
-      throw new Error("Document dialog not found, I excpected it to be there...")
+      throw new Error("Document dialog not found, I expected it to be there...")
     }
 
     originalDialogParent = documentDialog.parentElement || undefined

@@ -55,7 +55,13 @@ const updateDocumentContentTemplate: ApiNextFunction<UpdateDocumentContentTempla
     sort: updateTemplateData.sort
   }
 
-  const updatedTemplateId: string = await dbClient.documentContentTemplates.updateDocumentContentTemplate(templateId, documentTemplate)
+  let updatedTemplateId: string
+
+  try {
+    updatedTemplateId = await dbClient.documentContentTemplates.updateDocumentContentTemplate(templateId, documentTemplate)
+  } catch (error) {
+    throw new HTTPError(500, "Feilet ved oppdatering av mal", error)
+  }
 
   try {
     await dbClient.auditLogs.createAuditEntry({
@@ -107,7 +113,11 @@ const deleteDocumentContentTemplate: ApiNextFunction<DeleteDocumentContentTempla
     throw new HTTPError(404, "Document content template not found, cannot delete non-existing template...")
   }
 
-  await dbClient.documentContentTemplates.deleteDocumentContentTemplate(templateId)
+  try {
+    await dbClient.documentContentTemplates.deleteDocumentContentTemplate(templateId)
+  } catch (error) {
+    throw new HTTPError(500, "Feilet ved sletting av mal", error)
+  }
 
   try {
     await dbClient.auditLogs.createAuditEntry({

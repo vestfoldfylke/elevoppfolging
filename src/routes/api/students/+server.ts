@@ -111,7 +111,13 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
     hasBlockedAddress: newManualStudentData.hasBlockedAddress ?? false
   }
 
-  const studentId: string = await dbClient.students.createManualStudent(newAppStudent)
+  let studentId: string
+
+  try {
+    studentId = await dbClient.students.createManualStudent(newAppStudent)
+  } catch (error) {
+    throw new HTTPError(500, "Feilet ved opprettelse av manuell bruker", error)
+  }
 
   logger.info("Created manual student with Id {Id} by user {DisplayName} ({PrincipalId})", studentId, principal.displayName, principal.id)
 

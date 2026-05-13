@@ -90,7 +90,13 @@ const updateManualStudent: ApiNextFunction<UpdateManualStudentResponse, UpdateMa
     hasBlockedAddress: updateManualStudentData.hasBlockedAddress ?? false
   }
 
-  const studentId: string = await dbClient.students.updateManualStudent(updateAppStudent)
+  let studentId: string
+
+  try {
+    studentId = await dbClient.students.updateManualStudent(updateAppStudent)
+  } catch (error) {
+    throw new HTTPError(500, "Feilet ved oppdatering av manuell bruker", error)
+  }
 
   logger.info("Updated manual student with Id {Id} by user {DisplayName} ({PrincipalId})", student._id, principal.displayName, principal.id)
 
