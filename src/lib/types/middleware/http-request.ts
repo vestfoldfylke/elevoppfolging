@@ -19,5 +19,5 @@ type ServerLoadNextParams = {
   principal: AuthenticatedPrincipal
 }
 
-// TODO drop isAuthorized from this to - just return T like apinextfunction
+// TODO drop isAuthorized from this to - just return T like ApiNextFunction
 export type ServerLoadNextFunction<T> = (params: ServerLoadNextParams) => Promise<ServerLoadNextResponse<T>>

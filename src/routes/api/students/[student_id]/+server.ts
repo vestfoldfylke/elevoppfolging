@@ -86,7 +86,8 @@ const updateManualStudent: ApiNextFunction<UpdateManualStudentResponse, UpdateMa
     name: updateManualStudentData.name,
     created: student.created,
     modified: editorData,
-    studentEnrollments: student.studentEnrollments
+    studentEnrollments: student.studentEnrollments,
+    hasBlockedAddress: updateManualStudentData.hasBlockedAddress ?? false
   }
 
   const studentId: string = await dbClient.students.updateManualStudent(updateAppStudent)
@@ -102,7 +103,8 @@ const updateManualStudent: ApiNextFunction<UpdateManualStudentResponse, UpdateMa
     source: student.source,
     studentEnrollments: student.studentEnrollments,
     created: student.created,
-    modified: updateAppStudent.modified
+    modified: updateAppStudent.modified,
+    hasBlockedAddress: updateAppStudent.hasBlockedAddress ?? false
   }
 
   await upsertStudentInCache(frontendStudent)

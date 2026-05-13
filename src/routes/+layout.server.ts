@@ -54,7 +54,7 @@ const layoutLoad: ServerLoadNextFunction<RootLayoutData> = async ({ principal })
   logger.info(`Fant sharing consent for ${Object.keys(sharingConsentByStudentId).length} elever - brukte ${timeTaken3 / 1000} sekunder`)
 
   // Og deretter kan getStudentAccessInfo returnere alle elevene eller no fett?
-  // Og den kan få lov å kjøre i parallell for alle elevene, og bli cachet i et kvarter ellerno. Men hvis de lager et dokument, så stemmer jo ikke lastactivity, så den kan vi ha på utsiden?
+  // Og den kan få lov å kjøre i parallell for alle elevene, og bli cachet i et kvarter eller no. Men hvis de lager et dokument, så stemmer jo ikke lastActivity, så den kan vi ha på utsiden?
   // Vi kan cache tilgangen og samtykke en kort stund hvis det er for tregt
 
   const overviewStudents: FrontendOverviewStudent[] = []
@@ -103,7 +103,8 @@ const layoutLoad: ServerLoadNextFunction<RootLayoutData> = async ({ principal })
       enrollmentsWithinViewAccessWindow: student.enrollmentsWithinViewAccessWindow,
       dataSharingConsent: sharingConsentByStudentId[student._id]?.consent || false,
       importantStuff: [],
-      lastActivityTimestamp
+      lastActivityTimestamp,
+      hasBlockedAddress: student.hasBlockedAddress ?? false
     }
 
     // Add important stuff for schools the user has access to
