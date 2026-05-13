@@ -65,6 +65,7 @@
       await onClick()
 
       if (!reloadPageDataOnSuccess) {
+        buttonState.loading = false
         return
       }
 
