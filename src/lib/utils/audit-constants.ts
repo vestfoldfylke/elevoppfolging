@@ -19,8 +19,8 @@ export const AUDIT_ENTRY_RESOURCE_DISPLAY_NAMES: Record<AuditEntry["resource"], 
     single: "Klassenotat"
   },
   GroupDocumentMessage: {
-    plural: "Oppfølging klassenotater",
-    single: "Oppfølging klassenotat"
+    plural: "Oppdatering klassenotater",
+    single: "Oppdatering klassenotat"
   },
   ImportantStuff: {
     plural: "Viktig informasjon"
@@ -53,8 +53,8 @@ export const AUDIT_ENTRY_RESOURCE_DISPLAY_NAMES: Record<AuditEntry["resource"], 
     single: "Elevnotat"
   },
   StudentDocumentMessage: {
-    plural: "Oppfølging elevnotater",
-    single: "Oppfølging elevnotat"
+    plural: "Oppdatering elevnotater",
+    single: "Oppdatering elevnotat"
   },
   Template: {
     plural: "Maler",
