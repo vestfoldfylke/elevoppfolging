@@ -4,6 +4,7 @@
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { FrontendStudent } from "$lib/types/app-types"
   import type { SchoolInfo, StudentCheckBox, StudentImportantStuff, StudentImportantStuffInput } from "$lib/types/db/shared-types"
+  import { STUDENT_CHECKBOX_DISPLAY_NAMES } from "$lib/utils/student-checkbox-constants"
   import AsyncButton from "../AsyncButton.svelte"
   import EditorInfo from "../EditorInfo.svelte"
 
@@ -87,7 +88,7 @@
 
       <div class="checkboxes-container">
         <div class="checkboxes">
-          <h3 class="ds-heading" data-size="xs">Oppfølging</h3>
+          <h3 class="ds-heading" data-size="xs">{STUDENT_CHECKBOX_DISPLAY_NAMES.FOLLOW_UP.single}</h3>
           {#if editMode}
             <fieldset class="ds-fieldset">
               {#each studentCheckBoxes.filter(checkbox => checkbox.enabled && checkbox.type === "FOLLOW_UP") as followUpCheckbox}
@@ -99,7 +100,7 @@
             </fieldset>
           {:else}
             {#if savedEditableImportantStuff.followUp.length === 0}
-              Ingen oppfølging
+              Ingen {STUDENT_CHECKBOX_DISPLAY_NAMES.FOLLOW_UP.plural.toLowerCase()}
             {:else}
               <ul class="ds-list">
                 {#each savedEditableImportantStuff.followUp || [] as followUpId}
@@ -111,7 +112,7 @@
         </div>
 
         <div class="checkboxes">
-          <h3 class="ds-heading" data-size="xs">Enkeltvedtak</h3>
+          <h3 class="ds-heading" data-size="xs">{STUDENT_CHECKBOX_DISPLAY_NAMES.FACILITATION.plural}</h3>
           {#if editMode}
             <fieldset class="ds-fieldset">
               {#each studentCheckBoxes.filter(checkbox => checkbox.enabled && checkbox.type === "FACILITATION") as facilitationCheckbox}
@@ -123,7 +124,7 @@
             </fieldset>
           {:else}
             {#if savedEditableImportantStuff.facilitation.length === 0}
-              Ingen enkeltvedtak
+              Ingen {STUDENT_CHECKBOX_DISPLAY_NAMES.FACILITATION.plural.toLowerCase()}
             {:else}
               <ul class="ds-list">
                 {#each savedEditableImportantStuff.facilitation || [] as facilitationId}

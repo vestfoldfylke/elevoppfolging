@@ -11,6 +11,7 @@
   import type { FrontendOverviewStudent, FrontendStudentMainDetails } from "$lib/types/app-types.js"
   import type { StudentCheckBox } from "$lib/types/db/shared-types.js"
   import { getFrontendStudentMainDetails } from "$lib/utils/frontend-student-details.js"
+  import { STUDENT_CHECKBOX_DISPLAY_NAMES } from "$lib/utils/student-checkbox-constants"
   import type { LayoutProps } from "./$types.js"
 
   let { data, children }: LayoutProps = $props()
@@ -186,7 +187,7 @@
 						<div id="student-filters-action-container" class="ds-popover ds-dropdown" popover="auto" data-placement="bottom-end" data-variant="default">
 							{#if followUpStudentCheckBoxes.length > 0}
 								<div class="student-filters-followup">
-									<h2 class="ds-heading">Oppfølging</h2>
+									<h2 class="ds-heading">{STUDENT_CHECKBOX_DISPLAY_NAMES.FOLLOW_UP.single}</h2>
 									<hr class="ds-divider" />
 									<ul class="ds-list">
 										{#each followUpStudentCheckBoxes as followUpStudentCheckBox}
@@ -204,7 +205,7 @@
 							{/if}
 							{#if facilitationStudentCheckBoxes.length > 0}
 								<div class="student-filters-facilitation">
-									<h2 class="ds-heading">Enkeltvedtak</h2>
+									<h2 class="ds-heading">{STUDENT_CHECKBOX_DISPLAY_NAMES.FACILITATION.plural}</h2>
 									<hr class="ds-divider" />
 									<ul class="ds-list">
 										{#each facilitationStudentCheckBoxes as facilitationStudentCheckBox}

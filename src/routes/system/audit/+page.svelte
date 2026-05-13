@@ -1,9 +1,10 @@
 <script lang="ts">
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import AsyncButton from "$lib/components/AsyncButton.svelte"
-  import type { AuditEntry, AuditEntryResourceDisplayNameEntry, AuditSearchQueryResult, AuditSearchTerms } from "$lib/types/db/shared-types"
+  import type { AuditEntry, AuditSearchQueryResult, AuditSearchTerms, ConstantDisplayNameEntry } from "$lib/types/db/shared-types"
   import { AUDIT_ENTRY_ACTION_DISPLAY_NAMES, AUDIT_ENTRY_RESOURCE_DISPLAY_NAMES } from "$lib/utils/audit-constants"
   import { getDateDaysBack, getDateValue, prettifyDateTime } from "$lib/utils/dates"
+  import { STUDENT_CHECKBOX_DISPLAY_NAMES } from "$lib/utils/student-checkbox-constants"
   import type { PageProps } from "./$types"
 
   type DisabledSearch = {
@@ -12,8 +13,8 @@
   }
 
   const auditActionDisplayNameEntries: [string, string][] = Object.entries(AUDIT_ENTRY_ACTION_DISPLAY_NAMES).sort((a: [string, string], b: [string, string]) => a[1].localeCompare(b[1]))
-  const auditResourceDisplayNameEntries: [string, AuditEntryResourceDisplayNameEntry][] = Object.entries(AUDIT_ENTRY_RESOURCE_DISPLAY_NAMES).sort(
-    (a: [string, AuditEntryResourceDisplayNameEntry], b: [string, AuditEntryResourceDisplayNameEntry]) => a[1].plural.localeCompare(b[1].plural)
+  const auditResourceDisplayNameEntries: [string, ConstantDisplayNameEntry][] = Object.entries(AUDIT_ENTRY_RESOURCE_DISPLAY_NAMES).sort(
+    (a: [string, ConstantDisplayNameEntry], b: [string, ConstantDisplayNameEntry]) => a[1].plural.localeCompare(b[1].plural)
   )
 
   let { data }: PageProps = $props()
@@ -99,7 +100,7 @@
   <h1 class="ds-heading" data-size="lg">Audit</h1>
 
   <p>
-    Her kan du se hva som skjer i systemet, og hvem som gjør hva. Dette inkluderer blant annet opprettelse og redigering av notater, redigering av oppfølging og tilrettelegging, og endringer i systemadministrasjonen.
+    Her kan du se hva som skjer i systemet, og hvem som gjør hva. Dette inkluderer blant annet opprettelse og redigering av notater, redigering av {STUDENT_CHECKBOX_DISPLAY_NAMES.FOLLOW_UP.single?.toLowerCase() || STUDENT_CHECKBOX_DISPLAY_NAMES.FOLLOW_UP.plural.toLowerCase()} og {STUDENT_CHECKBOX_DISPLAY_NAMES.FACILITATION.plural.toLowerCase()}, og endringer i systemadministrasjonen.
   </p>
 
   <div class="ds-card audit-search-container" data-variant="tinted" data-color="brand3">
