@@ -180,7 +180,7 @@
     <h1 class="ds-heading" data-size="lg" style="margin-bottom: 0;">{data.student.name}</h1>
     <span class="ds-paragraph" data-size="sm">{studentEnrollmentDetails.length > 1 ? "Hovedskole: " : ""}{studentMainDetails.mainSchool?.name ?? "Ingen hovedskole"} - {studentMainDetails.mainClass?.name || "Ingen aktiv klasse ved hovedskole"}</span>
     {#if data.student.hasBlockedAddress}
-      <div class="ds-alert address-block-container" data-color="info">
+      <div class="ds-alert address-block-container" data-color="warning">
         NB: Adressesperre
       </div>
     {/if}
