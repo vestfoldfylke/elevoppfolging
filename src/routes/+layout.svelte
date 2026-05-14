@@ -13,6 +13,7 @@
   import type { NoSlashString } from "$lib/types/api/api-route-map.js"
   import type { FrontendOverviewStudent, FrontendOverviewStudentFilter } from "$lib/types/app-types.js"
   import type { StudentCheckBox } from "$lib/types/db/shared-types.js"
+  import { prettifyDateTime } from "$lib/utils/dates.js"
   import { STUDENT_CHECKBOX_DISPLAY_NAMES } from "$lib/utils/student-checkbox-constants"
   import type { LayoutProps } from "./$types.js"
 
@@ -290,7 +291,7 @@
 										<td><a class="ds-link" href={`/students/${student._id}`}>{student.name}</a></td>
 										<td class="desktop-only">{student.mainClass?.name || "Ukjent klasse"}<br/><span class="school-name">{student.mainSchool?.name || "N/A"}</span></td>
 										<td class="desktop-only">{student.mainContactTeacherGroup?.teachers[0]?.name || "Ingen kontaktlærer"}</td>
-										<td class="desktop-only">{student.lastActivityTimestamp?.toLocaleString("no-NB", { dateStyle: 'short', timeStyle: 'short' }) || "Ingen aktivitet"}</td>
+										<td class="desktop-only">{student.lastActivityTimestamp ? prettifyDateTime(student.lastActivityTimestamp) : "Ingen aktivitet"}</td>
 									</tr>
 								{/each}
 							{/if}
