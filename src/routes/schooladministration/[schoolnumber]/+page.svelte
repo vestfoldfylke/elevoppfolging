@@ -8,7 +8,7 @@
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import { canGrantAndRemoveAccessForSchool, canManageManualStudentsOnSchool } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
-  import type { EnrollmentWithinViewAccessWindow, FrontendOverviewStudent, NewManualAccessControl } from "$lib/types/app-types"
+  import type { EnrollmentWithinViewAccessWindow, NewManualAccessControl, PrincipalAccessStudent } from "$lib/types/app-types"
   import type {
     ClassManualAccessEntry,
     ManageManualStudentsManualAccessEntry,
@@ -50,7 +50,7 @@
     return canGrantAndRemoveAccessForSchool(currentSchool.schoolNumber, data.principalAccess)
   })
 
-  let schoolStudents: FrontendOverviewStudent[] = $derived.by(() => {
+  let schoolStudents: PrincipalAccessStudent[] = $derived.by(() => {
     return data.students.filter((student) =>
       student.principalAccessForStudent.some((accessType) => accessType.type === "MANUELL-SKOLELEDER-TILGANG" && accessType.schoolNumber === currentSchool.schoolNumber)
     )
@@ -454,9 +454,9 @@
     return canManageManualStudentsOnSchool(data.principalAccess, currentSchool.schoolNumber)
   })
 
-  let manualStudents: FrontendOverviewStudent[] = $derived.by(() => {
+  let manualStudents: PrincipalAccessStudent[] = $derived.by(() => {
     return data.students.filter(
-      (student: FrontendOverviewStudent) =>
+      (student: PrincipalAccessStudent) =>
         student.source === "MANUAL" && student.enrollmentsWithinViewAccessWindow.some((enrollment: EnrollmentWithinViewAccessWindow) => enrollment.school.schoolNumber === currentSchool.schoolNumber)
     )
   })

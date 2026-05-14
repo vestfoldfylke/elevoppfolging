@@ -1,14 +1,18 @@
+import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
+import { getStudentsFromCache } from "$lib/server/cache/students-cache"
 import { getAppUsersFromCache } from "$lib/server/cache/users-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canAccessSchoolAdministration, canGrantAndRemoveAccessForSchool, canManageManualStudentsOnSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
+import type { PrincipalAccess, PrincipalAccessStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { AppUser, School } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
 import type { LayoutServerLoad } from "./$types"
 
 type AdministrationAccessLayoutData = {
+  students: PrincipalAccessStudent[]
   accessSchools: School[]
   appUsers: AppUser[]
 }
@@ -16,7 +20,7 @@ type AdministrationAccessLayoutData = {
 const getAdministrationAccessData: ServerLoadNextFunction<AdministrationAccessLayoutData> = async ({ principal }) => {
   const dbClient: IDbClient = getDbClient()
 
-  const principalAccess = await dbClient.access.getPrincipalAccess(principal.id)
+  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
     throw new HTTPError(403, noAccessMessage("No access found for principal"))
   }
@@ -36,8 +40,11 @@ const getAdministrationAccessData: ServerLoadNextFunction<AdministrationAccessLa
 
   const appUsers = (await getAppUsersFromCache()).sort((a, b) => a.entra.displayName.localeCompare(b.entra.displayName))
 
+  const students = (await getStudentsFromCache(principalAccess)).sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+
   return {
     data: {
+      students,
       accessSchools: allowedToAdministrateSchools,
       appUsers
     },
