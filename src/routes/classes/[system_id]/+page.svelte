@@ -49,7 +49,6 @@
       schools
     }
   })
-    
 
   let filteredStudents = $derived.by(() => {
     return data.classStudents.sort((a: PrincipalAccessStudent, b: PrincipalAccessStudent) => {

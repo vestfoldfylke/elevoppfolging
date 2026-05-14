@@ -13,7 +13,6 @@
   let sortBy = $state<"class" | "school" | "teacher">("class")
   let sortDirection = $state<"ascending" | "descending">("ascending")
 
-  
   let classes: StudentClassGroup[] = $derived.by(() => data.principalClasses)
 
   let filteredClasses = $derived.by(() => {
@@ -41,7 +40,6 @@
         }
       })
   })
-
 </script>
 
 <div class="page-content">

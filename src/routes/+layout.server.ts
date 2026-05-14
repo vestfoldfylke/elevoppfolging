@@ -42,7 +42,6 @@ const layoutLoad: ServerLoadNextFunction<RootLayoutData> = async ({ principal })
   }))
   logger.info(`Found ${schoolsFromDb.length} schools`)
 
-
   return {
     data: {
       authenticatedPrincipal: principal,

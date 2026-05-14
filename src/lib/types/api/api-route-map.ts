@@ -1,4 +1,4 @@
-import type { FrontendOverviewStudent } from "../app-types";
+import type { FrontendOverviewStudent } from "../app-types"
 import type {
   AuditEntryInput,
   AuditSearchQueryResult,

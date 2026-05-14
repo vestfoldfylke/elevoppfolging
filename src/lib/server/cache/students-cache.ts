@@ -111,7 +111,7 @@ export const getStudentsFromCache = async (principalAccess: PrincipalAccess, stu
     }
 
     // Apply search filters
-    
+
     if (studentFilter?.studentName && !student.name.toLowerCase().includes(studentFilter.studentName.toLowerCase())) {
       continue
     }
@@ -120,13 +120,18 @@ export const getStudentsFromCache = async (principalAccess: PrincipalAccess, stu
       continue
     }
 
-    if (studentFilter?.contactTeacherName && !student.mainContactTeacherGroup?.teachers.some((teacher) => studentFilter?.contactTeacherName && teacher.name.toLowerCase().includes(studentFilter.contactTeacherName.toLowerCase()))) {
+    if (
+      studentFilter?.contactTeacherName &&
+      !student.mainContactTeacherGroup?.teachers.some((teacher) => studentFilter?.contactTeacherName && teacher.name.toLowerCase().includes(studentFilter.contactTeacherName.toLowerCase()))
+    ) {
       continue
     }
 
     if (Array.isArray(studentFilter?.classSystemIds) && studentFilter.classSystemIds.length > 0) {
-      const isInClass = student.enrollmentsWithinViewAccessWindow.some((enrollment) => enrollment.classMemberships.some((classMembership) => studentFilter.classSystemIds?.includes(classMembership.classGroup.systemId)))
-      
+      const isInClass = student.enrollmentsWithinViewAccessWindow.some((enrollment) =>
+        enrollment.classMemberships.some((classMembership) => studentFilter.classSystemIds?.includes(classMembership.classGroup.systemId))
+      )
+
       if (!isInClass) {
         continue
       }

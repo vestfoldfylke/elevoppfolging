@@ -51,9 +51,10 @@ export type FrontendStudentMainDetails = {
   mainContactTeacherGroup: ContactTeacherGroup | null
 }
 
-export type CachedFrontendStudent = FrontendStudent & FrontendStudentMainDetails & {
-  enrollmentsWithinViewAccessWindow: EnrollmentWithinViewAccessWindow[]
-}
+export type CachedFrontendStudent = FrontendStudent &
+  FrontendStudentMainDetails & {
+    enrollmentsWithinViewAccessWindow: EnrollmentWithinViewAccessWindow[]
+  }
 
 export type CachedFrontendStudentFilter = {
   studentName?: string
@@ -175,4 +176,3 @@ export type FrontendOverviewStudentFilter = Omit<CachedFrontendStudentFilter, "s
   sortDirection?: "ascending" | "descending"
   top?: number
 }
-

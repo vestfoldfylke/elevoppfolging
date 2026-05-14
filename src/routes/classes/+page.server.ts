@@ -18,7 +18,7 @@ const getClassGroups: ServerLoadNextFunction<ClassesPageData> = async ({ princip
       data: {
         principalClasses: []
       },
-      isAuthorized: true,
+      isAuthorized: true
     }
   }
 

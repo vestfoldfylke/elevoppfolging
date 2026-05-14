@@ -1,10 +1,10 @@
-import type { FrontendOverviewStudent, FrontendOverviewStudentFilter, PrincipalAccess } from "$lib/types/app-types";
-import type { IDbClient } from "$lib/types/db/db-client";
-import type { StudentDataSharingConsent, StudentImportantStuff } from "$lib/types/db/shared-types";
-import { logger } from "@vestfoldfylke/loglady";
-import { getStudentsFromCache } from "./cache/students-cache";
-import { getDbClient } from "./db/get-db-client";
-import { HTTPError } from "./middleware/http-error";
+import { logger } from "@vestfoldfylke/loglady"
+import type { FrontendOverviewStudent, FrontendOverviewStudentFilter, PrincipalAccess } from "$lib/types/app-types"
+import type { IDbClient } from "$lib/types/db/db-client"
+import type { StudentDataSharingConsent, StudentImportantStuff } from "$lib/types/db/shared-types"
+import { getStudentsFromCache } from "./cache/students-cache"
+import { getDbClient } from "./db/get-db-client"
+import { HTTPError } from "./middleware/http-error"
 
 export const getFrontendOverviewStudents = async (principalAccess: PrincipalAccess, studentFilter?: FrontendOverviewStudentFilter): Promise<FrontendOverviewStudent[]> => {
   logger.info("Fetching students for principal")
@@ -98,30 +98,32 @@ export const getFrontendOverviewStudents = async (principalAccess: PrincipalAcce
 
   logger.info(`Finished filtering students and adding important stuff. Returning {OverviewStudentCount} overview students`, overviewStudents.length)
 
-  return overviewStudents.sort((a, b) => {
-    const sortBy = studentFilter?.sortBy || "studentName"
-    const sortDirection = studentFilter?.sortDirection === "descending" ? -1 : 1
+  return overviewStudents
+    .sort((a, b) => {
+      const sortBy = studentFilter?.sortBy || "studentName"
+      const sortDirection = studentFilter?.sortDirection === "descending" ? -1 : 1
 
-    switch (sortBy) {
-      case "lastActivity": {
-        const aTimestamp = a.lastActivityTimestamp ? a.lastActivityTimestamp.getTime() : 0
-        const bTimestamp = b.lastActivityTimestamp ? b.lastActivityTimestamp.getTime() : 0
-        return (aTimestamp - bTimestamp) * sortDirection
+      switch (sortBy) {
+        case "lastActivity": {
+          const aTimestamp = a.lastActivityTimestamp ? a.lastActivityTimestamp.getTime() : 0
+          const bTimestamp = b.lastActivityTimestamp ? b.lastActivityTimestamp.getTime() : 0
+          return (aTimestamp - bTimestamp) * sortDirection
+        }
+        case "studentName":
+          return a.name.localeCompare(b.name) * sortDirection
+        case "className": {
+          const aClassName = a.mainClass?.name || ""
+          const bClassName = b.mainClass?.name || ""
+          return aClassName.localeCompare(bClassName) * sortDirection
+        }
+        case "contactTeacherName": {
+          const aContactTeacherName = a.mainContactTeacherGroup?.teachers[0]?.name || ""
+          const bContactTeacherName = b.mainContactTeacherGroup?.teachers[0]?.name || ""
+          return aContactTeacherName.localeCompare(bContactTeacherName) * sortDirection
+        }
+        default:
+          return 0
       }
-      case "studentName":
-        return a.name.localeCompare(b.name) * sortDirection
-      case "className": {
-        const aClassName = a.mainClass?.name || ""
-        const bClassName = b.mainClass?.name || ""
-        return aClassName.localeCompare(bClassName) * sortDirection
-      }
-      case "contactTeacherName": {
-        const aContactTeacherName = a.mainContactTeacherGroup?.teachers[0]?.name || ""
-        const bContactTeacherName = b.mainContactTeacherGroup?.teachers[0]?.name || ""
-        return aContactTeacherName.localeCompare(bContactTeacherName) * sortDirection
-      }
-      default:
-        return 0
-    }
-  }).slice(0, studentFilter?.top ?? overviewStudents.length)
+    })
+    .slice(0, studentFilter?.top ?? overviewStudents.length)
 }

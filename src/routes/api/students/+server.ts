@@ -3,8 +3,10 @@ import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
 import { env } from "$env/dynamic/private"
 import { validateManualStudentData } from "$lib/data-validation/manual-student-validation"
+import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
 import { upsertStudentInCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
+import { getFrontendOverviewStudents } from "$lib/server/get-frontend-overview-students"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canManageManualStudentsOnSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
@@ -15,8 +17,6 @@ import type { IDbClient } from "$lib/types/db/db-client"
 import type { Access, EditorData, NewAppStudent, Period, StudentEnrollment } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 import { generateUUID } from "$lib/utils/uuid"
-import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
-import { getFrontendOverviewStudents } from "$lib/server/get-frontend-overview-students"
 
 type GetStudentsResponse = ApiRouteMap[`/api/students${NoSlashString}`]["GET"]["res"]
 
@@ -26,7 +26,7 @@ const getStudents: ApiNextFunction<GetStudentsResponse, void> = async ({ princip
 
   const validSortByValues: FrontendOverviewStudentFilter["sortBy"][] = ["studentName", "className", "contactTeacherName", "lastActivity"]
   const validSortDirectionValues: FrontendOverviewStudentFilter["sortDirection"][] = ["ascending", "descending"]
-  
+
   if (sortBy && !validSortByValues.includes(sortBy as FrontendOverviewStudentFilter["sortBy"])) {
     throw new HTTPError(400, `Invalid sortBy value. Valid values are: ${validSortByValues.join(", ")}`)
   }
@@ -40,8 +40,8 @@ const getStudents: ApiNextFunction<GetStudentsResponse, void> = async ({ princip
     className: requestEvent.url.searchParams.get("className") || undefined,
     contactTeacherName: requestEvent.url.searchParams.get("contactTeacherName") || undefined,
     studentCheckBoxIds: requestEvent.url.searchParams.getAll("studentCheckBoxIds"),
-    sortBy: sortBy as FrontendOverviewStudentFilter["sortBy"] || undefined,
-    sortDirection: sortDirection as FrontendOverviewStudentFilter["sortDirection"] || undefined,
+    sortBy: (sortBy as FrontendOverviewStudentFilter["sortBy"]) || undefined,
+    sortDirection: (sortDirection as FrontendOverviewStudentFilter["sortDirection"]) || undefined,
     top: Number(requestEvent.url.searchParams.get("top")) || undefined
   }
 

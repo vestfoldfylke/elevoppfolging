@@ -5,16 +5,16 @@
   import "@digdir/designsystemet-css" // for ds css to work and hot reload
   import "@digdir/designsystemet-css/theme" // default theme for now
   import "../style.css" // Add global css (and make it hot reload)
+  import { untrack } from "svelte"
   import { page } from "$app/state"
+  import { apiFetch } from "$lib/api-fetch/api-fetch.js"
   import AppHeader from "$lib/components/AppHeader.svelte"
   import ScreenSaver from "$lib/components/ScreenSaver.svelte"
+  import type { NoSlashString } from "$lib/types/api/api-route-map.js"
   import type { FrontendOverviewStudent, FrontendOverviewStudentFilter } from "$lib/types/app-types.js"
   import type { StudentCheckBox } from "$lib/types/db/shared-types.js"
   import { STUDENT_CHECKBOX_DISPLAY_NAMES } from "$lib/utils/student-checkbox-constants"
   import type { LayoutProps } from "./$types.js"
-  import { apiFetch } from "$lib/api-fetch/api-fetch.js";
-  import type { NoSlashString } from "$lib/types/api/api-route-map.js";
-  import { untrack } from "svelte";
 
   let { data, children }: LayoutProps = $props()
 
@@ -23,7 +23,7 @@
   let studentsQuickViewAvailable = $derived(page.route.id === "/students/[student_id]")
   let showStudentsQuickView = $state(true)
 
-	// svelte-ignore state_referenced_locally - det går bra så lenge ikke system admin kødder med checkboxene, da kan de bare refresh sida
+  // svelte-ignore state_referenced_locally - det går bra så lenge ikke system admin kødder med checkboxene, da kan de bare refresh sida
   const enabledStudentCheckBoxes: StudentCheckBox[] = data.studentCheckBoxes.filter((checkbox: StudentCheckBox) => checkbox.enabled)
   const followUpStudentCheckBoxes: StudentCheckBox[] = enabledStudentCheckBoxes.filter((checkbox: StudentCheckBox) => checkbox.type === "FOLLOW_UP")
   const facilitationStudentCheckBoxes: StudentCheckBox[] = enabledStudentCheckBoxes.filter((checkbox: StudentCheckBox) => checkbox.type === "FACILITATION")
@@ -31,14 +31,14 @@
   let selectedFollowUpStudentCheckBoxes: string[] = $state([])
   let selectedFacilitationStudentCheckBoxes: string[] = $state([])
 
-	let studentOverviewFilter: FrontendOverviewStudentFilter = $state({
-		className: "",
-		contactTeacherName: "",
-		studentName: "",
-		sortBy: "studentName",
-		sortDirection: "ascending",
-		top: 100
-	})
+  let studentOverviewFilter: FrontendOverviewStudentFilter = $state({
+    className: "",
+    contactTeacherName: "",
+    studentName: "",
+    sortBy: "studentName",
+    sortDirection: "ascending",
+    top: 100
+  })
 
   const getStudentCheckBox = (studentCheckBoxId: string): StudentCheckBox => {
     const studentCheckBox: StudentCheckBox | undefined = enabledStudentCheckBoxes.find((checkBox: StudentCheckBox) => checkBox._id === studentCheckBoxId)
@@ -65,80 +65,83 @@
     selectedFacilitationStudentCheckBoxes = selectedFacilitationStudentCheckBoxes.filter((id: string) => id !== studentCheckBoxId)
   }
 
-	type overviewStudentsState = {
-		isLoading: boolean
-		errorMessage: string | null
-		students: FrontendOverviewStudent[]
-	}
+  type overviewStudentsState = {
+    isLoading: boolean
+    errorMessage: string | null
+    students: FrontendOverviewStudent[]
+  }
 
-	let overviewStudents: overviewStudentsState = $state({
-		isLoading: false,
-		errorMessage: null,
-		students: []
-	})
+  let overviewStudents: overviewStudentsState = $state({
+    isLoading: false,
+    errorMessage: null,
+    students: []
+  })
 
-	const updateOverviewStudents = async (): Promise<void> => {
-		overviewStudents.isLoading = true
-		overviewStudents.errorMessage = null
+  const updateOverviewStudents = async (): Promise<void> => {
+    overviewStudents.isLoading = true
+    overviewStudents.errorMessage = null
 
-		const queryParams = new URLSearchParams()
-		if (studentOverviewFilter.studentName) {
-			queryParams.append("studentName", studentOverviewFilter.studentName)
-		}
-		if (studentOverviewFilter.className) {
-			queryParams.append("className", studentOverviewFilter.className)
-		}
-		if (studentOverviewFilter.contactTeacherName) {
-			queryParams.append("contactTeacherName", studentOverviewFilter.contactTeacherName)
-		}
+    const queryParams = new URLSearchParams()
+    if (studentOverviewFilter.studentName) {
+      queryParams.append("studentName", studentOverviewFilter.studentName)
+    }
+    if (studentOverviewFilter.className) {
+      queryParams.append("className", studentOverviewFilter.className)
+    }
+    if (studentOverviewFilter.contactTeacherName) {
+      queryParams.append("contactTeacherName", studentOverviewFilter.contactTeacherName)
+    }
 
-		selectedFacilitationStudentCheckBoxes.forEach((id) => { queryParams.append("studentCheckBoxIds", id) })
-		selectedFollowUpStudentCheckBoxes.forEach((id) => { queryParams.append("studentCheckBoxIds", id) })
-		
-		if (studentOverviewFilter.sortBy) {
-			queryParams.append("sortBy", studentOverviewFilter.sortBy)
-		}
-		if (studentOverviewFilter.sortDirection) {
-			queryParams.append("sortDirection", studentOverviewFilter.sortDirection)
-		}
-		if (studentOverviewFilter.top) {
-			queryParams.append("top", studentOverviewFilter.top.toString()) // For nå, hardkode til 100
-		}
+    selectedFacilitationStudentCheckBoxes.forEach((id) => {
+      queryParams.append("studentCheckBoxIds", id)
+    })
+    selectedFollowUpStudentCheckBoxes.forEach((id) => {
+      queryParams.append("studentCheckBoxIds", id)
+    })
 
-		const queryString = `?${queryParams.toString()}` as NoSlashString
+    if (studentOverviewFilter.sortBy) {
+      queryParams.append("sortBy", studentOverviewFilter.sortBy)
+    }
+    if (studentOverviewFilter.sortDirection) {
+      queryParams.append("sortDirection", studentOverviewFilter.sortDirection)
+    }
+    if (studentOverviewFilter.top) {
+      queryParams.append("top", studentOverviewFilter.top.toString()) // For nå, hardkode til 100
+    }
 
-		try {
-			const studentsResponse = await apiFetch(`/api/students${queryString}`, {
-				method: "GET"
-			})
-			overviewStudents.students = studentsResponse.students
-		} catch (error) {
-			console.error("Error fetching students:", error)
-			overviewStudents.errorMessage = `Det skjedde en feil ved innlastning av elever. Fermelding: ${error instanceof Error ? error.message : "Ukjent feil"}`
-		}
-		overviewStudents.isLoading = false
-	}
+    const queryString = `?${queryParams.toString()}` as NoSlashString
 
-	let debounceTimer: NodeJS.Timeout
+    try {
+      const studentsResponse = await apiFetch(`/api/students${queryString}`, {
+        method: "GET"
+      })
+      overviewStudents.students = studentsResponse.students
+    } catch (error) {
+      console.error("Error fetching students:", error)
+      overviewStudents.errorMessage = `Det skjedde en feil ved innlastning av elever. Fermelding: ${error instanceof Error ? error.message : "Ukjent feil"}`
+    }
+    overviewStudents.isLoading = false
+  }
 
-	const debouncedUpdateOverviewStudents = (): void => {
-		clearTimeout(debounceTimer)
+  let debounceTimer: NodeJS.Timeout
 
-		debounceTimer = setTimeout(() => {
-			updateOverviewStudents()
-		}, 300)
-	}
+  const debouncedUpdateOverviewStudents = (): void => {
+    clearTimeout(debounceTimer)
 
-	// Instant load on checkbox-filters, sorting and on mount
-	$effect(() => {
-		const _studentCheckBoxIds = [...selectedFacilitationStudentCheckBoxes, ...selectedFollowUpStudentCheckBoxes]
-		const _sorting = studentOverviewFilter.sortBy ? { sortBy: studentOverviewFilter.sortBy, sortDirection: studentOverviewFilter.sortDirection } : undefined
+    debounceTimer = setTimeout(() => {
+      updateOverviewStudents()
+    }, 300)
+  }
 
-		untrack(() => {
-			updateOverviewStudents()
-		})
-	})
+  // Instant load on checkbox-filters, sorting and on mount
+  $effect(() => {
+    const _studentCheckBoxIds = [...selectedFacilitationStudentCheckBoxes, ...selectedFollowUpStudentCheckBoxes]
+    const _sorting = studentOverviewFilter.sortBy ? { sortBy: studentOverviewFilter.sortBy, sortDirection: studentOverviewFilter.sortDirection } : undefined
 
+    untrack(() => {
+      updateOverviewStudents()
+    })
+  })
 </script>
 
 <svelte:head>
