@@ -20,7 +20,7 @@ import { incrementCount, metricResultFailure, metricResultName, metricResultSucc
 
 export class ImportantStuffDbClient implements IImportantStuffDbClient {
   private encryptionDb: Db
-  private encryptValue: (value: unknown) => Promise<Binary>
+  private readonly encryptValue: (value: unknown) => Promise<Binary>
   private importantStuffCollectionName = "important-stuff"
 
   constructor(encryptionDb: Db, encryptValue: (value: unknown) => Promise<Binary>) {

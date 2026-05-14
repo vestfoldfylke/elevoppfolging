@@ -142,10 +142,12 @@ export const getStudentsFromCache = async (principalAccess: PrincipalAccess, stu
         mainClass: student.mainClass,
         mainContactTeacherGroup: student.mainContactTeacherGroup,
         mainSchool: student.mainSchool,
-        principalAccessForStudent: studentAccessInfo
+        principalAccessForStudent: studentAccessInfo,
+        hasBlockedAddress: student.hasBlockedAddress ?? false
       })
     }
   }
+
   return studentsWithAccessInfo
 }
 

@@ -84,7 +84,13 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
     emailAlertReceivers: currentDocument.emailAlertReceivers || [] // in case the existing document doesn't have emailAlertReceivers
   }
 
-  const updatedDocumentId: string = await dbClient.documents.updateStudentDocument(documentId, updatedDocument)
+  let updatedDocumentId: string
+
+  try {
+    updatedDocumentId = await dbClient.documents.updateStudentDocument(documentId, updatedDocument)
+  } catch (error) {
+    throw new HTTPError(500, "Feilet ved oppdatering av elevnotat", error)
+  }
 
   logger.info(`Student document with ID ${documentId} updated by user ${principal.displayName} (${principal.id})`)
 
@@ -125,6 +131,7 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
       updateDocumentData.school
     )
   }
+
   return {
     documentId: updatedDocumentId
   }

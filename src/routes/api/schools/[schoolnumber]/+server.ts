@@ -33,7 +33,11 @@ const deleteSchool: ApiNextFunction<DeleteSchoolResponse> = async ({ principal, 
     throw new HTTPError(400, "Only schools created manually can be deleted.")
   }
 
-  await dbClient.schools.deleteSchool(schoolNumber)
+  try {
+    await dbClient.schools.deleteSchool(schoolNumber)
+  } catch (error) {
+    throw new HTTPError(500, "Feilet ved sletting av skole", error)
+  }
 
   try {
     await dbClient.auditLogs.createAuditEntry({
@@ -117,7 +121,13 @@ const updateSchool: ApiNextFunction<UpdateSchoolResponse, UpdateSchoolBody> = as
     }
   }
 
-  const updatedSchoolId: string = await dbClient.schools.updateSchool(schoolNumber, updatedSchool)
+  let updatedSchoolId: string
+
+  try {
+    updatedSchoolId = await dbClient.schools.updateSchool(schoolNumber, updatedSchool)
+  } catch (error) {
+    throw new HTTPError(500, "Feilet ved oppdatering av skole", error)
+  }
 
   try {
     await dbClient.auditLogs.createAuditEntry({

@@ -9,11 +9,11 @@ const programAreaCache: ProgramAreaCache = {}
 export const getProgramAreaFromCache = async (programAreaId: string): Promise<ProgramArea> => {
   const cacheEntry = programAreaCache[programAreaId]
   if (cacheEntry) {
-    logger.info(`Cache hit for programarea access with ID ${programAreaId}`)
+    logger.info(`Cache hit for program area access with ID ${programAreaId}`)
     return cacheEntry
   }
 
-  const dbClient = await getDbClient()
+  const dbClient = getDbClient()
 
   const programArea = await dbClient.programAreas.getProgramArea(programAreaId)
   if (!programArea) {

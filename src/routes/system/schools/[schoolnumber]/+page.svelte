@@ -37,7 +37,6 @@
     await goto("/system/schools", { invalidateAll: true })
   }
 
-  let schoolLeaderForm: HTMLFormElement | undefined = $state()
   let selectedEntraUserId = $state("")
 
   const addSchoolLeaderAccess = async (): Promise<void> => {
@@ -72,7 +71,7 @@
 
   <h2>{currentSchool.name}</h2>
   {#if currentSchool.source === "MANUAL"}
-    <AsyncButton onClick={deleteManualSchool} buttonText="Slett skole"  iconName="delete" />    
+    <AsyncButton onClick={deleteManualSchool} buttonText="Slett skole" iconName="delete" />    
   {/if}
 
   <p>Skolenummer: {currentSchool.schoolNumber}</p>
@@ -88,7 +87,7 @@
     {/if}
     {#if addSchoolLeaderOpen}
       <h3>Legg til skoleleder</h3>
-      <form bind:this={schoolLeaderForm}>
+      <form>
         <div class="form-group">
           <!-- TODO - lag en people select med litt søk og fancy, og bind mulighet -->
           <label for="appUser">Velg bruker</label>
@@ -100,7 +99,7 @@
         </div>
       </form>
       <div class="new-school-leader-actions">
-        <AsyncButton onClick={addSchoolLeaderAccess} buttonText="Legg til skoleleder" reloadPageDataOnSuccess={true}  iconName="add" callBackAfterReloadPageData={() => { addSchoolLeaderOpen = false; selectedEntraUserId = ""; }} />
+        <AsyncButton onClick={addSchoolLeaderAccess} buttonText="Legg til skoleleder" reloadPageDataOnSuccess={true} iconName="add" callBackAfterReloadPageData={() => { addSchoolLeaderOpen = false; selectedEntraUserId = ""; }} />
         <button onclick={() => addSchoolLeaderOpen = false} class="filled danger">Avbryt</button>
       </div>
     {/if}
@@ -109,7 +108,7 @@
   {#each data.schoolLeaderAccess.filter((access) => access.leaderForSchools.some((school) => school.schoolNumber === currentSchool.schoolNumber)) as schoolLeaderAccess}
     <div class="school-leader-access-entry">
       <p>Skoleleder: {schoolLeaderAccess.name}</p>
-      <AsyncButton onClick={() => removeSchoolLeaderAccess(schoolLeaderAccess.entraUserId)} reloadPageDataOnSuccess={true} buttonText="Fjern skoleleder"  iconName="delete" />
+      <AsyncButton onClick={() => removeSchoolLeaderAccess(schoolLeaderAccess.entraUserId)} reloadPageDataOnSuccess={true} buttonText="Fjern skoleleder" iconName="delete" />
     </div>
   {/each}
 </div>

@@ -41,13 +41,18 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100%;
-  font-family: var(--font-family);
+  font-family: var(--font-family), serif;
   font-optical-sizing: auto;
   font-weight: 300;
   font-style: normal;
   font-variation-settings:
     "wdth" 100,
     "YTLC" 500;
+}
+
+/* Selector comes from designsystemet, but for some reason it doesn't work from the designsystemet alone. Is it being overridden somewhere? Can't find it... */
+.ds-field:has(input:is([type="radio"], [type="checkbox"])) > label {
+  padding-inline-start: var(--dsc-field-content-spacing);
 }
 
 .page-content {
@@ -61,7 +66,7 @@ body {
 
 @media (min-width: 80rem) {
   .page-content {
-    padding: 0rem var(--ds-size-4);
+    padding: 0 var(--ds-size-4);
   }
 }
 

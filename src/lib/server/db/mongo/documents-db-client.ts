@@ -24,7 +24,7 @@ import { incrementCount, metricResultFailure, metricResultName, metricResultSucc
 
 export class DocumentsDbClient implements IDocumentsDbClient {
   private encryptionDb: Db
-  private encryptValue: (value: unknown) => Promise<Binary>
+  private readonly encryptValue: (value: unknown) => Promise<Binary>
   private documentsCollectionName = "documents"
   private usersCollectionName = "users"
 

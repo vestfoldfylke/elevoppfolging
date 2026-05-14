@@ -88,7 +88,17 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
     created: currentImportantStuff && currentImportantStuff.length > 0 ? currentImportantStuff[0].created : editor
   }
 
-  const importantStuffId: string = await dbClient.importantStuff.upsertStudentImportantStuff(studentId, upsertStudentImportantStuffData)
+  let importantStuffId: string
+
+  try {
+    importantStuffId = await dbClient.importantStuff.upsertStudentImportantStuff(studentId, upsertStudentImportantStuffData)
+  } catch (error) {
+    if (currentImportantStuff && currentImportantStuff.length > 0) {
+      throw new HTTPError(500, "Feilet ved oppdatering av viktig informasjon på elev", error)
+    }
+
+    throw new HTTPError(500, "Feilet ved opprettelse av viktig informasjon på elev", error)
+  }
 
   if (currentImportantStuff && currentImportantStuff.length > 0) {
     try {

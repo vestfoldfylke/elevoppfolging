@@ -86,10 +86,17 @@ const updateManualStudent: ApiNextFunction<UpdateManualStudentResponse, UpdateMa
     name: updateManualStudentData.name,
     created: student.created,
     modified: editorData,
-    studentEnrollments: student.studentEnrollments
+    studentEnrollments: student.studentEnrollments,
+    hasBlockedAddress: updateManualStudentData.hasBlockedAddress ?? false
   }
 
-  const studentId: string = await dbClient.students.updateManualStudent(updateAppStudent)
+  let studentId: string
+
+  try {
+    studentId = await dbClient.students.updateManualStudent(updateAppStudent)
+  } catch (error) {
+    throw new HTTPError(500, "Feilet ved oppdatering av manuell bruker", error)
+  }
 
   logger.info("Updated manual student with Id {Id} by user {DisplayName} ({PrincipalId})", student._id, principal.displayName, principal.id)
 
@@ -102,7 +109,8 @@ const updateManualStudent: ApiNextFunction<UpdateManualStudentResponse, UpdateMa
     source: student.source,
     studentEnrollments: student.studentEnrollments,
     created: student.created,
-    modified: updateAppStudent.modified
+    modified: updateAppStudent.modified,
+    hasBlockedAddress: updateAppStudent.hasBlockedAddress ?? false
   }
 
   await upsertStudentInCache(frontendStudent)

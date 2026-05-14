@@ -1,4 +1,8 @@
-import type { AuditEntry, AuditEntryResourceDisplayNameEntry } from "$lib/types/db/shared-types"
+import type { AuditEntry, ConstantDisplayNameEntry } from "$lib/types/db/shared-types"
+import { STUDENT_CHECKBOX_DISPLAY_NAMES } from "$lib/utils/student-checkbox-constants"
+
+const followUpDisplayName: string = STUDENT_CHECKBOX_DISPLAY_NAMES.FOLLOW_UP.single?.toLowerCase() || STUDENT_CHECKBOX_DISPLAY_NAMES.FOLLOW_UP.plural.toLowerCase()
+const facilitationDisplayName: string = STUDENT_CHECKBOX_DISPLAY_NAMES.FACILITATION.plural.toLowerCase()
 
 export const AUDIT_ENTRY_ACTION_DISPLAY_NAMES: Record<AuditEntry["action"], string> = {
   OPEN: "Åpnet / Vist / Lest",
@@ -7,7 +11,7 @@ export const AUDIT_ENTRY_ACTION_DISPLAY_NAMES: Record<AuditEntry["action"], stri
   DELETE: "Slettet"
 }
 
-export const AUDIT_ENTRY_RESOURCE_DISPLAY_NAMES: Record<AuditEntry["resource"], AuditEntryResourceDisplayNameEntry> = {
+export const AUDIT_ENTRY_RESOURCE_DISPLAY_NAMES: Record<AuditEntry["resource"], ConstantDisplayNameEntry> = {
   Access: {
     plural: "Tilgang"
   },
@@ -19,8 +23,8 @@ export const AUDIT_ENTRY_RESOURCE_DISPLAY_NAMES: Record<AuditEntry["resource"], 
     single: "Klassenotat"
   },
   GroupDocumentMessage: {
-    plural: "Oppfølging klassenotater",
-    single: "Oppfølging klassenotat"
+    plural: "Oppdatering klassenotater",
+    single: "Oppdatering klassenotat"
   },
   ImportantStuff: {
     plural: "Viktig informasjon"
@@ -42,8 +46,8 @@ export const AUDIT_ENTRY_RESOURCE_DISPLAY_NAMES: Record<AuditEntry["resource"], 
     single: "Elev"
   },
   StudentCheckBox: {
-    plural: "Avkrysningsbokser oppfølging og enkeltvedtak",
-    single: "Avkrysningsboks oppfølging og enkeltvedtak"
+    plural: `Avkrysningsbokser ${followUpDisplayName} og ${facilitationDisplayName}`,
+    single: `Avkrysningsboks ${followUpDisplayName} og ${facilitationDisplayName}`
   },
   StudentDataSharingConsent: {
     plural: "Samtykke til deling av data"
@@ -53,8 +57,8 @@ export const AUDIT_ENTRY_RESOURCE_DISPLAY_NAMES: Record<AuditEntry["resource"], 
     single: "Elevnotat"
   },
   StudentDocumentMessage: {
-    plural: "Oppfølging elevnotater",
-    single: "Oppfølging elevnotat"
+    plural: "Oppdatering elevnotater",
+    single: "Oppdatering elevnotat"
   },
   Template: {
     plural: "Maler",

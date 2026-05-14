@@ -22,11 +22,11 @@
 
   let { documentId, studentId, groupSystemId, accessSchools, currentDocument = $bindable(), studentDataSharingConsent, studentAccessPersons, emailAlertAvailable, closeEditor }: EditorProps = $props()
 
-  // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounter ved endring av studentId/groupSystemId
+  // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounts ved endring av studentId/groupSystemId
   if (!studentId && !groupSystemId) {
     throw new Error("Student ID or Group System ID is required to create a new document")
   }
-  // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounter ved endring av studentId/groupSystemId
+  // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounts ved endring av studentId/groupSystemId
   if (studentId && groupSystemId) {
     throw new Error("Both Student ID and Group System ID provided, only one should be provided")
   }

@@ -97,7 +97,11 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
       students: []
     }
 
-    await dbClient.access.createAccess(newAccess)
+    try {
+      await dbClient.access.createAccess(newAccess)
+    } catch (error) {
+      throw new HTTPError(500, "Feilet ved opprettelse av tilgang", error)
+    }
   } else {
     // If the same access entry already exists, we should not add it again
     switch (accessEntryInput.type) {
@@ -142,7 +146,13 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
   }
 
   // Then we can finally add the access entry
-  const updatedAccessId: string = await dbClient.access.addAccessEntry(entraUserId, accessEntryToAdd)
+  let updatedAccessId: string
+
+  try {
+    updatedAccessId = await dbClient.access.addAccessEntry(entraUserId, accessEntryToAdd)
+  } catch (error) {
+    throw new HTTPError(500, "Feilet ved opprettelse av tilgang", error)
+  }
 
   try {
     await dbClient.auditLogs.createAuditEntry({

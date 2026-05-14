@@ -2,6 +2,7 @@
   import PageHeader from "$lib/components/PageHeader.svelte"
   import StudentCheckBoxComponent from "$lib/components/StudentCheckBox.svelte"
   import type { EditorData, StudentCheckBox } from "$lib/types/db/shared-types"
+  import { STUDENT_CHECKBOX_DISPLAY_NAMES } from "$lib/utils/student-checkbox-constants"
   import type { PageProps } from "./$types"
 
   let { data }: PageProps = $props()
@@ -31,45 +32,48 @@
     ...newStudentFollowUpCheckBox,
     type: "FACILITATION"
   }
+
+  const followUpDisplayName: string = STUDENT_CHECKBOX_DISPLAY_NAMES.FOLLOW_UP.single || STUDENT_CHECKBOX_DISPLAY_NAMES.FOLLOW_UP.plural
+  const followUpDisplayNameLowerCase: string = followUpDisplayName.toLowerCase()
+  const facilitationDisplayName: string = STUDENT_CHECKBOX_DISPLAY_NAMES.FACILITATION.plural
+  const facilitationDisplayNameLowerCase: string = facilitationDisplayName.toLowerCase()
 </script>
 
 <div class="page-content">
-  <PageHeader title="Konfigurasjon av oppfølging/enkeltvedtak-sjekkbokser (K.A.O.S)" />
+  <PageHeader title={`Konfigurasjon av ${followUpDisplayNameLowerCase}/${facilitationDisplayNameLowerCase}-sjekkbokser (K.A.O.S)`} />
   <p>De som er i viktig informasjonsboksen på elevsiden</p>
-  <h3>Oppfølging</h3>
+  <h3>{followUpDisplayName}</h3>
   {#if data.checkBoxes.filter(checkBox => checkBox.type === "FOLLOW_UP").length === 0}
-    <p>Ingen oppfølgings-sjekkbokser er lagt til enda</p>
+    <p>Ingen {followUpDisplayNameLowerCase}-sjekkbokser er lagt til enda</p>
   {/if}
   {#each data.checkBoxes.filter(checkBox => checkBox.type === "FOLLOW_UP") as checkBox (checkBox._id)}
     <StudentCheckBoxComponent {checkBox} editMode={false} />
   {/each}
   <div class="add-student-checkbox">
     {#if !addStudentFollowUpCheckBoxOpen}
-      <button onclick={() => addStudentFollowUpCheckBoxOpen = true}>Legg til ny oppfølgings-sjekkboks</button>
+      <button onclick={() => addStudentFollowUpCheckBoxOpen = true}>Legg til ny {followUpDisplayNameLowerCase}-sjekkboks</button>
     {/if}
     {#if addStudentFollowUpCheckBoxOpen}
       <StudentCheckBoxComponent checkBox={newStudentFollowUpCheckBox} editMode={true} callBackOnCancel={() => addStudentFollowUpCheckBoxOpen = false} callBackOnCreate={() => addStudentFollowUpCheckBoxOpen = false} />
     {/if}
   </div>
 
-
-  <h3>Enkeltvedtak</h3>
+  <h3>{facilitationDisplayName}</h3>
   {#if data.checkBoxes.filter(checkBox => checkBox.type === "FACILITATION").length === 0}
-    <p>Ingen enkeltvedtak-sjekkbokser er lagt til enda</p>
+    <p>Ingen {facilitationDisplayNameLowerCase}-sjekkbokser er lagt til enda</p>
   {/if}
   {#each data.checkBoxes.filter(checkBox => checkBox.type === "FACILITATION") as checkBox (checkBox._id)}
     <StudentCheckBoxComponent {checkBox} editMode={false} />
   {/each}
   <div class="add-student-checkbox">
     {#if !addStudentFacilitationCheckBoxOpen}
-      <button onclick={() => addStudentFacilitationCheckBoxOpen = true}>Legg til ny enkeltvedtak-sjekkboks</button>
+      <button onclick={() => addStudentFacilitationCheckBoxOpen = true}>Legg til ny {facilitationDisplayNameLowerCase}-sjekkboks</button>
     {/if}
     {#if addStudentFacilitationCheckBoxOpen}
       <StudentCheckBoxComponent checkBox={newStudentFacilitationCheckBox} editMode={true} callBackOnCancel={() => addStudentFacilitationCheckBoxOpen = false} callBackOnCreate={() => addStudentFacilitationCheckBoxOpen = false} />
     {/if}
   </div>
 </div>
-
 
 <style>
 </style>

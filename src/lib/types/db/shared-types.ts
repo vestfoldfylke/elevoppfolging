@@ -2,7 +2,7 @@ import type { Binary, ObjectId } from "mongodb"
 
 /** Undervisningsforhold & Skoleressurs */
 export type Teacher = {
-  /** entra objectid knyttet til en bruker i Users-collection hvis læreren finnes der */
+  /** entra ObjectId knyttet til en bruker i Users-collection hvis læreren finnes der */
   entraUserId: string | null
   systemId: string
   feideName: string
@@ -105,7 +105,7 @@ export type MainSchool = SchoolInfo & {
 
 export type Source = "AUTO" | "MANUAL"
 
-/** En elev i db for denne appen */
+/** En elev i db for denne app */
 export type NewAppStudent = {
   /** FINT system-id for eleven */
   systemId: string
@@ -118,6 +118,8 @@ export type NewAppStudent = {
   created: EditorData
   modified: EditorData
   source: Source
+  /** Based on elev.person.bostedsadresse.adresselinje from FINT */
+  hasBlockedAddress?: boolean
 }
 
 export type AppStudent = NewAppStudent & {
@@ -133,6 +135,7 @@ export type UpdateAppStudent = AppStudent
 export type NewManualStudentInput = {
   ssn: string
   name: string
+  hasBlockedAddress: boolean
   school: School
 }
 
@@ -737,7 +740,7 @@ export type MetricCount = {
   splitMetricByLabels?: boolean
   /** Only applicable when <u>splitMetricByLabels</u> is <b>true</b>.<br />
    *  If set to false, labels will not be added to the metric (<b>metricResultName</b> will be added anyway).<br />
-   *  If not set or set to true, splitted labels will be added to the metric (<b>metricResultName</b> will be added anyway).<br />
+   *  If not set or set to true, split labels will be added to the metric (<b>metricResultName</b> will be added anyway).<br />
    *  Default behavior: true */
   includeLabelsInSplit?: boolean
 }
@@ -782,7 +785,7 @@ export type AuditEntry = AuditEntryInput & {
   _id: string
 }
 
-export type AuditEntryResourceDisplayNameEntry = {
+export type ConstantDisplayNameEntry = {
   plural: string
   single?: string
 }

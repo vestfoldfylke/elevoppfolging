@@ -155,10 +155,17 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
         contactTeacherGroupMemberships: [],
         teachingGroupMemberships: []
       }
-    ]
+    ],
+    hasBlockedAddress: newManualStudentData.hasBlockedAddress ?? false
   }
 
-  const studentId: string = await dbClient.students.createManualStudent(newAppStudent)
+  let studentId: string
+
+  try {
+    studentId = await dbClient.students.createManualStudent(newAppStudent)
+  } catch (error) {
+    throw new HTTPError(500, "Feilet ved opprettelse av manuell bruker", error)
+  }
 
   logger.info("Created manual student with Id {Id} by user {DisplayName} ({PrincipalId})", studentId, principal.displayName, principal.id)
 
@@ -171,7 +178,8 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
     source: newAppStudent.source,
     studentEnrollments: newAppStudent.studentEnrollments,
     created: newAppStudent.created,
-    modified: newAppStudent.modified
+    modified: newAppStudent.modified,
+    hasBlockedAddress: newAppStudent.hasBlockedAddress ?? false
   }
 
   await upsertStudentInCache(frontendStudent)

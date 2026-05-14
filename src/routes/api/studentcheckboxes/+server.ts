@@ -9,6 +9,7 @@ import { isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/author
 import type { ApiRouteMap } from "$lib/types/api/api-route-map"
 import type { EditorData, NewStudentCheckBox } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
+import { STUDENT_CHECKBOX_DISPLAY_NAMES } from "$lib/utils/student-checkbox-constants"
 
 type AddStudentCheckBoxResponse = ApiRouteMap["/api/studentcheckboxes"]["POST"]["res"]
 type AddStudentCheckBoxBody = ApiRouteMap["/api/studentcheckboxes"]["POST"]["req"]
@@ -48,7 +49,17 @@ const addStudentCheckBox: ApiNextFunction<AddStudentCheckBoxResponse, AddStudent
     modified: editorData
   }
 
-  const checkBoxId: string = await dbClient.studentCheckBoxes.createStudentCheckBox(newStudentCheckBox)
+  let checkBoxId: string
+
+  try {
+    checkBoxId = await dbClient.studentCheckBoxes.createStudentCheckBox(newStudentCheckBox)
+  } catch (error) {
+    throw new HTTPError(
+      500,
+      `Feilet ved opprettelse av ${STUDENT_CHECKBOX_DISPLAY_NAMES[newStudentCheckBox.type].single?.toLowerCase() || STUDENT_CHECKBOX_DISPLAY_NAMES[newStudentCheckBox.type].plural.toLowerCase()} sjekkboks`,
+      error
+    )
+  }
 
   try {
     await dbClient.auditLogs.createAuditEntry({

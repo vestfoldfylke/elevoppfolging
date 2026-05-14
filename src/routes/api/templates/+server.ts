@@ -44,7 +44,13 @@ const addDocumentContentTemplate: ApiNextFunction<AddDocumentContentTemplateResp
 
   const dbClient = getDbClient()
 
-  const templateId: string = await dbClient.documentContentTemplates.createDocumentContentTemplate(newDocument)
+  let templateId: string
+
+  try {
+    templateId = await dbClient.documentContentTemplates.createDocumentContentTemplate(newDocument)
+  } catch (error) {
+    throw new HTTPError(500, "Feilet ved opprettelse av mal", error)
+  }
 
   try {
     await dbClient.auditLogs.createAuditEntry({
