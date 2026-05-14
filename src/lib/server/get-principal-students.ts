@@ -6,7 +6,7 @@ import { getStudentsFromCache } from "./cache/students-cache";
 import { getDbClient } from "./db/get-db-client";
 import { HTTPError } from "./middleware/http-error";
 
-export const getPrincipalStudents = async (principalAccess: PrincipalAccess, studentFilter: FrontendOverviewStudentFilter) => {
+export const getPrincipalStudents = async (principalAccess: PrincipalAccess, studentFilter?: FrontendOverviewStudentFilter): Promise<FrontendOverviewStudent[]> => {
   logger.info("Fetching students for principal")
   const studentsWithAccessInfo = await getStudentsFromCache(principalAccess)
   logger.info(`Found {StudentsCount} students for principal`, studentsWithAccessInfo.length)
@@ -32,15 +32,15 @@ export const getPrincipalStudents = async (principalAccess: PrincipalAccess, stu
   for (const student of studentsWithAccessInfo) {
     // Apply search filters
     
-    if (studentFilter.studentName && !student.name.toLowerCase().includes(studentFilter.studentName.toLowerCase())) {
+    if (studentFilter?.studentName && !student.name.toLowerCase().includes(studentFilter.studentName.toLowerCase())) {
       continue
     }
 
-    if (studentFilter.className && !student.mainClass?.name.toLowerCase().includes(studentFilter.className.toLowerCase())) {
+    if (studentFilter?.className && !student.mainClass?.name.toLowerCase().includes(studentFilter.className.toLowerCase())) {
       continue
     }
 
-    if (studentFilter.contactTeacherName && !student.mainContactTeacherGroup?.teachers.some((teacher) => teacher.name.toLowerCase().includes(studentFilter.contactTeacherName.toLowerCase()))) {
+    if (studentFilter?.contactTeacherName && !student.mainContactTeacherGroup?.teachers.some((teacher) => studentFilter?.contactTeacherName && teacher.name.toLowerCase().includes(studentFilter.contactTeacherName.toLowerCase()))) {
       continue
     }
 
@@ -95,7 +95,7 @@ export const getPrincipalStudents = async (principalAccess: PrincipalAccess, stu
     }
 
     // Apply checkbox filters
-    if (studentFilter.studentCheckBoxIds.length > 0) {
+    if (Array.isArray(studentFilter?.studentCheckBoxIds) && studentFilter.studentCheckBoxIds.length > 0) {
       const hasCheckBoxIds = studentFilter.studentCheckBoxIds.every((checkBoxId) => {
         return overviewStudent.importantStuff.some((importantStuff) => importantStuff.facilitation.includes(checkBoxId) || importantStuff.followUp.includes(checkBoxId))
       })
@@ -112,5 +112,30 @@ export const getPrincipalStudents = async (principalAccess: PrincipalAccess, stu
 
   logger.info(`Finished filtering students and adding important stuff. Returning {OverviewStudentCount} overview students`, overviewStudents.length)
 
-  return overviewStudents
+  return overviewStudents.sort((a, b) => {
+    const sortBy = studentFilter?.sortBy || "studentName"
+    const sortDirection = studentFilter?.sortDirection === "descending" ? -1 : 1
+
+    switch (sortBy) {
+      case "lastActivity": {
+        const aTimestamp = a.lastActivityTimestamp ? a.lastActivityTimestamp.getTime() : 0
+        const bTimestamp = b.lastActivityTimestamp ? b.lastActivityTimestamp.getTime() : 0
+        return (aTimestamp - bTimestamp) * sortDirection
+      }
+      case "studentName":
+        return a.name.localeCompare(b.name) * sortDirection
+      case "className": {
+        const aClassName = a.mainClass?.name || ""
+        const bClassName = b.mainClass?.name || ""
+        return aClassName.localeCompare(bClassName) * sortDirection
+      }
+      case "contactTeacherName": {
+        const aContactTeacherName = a.mainContactTeacherGroup?.teachers[0]?.name || ""
+        const bContactTeacherName = b.mainContactTeacherGroup?.teachers[0]?.name || ""
+        return aContactTeacherName.localeCompare(bContactTeacherName) * sortDirection
+      }
+      default:
+        return 0
+    }
+  }).slice(0, studentFilter?.top ?? overviewStudents.length)
 }
