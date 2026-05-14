@@ -8,7 +8,7 @@
   import { page } from "$app/state"
   import AppHeader from "$lib/components/AppHeader.svelte"
   import ScreenSaver from "$lib/components/ScreenSaver.svelte"
-  import type { FrontendOverviewStudent, FrontendOverviewStudentFilter, FrontendStudentMainDetails } from "$lib/types/app-types.js"
+  import type { FrontendOverviewStudent, FrontendOverviewStudentFilter } from "$lib/types/app-types.js"
   import type { StudentCheckBox } from "$lib/types/db/shared-types.js"
   import { STUDENT_CHECKBOX_DISPLAY_NAMES } from "$lib/utils/student-checkbox-constants"
   import type { LayoutProps } from "./$types.js"
