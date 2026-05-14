@@ -15,8 +15,8 @@ import type { IDbClient } from "$lib/types/db/db-client"
 import type { Access, EditorData, NewAppStudent, Period, StudentEnrollment } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 import { generateUUID } from "$lib/utils/uuid"
-import { getPrincipalStudents } from "$lib/server/get-principal-students"
 import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
+import { getFrontendOverviewStudents } from "$lib/server/get-frontend-overview-students"
 
 type GetStudentsResponse = ApiRouteMap[`/api/students${NoSlashString}`]["GET"]["res"]
 
@@ -53,7 +53,7 @@ const getStudents: ApiNextFunction<GetStudentsResponse, void> = async ({ princip
     }
   }
 
-  const frontendOverviewStudents: FrontendOverviewStudent[] = await getPrincipalStudents(principalAccess, studentFilter)
+  const frontendOverviewStudents: FrontendOverviewStudent[] = await getFrontendOverviewStudents(principalAccess, studentFilter)
 
   return {
     students: frontendOverviewStudents

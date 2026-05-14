@@ -6,9 +6,9 @@ import { getStudentsFromCache } from "./cache/students-cache";
 import { getDbClient } from "./db/get-db-client";
 import { HTTPError } from "./middleware/http-error";
 
-export const getPrincipalStudents = async (principalAccess: PrincipalAccess, studentFilter?: FrontendOverviewStudentFilter): Promise<FrontendOverviewStudent[]> => {
+export const getFrontendOverviewStudents = async (principalAccess: PrincipalAccess, studentFilter?: FrontendOverviewStudentFilter): Promise<FrontendOverviewStudent[]> => {
   logger.info("Fetching students for principal")
-  const studentsWithAccessInfo = await getStudentsFromCache(principalAccess)
+  const studentsWithAccessInfo = await getStudentsFromCache(principalAccess, studentFilter)
   logger.info(`Found {StudentsCount} students for principal`, studentsWithAccessInfo.length)
 
   const dbClient: IDbClient = getDbClient()
@@ -30,20 +30,6 @@ export const getPrincipalStudents = async (principalAccess: PrincipalAccess, stu
   const now = Date.now()
 
   for (const student of studentsWithAccessInfo) {
-    // Apply search filters
-    
-    if (studentFilter?.studentName && !student.name.toLowerCase().includes(studentFilter.studentName.toLowerCase())) {
-      continue
-    }
-
-    if (studentFilter?.className && !student.mainClass?.name.toLowerCase().includes(studentFilter.className.toLowerCase())) {
-      continue
-    }
-
-    if (studentFilter?.contactTeacherName && !student.mainContactTeacherGroup?.teachers.some((teacher) => studentFilter?.contactTeacherName && teacher.name.toLowerCase().includes(studentFilter.contactTeacherName.toLowerCase()))) {
-      continue
-    }
-
     const accessSchoolsForStudent = Array.from(new Set(student.principalAccessForStudent.map((accessType) => accessType.schoolNumber)))
 
     if (accessSchoolsForStudent.length === 0) {

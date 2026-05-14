@@ -8,10 +8,12 @@
   import { page } from "$app/state"
   import AppHeader from "$lib/components/AppHeader.svelte"
   import ScreenSaver from "$lib/components/ScreenSaver.svelte"
-  import type { FrontendOverviewStudent, FrontendStudentMainDetails } from "$lib/types/app-types.js"
+  import type { FrontendOverviewStudent, FrontendOverviewStudentFilter, FrontendStudentMainDetails } from "$lib/types/app-types.js"
   import type { StudentCheckBox } from "$lib/types/db/shared-types.js"
-  import { getFrontendStudentMainDetails } from "$lib/utils/frontend-student-details.js"
   import type { LayoutProps } from "./$types.js"
+  import { apiFetch } from "$lib/api-fetch/api-fetch.js";
+  import type { NoSlashString } from "$lib/types/api/api-route-map.js";
+  import { untrack } from "svelte";
 
   let { data, children }: LayoutProps = $props()
 
@@ -20,19 +22,22 @@
   let studentsQuickViewAvailable = $derived(page.route.id === "/students/[student_id]")
   let showStudentsQuickView = $state(true)
 
-  let searchTerms = $state({
-    name: "",
-    class: "",
-    teacher: ""
-  })
-
-  // svelte-ignore state_referenced_locally - det går bra så lenge ikke system admin kødder med checkboxene, da kan de bare refresh sida
+	// svelte-ignore state_referenced_locally - det går bra så lenge ikke system admin kødder med checkboxene, da kan de bare refresh sida
   const enabledStudentCheckBoxes: StudentCheckBox[] = data.studentCheckBoxes.filter((checkbox: StudentCheckBox) => checkbox.enabled)
   const followUpStudentCheckBoxes: StudentCheckBox[] = enabledStudentCheckBoxes.filter((checkbox: StudentCheckBox) => checkbox.type === "FOLLOW_UP")
   const facilitationStudentCheckBoxes: StudentCheckBox[] = enabledStudentCheckBoxes.filter((checkbox: StudentCheckBox) => checkbox.type === "FACILITATION")
 
   let selectedFollowUpStudentCheckBoxes: string[] = $state([])
   let selectedFacilitationStudentCheckBoxes: string[] = $state([])
+
+	let studentOverviewFilter: FrontendOverviewStudentFilter = $state({
+		className: "",
+		contactTeacherName: "",
+		studentName: "",
+		sortBy: "studentName",
+		sortDirection: "ascending",
+		top: 100
+	})
 
   const getStudentCheckBox = (studentCheckBoxId: string): StudentCheckBox => {
     const studentCheckBox: StudentCheckBox | undefined = enabledStudentCheckBoxes.find((checkBox: StudentCheckBox) => checkBox._id === studentCheckBoxId)
@@ -59,65 +64,80 @@
     selectedFacilitationStudentCheckBoxes = selectedFacilitationStudentCheckBoxes.filter((id: string) => id !== studentCheckBoxId)
   }
 
-  let filters: Record<string, boolean> = $state({
-    importantInfo: false,
-    followUp: false,
-    facilitation: false
-  })
+	type overviewStudentsState = {
+		isLoading: boolean
+		errorMessage: string | null
+		students: FrontendOverviewStudent[]
+	}
 
-  let sortBy = $state<"name" | "class" | "teacher" | "lastActivity">("name")
-  let sortDirection = $state<"ascending" | "descending">("ascending")
+	let overviewStudents: overviewStudentsState = $state({
+		isLoading: false,
+		errorMessage: null,
+		students: []
+	})
 
-  let students: (FrontendOverviewStudent & FrontendStudentMainDetails)[] = $derived.by(() =>
-    data.students.map((student) => {
-      return {
-        ...student,
-        ...getFrontendStudentMainDetails(student.enrollmentsWithinViewAccessWindow)
-      }
-    })
-  )
+	const updateOverviewStudents = async (): Promise<void> => {
+		overviewStudents.isLoading = true
+		overviewStudents.errorMessage = null
 
-  let filteredStudents = $derived.by(() => {
-    return students
-      .filter((student) => {
-        const searchFilters: Record<string, boolean> = {
-          matchesImportantInfo: !filters.importantInfo || student.importantStuff.some((importantStuff) => importantStuff.importantInfo && importantStuff.importantInfo.trim() !== "")
-        }
-        Object.values(selectedFollowUpStudentCheckBoxes).forEach((checkboxId: string) => {
-          searchFilters[`matchesCheckbox_${checkboxId}`] = student.importantStuff.some((importantStuff) => importantStuff.followUp.includes(checkboxId))
-        })
-        Object.values(selectedFacilitationStudentCheckBoxes).forEach((checkboxId: string) => {
-          searchFilters[`matchesCheckbox_${checkboxId}`] = student.importantStuff.some((importantStuff) => importantStuff.facilitation.includes(checkboxId))
-        })
+		const queryParams = new URLSearchParams()
+		if (studentOverviewFilter.studentName) {
+			queryParams.append("studentName", studentOverviewFilter.studentName)
+		}
+		if (studentOverviewFilter.className) {
+			queryParams.append("className", studentOverviewFilter.className)
+		}
+		if (studentOverviewFilter.contactTeacherName) {
+			queryParams.append("contactTeacherName", studentOverviewFilter.contactTeacherName)
+		}
 
-        const matchesName = !searchTerms.name || student.name.toLowerCase().includes(searchTerms.name.toLowerCase())
-        const matchesClass = !searchTerms.class || student.mainClass?.name.toLowerCase().includes(searchTerms.class.toLowerCase()) || false
-        const matchesTeacher = !searchTerms.teacher || student.mainContactTeacherGroup?.teachers.some((teacher) => teacher.name.toLowerCase().includes(searchTerms.teacher.toLowerCase())) || false
-        const searchFilterMatch = Object.values(searchFilters).every((filter) => filter)
+		selectedFacilitationStudentCheckBoxes.forEach((id) => { queryParams.append("studentCheckBoxIds", id) })
+		selectedFollowUpStudentCheckBoxes.forEach((id) => { queryParams.append("studentCheckBoxIds", id) })
+		
+		if (studentOverviewFilter.sortBy) {
+			queryParams.append("sortBy", studentOverviewFilter.sortBy)
+		}
+		if (studentOverviewFilter.sortDirection) {
+			queryParams.append("sortDirection", studentOverviewFilter.sortDirection)
+		}
+		if (studentOverviewFilter.top) {
+			queryParams.append("top", studentOverviewFilter.top.toString()) // For nå, hardkode til 100
+		}
 
-        return matchesName && matchesClass && matchesTeacher && searchFilterMatch
-      })
-      .sort((a, b) => {
-        switch (sortBy) {
-          case "name":
-            return sortDirection === "ascending" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
-          case "class":
-            return sortDirection === "ascending" ? (a.mainClass?.name || "").localeCompare(b.mainClass?.name || "") : (b.mainClass?.name || "").localeCompare(a.mainClass?.name || "")
-          case "teacher": {
-            const aTeachers = a.mainContactTeacherGroup?.teachers.map((t) => t.name).join(", ") || ""
-            const bTeachers = b.mainContactTeacherGroup?.teachers.map((t) => t.name).join(", ") || ""
-            return sortDirection === "ascending" ? aTeachers.localeCompare(bTeachers) : bTeachers.localeCompare(aTeachers)
-          }
-          case "lastActivity": {
-            const aTimestamp = a.lastActivityTimestamp ? a.lastActivityTimestamp.getTime() : 0
-            const bTimestamp = b.lastActivityTimestamp ? b.lastActivityTimestamp.getTime() : 0
-            return sortDirection === "ascending" ? aTimestamp - bTimestamp : bTimestamp - aTimestamp
-          }
-          default:
-            return 0
-        }
-      })
-  })
+		const queryString = `?${queryParams.toString()}` as NoSlashString
+
+		try {
+			const studentsResponse = await apiFetch(`/api/students${queryString}`, {
+				method: "GET"
+			})
+			overviewStudents.students = studentsResponse.students
+		} catch (error) {
+			console.error("Error fetching students:", error)
+			overviewStudents.errorMessage = `Det skjedde en feil ved innlastning av elever. Fermelding: ${error instanceof Error ? error.message : "Ukjent feil"}`
+		}
+		overviewStudents.isLoading = false
+	}
+
+	let debounceTimer: NodeJS.Timeout
+
+	const debouncedUpdateOverviewStudents = (): void => {
+		clearTimeout(debounceTimer)
+
+		debounceTimer = setTimeout(() => {
+			updateOverviewStudents()
+		}, 300)
+	}
+
+	// Instant load on checkbox-filters, sorting and on mount
+	$effect(() => {
+		const _studentCheckBoxIds = [...selectedFacilitationStudentCheckBoxes, ...selectedFollowUpStudentCheckBoxes]
+		const _sorting = studentOverviewFilter.sortBy ? { sortBy: studentOverviewFilter.sortBy, sortDirection: studentOverviewFilter.sortDirection } : undefined
+
+		untrack(() => {
+			updateOverviewStudents()
+		})
+	})
+
 </script>
 
 <svelte:head>
@@ -147,15 +167,15 @@
 				<div class="student-search-container">
 					<ds-field class="ds-field">
 						<label for="student-name-search" class="ds-label" data-weight="medium">Navn</label>
-						<input id="student-name-search" class="ds-input" type="text" placeholder="Søk etter elev" bind:value={searchTerms.name} >
+						<input id="student-name-search" class="ds-input" type="text" placeholder="Søk etter elev" bind:value={studentOverviewFilter.studentName} oninput={debouncedUpdateOverviewStudents} autocomplete="off" >
 					</ds-field>
 					<ds-field class="ds-field">
 						<label for="student-class-search" class="ds-label" data-weight="medium">Klasse</label>
-						<input id="student-class-search" class="ds-input" placeholder="Søk etter klasse" type="text" bind:value={searchTerms.class} />
+						<input id="student-class-search" class="ds-input" placeholder="Søk etter klasse" type="text" bind:value={studentOverviewFilter.className} oninput={debouncedUpdateOverviewStudents} autocomplete="off" />
 					</ds-field>
 					<ds-field class="ds-field">
 						<label for="student-teacher-search" class="ds-label" data-weight="medium">Kontaktlærer</label>
-						<input id="student-teacher-search" class="ds-input" placeholder="Søk etter kontaktlærer" type="text" bind:value={searchTerms.teacher} />
+						<input id="student-teacher-search" class="ds-input" placeholder="Søk etter kontaktlærer" type="text" bind:value={studentOverviewFilter.contactTeacherName} oninput={debouncedUpdateOverviewStudents} autocomplete="off" />
 					</ds-field>
 				</div>
 
@@ -225,32 +245,51 @@
 				</div>
 
 				<div class="student-table-container">
-					<table class="ds-table">
+					<table class="ds-table" style="table-layout:fixed">
 						<thead>
 							<tr>
-								<th aria-sort={sortBy === "name" ? sortDirection : "none"}>
-									<button type="button" onclick={() => sortBy === "name" ? sortDirection = sortDirection === "ascending" ? "descending" : "ascending" : sortBy = "name"}>Navn</button>
+								<th aria-sort={studentOverviewFilter.sortBy === "studentName" ? studentOverviewFilter.sortDirection : "none"}>
+									<button type="button" onclick={() => studentOverviewFilter.sortBy === "studentName" ? studentOverviewFilter.sortDirection = studentOverviewFilter.sortDirection === "ascending" ? "descending" : "ascending" : studentOverviewFilter.sortBy = "studentName"}>Navn</button>
 								</th>
-								<th class="desktop-only" aria-sort={sortBy === "class" ? sortDirection : "none"}>
-									<button type="button" onclick={() => sortBy === "class" ? sortDirection = sortDirection === "ascending" ? "descending" : "ascending" : sortBy = "class"}>Klasse</button>
+								<th class="desktop-only" aria-sort={studentOverviewFilter.sortBy === "className" ? studentOverviewFilter.sortDirection : "none"}>
+									<button type="button" onclick={() => studentOverviewFilter.sortBy === "className" ? studentOverviewFilter.sortDirection = studentOverviewFilter.sortDirection === "ascending" ? "descending" : "ascending" : studentOverviewFilter.sortBy = "className"}>Klasse</button>
 								</th>
-								<th class="desktop-only" aria-sort={sortBy === "teacher" ? sortDirection : "none"}>
-									<button type="button" onclick={() => sortBy === "teacher" ? sortDirection = sortDirection === "ascending" ? "descending" : "ascending" : sortBy = "teacher"}>Kontaktlærer</button>
+								<th class="desktop-only" aria-sort={studentOverviewFilter.sortBy === "contactTeacherName" ? studentOverviewFilter.sortDirection : "none"}>
+									<button type="button" onclick={() => studentOverviewFilter.sortBy === "contactTeacherName" ? studentOverviewFilter.sortDirection = studentOverviewFilter.sortDirection === "ascending" ? "descending" : "ascending" : studentOverviewFilter.sortBy = "contactTeacherName"}>Kontaktlærer</button>
 								</th>
-								<th class="desktop-only" aria-sort={sortBy === "lastActivity" ? sortDirection : "none"}>
-									<button type="button" onclick={() => sortBy === "lastActivity" ? sortDirection = sortDirection === "ascending" ? "descending" : "ascending" : sortBy = "lastActivity"}>Siste aktivitet</button>
+								<th class="desktop-only" aria-sort={studentOverviewFilter.sortBy === "lastActivity" ? studentOverviewFilter.sortDirection : "none"}>
+									<button type="button" onclick={() => studentOverviewFilter.sortBy === "lastActivity" ? studentOverviewFilter.sortDirection = studentOverviewFilter.sortDirection === "ascending" ? "descending" : "ascending" : studentOverviewFilter.sortBy = "lastActivity"}>Siste aktivitet</button>
 								</th>
 							</tr>
 						</thead>
 						<tbody>
-							{#each filteredStudents.slice(0, 100) as student}
+							{#if overviewStudents.isLoading}
+								{#each new Array(10) as _item}
+									<tr>
+										<td><span aria-hidden="true" class="ds-skeleton" data-variant="rectangle" style="height: 3rem;"></span></td>
+										<td class="desktop-only"><span aria-hidden="true" class="ds-skeleton" data-variant="rectangle" style="height: 3rem;"></span></td>
+										<td class="desktop-only"><span aria-hidden="true" class="ds-skeleton" data-variant="rectangle" style="height: 3rem;"></span></td>
+										<td class="desktop-only"><span aria-hidden="true" class="ds-skeleton" data-variant="rectangle" style="height: 3rem;"></span></td>
+									</tr>
+								{/each}
+							{:else if overviewStudents.errorMessage}
 								<tr>
-									<td><a class="ds-link" href={`/students/${student._id}`}>{student.name}</a></td>
-									<td class="desktop-only">{student.mainClass?.name || "Ukjent klasse"}<br/><span class="school-name">{student.mainSchool?.name || "N/A"}</span></td>
-									<td class="desktop-only">{student.mainContactTeacherGroup?.teachers[0]?.name || "Ingen kontaktlærer"}</td>
-									<td class="desktop-only">{student.lastActivityTimestamp?.toLocaleString("no-NB", { dateStyle: 'short', timeStyle: 'short' }) || "Ingen aktivitet"}</td>
+									<td colspan="4" class="ds-text--error">{overviewStudents.errorMessage}</td>
 								</tr>
-							{/each}
+							{:else if overviewStudents.students.length === 0}
+								<tr>
+									<td colspan="4">Ingen elever funnet</td>
+								</tr>
+							{:else} 
+								{#each overviewStudents.students as student}
+									<tr>
+										<td><a class="ds-link" href={`/students/${student._id}`}>{student.name}</a></td>
+										<td class="desktop-only">{student.mainClass?.name || "Ukjent klasse"}<br/><span class="school-name">{student.mainSchool?.name || "N/A"}</span></td>
+										<td class="desktop-only">{student.mainContactTeacherGroup?.teachers[0]?.name || "Ingen kontaktlærer"}</td>
+										<td class="desktop-only">{student.lastActivityTimestamp?.toLocaleString("no-NB", { dateStyle: 'short', timeStyle: 'short' }) || "Ingen aktivitet"}</td>
+									</tr>
+								{/each}
+							{/if}
 						</tbody>
 					</table>
 				</div>
@@ -266,11 +305,21 @@
 				</a>
 				<div class="ds-paragraph students-side-menu-heading">Elever</div>
 				<ul class="students-side-menu-list">
-					{#each filteredStudents.slice(0, 100) as student}
-						<li class:active={page.url.pathname === `/students/${student._id}`}>
-							<a data-variant="default" data-size="sm" class="ds-link ds-paragraph students-side-menu-list-item-link" href={`/students/${student._id}`} class:active={page.url.pathname === `/students/${student._id}`}>{student.name}</a>
-						</li>
-					{/each}
+					{#if overviewStudents.isLoading}
+						<li><span aria-hidden="true" class="ds-skeleton" data-variant="rectangle" style="width:200px;height:20px"></span></li>
+						<li><span aria-hidden="true" class="ds-skeleton" data-variant="rectangle" style="width:200px;height:20px"></span></li>
+						<li><span aria-hidden="true" class="ds-skeleton" data-variant="rectangle" style="width:200px;height:20px"></span></li>
+					{:else if overviewStudents.errorMessage}
+						<li class="ds-text--error">{overviewStudents.errorMessage}</li>
+					{:else if overviewStudents.students.length === 0}
+						<li>Ingen elever funnet</li>
+					{:else}
+						{#each overviewStudents.students as student}
+							<li>
+								<a data-variant="default" data-size="sm" class="ds-link ds-paragraph students-side-menu-list-item-link" href={`/students/${student._id}`} class:active={page.url.pathname === `/students/${student._id}`}>{student.name}</a>
+							</li>
+						{/each}
+					{/if}
 				</ul>
 			</div>
 			<div class="page-content">

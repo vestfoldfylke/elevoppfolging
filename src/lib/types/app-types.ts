@@ -18,7 +18,6 @@ import type {
   SchoolLeaderManualAccessEntry,
   Source,
   StudentCheckBox,
-  StudentClassGroup,
   StudentImportantStuff,
   StudentManualAccessEntry,
   TeachingGroup,
@@ -54,6 +53,13 @@ export type FrontendStudentMainDetails = {
 
 export type CachedFrontendStudent = FrontendStudent & FrontendStudentMainDetails & {
   enrollmentsWithinViewAccessWindow: EnrollmentWithinViewAccessWindow[]
+}
+
+export type CachedFrontendStudentFilter = {
+  studentName?: string
+  className?: string
+  classSystemIds?: string[]
+  contactTeacherName?: string
 }
 
 export type AccessEntry =
@@ -112,9 +118,7 @@ export type ApplicationInfo = {
 export type RootLayoutData = {
   APP_INFO: ApplicationInfo
   authenticatedPrincipal: AuthenticatedPrincipal
-  classes: StudentClassGroup[]
   principalAccess: PrincipalAccess | null
-  students: FrontendOverviewStudent[]
   studentCheckBoxes: StudentCheckBox[]
   schools: SchoolInfo[]
 }
@@ -165,10 +169,7 @@ export type TemplateInfo = {
   name: string
 }
 
-export type FrontendOverviewStudentFilter = {
-  studentName?: string
-  className?: string
-  contactTeacherName?: string
+export type FrontendOverviewStudentFilter = Omit<CachedFrontendStudentFilter, "sortBy"> & {
   studentCheckBoxIds?: string[]
   sortBy?: "studentName" | "className" | "contactTeacherName" | "lastActivity"
   sortDirection?: "ascending" | "descending"
