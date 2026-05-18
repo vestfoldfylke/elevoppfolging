@@ -15,6 +15,7 @@ import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent 
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { DocumentMessageInput, EditorData, NewDbEmailAlert, NewDocumentMessage } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
+import { generateEmailAlertBody, generateEmailAlertReceivers } from "$lib/utils/email-alerts"
 
 type AddDocumentMessageResponse = ApiRouteMap[`/api/students/${NoSlashString}/documents/${NoSlashString}/messages`]["POST"]["res"]
 type AddDocumentMessageBody = ApiRouteMap[`/api/students/${NoSlashString}/documents/${NoSlashString}/messages`]["POST"]["req"]
@@ -147,9 +148,10 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
   const emailAlert: NewDbEmailAlert = {
     type: "DOCUMENT_MESSAGE_CREATED",
     documentId: new ObjectId(documentId),
-    receivers: newMessage.emailAlertReceivers,
+    receivers: generateEmailAlertReceivers(newMessage.emailAlertReceivers),
     status: "QUEUED",
-    created: editorData
+    created: editorData,
+    alertBody: generateEmailAlertBody(documentId, student, "DOCUMENT_MESSAGE_CREATED")
   }
 
   try {

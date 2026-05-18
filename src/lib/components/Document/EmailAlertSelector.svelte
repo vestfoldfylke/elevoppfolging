@@ -53,7 +53,6 @@
   <fieldset class="ds-fieldset content-item">
     <legend class="ds-label" data-weight="medium">
       {legendText}
-      <span class="ds-tag" data-variant="outline" data-color="warning" data-size="xs" style="margin-left: var(--ds-size-1)">Obs! Denne gjør ingenting enda, bare for testing</span>
     </legend>
 
     <ds-field class="ds-field">

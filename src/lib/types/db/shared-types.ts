@@ -710,12 +710,24 @@ export type DbStudentDataSharingConsent = StudentDataSharingConsentBase &
 
 // EMAIL ALERTS
 
+export type EmailAlertStatus = "QUEUED" | "SENT" | "FAILED"
+
+export type EmailAlertReceiver = {
+  receiver: string
+  messageId?: string
+  status: EmailAlertStatus
+}
+
 export type NewDbEmailAlert = {
   type: "DOCUMENT_CREATED" | "DOCUMENT_MESSAGE_CREATED"
   documentId: ObjectId
-  receivers: string[]
-  status: "QUEUED" | "SENT" | "FAILED"
+  receivers: EmailAlertReceiver[]
+  status: EmailAlertStatus
   created: EditorData
+  alertBody: {
+    body: string
+    subject: string
+  }
 }
 
 export type DbEmailAlert = NewDbEmailAlert & {
