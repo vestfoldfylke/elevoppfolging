@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { slide } from "svelte/transition"
   import DocumentComponent from "$lib/components/Document/Document.svelte"
   import NewDocument from "$lib/components/Document/NewDocument.svelte"
   import ImportantGroupStuff from "$lib/components/ImportantGroupStuff.svelte"

@@ -18,9 +18,10 @@
     groupName?: string
     studentDataSharingConsent?: boolean
     studentAccessPersons?: StudentAccessPerson[]
+    referencedOpen?: boolean
   }
 
-  let { document, accessSchools, canEditDocument, studentName, groupName, studentDataSharingConsent, studentAccessPersons }: PageProps = $props()
+  let { document, accessSchools, canEditDocument, studentName, groupName, studentDataSharingConsent, studentAccessPersons, referencedOpen = false }: PageProps = $props()
 
   const editableDocumentFromDocument = () => {
     return JSON.parse(
@@ -75,6 +76,10 @@
 
       originalDialogParent.appendChild(documentDialog) // Move back to original parent, to not mess with svelte too much
     })
+
+    if (referencedOpen) {
+      handleDocumentOpen(document)
+    }
   })
 
   const handleDocumentOpen = (document: StudentDocument | GroupDocument): void => {

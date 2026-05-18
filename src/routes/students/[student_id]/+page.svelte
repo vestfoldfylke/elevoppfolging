@@ -1,6 +1,7 @@
 <script lang="ts">
   import { slide } from "svelte/transition"
   import { afterNavigate } from "$app/navigation"
+  import { page } from "$app/state"
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import DocumentComponent from "$lib/components/Document/Document.svelte"
   import NewDocument from "$lib/components/Document/NewDocument.svelte"
@@ -57,6 +58,8 @@
       }
     })
   })
+
+  let referencedDocumentId: string | null = $derived.by(() => page.url.searchParams.get("documentId"))
 
   let expandedStudentDetails = $state(false)
 
@@ -397,7 +400,7 @@
         {/each}
       </div>
       {#each filteredDocuments as document (document._id)}
-        <DocumentComponent {document} {accessSchools} canEditDocument={canEditStudentDocument(data.authenticatedPrincipal, data.principalAccessForStudent, document)} studentName={data.student.name} studentDataSharingConsent={data.studentDataSharingConsent?.consent} studentAccessPersons={data.studentAccessPersons} />
+        <DocumentComponent referencedOpen={referencedDocumentId === document._id} {document} {accessSchools} canEditDocument={canEditStudentDocument(data.authenticatedPrincipal, data.principalAccessForStudent, document)} studentName={data.student.name} studentDataSharingConsent={data.studentDataSharingConsent?.consent} studentAccessPersons={data.studentAccessPersons} />
       {/each}
     {/if}
   </div>
