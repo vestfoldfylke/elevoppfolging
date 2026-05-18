@@ -90,7 +90,8 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
   if (!(env.MOCK_SSN_CHECK?.trim().toLowerCase() === "true")) {
     const valid = idnr(newManualStudentData.ssn)
     if (valid.status !== "valid") {
-      throw new HTTPError(400, valid.reasons.join(", "))
+      logger.error("Failed to create new manual user. Invalid SSN provided: {SSN}. Validation result: {@ValidationResult}", newManualStudentData.ssn, valid.reasons)
+      throw new HTTPError(400, "Ugyldig fødselsnummer. Sjekk at det er riktig og prøv igjen.")
     }
   }
 

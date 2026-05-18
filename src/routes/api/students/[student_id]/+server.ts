@@ -52,7 +52,8 @@ const updateManualStudent: ApiNextFunction<UpdateManualStudentResponse, UpdateMa
     if (!(env.MOCK_SSN_CHECK?.trim().toLowerCase() === "true")) {
       const valid = idnr(updateManualStudentData.ssn)
       if (valid.status !== "valid") {
-        throw new HTTPError(400, valid.reasons.join(", "))
+        logger.error("Failed to update manual user. Invalid SSN provided: {SSN}. Validation result: {@ValidationResult}", updateManualStudentData.ssn, valid.reasons)
+        throw new HTTPError(400, "Ugyldig fødselsnummer. Sjekk at det er riktig og prøv igjen.")
       }
     }
 
