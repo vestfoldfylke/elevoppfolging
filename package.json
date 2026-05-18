@@ -17,18 +17,18 @@
   "devDependencies": {
     "@biomejs/biome": "2.4.11",
     "@digdir/designsystemet-types": "^1.13.1",
-    "@sveltejs/kit": "^2.59.0",
-    "@sveltejs/vite-plugin-svelte": "^7.0.0",
+    "@sveltejs/kit": "^2.60.1",
+    "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@types/luxon": "^3.7.1",
-    "@types/node": "^25.6.0",
-    "svelte": "^5.55.5",
-    "svelte-check": "^4.4.7",
+    "@types/node": "^25.8.0",
+    "svelte": "^5.55.7",
+    "svelte-check": "^4.4.8",
     "typescript": "^5.9.3",
-    "vite": "^8.0.10"
+    "vite": "^8.0.13"
   },
   "dependencies": {
-    "@digdir/designsystemet-css": "^1.13.3",
-    "@digdir/designsystemet-web": "^1.13.3",
+    "@digdir/designsystemet-css": "^1.14.0",
+    "@digdir/designsystemet-web": "^1.14.0",
     "@navikt/fnrvalidator": "^2.2.1",
     "@sveltejs/adapter-node": "^5.5.4",
     "@vestfoldfylke/loglady": "^1.5.3",
