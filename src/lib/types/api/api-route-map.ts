@@ -1,3 +1,4 @@
+import type { FrontendOverviewStudent } from "../app-types"
 import type {
   AuditEntryInput,
   AuditSearchQueryResult,
@@ -67,7 +68,9 @@ export interface ApiRouteMap {
 
   [key: `/api/access/${NoSlashString}/remove`]: ApiAccessEntraUserIdRemove
 
-  "/api/students": ApiStudentAddManualStudent
+  [key: `/api/students${NoSlashString}`]: {
+    GET: { res: { students: FrontendOverviewStudent[] } }
+  }
 
   [key: `/api/students/${NoSlashString}`]: {
     POST: { req: UpdateManualStudentInput; res: { studentId: string } }
@@ -92,6 +95,8 @@ export interface ApiRouteMap {
   [key: `/api/students/${NoSlashString}/documents/${NoSlashString}/messages/${NoSlashString}`]: {
     PATCH: { req: DocumentMessageInput; res: { updatedMessageId: string } }
   }
+
+  "/api/students": ApiStudentAddManualStudent
 
   "/api/studentcheckboxes": {
     POST: { req: StudentCheckBoxInput; res: { checkBoxId: string } }

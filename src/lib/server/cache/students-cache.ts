@@ -1,7 +1,7 @@
 import { logger } from "@vestfoldfylke/loglady"
 import { updateGauge } from "$lib/server/metrics/handle-metrics"
-import type { CachedFrontendStudent, FrontendStudent, PrincipalAccess, PrincipalAccessStudent, StudentMemberships } from "$lib/types/app-types"
-import { getEnrollmentsWithinViewAccessWindow } from "$lib/utils/frontend-student-details"
+import type { CachedFrontendStudent, CachedFrontendStudentFilter, FrontendStudent, PrincipalAccess, PrincipalAccessStudent, StudentMemberships } from "$lib/types/app-types"
+import { getEnrollmentsWithinViewAccessWindow, getFrontendStudentMainDetails } from "$lib/utils/frontend-student-details"
 import { APP_INFO } from "../app-info"
 import { getPrincipalAccessForStudent } from "../authorization/student-access"
 import { getDbClient } from "../db/get-db-client"
@@ -39,9 +39,12 @@ export const updateStudentsCache = async () => {
   const tempStudentsMap: Map<string, CachedFrontendStudent> = new Map()
 
   for (const student of students) {
+    const enrollmentsWithinViewAccessWindow = getEnrollmentsWithinViewAccessWindow(student, APP_INFO)
+    const studentMainDetails = getFrontendStudentMainDetails(enrollmentsWithinViewAccessWindow)
     tempStudentsMap.set(student._id, {
       ...student,
-      enrollmentsWithinViewAccessWindow: getEnrollmentsWithinViewAccessWindow(student, APP_INFO)
+      enrollmentsWithinViewAccessWindow,
+      ...studentMainDetails
     })
   }
 
@@ -85,7 +88,7 @@ export const updateStudentsCacheInBackgroundIfExpired = () => {
  * If cache is empty, it will populate the cache before returning students.
  * If cache is too old, it will update the cache in the background but return the old cache for now, to avoid making users wait for the cache to update.
  */
-export const getStudentsFromCache = async (principalAccess: PrincipalAccess): Promise<PrincipalAccessStudent[]> => {
+export const getStudentsFromCache = async (principalAccess: PrincipalAccess, studentFilter?: CachedFrontendStudentFilter): Promise<PrincipalAccessStudent[]> => {
   const studentsWithAccessInfo: PrincipalAccessStudent[] = []
 
   // If first time or cache is empty, populate cache before returning students
@@ -102,6 +105,38 @@ export const getStudentsFromCache = async (principalAccess: PrincipalAccess): Pr
 
   for (const student of studentsCache.studentsListCache) {
     const studentAccessInfo = getPrincipalAccessForStudent(student, principalAccess)
+
+    if (studentAccessInfo.length === 0) {
+      continue
+    }
+
+    // Apply search filters
+
+    if (studentFilter?.studentName && !student.name.toLowerCase().includes(studentFilter.studentName.toLowerCase())) {
+      continue
+    }
+
+    if (studentFilter?.className && !student.mainClass?.name.toLowerCase().includes(studentFilter.className.toLowerCase())) {
+      continue
+    }
+
+    if (
+      studentFilter?.contactTeacherName &&
+      !student.mainContactTeacherGroup?.teachers.some((teacher) => studentFilter?.contactTeacherName && teacher.name.toLowerCase().includes(studentFilter.contactTeacherName.toLowerCase()))
+    ) {
+      continue
+    }
+
+    if (Array.isArray(studentFilter?.classSystemIds) && studentFilter.classSystemIds.length > 0) {
+      const isInClass = student.enrollmentsWithinViewAccessWindow.some((enrollment) =>
+        enrollment.classMemberships.some((classMembership) => studentFilter.classSystemIds?.includes(classMembership.classGroup.systemId))
+      )
+
+      if (!isInClass) {
+        continue
+      }
+    }
+
     if (studentAccessInfo.length > 0) {
       studentsWithAccessInfo.push({
         _id: student._id,
@@ -109,6 +144,9 @@ export const getStudentsFromCache = async (principalAccess: PrincipalAccess): Pr
         name: student.name,
         source: student.source,
         enrollmentsWithinViewAccessWindow: student.enrollmentsWithinViewAccessWindow,
+        mainClass: student.mainClass,
+        mainContactTeacherGroup: student.mainContactTeacherGroup,
+        mainSchool: student.mainSchool,
         principalAccessForStudent: studentAccessInfo,
         hasBlockedAddress: student.hasBlockedAddress ?? false
       })
@@ -173,9 +211,13 @@ export const upsertStudentInCache = async (student: FrontendStudent): Promise<vo
   logger.info("Upserting student in cache")
   studentsCache.updateInProgress = true
 
+  const enrollmentsWithinViewAccessWindow = getEnrollmentsWithinViewAccessWindow(student, APP_INFO)
+  const studentMainDetails = getFrontendStudentMainDetails(enrollmentsWithinViewAccessWindow)
+
   const cachedStudent: CachedFrontendStudent = {
     ...student,
-    enrollmentsWithinViewAccessWindow: getEnrollmentsWithinViewAccessWindow(student, APP_INFO)
+    enrollmentsWithinViewAccessWindow,
+    ...studentMainDetails
   }
 
   studentsCache.students.set(student._id, cachedStudent)

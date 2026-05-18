@@ -1,12 +1,11 @@
 <script lang="ts">
   import { slide } from "svelte/transition"
-  import { page } from "$app/state"
   import DocumentComponent from "$lib/components/Document/Document.svelte"
   import NewDocument from "$lib/components/Document/NewDocument.svelte"
   import ImportantGroupStuff from "$lib/components/ImportantGroupStuff.svelte"
   import PrincipalAccessTag from "$lib/components/PrincipalAccessTag.svelte"
-  import type { EnrollmentWithinViewAccessWindow, FrontendOverviewStudent, PrincipalAccess, ProgramAreaPrincipalAccess, TemplateInfo } from "$lib/types/app-types"
-  import type { ClassAutoAccessEntry, ClassManualAccessEntry, GroupDocument, GroupImportantStuff, SchoolLeaderManualAccessEntry, StudentClassGroup } from "$lib/types/db/shared-types"
+  import type { PrincipalAccess, PrincipalAccessStudent, ProgramAreaPrincipalAccess, TemplateInfo } from "$lib/types/app-types"
+  import type { ClassAutoAccessEntry, ClassManualAccessEntry, GroupDocument, GroupImportantStuff, SchoolLeaderManualAccessEntry } from "$lib/types/db/shared-types"
   import { ACCESS_TYPE_DISPLAY_NAMES } from "$lib/utils/access-constants"
   import type { PageProps } from "./$types"
 
@@ -36,9 +35,9 @@
   })
 
   let classAccess: ClassAccess = $derived.by(() => {
-    const programAreas = principalAccess.programAreas.filter((programArea) => programArea.classSystemIds.includes(selectedClass.systemId))
-    const classEntries = principalAccess.classes.filter((classEntry) => classEntry.systemId === selectedClass.systemId)
-    const schools = principalAccess.leaderForSchools.filter((leaderForSchool) => leaderForSchool.schoolNumber === selectedClass.school.schoolNumber)
+    const programAreas = principalAccess.programAreas.filter((programArea) => programArea.classSystemIds.includes(data.classGroup.systemId))
+    const classEntries = principalAccess.classes.filter((classEntry) => classEntry.systemId === data.classGroup.systemId)
+    const schools = principalAccess.leaderForSchools.filter((leaderForSchool) => leaderForSchool.schoolNumber === data.classGroup.school.schoolNumber)
 
     if (programAreas.length === 0 && classEntries.length === 0 && schools.length === 0) {
       throw new Error("No access to this class found for principal")
@@ -51,30 +50,8 @@
     }
   })
 
-  let selectedClass: StudentClassGroup = $derived.by(() => {
-    const classId: string | undefined = page.params.system_id
-    if (!classId) {
-      throw new Error("Klasse ID mangler")
-    }
-
-    const selectedClassEntry: StudentClassGroup | undefined = data.classes.find((classEntry: StudentClassGroup) => classEntry.systemId === classId)
-    if (!selectedClassEntry) {
-      throw new Error("Klasse ID ikke funnet")
-    }
-
-    return selectedClassEntry
-  })
-
-  let classStudents: FrontendOverviewStudent[] = $derived.by(() =>
-    data.students.filter((student: FrontendOverviewStudent) =>
-      student.enrollmentsWithinViewAccessWindow.some((enrollment: EnrollmentWithinViewAccessWindow) =>
-        enrollment.classMemberships.some((classMembership) => classMembership.classGroup.systemId === selectedClass.systemId)
-      )
-    )
-  )
-
   let filteredStudents = $derived.by(() => {
-    return classStudents.sort((a: FrontendOverviewStudent, b: FrontendOverviewStudent) => {
+    return data.classStudents.sort((a: PrincipalAccessStudent, b: PrincipalAccessStudent) => {
       switch (sortBy) {
         case "name":
           return sortDirection === "ascending" ? (a.name || "").localeCompare(b.name || "") : (b.name || "").localeCompare(a.name || "")
@@ -86,7 +63,7 @@
 
   let classSummaryDetails: ClassSummaryDetails = $derived.by(() => {
     const groupImportantStuffToUse: GroupImportantStuff | null =
-      data.groupImportantStuff.find((importantStuff) => importantStuff.school.schoolNumber === selectedClass.school.schoolNumber) || data.groupImportantStuff[0] || null
+      data.groupImportantStuff.find((importantStuff) => importantStuff.school.schoolNumber === data.classGroup.school.schoolNumber) || data.groupImportantStuff[0] || null
     if (!groupImportantStuffToUse) {
       return undefined
     }
@@ -144,8 +121,8 @@
 
 <div class="page-content">
   <div class="page-header">
-    <h1 class="ds-heading" data-size="lg">{selectedClass.name}</h1>
-    <span class="ds-paragraph" data-size="sm">{selectedClass.school.name}</span>
+    <h1 class="ds-heading" data-size="lg">{data.classGroup.name}</h1>
+    <span class="ds-paragraph" data-size="sm">{data.classGroup.school.name}</span>
   </div>
 
   <p class="ds-paragraph" data-size="sm" style="margin-top: var(--ds-size-2);">Din tilgang til klassen</p>
@@ -164,13 +141,13 @@
 
     {#if classAccess.schools.length > 0}
       {#each classAccess.schools as school}
-        <PrincipalAccessTag source={school.source} name={`${ACCESS_TYPE_DISPLAY_NAMES[school.type]} for ${selectedClass.school.name}`} />
+        <PrincipalAccessTag source={school.source} name={`${ACCESS_TYPE_DISPLAY_NAMES[school.type]} for ${data.classGroup.school.name}`} />
       {/each}
     {/if}
   </div>
 
-  <div class="class-details" transition:slide>
-    <ImportantGroupStuff groupImportantStuff={classSummaryDetails?.groupImportantInfo || null} school={selectedClass.school} group={selectedClass} />
+  <div class="class-details">
+    <ImportantGroupStuff groupImportantStuff={classSummaryDetails?.groupImportantInfo || null} school={data.classGroup.school} group={data.classGroup} />
   </div>
 
   <div class="ds-card class-students-container" data-variant="tinted" data-color="brand1">
@@ -223,7 +200,7 @@
             <button class="ds-button" data-variant="tertiary" data-size="sm" type="button" onclick={() => selectedDocumentTypes = []} disabled={selectedDocumentTypes.length === 0}>Fjern alle filter</button>
           </div>
         </div>
-        <NewDocument accessSchools={[selectedClass.school]} documentContentTemplates={data.documentContentTemplates} groupSystemId={selectedClass.systemId} groupName={selectedClass.name} />
+        <NewDocument accessSchools={[data.classGroup.school]} documentContentTemplates={data.documentContentTemplates} groupSystemId={data.classGroup.systemId} groupName={data.classGroup.name} />
       </div>
     </div>
 
@@ -236,7 +213,7 @@
         {/each}
       </div>
       {#each filteredDocuments as document (document._id)}
-        <DocumentComponent {document} accessSchools={[selectedClass.school]} canEditDocument={true} groupName={selectedClass.name} />
+        <DocumentComponent {document} accessSchools={[data.classGroup.school]} canEditDocument={true} groupName={data.classGroup.name} />
       {/each}
     {/if}
   </div>
