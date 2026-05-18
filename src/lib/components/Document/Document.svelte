@@ -11,7 +11,6 @@
   import NewMessage from "./NewMessage.svelte"
 
   type PageProps = {
-    referencedOpen: boolean
     document: StudentDocument | GroupDocument
     accessSchools: SchoolInfo[]
     canEditDocument: boolean
@@ -19,9 +18,10 @@
     groupName?: string
     studentDataSharingConsent?: boolean
     studentAccessPersons?: StudentAccessPerson[]
+    referencedOpen?: boolean
   }
 
-  let { referencedOpen = false, document, accessSchools, canEditDocument, studentName, groupName, studentDataSharingConsent, studentAccessPersons }: PageProps = $props()
+  let { document, accessSchools, canEditDocument, studentName, groupName, studentDataSharingConsent, studentAccessPersons, referencedOpen = false }: PageProps = $props()
 
   const editableDocumentFromDocument = () => {
     return JSON.parse(
