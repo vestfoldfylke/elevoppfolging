@@ -1,0 +1,13 @@
+name: Build and deploy Node.js project to Azure Web App - TEST
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    uses: vestfoldfylke/shared/.github/workflows/deploy-az-app-service-node.yml@main
+    with:
+      azure_appname: 'vfkplzminelevelotest'
+      azure_functionapp_package_path: '.'
+    secrets:
+      azure_publishprofile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_TEST }}
