@@ -26,8 +26,8 @@
       throw new Error("No access found for principal")
     }
 
-    if (data.principalAccess.programAreas.length === 0 && data.principalAccess.classes.length === 0) {
-      throw new Error("No program areas or classes found on this principal access")
+    if (data.principalAccess.programAreas.length === 0 && data.principalAccess.classes.length === 0 && data.principalAccess.leaderForSchools.length === 0) {
+      throw new Error("No program areas, classes or leaderships found on this principal access")
     }
 
     return data.principalAccess
