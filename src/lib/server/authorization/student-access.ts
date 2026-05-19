@@ -50,7 +50,8 @@ export const getPrincipalAccessForStudent = (student: CachedFrontendStudent, pri
         return
       }
       enrollment.classMemberships.forEach((membership) => {
-        if (!membership.period.active && !membership.period.withinViewAccessWindow) {
+        // OBS, klasser har ikke periode, så vi antar at de er aktive innenfor et aktivt elevforhold dersom de er null.
+        if (!membership.period.active && !membership.period.withinViewAccessWindow && !membership.period.isNull) {
           return
         }
         if (
@@ -83,7 +84,8 @@ export const getPrincipalAccessForStudent = (student: CachedFrontendStudent, pri
         return
       }
       enrollment.classMemberships.forEach((membership) => {
-        if (!membership.period.active && !membership.period.withinViewAccessWindow) {
+        // OBS, klasser har ikke periode, så vi antar at de er aktive innenfor et aktivt elevforhold dersom de er null.
+        if (!membership.period.active && !membership.period.withinViewAccessWindow && !membership.period.isNull) {
           return
         }
         if (membership.classGroup.systemId === classAccess.systemId) {
@@ -108,7 +110,8 @@ export const getPrincipalAccessForStudent = (student: CachedFrontendStudent, pri
         return
       }
       enrollment.contactTeacherGroupMemberships.forEach((membership) => {
-        if (!membership.period.active && !membership.period.withinViewAccessWindow) {
+        // OBS, kontaktlærergrupper har ikke periode, så vi antar at de er aktive innenfor et aktivt elevforhold dersom de er null.
+        if (!membership.period.active && !membership.period.withinViewAccessWindow && !membership.period.isNull) {
           return
         }
         if (membership.contactTeacherGroup.systemId === contactTeacherGroupAccess.systemId) {
@@ -133,7 +136,8 @@ export const getPrincipalAccessForStudent = (student: CachedFrontendStudent, pri
         return
       }
       enrollment.classMemberships.forEach((membership) => {
-        if (!membership.period.active && !membership.period.withinViewAccessWindow) {
+        // OBS, klasser har ikke periode, så vi antar at de er aktive innenfor et aktivt elevforhold dersom de er null.
+        if (!membership.period.active && !membership.period.withinViewAccessWindow && !membership.period.isNull) {
           return
         }
         if (membership.classGroup.systemId === classAccess.systemId) {
