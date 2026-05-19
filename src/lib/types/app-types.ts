@@ -125,6 +125,7 @@ export type RootLayoutData = {
 }
 
 export type PeriodDetails = Period & {
+  isNull: boolean
   active: boolean
   daysAfterExpired: number | null
   daysUntilActive: number | null

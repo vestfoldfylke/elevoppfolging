@@ -14,10 +14,10 @@ export const getEnrollmentsWithinViewAccessWindow = (student: FrontendStudent, A
         period: periodDetails,
         classMemberships: enrollment.classMemberships
           .map((membership) => ({ ...membership, period: getPeriodDetails(membership.period, APP_INFO) }))
-          .filter((membership) => membership.period.active || membership.period.withinViewAccessWindow),
+          .filter((membership) => membership.period.active || membership.period.withinViewAccessWindow || membership.period.isNull), // Obs, klassemedlemskap har ingen periode. Vi antar at de er aktive innenfor et aktivt elevforhold
         contactTeacherGroupMemberships: enrollment.contactTeacherGroupMemberships
           .map((membership) => ({ ...membership, period: getPeriodDetails(membership.period, APP_INFO) }))
-          .filter((membership) => membership.period.active || membership.period.withinViewAccessWindow),
+          .filter((membership) => membership.period.active || membership.period.withinViewAccessWindow || membership.period.isNull), // Obs, kontaktlærergruppemedlemskap har ingen periode. Vi antar at de er aktive innenfor et aktivt elevforhold
         teachingGroupMemberships: enrollment.teachingGroupMemberships
           .map((membership) => ({ ...membership, period: getPeriodDetails(membership.period, APP_INFO) }))
           .filter((membership) => membership.period.active || membership.period.withinViewAccessWindow)
