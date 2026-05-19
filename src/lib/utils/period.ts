@@ -47,6 +47,7 @@ export const getPeriodDetails = (period: Period, APP_INFO: ApplicationInfo): Per
 
   return {
     ...period,
+    isNull: period.start === null && period.end === null,
     active: isActive(period),
     daysUntilActive,
     daysAfterExpired,
