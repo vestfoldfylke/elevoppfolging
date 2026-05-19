@@ -20,7 +20,7 @@ export class AppUsersDbClient implements IAppUsersDbClient {
   }
 
   async getAppUser(entraUserId: string): Promise<AppUser | null> {
-    const appUser = await this.usersCollection.findOne({ entraUserId })
+    const appUser = await this.usersCollection.findOne({ "entra.id": entraUserId })
     if (!appUser) {
       return null
     }
