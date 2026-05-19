@@ -75,6 +75,11 @@
       </tr>
       </thead>
       <tbody>
+      {#if filteredClasses.length === 0}
+        <tr>
+          <td colspan="4">Ingen klasser funnet</td>
+        </tr>
+      {/if}
       {#each filteredClasses as classEntry}
         <tr>
           <td>
