@@ -1,10 +1,11 @@
-import type { ApplicationInfo, EnrollmentDetails, EnrollmentWithinViewAccessWindow, FrontendStudent, FrontendStudentMainDetails } from "$lib/types/app-types"
+import type { ApplicationInfo, EnrollmentDetails, EnrollmentWithinViewAccessWindow, FrontendStudentMainDetails } from "$lib/types/app-types"
+import type { ClassMembership, ContactTeacherGroupMembership, StudentEnrollment, Teacher, TeachingGroupMembership } from "$lib/types/db/shared-types"
 import { getPeriodDetails } from "./period"
 
-export const getEnrollmentsWithinViewAccessWindow = (student: FrontendStudent, APP_INFO: ApplicationInfo): EnrollmentWithinViewAccessWindow[] => {
+export const getEnrollmentsWithinViewAccessWindow = (studentEnrollments: StudentEnrollment[], APP_INFO: ApplicationInfo): EnrollmentWithinViewAccessWindow[] => {
   const enrollmentsWithinViewAccessWindow: EnrollmentWithinViewAccessWindow[] = []
 
-  for (const enrollment of student.studentEnrollments) {
+  for (const enrollment of studentEnrollments) {
     const periodDetails = getPeriodDetails(enrollment.period, APP_INFO)
     if (periodDetails.active || periodDetails.withinViewAccessWindow) {
       enrollmentsWithinViewAccessWindow.push({
@@ -54,4 +55,43 @@ export const getFrontendStudentMainDetails = (enrollmentsWithinViewAccessWindow:
     mainClass,
     mainContactTeacherGroup
   }
+}
+
+export const getUniqueStudentEnrollmentTeachers = (studentEnrollments: StudentEnrollment[]): StudentEnrollment[] => {
+  return studentEnrollments.map((studentEnrollment: StudentEnrollment) => {
+    return {
+      ...studentEnrollment,
+      classMemberships: studentEnrollment.classMemberships.map((classMembership: ClassMembership) => {
+        return {
+          ...classMembership,
+          classGroup: {
+            ...classMembership.classGroup,
+            teachers: classMembership.classGroup.teachers.filter((teacher: Teacher, index: number, self: Teacher[]) => index === self.findIndex((t: Teacher) => t.systemId === teacher.systemId))
+          }
+        }
+      }),
+      contactTeacherGroupMemberships: studentEnrollment.contactTeacherGroupMemberships.map((contactTeacherGroupMembership: ContactTeacherGroupMembership) => {
+        return {
+          ...contactTeacherGroupMembership,
+          contactTeacherGroup: {
+            ...contactTeacherGroupMembership.contactTeacherGroup,
+            teachers: contactTeacherGroupMembership.contactTeacherGroup.teachers.filter(
+              (teacher: Teacher, index: number, self: Teacher[]) => index === self.findIndex((t: Teacher) => t.systemId === teacher.systemId)
+            )
+          }
+        }
+      }),
+      teachingGroupMemberships: studentEnrollment.teachingGroupMemberships.map((teachingGroupMembership: TeachingGroupMembership) => {
+        return {
+          ...teachingGroupMembership,
+          teachingGroup: {
+            ...teachingGroupMembership.teachingGroup,
+            teachers: teachingGroupMembership.teachingGroup.teachers.filter(
+              (teacher: Teacher, index: number, self: Teacher[]) => index === self.findIndex((t: Teacher) => t.systemId === teacher.systemId)
+            )
+          }
+        }
+      })
+    }
+  })
 }
