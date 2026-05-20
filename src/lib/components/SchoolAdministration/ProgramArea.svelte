@@ -23,6 +23,16 @@
 
   let programAreaEdited = $state(false)
 
+  let nonExistingProgramAreas: string[] = $derived.by(() => {
+    if (!programArea) {
+      return []
+    }
+
+    return programArea.classes
+      .filter((classGroup) => !schoolClasses.some((schoolClass: StudentClassGroup) => schoolClass.systemId === classGroup.systemId))
+      .map((classGroup) => classGroup.systemId)
+  })
+
   const programAreaHasBeenEdited = (): void => {
     if (!programArea) {
       programAreaEdited = false
@@ -56,16 +66,20 @@
 
     return {
       name: editableProgramAreaName,
-      classes: classesSuggestionElement.values.map((value) => {
-        const matchingClass = schoolClasses.find((classGroup) => classGroup.systemId === value)
-        if (!matchingClass) {
-          throw new Error(`Fant ingen klasse med systemId ${value} - kan ikke opprette programområde`)
-        }
-        return {
-          systemId: matchingClass.systemId,
-          fallbackName: matchingClass.name
-        }
-      }),
+      classes: classesSuggestionElement.values
+        .map((value) => {
+          const matchingClass = schoolClasses.find((classGroup) => classGroup.systemId === value)
+          if (!matchingClass) {
+            console.warn("Klasse med systemId", value, "ikke funnet. Den vil bli fjernet fra programområde", editableProgramAreaName)
+            return null
+          }
+  
+          return {
+            systemId: matchingClass.systemId,
+            fallbackName: matchingClass.name
+          }
+        })
+      .filter((value) => value !== null),
       schoolNumber
     }
   }
@@ -142,7 +156,11 @@
         <ds-suggestion bind:this={classesSuggestionElement} data-multiple="" class="ds-suggestion" /* @ts-expect-error (oncomboboxafterselect exists and works...) */ oncomboboxafterselect={programAreaHasBeenEdited}>
           {#if programArea}
             {#each programArea.classes as selectedClassGroup}
-              <data value={selectedClassGroup.systemId}>{selectedClassGroup.fallbackName}</data>
+              {#if nonExistingProgramAreas.some((nonExistingSystemId: string) => nonExistingSystemId === selectedClassGroup.systemId)}
+                <data value={selectedClassGroup.systemId} class="program-area-class-nonexisting">{selectedClassGroup.fallbackName}</data>
+              {:else}
+                <data value={selectedClassGroup.systemId}>{selectedClassGroup.fallbackName}</data>
+              {/if}
             {/each}
           {/if}
           <input id="classes" class="ds-input" type="text" placeholder="" />
@@ -159,6 +177,15 @@
         </ds-suggestion>
       </ds-field>
     </form>
+
+    {#if programArea && nonExistingProgramAreas.length > 0}
+      <div class="ds-alert" data-color="info">
+        <h2 class="ds-heading" data-size="xs">{nonExistingProgramAreas.length} {nonExistingProgramAreas.length > 1 ? "utgåtte klasser" : "utgått klasse"}</h2>
+        <p class="ds-paragraph" data-variant="default">
+          Klasser merket i rødt eksisterer ikke lenger på skolen eller har fått ny intern id og vil automatisk bli fjernet fra dette programområdet ved lagring. Legg til klassen på nytt dersom klassen skal være med i dette programområde. Dette skjer typisk ved nytt skoleår.
+        </p>
+      </div>
+    {/if}
 
     <div class="program-area-actions">
       {#if programArea}
@@ -191,6 +218,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.program-area-class-nonexisting {
+  background: var(--ds-color-danger-base-default);
 }
 
 .program-area-actions {
