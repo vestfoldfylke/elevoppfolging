@@ -1,7 +1,7 @@
 import { logger } from "@vestfoldfylke/loglady"
 import { updateGauge } from "$lib/server/metrics/handle-metrics"
 import type { CachedFrontendStudent, CachedFrontendStudentFilter, FrontendStudent, PrincipalAccess, PrincipalAccessStudent, StudentMemberships } from "$lib/types/app-types"
-import { getEnrollmentsWithinViewAccessWindow, getFrontendStudentMainDetails } from "$lib/utils/frontend-student-details"
+import { getEnrollmentsWithinViewAccessWindow, getFrontendStudentMainDetails, getUniqueStudentEnrollmentTeachers } from "$lib/utils/frontend-student-details"
 import { APP_INFO } from "../app-info"
 import { getPrincipalAccessForStudent } from "../authorization/student-access"
 import { getDbClient } from "../db/get-db-client"
@@ -39,10 +39,12 @@ export const updateStudentsCache = async () => {
   const tempStudentsMap: Map<string, CachedFrontendStudent> = new Map()
 
   for (const student of students) {
-    const enrollmentsWithinViewAccessWindow = getEnrollmentsWithinViewAccessWindow(student, APP_INFO)
+    const studentEnrollments = getUniqueStudentEnrollmentTeachers(student.studentEnrollments)
+    const enrollmentsWithinViewAccessWindow = getEnrollmentsWithinViewAccessWindow(studentEnrollments, APP_INFO)
     const studentMainDetails = getFrontendStudentMainDetails(enrollmentsWithinViewAccessWindow)
     tempStudentsMap.set(student._id, {
       ...student,
+      studentEnrollments,
       enrollmentsWithinViewAccessWindow,
       ...studentMainDetails
     })
@@ -211,7 +213,7 @@ export const upsertStudentInCache = async (student: FrontendStudent): Promise<vo
   logger.info("Upserting student in cache")
   studentsCache.updateInProgress = true
 
-  const enrollmentsWithinViewAccessWindow = getEnrollmentsWithinViewAccessWindow(student, APP_INFO)
+  const enrollmentsWithinViewAccessWindow = getEnrollmentsWithinViewAccessWindow(student.studentEnrollments, APP_INFO)
   const studentMainDetails = getFrontendStudentMainDetails(enrollmentsWithinViewAccessWindow)
 
   const cachedStudent: CachedFrontendStudent = {
