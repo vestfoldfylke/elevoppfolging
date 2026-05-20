@@ -189,7 +189,7 @@
 
     <div class="program-area-actions">
       {#if programArea}
-        <AsyncButton disabled={!programAreaEdited} onClick={updateProgramArea} buttonText="Lagre endringer" iconName="save" reloadPageDataOnSuccess={true} callBackAfterReloadPageData={closeEditMode} />
+        <AsyncButton disabled={!programAreaEdited && nonExistingProgramAreas.length === 0} onClick={updateProgramArea} buttonText="Lagre endringer" iconName="save" reloadPageDataOnSuccess={true} callBackAfterReloadPageData={closeEditMode} />
         <AsyncButton onClick={deleteProgramArea} buttonText="Slett programområde" iconName="delete" color="danger" reloadPageDataOnSuccess={true} callBackAfterReloadPageData={closeEditMode} />
       {:else}
         <AsyncButton onClick={createProgramArea} buttonText="Opprett programområde" iconName="save" reloadPageDataOnSuccess={true} callBackAfterReloadPageData={closeEditMode} />
