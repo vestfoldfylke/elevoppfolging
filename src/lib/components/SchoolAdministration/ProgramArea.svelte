@@ -28,9 +28,7 @@
       return []
     }
 
-    return programArea.classes
-      .filter((classGroup) => !schoolClasses.some((schoolClass: StudentClassGroup) => schoolClass.systemId === classGroup.systemId))
-      .map((classGroup) => classGroup.systemId)
+    return programArea.classes.filter((classGroup) => !schoolClasses.some((schoolClass: StudentClassGroup) => schoolClass.systemId === classGroup.systemId)).map((classGroup) => classGroup.systemId)
   })
 
   const programAreaHasBeenEdited = (): void => {
@@ -73,13 +71,13 @@
             console.warn("Klasse med systemId", value, "ikke funnet. Den vil bli fjernet fra programområde", editableProgramAreaName)
             return null
           }
-  
+
           return {
             systemId: matchingClass.systemId,
             fallbackName: matchingClass.name
           }
         })
-      .filter((value) => value !== null),
+        .filter((value) => value !== null),
       schoolNumber
     }
   }
