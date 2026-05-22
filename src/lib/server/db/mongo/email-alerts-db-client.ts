@@ -1,6 +1,6 @@
 import type { Collection, Db } from "mongodb"
 import type { IEmailAlertsDbClient } from "$lib/types/db/db-client"
-import type {MetricCount, MetricLabel, NewDbEmailAlert} from "$lib/types/db/shared-types"
+import type { MetricCount, MetricLabel, NewDbEmailAlert } from "$lib/types/db/shared-types"
 import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
 
 export class EmailAlertsDbClient implements IEmailAlertsDbClient {
