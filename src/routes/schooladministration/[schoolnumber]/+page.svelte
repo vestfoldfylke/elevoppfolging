@@ -8,7 +8,7 @@
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import { canGrantAndRemoveAccessForSchool, canManageManualStudentsOnSchool } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
-  import type { EnrollmentWithinViewAccessWindow, NewManualAccessControl, PrincipalAccessStudent } from "$lib/types/app-types"
+  import type { NewManualAccessControl } from "$lib/types/app-types"
   import type {
     ClassManualAccessEntry,
     ManageManualStudentsManualAccessEntry,
@@ -17,7 +17,6 @@
     ProgramAreaManualAccessEntryInput,
     StudentManualAccessEntry
   } from "$lib/types/db/shared-types"
-  import { getClassesFromStudents } from "$lib/utils/classes-from-students"
   import type { PageProps } from "./$types"
 
   let { data }: PageProps = $props()
@@ -50,16 +49,6 @@
     return canGrantAndRemoveAccessForSchool(currentSchool.schoolNumber, data.principalAccess)
   })
 
-  let schoolStudents: PrincipalAccessStudent[] = $derived.by(() => {
-    return data.students.filter((student) =>
-      student.principalAccessForStudent.some((accessType) => accessType.type === "MANUELL-SKOLELEDER-TILGANG" && accessType.schoolNumber === currentSchool.schoolNumber)
-    )
-  })
-
-  let schoolClasses = $derived.by(() => {
-    return getClassesFromStudents(schoolStudents).filter((classInfo) => classInfo.school.schoolNumber === currentSchool.schoolNumber)
-  })
-
   type SortDirection = "ascending" | "descending"
 
   const toggleSort = (sortConfig: { column: string; direction: SortDirection }, sortByColumn: string) => {
@@ -71,11 +60,11 @@
     sortConfig.direction = "ascending"
   }
 
-  const getAppUserInfo = (entraUserId: string): { name: string; companyName: string } => {
-    const appUser = data.appUsers.find((appUser) => appUser.entra.id === entraUserId)
+  const getAppUserInfo = (entraUserId: string): { displayName: string; companyName: string } => {
+    const appUser = data.appUsers.find((appUser) => appUser.entraUserId === entraUserId)
     return {
-      name: appUser ? appUser.entra.displayName : `Ukjent bruker (${entraUserId})`,
-      companyName: appUser?.entra.companyName || "Ukjent"
+      displayName: appUser ? appUser.displayName : `Ukjent bruker (${entraUserId})`,
+      companyName: appUser?.companyName || "Ukjent"
     }
   }
 
@@ -110,7 +99,7 @@
           programAreaName,
           entraUser: {
             id: access.entraUserId,
-            name: appUserInfo.name,
+            name: appUserInfo.displayName,
             companyName: appUserInfo.companyName
           },
           accessEntry: programAreaAccessEntry
@@ -157,15 +146,15 @@
           throw new Error(`Uventet access entry type for klasse: ${classAccessEntry.type}`)
         }
 
-        const classInfo = schoolClasses.find((classGroup) => classGroup.systemId === classAccessEntry.systemId)
-        const className = classInfo ? classInfo.name : `Inaktiv klasse (${classAccessEntry.systemId})`
+        const classInfo = data.accessControlSchoolClasses.find((classGroup) => classGroup.systemId === classAccessEntry.systemId)
+        const className = classInfo ? classInfo.name : `Utgått klasse (${classAccessEntry.systemId})`
         const appUserInfo = getAppUserInfo(access.entraUserId)
 
         classAccessRows.push({
           className,
           entraUser: {
             id: access.entraUserId,
-            name: appUserInfo.name,
+            name: appUserInfo.displayName,
             companyName: appUserInfo.companyName
           },
           accessEntry: classAccessEntry
@@ -211,9 +200,9 @@
     const studentAccessRows: StudentAccessEntry[] = []
     for (const access of data.manualAccessForSchool) {
       for (const studentAccessEntry of access.students) {
-        const studentInfo = schoolStudents.find((student) => student._id === studentAccessEntry._id)
-        const studentName = studentInfo ? studentInfo.name : `Inaktiv elev (${studentAccessEntry._id})`
-        const studentFeideName = studentInfo ? studentInfo.feideName : `Inaktiv elev (${studentAccessEntry._id})`
+        const studentInfo = data.accessControlSchoolStudents.find((student) => student._id === studentAccessEntry._id)
+        const studentName = studentInfo?.name || `Inaktiv elev (${studentAccessEntry._id})`
+        const studentFeideName = studentInfo?.feideName || ""
         const appUserInfo = getAppUserInfo(access.entraUserId)
 
         studentAccessRows.push({
@@ -223,7 +212,7 @@
           },
           entraUser: {
             id: access.entraUserId,
-            name: appUserInfo.name,
+            name: appUserInfo.displayName,
             companyName: appUserInfo.companyName
           },
           accessEntry: studentAccessEntry
@@ -269,7 +258,7 @@
         accessRows.push({
           entraUser: {
             id: access.entraUserId,
-            name: appUserInfo.name,
+            name: appUserInfo.displayName,
             companyName: appUserInfo.companyName
           },
           accessEntry: manageManualStudentsAccessEntry
@@ -452,13 +441,6 @@
     }
 
     return canManageManualStudentsOnSchool(data.principalAccess, currentSchool.schoolNumber)
-  })
-
-  let manualStudents: PrincipalAccessStudent[] = $derived.by(() => {
-    return data.students.filter(
-      (student: PrincipalAccessStudent) =>
-        student.source === "MANUAL" && student.enrollmentsWithinViewAccessWindow.some((enrollment: EnrollmentWithinViewAccessWindow) => enrollment.school.schoolNumber === currentSchool.schoolNumber)
-    )
   })
 
   const openNewManualStudentForm = () => {
@@ -730,12 +712,12 @@
 
         {#if newProgramAreaFormOpen}
           <div class="new-program-area-form">
-            <ProgramAreaComponent {schoolClasses} schoolNumber={currentSchool.schoolNumber} bind:editMode={newProgramAreaFormOpen} />
+            <ProgramAreaComponent schoolClasses={data.accessControlSchoolClasses} schoolNumber={currentSchool.schoolNumber} bind:editMode={newProgramAreaFormOpen} />
           </div>
         {/if}
 
         {#each data.programAreasForSchool as programArea (programArea._id)}
-          <ProgramAreaComponent {schoolClasses} schoolNumber={currentSchool.schoolNumber} programArea={programArea} />
+          <ProgramAreaComponent schoolClasses={data.accessControlSchoolClasses} schoolNumber={currentSchool.schoolNumber} programArea={programArea} />
         {/each}
 
       </ds-tabpanel>
@@ -789,7 +771,7 @@
         {/if}
   
         <div class="manual-students">
-          {#if manualStudents.length > 0 }
+          {#if data.manualSchoolStudents.length > 0 }
             <table class="ds-table">
               <thead>
                 <tr>
@@ -803,7 +785,7 @@
                 </tr>
               </thead>
               <tbody>
-              {#each manualStudents as manualStudent}
+              {#each data.manualSchoolStudents as manualStudent}
                 <tr>
                   <td>
                     <a href={`/students/${manualStudent._id}`} class="ds-link" rel="noopener noreferrer">{manualStudent.name}</a>
