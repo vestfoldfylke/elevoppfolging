@@ -1,6 +1,6 @@
 import type { Collection, Db } from "mongodb"
 import type { IEmailAlertsDbClient } from "$lib/types/db/db-client"
-import type { MetricCount, NewDbEmailAlert } from "$lib/types/db/shared-types"
+import type { MetricCount, MetricLabel, NewDbEmailAlert } from "$lib/types/db/shared-types"
 import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
 
 export class EmailAlertsDbClient implements IEmailAlertsDbClient {
@@ -17,11 +17,12 @@ export class EmailAlertsDbClient implements IEmailAlertsDbClient {
       name: "EmailAlert_Create",
       description: "Number of email alerts created"
     }
+    const labels: MetricLabel[] = [["type", emailAlert.type]]
 
     if (!result.insertedId) {
       incrementCount({
         ...metricBody,
-        labels: [[metricResultName, metricResultFailure]]
+        labels: [...labels, [metricResultName, metricResultFailure]]
       })
 
       throw new Error("Failed to create email alert")
