@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { DSSuggestionElement } from "@digdir/designsystemet-web";
+  import type { DSSuggestionElement } from "@digdir/designsystemet-web"
 
   type SearchSelectProps = {
     label: string
@@ -15,7 +15,7 @@
   const id = `search-select-${crypto.randomUUID()}`
 
   let suggestionElement: DSSuggestionElement | undefined = $state()
-  
+
   let searchValue: string = $state("")
 
   const optionsToShow = $derived.by(() => {
@@ -36,7 +36,6 @@
       value = selectedValues[0]
     }
   }
-
 </script>
 
 <ds-field class="ds-field content-item">

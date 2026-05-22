@@ -4,7 +4,7 @@
   import AsyncButton from "$lib/components/AsyncButton.svelte"
   import PageHeader from "$lib/components/PageHeader.svelte"
   import ProgramAreaComponent from "$lib/components/SchoolAdministration/ProgramArea.svelte"
-  import SuggestionSelect from "$lib/components/SchoolAdministration/SuggestionSelect.svelte";
+  import SuggestionSelect from "$lib/components/SchoolAdministration/SuggestionSelect.svelte"
   import { nameValidation, ssnValidation } from "$lib/data-validation/manual-student-validation"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import { canGrantAndRemoveAccessForSchool, canManageManualStudentsOnSchool } from "$lib/shared-authorization/authorization"

@@ -126,7 +126,6 @@
     editableProgramAreaName = programArea?.name || ""
     programAreaEdited = false
   }
-
 </script>
 
 <div class="ds-card content-item">
