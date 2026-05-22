@@ -47,7 +47,7 @@ const layoutLoad: ServerLoadNextFunction<RootLayoutData> = async ({ principal })
       authenticatedPrincipal: principal,
       APP_INFO,
       principalAccess,
-      studentCheckBoxes,
+      studentCheckBoxes: studentCheckBoxes.sort((a, b) => a.sort - b.sort),
       schools: schoolsInfo
     },
     isAuthorized: true

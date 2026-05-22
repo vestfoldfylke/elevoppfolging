@@ -37,6 +37,14 @@
     return JSON.stringify(savedEditableImportantStuff) !== JSON.stringify(editableImportantStuff)
   })
 
+  const getStudentCheckBoxValues = (checkboxIds: string[]): string[] => {
+    return checkboxIds
+      .map((id) => studentCheckBoxes.find((checkbox) => checkbox._id === id))
+      .filter((checkbox): checkbox is StudentCheckBox => checkbox !== undefined)
+      .sort((a, b) => a.sort - b.sort)
+      .map((checkbox) => checkbox.value)
+  }
+
   const updateStudentImportantStuff = async (): Promise<void> => {
     if (!importantStuffForm) {
       throw new Error("Important stuff form not found")
@@ -103,8 +111,8 @@
               Ingen {STUDENT_CHECKBOX_DISPLAY_NAMES.FOLLOW_UP.plural.toLowerCase()}
             {:else}
               <ul class="ds-list">
-                {#each savedEditableImportantStuff.followUp || [] as followUpId}
-                  <li>{studentCheckBoxes.find(checkbox => checkbox._id === followUpId)?.value}</li>
+                {#each getStudentCheckBoxValues(savedEditableImportantStuff.followUp) as followUpValue}
+                  <li>{followUpValue}</li>
                 {/each}
               </ul>
             {/if}
@@ -127,8 +135,8 @@
               Ingen {STUDENT_CHECKBOX_DISPLAY_NAMES.FACILITATION.plural.toLowerCase()}
             {:else}
               <ul class="ds-list">
-                {#each savedEditableImportantStuff.facilitation || [] as facilitationId}
-                  <li>{studentCheckBoxes.find(checkbox => checkbox._id === facilitationId)?.value}</li>
+                {#each getStudentCheckBoxValues(savedEditableImportantStuff.facilitation) as facilitationValue}
+                  <li>{facilitationValue}</li>
                 {/each}
               </ul>
             {/if}
