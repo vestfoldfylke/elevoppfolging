@@ -4,6 +4,7 @@
   import AsyncButton from "$lib/components/AsyncButton.svelte"
   import PageHeader from "$lib/components/PageHeader.svelte"
   import ProgramAreaComponent from "$lib/components/SchoolAdministration/ProgramArea.svelte"
+  import SuggestionSelect from "$lib/components/SchoolAdministration/SuggestionSelect.svelte";
   import { nameValidation, ssnValidation } from "$lib/data-validation/manual-student-validation"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import { canGrantAndRemoveAccessForSchool, canManageManualStudentsOnSchool } from "$lib/shared-authorization/authorization"
@@ -332,9 +333,6 @@
       throw new Error("Entra user ID must be selected")
     }
 
-    // Temp override of entraUserId until issue is fixed: https://github.com/digdir/designsystemet/issues/4718
-    const entraUserIdToUse = newManualAccessControl.entraUserId.substring(newManualAccessControl.entraUserId.lastIndexOf(" ") + 1)
-
     let accessEntryToAdd: ManualAccessEntryInput
 
     switch (newManualAccessControl.type) {
@@ -350,10 +348,8 @@
         if (!newManualAccessControl.classId) {
           throw new Error("Class ID must be selected")
         }
-        // temp override of classId until issue is fixed: https://github.com/digdir/designsystemet/issues/4718
-        const classIdToUse = newManualAccessControl.classId.substring(newManualAccessControl.classId.lastIndexOf(" ") + 1)
 
-        accessEntryToAdd = { type: newManualAccessControl.type, schoolNumber: currentSchool.schoolNumber, systemId: classIdToUse }
+        accessEntryToAdd = { type: newManualAccessControl.type, schoolNumber: currentSchool.schoolNumber, systemId: newManualAccessControl.classId }
         break
       }
 
@@ -361,10 +357,8 @@
         if (!newManualAccessControl.studentId) {
           throw new Error("Student ID must be selected")
         }
-        // temp override of studentId until issue is fixed: https://github.com/digdir/designsystemet/issues/4718
-        const studentIdToUse = newManualAccessControl.studentId.substring(newManualAccessControl.studentId.lastIndexOf(" ") + 1)
 
-        accessEntryToAdd = { type: newManualAccessControl.type, schoolNumber: currentSchool.schoolNumber, _id: studentIdToUse }
+        accessEntryToAdd = { type: newManualAccessControl.type, schoolNumber: currentSchool.schoolNumber, _id: newManualAccessControl.studentId }
         break
       }
 
@@ -376,7 +370,7 @@
         throw new Error(`Invalid access entry type: ${newManualAccessControl.type}`)
     }
 
-    await apiFetch(`/api/access/${entraUserIdToUse as NoSlashString}/add`, {
+    await apiFetch(`/api/access/${newManualAccessControl.entraUserId as NoSlashString}/add`, {
       method: "POST",
       body: accessEntryToAdd,
       headers: {
@@ -460,39 +454,19 @@
     {#if newManualAccessControl.open}
       <h3 class="ds-heading" data-size="xs" style="margin-top: var(--ds-size-4)">Ny {newManualAccessControl.name}</h3>
       <form bind:this={newManualAccessControl.form}>
-        <ds-field class="ds-field content-item">
-          <label for="{newManualAccessControl.name}-access-person" class="ds-label" data-weight="medium">Velg bruker</label>
-          <ds-suggestion class="ds-suggestion">
-            <input id="{newManualAccessControl.name}-access-person" class="ds-input" type="text" placeholder="" bind:value={newManualAccessControl.entraUserId} />
-            <del aria-label="Tøm" hidden=""></del>
-            <u-datalist>
-              {#each data.appUsers as appUser}
-                <u-option label="{appUser.entra.displayName} ({appUser.entra.companyName}) {appUser.entra.id}">
-                  {appUser.entra.displayName}
-                  <div>
-                    {appUser.entra.companyName}
-                  </div>
-                </u-option>
-              {/each}
-            </u-datalist>
-          </ds-suggestion>
-        </ds-field>
+        <SuggestionSelect
+          items={data.appUsers.map((appUser) => ({ label: `${appUser.displayName} (${appUser.companyName})`, value: appUser.entraUserId }))}
+          bind:value={newManualAccessControl.entraUserId as string}
+          label="Velg bruker"
+        />
+      
 
         {#if newManualAccessControl.type === "MANUELL-KLASSE-TILGANG"}
-          <ds-field class="ds-field content-item">
-            <label for="{newManualAccessControl.name}-class" class="ds-label" data-weight="medium">Velg klasse</label>
-            <ds-suggestion class="ds-suggestion">
-              <input id="{newManualAccessControl.name}-class" class="ds-input" type="text" placeholder="" bind:value={newManualAccessControl.classId}/>
-              <del aria-label="Tøm" hidden=""></del>
-              <u-datalist>
-                {#each schoolClasses as classInfo}
-                  <u-option label="{classInfo.name} {classInfo.systemId}">
-                    {classInfo.name}
-                  </u-option>
-                {/each}
-              </u-datalist>
-            </ds-suggestion>
-          </ds-field>
+          <SuggestionSelect
+            items={data.accessControlSchoolClasses.map((classInfo) => ({ label: classInfo.name, value: classInfo.systemId }))}
+            bind:value={newManualAccessControl.classId as string}
+            label="Velg klasse"
+          />
         {/if}
 
         {#if newManualAccessControl.type === "MANUELL-PROGRAMOMRÅDE-TILGANG"}
@@ -507,24 +481,15 @@
         {/if}
 
         {#if newManualAccessControl.type === "MANUELL-ELEV-TILGANG"}
-          <ds-field class="ds-field content-item">
-            <label for="{newManualAccessControl.name}-student" class="ds-label" data-weight="medium">Velg elev</label>
-            <ds-suggestion class="ds-suggestion">
-              <input id="{newManualAccessControl.name}-student" class="ds-input" type="text" placeholder="" bind:value={newManualAccessControl.studentId}/>
-              <del aria-label="Tøm" hidden=""></del>
-              <u-datalist>
-                {#each schoolStudents.sort((a, b) => a.name.localeCompare(b.name)) as student}
-                  <u-option label="{student.name} {student._id}">
-                    {student.name}
-                  </u-option>
-                {/each}
-              </u-datalist>
-            </ds-suggestion>
-          </ds-field>
+          <SuggestionSelect
+            items={data.accessControlSchoolStudents.map((student) => ({ label: student.name, value: student._id }))}
+            bind:value={newManualAccessControl.studentId as string}
+            label="Velg elev"
+          />
         {/if}
 
         <div class="new-manual-access-actions">
-          <AsyncButton onClick={() => addManualAccessEntry(newManualAccessControl)} reloadPageDataOnSuccess={true} buttonText="Legg til tilgang" iconName="add" callBackAfterReloadPageData={() => { newManualAccessControl.classId = ""; newManualAccessControl.studentId = ""; }} />
+          <AsyncButton onClick={() => addManualAccessEntry(newManualAccessControl)} reloadPageDataOnSuccess={true} buttonText="Legg til tilgang" iconName="add" callBackAfterReloadPageData={() => closeManualAccessControl(newManualAccessControl)} />
 
           <button class="ds-button" type="button" data-variant="secondary" onclick={() => closeManualAccessControl(newManualAccessControl)}>
             <span class="material-symbols-outlined">close</span>Lukk
@@ -546,13 +511,14 @@
   <ds-tabs class="ds-tabs">
     <ds-tablist>
       {#if canManageAccess}
-      <ds-tab aria-selected={selectedTab === undefined || selectedTab === accessTab}>
-        Tilgangsstyring
-      </ds-tab>
-      <ds-tab aria-selected={selectedTab === programAreasTab}>
-        Programområder
-      </ds-tab>
+        <ds-tab aria-selected={selectedTab === undefined || selectedTab === accessTab}>
+          Tilgangsstyring
+        </ds-tab>
+        <ds-tab aria-selected={selectedTab === programAreasTab}>
+          Programområder
+        </ds-tab>
       {/if}
+
       {#if canManageManualStudents}
         <ds-tab aria-selected={selectedTab === manualStudentsTab || !canManageAccess}>
           Manuelle elever
@@ -821,10 +787,6 @@
 
   .access-group h2 {
     margin-bottom: var(--ds-size-2);
-  }
-
-  .ds-suggestion, .ds-label {
-    max-width: 20rem;
   }
 
   .new-manual-access-actions {
