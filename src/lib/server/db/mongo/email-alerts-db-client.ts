@@ -30,7 +30,7 @@ export class EmailAlertsDbClient implements IEmailAlertsDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [[metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
 
     return result.insertedId.toString()
