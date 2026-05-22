@@ -1,4 +1,4 @@
-import { type Binary, type Db, ObjectId } from "mongodb"
+import { type Binary, type Db, type DeleteResult, ObjectId } from "mongodb"
 import type { IDocumentsDbClient } from "$lib/types/db/db-client"
 import type {
   DbEncryptedDocumentMessage,
@@ -186,6 +186,30 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     })
 
     return updatedDocument._id.toString()
+  }
+
+  async deleteStudentDocument(document: StudentDocument): Promise<void> {
+    const deleteResult: DeleteResult = await this.encryptionDb.collection<DbEncryptedStudentDocument>(this.documentsCollectionName).deleteOne({ _id: new ObjectId(document._id) })
+
+    const metricBody: MetricCount = {
+      name: "StudentDocument_Remove",
+      description: "Number of student documents removed"
+    }
+    const labels: MetricLabel[] = [["schoolNumber", document.school.schoolNumber]]
+
+    if (deleteResult.deletedCount === 0) {
+      incrementCount({
+        ...metricBody,
+        labels: [...labels, [metricResultName, metricResultFailure]]
+      })
+
+      throw new Error(`Failed to delete student document with id: ${document._id}`)
+    }
+
+    incrementCount({
+      ...metricBody,
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
+    })
   }
 
   async addStudentDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<string> {
@@ -416,6 +440,30 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     })
 
     return updatedDocument._id.toString()
+  }
+
+  async deleteGroupDocument(document: GroupDocument): Promise<void> {
+    const deleteResult: DeleteResult = await this.encryptionDb.collection<DbEncryptedGroupDocument>(this.documentsCollectionName).deleteOne({ _id: new ObjectId(document._id) })
+
+    const metricBody: MetricCount = {
+      name: "GroupDocument_Remove",
+      description: "Number of group documents removed"
+    }
+    const labels: MetricLabel[] = [["schoolNumber", document.school.schoolNumber]]
+
+    if (deleteResult.deletedCount === 0) {
+      incrementCount({
+        ...metricBody,
+        labels: [...labels, [metricResultName, metricResultFailure]]
+      })
+
+      throw new Error(`Failed to delete group document with id: ${document._id}`)
+    }
+
+    incrementCount({
+      ...metricBody,
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
+    })
   }
 
   async addGroupDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<string> {

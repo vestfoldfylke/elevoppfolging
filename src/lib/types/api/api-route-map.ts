@@ -87,6 +87,7 @@ export interface ApiRouteMap {
   }
 
   [key: `/api/students/${NoSlashString}/documents/${NoSlashString}`]: {
+    DELETE: { res: { documentId: string } }
     PATCH: { req: DocumentInput; res: { documentId: string } }
   }
 
@@ -133,6 +134,7 @@ export interface ApiRouteMap {
   }
 
   [key: `/api/classes/${NoSlashString}/documents/${NoSlashString}`]: {
+    DELETE: { res: { documentId: string } }
     PATCH: { req: DocumentInput; res: { documentId: string } }
   }
 

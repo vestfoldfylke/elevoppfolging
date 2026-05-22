@@ -6,7 +6,7 @@ import { getStudentsFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canEditGroupDocument, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { canEditGroupDocument, isSchoolLeaderForSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { PrincipalAccess, PrincipalAccessStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
@@ -14,8 +14,97 @@ import type { EditorData, GroupDocument, GroupDocumentUpdate, StudentClassGroup 
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 import { getAccessibleClassesFromStudents } from "$lib/utils/classes-from-students"
 
+type RemoveDocumentResponse = ApiRouteMap[`/api/classes/${NoSlashString}/documents/${NoSlashString}`]["DELETE"]["res"]
+
 type UpdateDocumentResponse = ApiRouteMap[`/api/classes/${NoSlashString}/documents/${NoSlashString}`]["PATCH"]["res"]
 type UpdateDocumentBody = ApiRouteMap[`/api/classes/${NoSlashString}/documents/${NoSlashString}`]["PATCH"]["req"]
+
+const removeDocument: ApiNextFunction<RemoveDocumentResponse> = async ({ principal, requestEvent }) => {
+  const documentId: string | undefined = requestEvent.params.document_id
+  if (!documentId) {
+    throw new HTTPError(400, "Document ID is missing in request parameters")
+  }
+
+  const systemId: string | undefined = requestEvent.params.system_id
+  if (!systemId) {
+    throw new HTTPError(400, "System ID is missing in request parameters")
+  }
+
+  const dbClient: IDbClient = getDbClient()
+
+  const document: GroupDocument | null = await dbClient.documents.getGroupDocumentById(documentId)
+  if (!document) {
+    throw new HTTPError(404, "Document not found. Cannot delete non-existing document.")
+  }
+
+  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
+  if (!principalAccess) {
+    throw new HTTPError(403, noAccessMessage("No access found for principal"))
+  }
+
+  if (!isSchoolLeaderForSchool(principalAccess, document.school.schoolNumber)) {
+    throw new HTTPError(403, noAccessMessage("No permission to delete this document"))
+  }
+
+  const students: PrincipalAccessStudent[] = await getStudentsFromCache(principalAccess)
+  if (students.length === 0) {
+    throw new HTTPError(404, noAccessMessage("No access to any students"))
+  }
+
+  const classes: StudentClassGroup[] = getAccessibleClassesFromStudents(principalAccess, students)
+  if (classes.length === 0) {
+    throw new HTTPError(404, noAccessMessage("No access to any class"))
+  }
+
+  const classEntry: StudentClassGroup | undefined = classes.find((classEntry: StudentClassGroup) => classEntry.systemId === systemId)
+  if (!classEntry) {
+    throw new HTTPError(404, noAccessMessage("No access to class"))
+  }
+
+  try {
+    await dbClient.documents.deleteGroupDocument(document)
+    logger.info("Group document with GroupDocumentId {GroupDocumentId} deleted successfully by PrincipalId {PrincipalId}", document._id, principal.id)
+  } catch (error) {
+    throw new HTTPError(500, "Feilet ved sletting av klassenotat", error)
+  }
+
+  try {
+    await dbClient.emailAlerts.deleteEmailAlertsByDocumentId(document._id)
+  } catch (error) {
+    logger.errorException(error, "Failed to delete email alerts for GroupDocumentId {GroupDocumentId} after deleting the document. Returning success response regardless.", document._id)
+  }
+
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "DELETE",
+      resource: "GroupDocument",
+      resourceId: documentId,
+      resourceName: "",
+      metaData: {
+        data: JSON.stringify({
+          groupName: classEntry.name,
+          template: document.template
+        }),
+        parentResource: "Group",
+        parentResourceId: systemId,
+        schoolId: document.school.schoolNumber
+      }
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when removing GroupDocumentId {GroupDocumentId}", document._id)
+  }
+
+  return {
+    documentId
+  }
+}
 
 const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody> = async ({ requestEvent, principal, body }) => {
   const systemId: string | undefined = requestEvent.params.system_id
@@ -128,6 +217,10 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
   return {
     documentId: updatedDocumentId
   }
+}
+
+export const DELETE: RequestHandler = async (requestEvent) => {
+  return apiRequestMiddleware<RemoveDocumentResponse>(requestEvent, removeDocument)
 }
 
 export const PATCH: RequestHandler = async (requestEvent) => {

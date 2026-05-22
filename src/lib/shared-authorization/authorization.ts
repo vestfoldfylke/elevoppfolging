@@ -103,8 +103,17 @@ export const isSchoolLeader = (principalAccess: Access | null): boolean => {
   if (!principalAccess) {
     return false
   }
+
   // TODO - check that the school leader access is for a school that is active
   return principalAccess.leaderForSchools.some((schoolAccess) => schoolAccess.type === "MANUELL-SKOLELEDER-TILGANG")
+}
+
+export const isSchoolLeaderForSchool = (principalAccess: Access | null, schoolNumber: string): boolean => {
+  if (!principalAccess) {
+    return false
+  }
+
+  return principalAccess.leaderForSchools.some((schoolAccess: SchoolLeaderManualAccessEntry) => schoolAccess.type === "MANUELL-SKOLELEDER-TILGANG" && schoolAccess.schoolNumber === schoolNumber)
 }
 
 export const canAccessSchoolAdministration = (principalAccess: Access | null): boolean => {
