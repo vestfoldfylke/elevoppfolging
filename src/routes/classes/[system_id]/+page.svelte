@@ -3,6 +3,7 @@
   import NewDocument from "$lib/components/Document/NewDocument.svelte"
   import ImportantGroupStuff from "$lib/components/ImportantGroupStuff.svelte"
   import PrincipalAccessTag from "$lib/components/PrincipalAccessTag.svelte"
+  import { canEditGroupDocument } from "$lib/shared-authorization/authorization"
   import type { PrincipalAccess, PrincipalAccessStudent, ProgramAreaPrincipalAccess, TemplateInfo } from "$lib/types/app-types"
   import type { ClassAutoAccessEntry, ClassManualAccessEntry, GroupDocument, GroupImportantStuff, SchoolLeaderManualAccessEntry } from "$lib/types/db/shared-types"
   import { ACCESS_TYPE_DISPLAY_NAMES } from "$lib/utils/access-constants"
@@ -212,7 +213,7 @@
         {/each}
       </div>
       {#each filteredDocuments as document (document._id)}
-        <DocumentComponent {document} accessSchools={[data.classGroup.school]} canEditDocument={true} groupName={data.classGroup.name} />
+        <DocumentComponent {document} accessSchools={[data.classGroup.school]} canEditDocument={canEditGroupDocument(data.authenticatedPrincipal, document)} groupName={data.classGroup.name} />
       {/each}
     {/if}
   </div>
