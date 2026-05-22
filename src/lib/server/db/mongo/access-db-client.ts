@@ -92,24 +92,9 @@ export class AccessDbClient implements IAccessDbClient {
 
     const result = await this.accessCollection.insertOne(accessToInsert)
 
-    const metricBody: MetricCount = {
-      name: "Access_Create",
-      description: "Number of access created"
-    }
-
     if (!result.insertedId) {
-      incrementCount({
-        ...metricBody,
-        labels: [[metricResultName, metricResultFailure]]
-      })
-
       throw new Error("Failed to create access")
     }
-
-    incrementCount({
-      ...metricBody,
-      labels: [[metricResultName, metricResultSuccessful]]
-    })
 
     return result.insertedId.toString()
   }
