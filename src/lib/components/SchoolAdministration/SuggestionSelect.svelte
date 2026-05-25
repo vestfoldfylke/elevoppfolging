@@ -26,7 +26,7 @@
     return items.filter((item) => item.label.toLowerCase().includes(searchValue.toLowerCase())).slice(0, 20)
   })
 
-  const oncomboboxafterselect = (): void => {
+  const onComboboxAfterSelect = (): void => {
     if (!suggestionElement) {
       throw new Error("Suggestion element not found, can't do much")
     }
@@ -41,7 +41,7 @@
 <ds-field class="ds-field content-item">
   <label for="{id}" class="ds-label" data-weight="medium">{label}</label>
 
-  <ds-suggestion bind:this={suggestionElement} data-nofilter class="ds-suggestion" /* @ts-expect-error (oncomboboxafterselect exists and works...) */ oncomboboxafterselect={oncomboboxafterselect}>
+  <ds-suggestion bind:this={suggestionElement} data-nofilter class="ds-suggestion" /* @ts-expect-error (oncomboboxafterselect exists and works...) */ oncomboboxafterselect={onComboboxAfterSelect}>
     <input id="{id}" class="ds-input" type="text" placeholder="" bind:value={searchValue} />
     
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions (handled by the ds-suggestion element) - have clickevent as oncomboboxafterselect does not trigger on del -->
