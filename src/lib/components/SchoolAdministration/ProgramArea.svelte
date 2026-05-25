@@ -4,12 +4,13 @@
   import { nameValidation } from "$lib/data-validation/program-area-validation"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
-  import type { ProgramArea, ProgramAreaInput, StudentClassGroup } from "$lib/types/db/shared-types"
+  import type { AccessControlClass } from "$lib/types/app-types"
+  import type { ProgramArea, ProgramAreaInput } from "$lib/types/db/shared-types"
   import AsyncButton from "../AsyncButton.svelte"
 
   type ProgramAreaProps = {
     programArea?: ProgramArea | undefined
-    schoolClasses: StudentClassGroup[]
+    schoolClasses: AccessControlClass[]
     schoolNumber: string
     editMode?: boolean
   }
@@ -28,7 +29,7 @@
       return []
     }
 
-    return programArea.classes.filter((classGroup) => !schoolClasses.some((schoolClass: StudentClassGroup) => schoolClass.systemId === classGroup.systemId)).map((classGroup) => classGroup.systemId)
+    return programArea.classes.filter((classGroup) => !schoolClasses.some((schoolClass: AccessControlClass) => schoolClass.systemId === classGroup.systemId)).map((classGroup) => classGroup.systemId)
   })
 
   const programAreaHasBeenEdited = (): void => {
