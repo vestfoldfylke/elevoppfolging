@@ -5,6 +5,14 @@ import type { ApiNextFunction, ServerLoadNextFunction } from "$lib/types/middlew
 import { getAuthenticatedPrincipal } from "../authentication/get-authenticated-principal"
 import { HTTPError } from "./http-error"
 
+const getErrorException = (error: unknown): unknown => {
+  if (error instanceof HTTPError && typeof error.data === "object" && error.data !== null && "stack" in error.data) {
+    return error.data
+  }
+
+  return error
+}
+
 /**
  * Wrap functionality in a server route with this middleware to handle authentication, some simple logging and error handling.
  * The `next` function will only be called if authentication is successful.
@@ -26,7 +34,7 @@ export const apiRequestMiddleware = async <TResponse extends object, TRequestBod
     loggerPrefix += ` - Principal: ${principal.id} (${principal.displayName})`
     logger.info(`${loggerPrefix} - Authenticated`)
   } catch (error) {
-    logger.errorException(error, `${loggerPrefix} - Error during authentication`)
+    logger.errorException(getErrorException(error), `${loggerPrefix} - Error during authentication`)
     return json({ message: "Unauthorized" }, { status: 401 })
   }
 
@@ -35,7 +43,7 @@ export const apiRequestMiddleware = async <TResponse extends object, TRequestBod
     try {
       body = (await request.json()) as TRequestBody
     } catch (error) {
-      logger.errorException(error, `${loggerPrefix} - Error parsing JSON body`)
+      logger.errorException(getErrorException(error), `${loggerPrefix} - Error parsing JSON body`)
       return json({ message: "Invalid JSON body" }, { status: 400 })
     }
   }
@@ -48,16 +56,17 @@ export const apiRequestMiddleware = async <TResponse extends object, TRequestBod
     try {
       JSON.stringify(data)
     } catch (error) {
-      logger.errorException(error, `${loggerPrefix} - Error serializing response data - please provide data that can be serialized to JSON`)
+      logger.errorException(getErrorException(error), `${loggerPrefix} - Error serializing response data - please provide data that can be serialized to JSON`)
       return json({ message: "Internal Server Error" }, { status: 500 })
     }
     return json(data)
   } catch (error) {
     if (error instanceof HTTPError) {
-      logger.errorException(error, `${loggerPrefix} - HTTP Error {status}`, error.status)
+      logger.errorException(getErrorException(error), `${loggerPrefix} - HTTP Error {status}`, error.status)
       return json({ message: error.message, data: error.data || null }, { status: error.status })
     }
-    logger.errorException(error, `${loggerPrefix} - Internal Server Error`)
+
+    logger.errorException(getErrorException(error), `${loggerPrefix} - Internal Server Error`)
     return json({ message: "Internal Server Error" }, { status: 500 })
   }
 }

@@ -1,4 +1,5 @@
-import type { Collection, Db } from "mongodb"
+import { logger } from "@vestfoldfylke/loglady"
+import { type Collection, type Db, type DeleteResult, ObjectId } from "mongodb"
 import type { IEmailAlertsDbClient } from "$lib/types/db/db-client"
 import type { MetricCount, MetricLabel, NewDbEmailAlert } from "$lib/types/db/shared-types"
 import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
@@ -34,5 +35,15 @@ export class EmailAlertsDbClient implements IEmailAlertsDbClient {
     })
 
     return result.insertedId.toString()
+  }
+
+  async deleteEmailAlertsByDocumentId(documentId: string): Promise<void> {
+    const deleteResult: DeleteResult = await this.emailAlertsCollection.deleteMany({ documentId: new ObjectId(documentId) })
+
+    if (!deleteResult.acknowledged) {
+      throw new Error(`Failed to delete email alerts with document id: ${documentId}`)
+    }
+
+    logger.info("Deleted {DeleteCount} email alerts with DocumentId: {DocumentId}", deleteResult.deletedCount, documentId)
   }
 }

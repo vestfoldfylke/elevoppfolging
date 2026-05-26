@@ -44,12 +44,14 @@ export const mockDbClient: IDbClient = {
     getStudentDocumentById: notImplemented,
     createStudentDocument: notImplemented,
     updateStudentDocument: notImplemented,
+    deleteStudentDocument: notImplemented,
     addStudentDocumentMessage: notImplemented,
     updateStudentDocumentMessage: notImplemented,
     getGroupDocuments: notImplemented,
     getGroupDocumentById: notImplemented,
     createGroupDocument: notImplemented,
     updateGroupDocument: notImplemented,
+    deleteGroupDocument: notImplemented,
     addGroupDocumentMessage: notImplemented,
     updateGroupDocumentMessage: notImplemented
   },
@@ -80,7 +82,8 @@ export const mockDbClient: IDbClient = {
     updateStudentCheckBox: notImplemented
   },
   emailAlerts: {
-    createEmailAlert: notImplemented
+    createEmailAlert: notImplemented,
+    deleteEmailAlertsByDocumentId: notImplemented
   },
   auditLogs: {
     createAuditEntry: notImplemented,
