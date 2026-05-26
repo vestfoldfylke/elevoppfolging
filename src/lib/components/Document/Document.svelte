@@ -2,6 +2,8 @@
   import { onMount } from "svelte"
   import { page } from "$app/state"
   import { apiFetch } from "$lib/api-fetch/api-fetch"
+  import AsyncButton from "$lib/components/AsyncButton.svelte"
+  import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { StudentAccessPerson } from "$lib/types/app-types"
   import type { AuditEntryInput, DocumentInput, GroupDocument, MetricCount, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
   import EditorInfo from "../EditorInfo.svelte"
@@ -14,6 +16,7 @@
     document: StudentDocument | GroupDocument
     accessSchools: SchoolInfo[]
     canEditDocument: boolean
+    canRemoveDocument: boolean
     studentName?: string
     groupName?: string
     studentDataSharingConsent?: boolean
@@ -21,7 +24,7 @@
     referencedOpen?: boolean
   }
 
-  let { document, accessSchools, canEditDocument, studentName, groupName, studentDataSharingConsent, studentAccessPersons, referencedOpen = false }: PageProps = $props()
+  let { document, accessSchools, canEditDocument, canRemoveDocument, studentName, groupName, studentDataSharingConsent, studentAccessPersons, referencedOpen = false }: PageProps = $props()
 
   const editableDocumentFromDocument = () => {
     return JSON.parse(
@@ -135,6 +138,41 @@
     })
   }
 
+  const handleDocumentRemove = async (): Promise<void> => {
+    const confirmDelete = confirm("Er du heeeelt sikker på du vil slette dette notatet da? Notatet og alle tilhørende oppdateringer vil bli borte borte")
+    if (!confirmDelete) {
+      return
+    }
+
+    if (studentName && "student" in document) {
+      const removeDocumentRoute = `/api/students/${document.student._id as NoSlashString}/documents/${document._id as NoSlashString}` as const
+
+      await apiFetch(removeDocumentRoute, {
+        method: "DELETE"
+      })
+
+      if (documentDialog) {
+        documentDialog.close()
+      }
+
+      return
+    }
+
+    if (groupName && "group" in document) {
+      const removeDocumentRoute = `/api/classes/${document.group.systemId as NoSlashString}/documents/${document._id as NoSlashString}` as const
+
+      await apiFetch(removeDocumentRoute, {
+        method: "DELETE"
+      })
+
+      if (documentDialog) {
+        documentDialog.close()
+      }
+
+      return
+    }
+  }
+
   // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounts ved endring av document (ha en key på document i parent)
   let editableDocument: DocumentInput = $state(editableDocumentFromDocument())
 
@@ -219,11 +257,18 @@
               {/if}
             </div>
 
-            {#if canEditDocument}
-              <button class="ds-button" data-variant="secondary" data-size="sm" onclick={() => editMode = true}>
-                <span class="material-symbols-outlined">{editMode ? "close" : "edit"}</span>
-                Rediger
-              </button>
+            {#if canEditDocument || canRemoveDocument}
+              <div class="document-footer-actions">
+                {#if canEditDocument}
+                  <button class="ds-button" data-variant="secondary" data-size="sm" onclick={() => editMode = true}>
+                    <span class="material-symbols-outlined">{editMode ? "close" : "edit"}</span>
+                    Rediger
+                  </button>
+                {/if}
+                {#if canRemoveDocument}
+                  <AsyncButton buttonText="Slett notat" onClick={handleDocumentRemove} dataSize="sm" iconName="delete" color="danger" reloadPageDataOnSuccess={true} />
+                {/if}
+              </div>
             {/if}
           {/if}
         </div>
@@ -269,6 +314,14 @@
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
+  }
+  
+  .document-footer-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--ds-size-2);
   }
 
   .card-button:hover {

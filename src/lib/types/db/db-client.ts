@@ -80,6 +80,7 @@ export interface IDocumentsDbClient {
   getStudentDocumentById(documentId: string): Promise<StudentDocument | null>
   createStudentDocument(document: NewStudentDocument): Promise<string>
   updateStudentDocument(documentId: string, documentUpdate: StudentDocumentUpdate): Promise<string>
+  deleteStudentDocument(document: StudentDocument): Promise<void>
 
   addStudentDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<string>
   updateStudentDocumentMessage(documentId: string, messageId: string, messageUpdate: NewDocumentMessage): Promise<string>
@@ -88,6 +89,7 @@ export interface IDocumentsDbClient {
   getGroupDocumentById(documentId: string): Promise<GroupDocument | null>
   createGroupDocument(document: NewGroupDocument): Promise<string>
   updateGroupDocument(documentId: string, documentUpdate: GroupDocumentUpdate): Promise<string>
+  deleteGroupDocument(document: GroupDocument): Promise<void>
 
   addGroupDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<string>
   updateGroupDocumentMessage(documentId: string, messageId: string, messageUpdate: NewDocumentMessage): Promise<string>
@@ -128,6 +130,7 @@ export interface IStudentCheckBoxDbClient {
 
 export interface IEmailAlertsDbClient {
   createEmailAlert(emailAlert: NewDbEmailAlert): Promise<string>
+  deleteEmailAlertsByDocumentId(documentId: string): Promise<void>
 }
 
 export interface IAuditLogsDbClient {
