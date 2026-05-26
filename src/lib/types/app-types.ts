@@ -61,6 +61,7 @@ export type CachedFrontendStudentFilter = {
   className?: string
   classSystemIds?: string[]
   contactTeacherName?: string
+  schoolNumbers?: string[]
 }
 
 export type AccessEntry =
@@ -176,4 +177,28 @@ export type FrontendOverviewStudentFilter = Omit<CachedFrontendStudentFilter, "s
   sortBy?: "studentName" | "className" | "contactTeacherName" | "lastActivity"
   sortDirection?: "ascending" | "descending"
   top?: number
+}
+
+export type AccessControlAppUser = {
+  entraUserId: string
+  displayName: string
+  companyName: string
+}
+
+export type AccessControlStudent = {
+  _id: string
+  name: string
+  feideName: string
+}
+
+export type AccessControlClass = {
+  systemId: string
+  name: string
+}
+
+export type SchoolAdministrationManualStudent = {
+  _id: string
+  name: string
+  feideName: string
+  hasBlockedAddress?: boolean
 }

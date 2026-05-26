@@ -123,6 +123,14 @@ export const getStudentsFromCache = async (principalAccess: PrincipalAccess, stu
     }
 
     if (
+      Array.isArray(studentFilter?.schoolNumbers) &&
+      studentFilter.schoolNumbers.length > 0 &&
+      !student.enrollmentsWithinViewAccessWindow.some((enrollment) => studentFilter.schoolNumbers?.includes(enrollment.school.schoolNumber))
+    ) {
+      continue
+    }
+
+    if (
       studentFilter?.contactTeacherName &&
       !student.mainContactTeacherGroup?.teachers.some((teacher) => studentFilter?.contactTeacherName && teacher.name.toLowerCase().includes(studentFilter.contactTeacherName.toLowerCase()))
     ) {
