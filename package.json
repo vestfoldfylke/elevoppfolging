@@ -15,16 +15,16 @@
     "lint:fix": "npx @biomejs/biome check --write"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.11",
+    "@biomejs/biome": "2.4.15",
     "@digdir/designsystemet-types": "^1.13.1",
-    "@sveltejs/kit": "^2.60.1",
+    "@sveltejs/kit": "^2.61.1",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@types/luxon": "^3.7.1",
-    "@types/node": "^25.8.0",
-    "svelte": "^5.55.7",
+    "@types/node": "^25.9.1",
+    "svelte": "^5.55.9",
     "svelte-check": "^4.4.8",
-    "typescript": "^5.9.3",
-    "vite": "^8.0.13"
+    "typescript": "^6.0.3",
+    "vite": "^8.0.14"
   },
   "dependencies": {
     "@digdir/designsystemet-css": "^1.14.0",
