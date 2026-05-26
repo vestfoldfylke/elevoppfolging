@@ -257,12 +257,14 @@
               {/if}
             </div>
 
-            {#if canEditDocument}
+            {#if canEditDocument || canRemoveDocument}
               <div class="document-footer-actions">
-                <button class="ds-button" data-variant="secondary" data-size="sm" onclick={() => editMode = true}>
-                  <span class="material-symbols-outlined">{editMode ? "close" : "edit"}</span>
-                  Rediger
-                </button>
+                {#if canEditDocument}
+                  <button class="ds-button" data-variant="secondary" data-size="sm" onclick={() => editMode = true}>
+                    <span class="material-symbols-outlined">{editMode ? "close" : "edit"}</span>
+                    Rediger
+                  </button>
+                {/if}
                 {#if canRemoveDocument}
                   <AsyncButton buttonText="Slett notat" onClick={handleDocumentRemove} dataSize="sm" iconName="delete" color="danger" reloadPageDataOnSuccess={true} />
                 {/if}
