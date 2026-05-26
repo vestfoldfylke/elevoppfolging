@@ -32,6 +32,8 @@
     emailAlertReceivers: message.emailAlertReceivers || []
   })
 
+  let canEditMessage: boolean = $derived.by(() => canEditDocumentMessage(page.data.authenticatedPrincipal, message))
+
   let messageEdited = $derived.by(() => {
     return editableMessage.type !== message.type || editableMessage.content.title !== message.content.title || editableMessage.content.text !== message.content.text
   })
@@ -195,7 +197,7 @@
     {/if}
     <button class="ds-button" data-variant="secondary" onclick={callBackOnSuccessOrCancel}><span class="material-symbols-outlined">close</span>Avbryt</button>
   </div>
-{:else if canEditDocumentMessage(page.data.authenticatedPrincipal, message) || (message.emailAlertReceivers && message.emailAlertReceivers.length > 0)}
+{:else if canEditMessage || (message.emailAlertReceivers && message.emailAlertReceivers.length > 0)}
   <div class="message-footer">
     <div class="message-info">
       {#if message.emailAlertReceivers && message.emailAlertReceivers.length > 0}
@@ -212,7 +214,7 @@
       {/if}
     </div>
     
-    {#if canEditDocumentMessage(page.data.authenticatedPrincipal, message)}
+    {#if canEditMessage && !document.isDocumentLocked}
       <button class="ds-button" data-variant="secondary" data-size="sm" onclick={() => editMode = true}><span class="material-symbols-outlined">edit</span>Rediger</button>
     {/if}
   </div>

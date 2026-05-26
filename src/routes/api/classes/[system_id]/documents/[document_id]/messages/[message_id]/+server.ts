@@ -75,6 +75,10 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
     throw new HTTPError(403, noAccessMessage("No permission to update message on document"))
   }
 
+  if (currentDocument.isDocumentLocked) {
+    throw new HTTPError(403, "Document is locked and cannot be edited")
+  }
+
   const editorData: EditorData = {
     by: {
       entraUserId: principal.id,

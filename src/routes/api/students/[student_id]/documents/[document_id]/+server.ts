@@ -46,6 +46,10 @@ const removeDocument: ApiNextFunction<RemoveDocumentResponse> = async ({ princip
     throw new HTTPError(403, noAccessMessage("No permission to delete this document"))
   }
 
+  if (document.isDocumentLocked) {
+    throw new HTTPError(403, "Document is locked and cannot be removed")
+  }
+
   try {
     await dbClient.documents.deleteStudentDocument(document)
     logger.info("Student document with StudentDocumentId {StudentDocumentId} deleted successfully by PrincipalId {PrincipalId}", document._id, principal.id)
@@ -133,6 +137,10 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
 
   if (currentDocument.student._id !== studentId) {
     throw new HTTPError(400, "Student ID in the document data does not match the student ID in the request parameters - what are you doing!!")
+  }
+
+  if (currentDocument.isDocumentLocked) {
+    throw new HTTPError(403, "Document is locked and cannot be edited")
   }
 
   const updateDocumentData: UpdateDocumentBody = body

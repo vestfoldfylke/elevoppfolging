@@ -449,6 +449,7 @@ export type DbEncryptedStudentDocumentUpdate = Omit<StudentDocumentUpdate, "titl
 
 export type StudentDocument = NewStudentDocument & {
   _id: string
+  isDocumentLocked: boolean
 }
 
 export type NewDbStudentDocument = Omit<NewStudentDocument, "student"> & {
@@ -498,6 +499,7 @@ export type DbEncryptedGroupDocumentUpdate = Omit<GroupDocumentUpdate, "title" |
 
 export type GroupDocument = NewGroupDocument & {
   _id: string
+  isDocumentLocked: boolean
 }
 
 export type NewDbGroupDocument = Omit<NewGroupDocument, "group"> & {

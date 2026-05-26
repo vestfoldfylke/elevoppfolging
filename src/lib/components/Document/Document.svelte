@@ -182,7 +182,12 @@
 <div>
   <div class="ds-card document-card" data-variant="tinted" data-color="accent" data-clickdelegatefor="document-modal-{document._id}-open">
     <div class="ds-card__block">
-      <div class="ds-paragraph" data-size="xs" style="margin-bottom: var(--ds-size-2);">{document.school.name}</div>
+      <div class="ds-paragraph document-card-title" data-size="xs" style="margin-bottom: var(--ds-size-2);">
+        <div>{document.school.name}</div>
+        {#if document.isDocumentLocked}
+          <span class="material-symbols-outlined" data-tooltip="Dette notatet er skrivebeskyttet fordi det tilhører et tidligere skoleår">lock</span>
+        {/if}
+      </div>
       <button id="document-modal-{document._id}-open" class="ds-button card-button" onclick={() => handleDocumentOpen(document)} data-size="lg" data-variant="tertiary" aria-label="{document.template.name}: {editableDocument.title}">{document.template.name}</button>
       <p class="ds-paragraph" style="margin: 0;">{document.title}</p>
       <EditorInfo editorInfo={document.created} isEdited={document.modified.at.getTime() > document.created.at.getTime()} timestamp={false} modifiedIndicator={true} style="margin-top: var(--ds-size-2);" />
@@ -211,6 +216,11 @@
             <span class="material-symbols-outlined" style="margin-right: var(--ds-size-2);">school</span>
             {studentName || groupName} - {editableDocument.school.name}
           </span>
+          {#if document.isDocumentLocked}
+            <span class="ds-tag" data-color="danger" data-size="lg" data-tooltip="Dette notatet er skrivebeskyttet fordi det tilhører et tidligere skoleår">
+              <span class="material-symbols-outlined">lock</span>
+            </span>
+          {/if}
         </div>
 
         {#if !editMode}
@@ -257,7 +267,7 @@
               {/if}
             </div>
 
-            {#if canEditDocument || canRemoveDocument}
+            {#if (canEditDocument || canRemoveDocument) && !document.isDocumentLocked}
               <div class="document-footer-actions">
                 {#if canEditDocument}
                   <button class="ds-button" data-variant="secondary" data-size="sm" onclick={() => editMode = true}>
@@ -284,15 +294,23 @@
         </div>
       {/if}
     {/each}
-    <div class="ds-dialog__block">
-      <NewMessage {document} {studentDataSharingConsent} {studentAccessPersons} />
-    </div>
+
+    {#if !document.isDocumentLocked}
+      <div class="ds-dialog__block">
+        <NewMessage {document} {studentDataSharingConsent} {studentAccessPersons} />
+      </div>
+    {/if}
   </dialog>
 </div>
 
 <style>
   .document-card {
     margin-bottom: var(--ds-size-6);
+  }
+  
+  .document-card-title {
+    display: flex;
+    justify-content: space-between;
   }
 
   .document-dialog-header-tags {
