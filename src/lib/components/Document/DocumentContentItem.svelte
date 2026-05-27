@@ -116,7 +116,7 @@
 </script>
 
 {#snippet helpText(inputItem: DocumentInputItem)}
-  {#if inputItem.helpText}
+  {#if editMode && inputItem.helpText}
     <div data-field="description">
       {inputItem.helpText}
     </div>
@@ -142,7 +142,7 @@
 {/if}
 
 {#if contentItem.type === "info" && (editMode || previewMode)}
-  <div class="ds-card content-item" data-variant="tinted" data-color="accent">
+  <div class="ds-alert content-item" data-color="info">
     <p class="ds-paragraph pre-wrap-whitespace">
       {#each parseInfoItemValue(contentItem.value) as infoItem}
         {#if infoItem.type === "text"}
@@ -152,12 +152,6 @@
         {/if}
       {/each}
     </p>
-    <!--
-    <p class="ds-paragraph pre-wrap-whitespace">{contentItem.value}</p>
-    {#if contentItem.link && contentItem.link.url && contentItem.link.text}
-      <a class="ds-link" href={contentItem.link.url} target="_blank" rel="noopener noreferrer">{contentItem.link.text}</a>
-    {/if}
-    -->
   </div>
 {/if}
 
@@ -175,11 +169,11 @@
         <input autocomplete="off" class="ds-input" type="text" id={contentItem.label} name={`contentItem-${index}`} placeholder={contentItem.placeholder} bind:value={contentItem.value} required={contentItem.required} />
       {/if}
     </ds-field>
-  {:else}
-    <div class="ds-field content-item">
-    <div class="ds-label" data-weight="medium">{contentItem.label}</div>
-    {@render helpText(contentItem)}
-    <p class="ds-paragraph">{contentItem.value}</p>
+  {:else if contentItem.required || contentItem.value.trim()}
+    <div class="content-item">
+      <div class="ds-label bold" data-weight="medium">{contentItem.label}</div>
+      {@render helpText(contentItem)}
+      <p class="ds-paragraph">{contentItem.value}</p>
     </div>
   {/if}
 {/if}
@@ -198,9 +192,9 @@
         <textarea class="ds-input" id={contentItem.label} name="contentItem-{index}" rows={contentItem.initialRows} placeholder={contentItem.placeholder} required={contentItem.required} bind:value={contentItem.value}></textarea>
       {/if}
     </ds-field>
-  {:else}
-    <div class="ds-field content-item">
-      <div class="ds-label" data-weight="medium">{contentItem.label}</div>
+  {:else if contentItem.required || contentItem.value.trim()}
+    <div class="content-item">
+      <div class="ds-label bold" data-weight="medium">{contentItem.label}</div>
       {@render helpText(contentItem)}
       <p class="ds-paragraph pre-wrap-whitespace">{contentItem.value}</p>
     </div>
@@ -209,7 +203,7 @@
 
 {#if contentItem.type === "radioGroup"}
   <fieldset class="ds-fieldset content-item">
-    <legend class="ds-label" data-weight="medium">
+    <legend class="ds-label" class:bold={!editMode} data-weight="medium">
       {contentItem.header}
       {@render requiredIndicator(true, "Velg ett alternativ")}
     </legend>
@@ -231,7 +225,7 @@
 
 {#if contentItem.type === "checkboxGroup"}
   <fieldset class="ds-fieldset content-item">
-    <legend class="ds-label" data-weight="medium">
+    <legend class="ds-label" class:bold={!editMode} data-weight="medium">
       {contentItem.header}
       {@render requiredIndicator(true, "Minst et valg")}
     </legend>
@@ -252,6 +246,10 @@
 {/if}
 
 <style>
+  .bold {
+    font-weight: bold;
+  }
+
   .pre-wrap-whitespace {
     white-space: pre-wrap;
   }

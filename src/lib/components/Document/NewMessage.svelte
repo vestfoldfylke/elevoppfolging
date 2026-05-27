@@ -50,7 +50,7 @@
 
 {#if messageType === null}
   <div class="new-message-actions">
-    <button class="ds-button" data-variant="primary" data-size="sm" onclick={() => { messageType = "update"; scrollToNewMessage(); }}><span class="material-symbols-outlined">info</span>Ny oppdatering</button>
+    <button class="ds-button" data-variant="primary" data-size="sm" onclick={() => { messageType = "update"; scrollToNewMessage(); }}><span class="material-symbols-outlined">chat_info</span>Ny oppdatering</button>
   </div>
 {:else}
   <div id="new-message-container">

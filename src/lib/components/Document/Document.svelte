@@ -224,7 +224,7 @@
         </div>
 
         {#if !editMode}
-          <h2 class="ds-heading">{editableDocument.title}</h2>
+          <h2 class="ds-heading" style="font-weight: bold;">{editableDocument.title}</h2>
           <EditorInfo editorInfo={document.created} isEdited={document.modified.at.getTime() > document.created.at.getTime()} timestamp={true} modifiedIndicator={true} />
         {/if}
       </div>
@@ -314,7 +314,7 @@
   }
 
   .document-dialog-header-tags {
-    margin-bottom: var(--ds-size-2);
+    margin-bottom: var(--ds-size-4);
   }
 
   .message-container {

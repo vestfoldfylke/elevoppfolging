@@ -136,16 +136,31 @@
       </ds-field>
     {/if}
 
-    <ds-field class="ds-field content-item">
-      <label for="documentTitle" class="ds-label" data-weight="medium">
-        Tittel
-        <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
-      </label>
-      <input autocomplete="off" id="documentTitle" class="ds-input" name="documentTitle" type="text" bind:value={currentDocument.title} required>
-    </ds-field>
+    {#each currentDocument.content as contentItem, index}
+      <!-- If first element is info - we want to display it before the title for nicer UX. Else, we display title of document as first element -->
+      {#if index === 0}
+        {#if contentItem.type === "info"}
+          <DocumentContentItem bind:contentItem={currentDocument.content[0]} {index} editMode={true} />
+        {/if}
 
-    {#each currentDocument.content as _contentItem, index}
-      <DocumentContentItem bind:contentItem={currentDocument.content[index]} {index} editMode={true} />
+        <ds-field class="ds-field content-item">
+          <label for="documentTitle" class="ds-label" data-weight="medium">
+            Tittel
+            <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
+          </label>
+          <div data-field="description">
+            En kort og beskrivende tittel på notatet. Tittelen vil være det som vises i oversikten over notater.
+          </div>
+          <input autocomplete="off" id="documentTitle" class="ds-input" name="documentTitle" type="text" bind:value={currentDocument.title} required>
+        </ds-field>
+
+        {#if contentItem.type !== "info"}
+          <DocumentContentItem bind:contentItem={currentDocument.content[0]} {index} editMode={true} />
+        {/if}
+      {:else}
+        <!-- For other content items we just display them in order -->
+        <DocumentContentItem bind:contentItem={currentDocument.content[index]} {index} editMode={true} />
+      {/if}
     {/each}
 
     {#if studentId}

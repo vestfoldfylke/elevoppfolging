@@ -38,16 +38,16 @@
     },
     {
       type: "inputText",
-      placeholder: "Heisann",
+      placeholder: "",
       label: "Beskrivelse av tekstfelt",
-      helpText: "",
+      helpText: "En hjelpende tekst som forklarer mer om hva som skal fylles ut i tekstfeltet",
       value: "",
       required: true
     },
     {
       type: "textarea",
       label: "Beskrivelse av tekstområde",
-      helpText: "",
+      helpText: "En hjelpende tekst som forklarer mer om hva som skal fylles ut i tekstområdet",
       placeholder: "",
       value: "",
       initialRows: 3,
