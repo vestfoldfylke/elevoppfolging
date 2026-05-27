@@ -1,12 +1,12 @@
 import { logger } from "@vestfoldfylke/loglady"
-import type { FrontendOverviewStudent, FrontendOverviewStudentFilter, PrincipalAccess } from "$lib/types/app-types"
+import type { FrontendOverviewStudent, FrontendOverviewStudentFilter, FrontendOverviewStudentResponse, PrincipalAccess } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { StudentDataSharingConsent, StudentImportantStuff } from "$lib/types/db/shared-types"
 import { getStudentsFromCache } from "./cache/students-cache"
 import { getDbClient } from "./db/get-db-client"
 import { HTTPError } from "./middleware/http-error"
 
-export const getFrontendOverviewStudents = async (principalAccess: PrincipalAccess, studentFilter?: FrontendOverviewStudentFilter): Promise<FrontendOverviewStudent[]> => {
+export const getFrontendOverviewStudents = async (principalAccess: PrincipalAccess, studentFilter?: FrontendOverviewStudentFilter): Promise<FrontendOverviewStudentResponse> => {
   logger.info("Fetching students for principal")
   const studentsWithAccessInfo = await getStudentsFromCache(principalAccess, studentFilter)
   logger.info(`Found {StudentsCount} students for principal`, studentsWithAccessInfo.length)
@@ -96,9 +96,11 @@ export const getFrontendOverviewStudents = async (principalAccess: PrincipalAcce
   const timeTaken = Date.now() - now
   logger.debug(`Finished filtering students and adding important stuff. Time taken: {TimeTaken} ms. Returning {OverviewStudentCount} overview students`, timeTaken, overviewStudents.length)
 
-  logger.info(`Finished filtering students and adding important stuff. Returning {OverviewStudentCount} overview students`, overviewStudents.length)
+  const studentReturnLength = studentFilter?.top ?? overviewStudents.length
 
-  return overviewStudents
+  logger.info(`Finished filtering students and adding important stuff. Returning {OverviewStudentCount} overview students capped to {OverviewStudentCountCapped}`, overviewStudents.length, studentReturnLength)
+
+  const students = overviewStudents
     .sort((a, b) => {
       const sortBy = studentFilter?.sortBy || "studentName"
       const sortDirection = studentFilter?.sortDirection === "descending" ? -1 : 1
@@ -125,5 +127,10 @@ export const getFrontendOverviewStudents = async (principalAccess: PrincipalAcce
           return 0
       }
     })
-    .slice(0, studentFilter?.top ?? overviewStudents.length)
+    .slice(0, studentReturnLength)
+
+  return {
+    students,
+    totalStudentCount: overviewStudents.length
+  }
 }

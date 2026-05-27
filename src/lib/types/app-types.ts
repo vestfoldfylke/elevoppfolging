@@ -101,6 +101,11 @@ export type FrontendOverviewStudent = PrincipalAccessStudent & {
   dataSharingConsent: boolean
 }
 
+export type FrontendOverviewStudentResponse = {
+  students: FrontendOverviewStudent[]
+  totalStudentCount: number
+}
+
 export type ApplicationInfo = {
   NAME: string
   VERSION: string

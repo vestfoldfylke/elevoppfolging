@@ -66,16 +66,18 @@
     selectedFacilitationStudentCheckBoxes = selectedFacilitationStudentCheckBoxes.filter((id: string) => id !== studentCheckBoxId)
   }
 
-  type overviewStudentsState = {
+  type OverviewStudentsState = {
     isLoading: boolean
     errorMessage: string | null
     students: FrontendOverviewStudent[]
+		totalStudentCount: number
   }
 
-  let overviewStudents: overviewStudentsState = $state({
+  let overviewStudents: OverviewStudentsState = $state({
     isLoading: false,
     errorMessage: null,
-    students: []
+    students: [],
+		totalStudentCount: 0
   })
 
   const updateOverviewStudents = async (): Promise<void> => {
@@ -116,11 +118,14 @@
       const studentsResponse = await apiFetch(`/api/students${queryString}`, {
         method: "GET"
       })
+
       overviewStudents.students = studentsResponse.students
+			overviewStudents.totalStudentCount = studentsResponse.totalStudentCount
     } catch (error) {
       console.error("Error fetching students:", error)
       overviewStudents.errorMessage = `Det skjedde en feil ved innlastning av elever. Fermelding: ${error instanceof Error ? error.message : "Ukjent feil"}`
     }
+
     overviewStudents.isLoading = false
   }
 
@@ -249,7 +254,10 @@
 					</div>
 				</div>
 
-				<div class="student-table-container">
+				<div>
+					<span>
+						{overviewStudents.students.length} av {overviewStudents.totalStudentCount} elever
+					</span>
 					<table class="ds-table" style="table-layout:fixed">
 						<thead>
 							<tr>
@@ -432,14 +440,6 @@
 	
 	.chip-facilitation {
 		background-color: var(--ds-color-brand1-text-subtle);
-	}
-
-	.student-table-container {
-		display: flex;
-	}
-
-	.student-table-container table {
-		flex: 1;
 	}
 
 	.students-side-menu {

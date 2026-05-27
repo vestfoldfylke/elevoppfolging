@@ -59,7 +59,10 @@
     </ds-field>
   </div>
 
-  <div class="class-table-container">
+  <div>
+    <span>
+      {filteredClasses.length} klasser
+    </span>
     <table class="ds-table">
       <thead>
       <tr>
@@ -97,28 +100,20 @@
 </div>
 
 <style>
-    .class-search-container {
-        display: flex;
-        gap: var(--ds-size-4);
-        margin-bottom: var(--ds-size-8);
-        flex-wrap: wrap;
-    }
+  .class-search-container {
+    display: flex;
+    gap: var(--ds-size-4);
+    margin-bottom: var(--ds-size-8);
+    flex-wrap: wrap;
+  }
 
-    .class-table-container {
-        display: flex;
-    }
+  .desktop-only {
+    display: none;
+  }
 
-    .class-table-container table {
-        flex: 1;
+  @media (min-width: 64rem) {
+    th.desktop-only, td.desktop-only {
+      display: table-cell;
     }
-
-    .desktop-only {
-        display: none;
-    }
-
-    @media (min-width: 64rem) {
-        th.desktop-only, td.desktop-only {
-            display: table-cell;
-        }
-    }
+  }
 </style>
