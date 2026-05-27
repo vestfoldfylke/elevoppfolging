@@ -101,6 +101,11 @@ export type FrontendOverviewStudent = PrincipalAccessStudent & {
   dataSharingConsent: boolean
 }
 
+export type FrontendOverviewStudentResponse = {
+  students: FrontendOverviewStudent[]
+  totalStudentCount: number
+}
+
 export type ApplicationInfo = {
   NAME: string
   VERSION: string
@@ -113,6 +118,7 @@ export type ApplicationInfo = {
   STUDENT_ACCESS_BEFORE_ACTIVE_DAYS: number
   STUDENT_ACCESS_AFTER_EXPIRE_DAYS: number
   STUDENT_CACHE_MAX_AGE_MINUTES: number
+  STUDENT_OVERVIEW_TOP: number
   APP_USER_CACHE_MAX_AGE_MINUTES: number
   SCREEN_SAVER_INACTIVITY_TIMEOUT_SECONDS: number
 }

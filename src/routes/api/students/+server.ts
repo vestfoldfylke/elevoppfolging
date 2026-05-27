@@ -11,7 +11,7 @@ import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canManageManualStudentsOnSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { FrontendOverviewStudent, FrontendOverviewStudentFilter, FrontendStudent, PrincipalAccess } from "$lib/types/app-types"
+import type { FrontendOverviewStudentFilter, FrontendStudent, PrincipalAccess } from "$lib/types/app-types"
 import type { ValidationResult } from "$lib/types/data-validation"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { Access, EditorData, NewAppStudent, Period, StudentEnrollment } from "$lib/types/db/shared-types"
@@ -49,15 +49,12 @@ const getStudents: ApiNextFunction<GetStudentsResponse, void> = async ({ princip
   if (!principalAccess) {
     logger.info("No access found for principal returning no students")
     return {
-      students: []
+      students: [],
+      totalStudentCount: 0
     }
   }
 
-  const frontendOverviewStudents: FrontendOverviewStudent[] = await getFrontendOverviewStudents(principalAccess, studentFilter)
-
-  return {
-    students: frontendOverviewStudents
-  }
+  return await getFrontendOverviewStudents(principalAccess, studentFilter)
 }
 
 export const GET: RequestHandler = async (requestEvent) => {

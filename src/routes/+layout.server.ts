@@ -20,10 +20,8 @@ const layoutLoad: ServerLoadNextFunction<RootLayoutData> = async ({ principal })
       data: {
         authenticatedPrincipal: principal,
         APP_INFO,
-        classes: [],
         principalAccess,
         studentCheckBoxes: [],
-        students: [],
         schools: []
       },
       isAuthorized: true

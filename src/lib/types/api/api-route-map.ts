@@ -1,4 +1,4 @@
-import type { FrontendOverviewStudent } from "../app-types"
+import type { FrontendOverviewStudentResponse } from "../app-types"
 import type {
   AuditEntryInput,
   AuditSearchQueryResult,
@@ -70,7 +70,7 @@ export interface ApiRouteMap {
   [key: `/api/access/${NoSlashString}/remove`]: ApiAccessEntraUserIdRemove
 
   [key: `/api/students${NoSlashString}`]: {
-    GET: { res: { students: FrontendOverviewStudent[] } }
+    GET: { res: FrontendOverviewStudentResponse }
   }
 
   [key: `/api/students/${NoSlashString}`]: {
