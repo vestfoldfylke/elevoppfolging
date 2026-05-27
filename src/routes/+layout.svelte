@@ -39,7 +39,8 @@
     studentName: "",
     sortBy: "studentName",
     sortDirection: "ascending",
-    top: (env.PUBLIC_STUDENT_OVERVIEW_TOP && Number.parseInt(env.PUBLIC_STUDENT_OVERVIEW_TOP, 10)) || 100
+    // svelte-ignore state_referenced_locally - det går bra da denne hentes inn ved oppstart av appen og endres ALDRI
+    top: data.APP_INFO.STUDENT_OVERVIEW_TOP
   })
 
   const getStudentCheckBox = (studentCheckBoxId: string): StudentCheckBox => {
