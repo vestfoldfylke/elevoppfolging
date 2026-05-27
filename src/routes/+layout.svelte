@@ -123,7 +123,7 @@
 			overviewStudents.totalStudentCount = studentsResponse.totalStudentCount
     } catch (error) {
       console.error("Error fetching students:", error)
-      overviewStudents.errorMessage = `Det skjedde en feil ved innlastning av elever. Fermelding: ${error instanceof Error ? error.message : "Ukjent feil"}`
+      overviewStudents.errorMessage = `Det skjedde en feil ved innlasting av elever. Feilmelding: ${error instanceof Error ? error.message : "Ukjent feil"}`
     }
 
     overviewStudents.isLoading = false
@@ -143,6 +143,8 @@
   $effect(() => {
     const _studentCheckBoxIds = [...selectedFacilitationStudentCheckBoxes, ...selectedFollowUpStudentCheckBoxes]
     const _sorting = studentOverviewFilter.sortBy ? { sortBy: studentOverviewFilter.sortBy, sortDirection: studentOverviewFilter.sortDirection } : undefined
+    void _studentCheckBoxIds // read to register reactive dependency before untrack() - this line is here only to silence the warning about unused constant
+    void _sorting // read to register reactive dependency before untrack() - this line is here only to silence the warning about unused constant
 
     untrack(() => {
       updateOverviewStudents()
