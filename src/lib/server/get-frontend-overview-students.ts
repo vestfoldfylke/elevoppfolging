@@ -98,7 +98,11 @@ export const getFrontendOverviewStudents = async (principalAccess: PrincipalAcce
 
   const studentReturnLength = studentFilter?.top ?? overviewStudents.length
 
-  logger.info(`Finished filtering students and adding important stuff. Returning {OverviewStudentCount} overview students capped to {OverviewStudentCountCapped}`, overviewStudents.length, studentReturnLength)
+  logger.info(
+    `Finished filtering students and adding important stuff. Returning {OverviewStudentCount} overview students capped to {OverviewStudentCountCapped}`,
+    overviewStudents.length,
+    studentReturnLength
+  )
 
   const students = overviewStudents
     .sort((a, b) => {
