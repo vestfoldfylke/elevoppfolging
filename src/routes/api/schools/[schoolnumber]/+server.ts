@@ -110,8 +110,8 @@ const updateSchool: ApiNextFunction<UpdateSchoolResponse, UpdateSchoolBody> = as
   const updatedSchool: NewSchool = {
     name: updatedSchoolData.name,
     schoolNumber: schoolToUpdate.schoolNumber, // keep the original school number to prevent changes to it
-    source: "MANUAL",
-    created: schoolToUpdate.created,
+    source: schoolToUpdate.source, // keep the original source to prevent changes to it
+    created: schoolToUpdate.created, // keep the original created info
     modified: {
       by: {
         entraUserId: principal.id,

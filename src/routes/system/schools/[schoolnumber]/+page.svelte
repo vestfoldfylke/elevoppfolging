@@ -4,7 +4,10 @@
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import AsyncButton from "$lib/components/AsyncButton.svelte"
   import PageHeader from "$lib/components/PageHeader.svelte"
+  import { schoolNameValidation } from "$lib/data-validation/school-validation"
+  import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
+  import type { UpdateSchool } from "$lib/types/db/shared-types"
   import type { PageProps } from "./$types"
 
   let { data }: PageProps = $props()
@@ -13,10 +16,12 @@
     if (data.schools.length === 0) {
       throw new Error("Ingen skoler funnet")
     }
+
     const school = data.schools.find((school) => school.schoolNumber === page.params.schoolnumber)
     if (!school) {
       throw new Error("Skole ikke funnet")
     }
+
     return school
   })
 
@@ -38,6 +43,44 @@
   }
 
   let selectedEntraUserId = $state("")
+
+  let updateSchoolEdit: boolean = $state(false)
+  let updateSchoolForm: HTMLFormElement | undefined = $state()
+  let updateSchoolName: string = $derived.by(() => currentSchool.name)
+
+  const updateSchool = async (): Promise<void> => {
+    if (!updateSchoolForm?.reportValidity()) {
+      throw new Error(INVALID_FORM_MESSAGE)
+    }
+
+    if (!updateSchoolName) {
+      throw new Error("Skolenavn må være fylt ut")
+    }
+
+    const updateSchoolInput: UpdateSchool = {
+      name: updateSchoolName,
+      schoolNumber: currentSchool.schoolNumber
+    }
+
+    await apiFetch(`/api/schools/${currentSchool.schoolNumber as NoSlashString}`, {
+      method: "PUT",
+      body: updateSchoolInput,
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+
+    updateSchoolEdit = false
+  }
+
+  const abortUpdateSchool = () => {
+    updateSchoolEdit = false
+    updateSchoolName = currentSchool.name
+  }
+
+  const isDisabled = (): boolean => {
+    return updateSchoolName === currentSchool.name
+  }
 
   const addSchoolLeaderAccess = async (): Promise<void> => {
     await apiFetch(`/api/access/${selectedEntraUserId as NoSlashString}/add`, {
@@ -67,16 +110,70 @@
 </script>
 
 <div class="page-content">
-  <PageHeader title="Skoleadministrasjon" />
+  <div class="update-school-link">
+    <a href="/system/schools" class="ds-link" rel="noopener noreferrer">
+      <span class="material-symbols-outlined">arrow_back</span>
+      Tilbake til skoler
+    </a>
+  </div>
 
-  <h2>{currentSchool.name}</h2>
-  {#if currentSchool.source === "MANUAL"}
-    <AsyncButton onClick={deleteManualSchool} buttonText="Slett skole" iconName="delete" />    
+  <PageHeader title={`Skoleadministrasjon - ${currentSchool.name}`} />
+
+  {#if !updateSchoolEdit}
+    <div class="update-school">
+      <div>
+        <h2 class="ds-heading">Skolenummer</h2>
+        <p class="ds-paragraph">{currentSchool.schoolNumber}</p>
+      </div>
+
+      <div>
+        <h2 class="ds-heading">Kilde</h2>
+        <p class="ds-paragraph">{currentSchool.source}</p>
+      </div>
+
+      {#if currentSchool.source === "MANUAL" }
+        <div class="update-school-actions">
+          <button onclick={() => updateSchoolEdit = true} class="ds-button" type="button">
+            <span class="material-symbols-outlined">edit</span>
+            Rediger
+          </button>
+          <AsyncButton onClick={deleteManualSchool} buttonText="Slett skole" iconName="delete" color="danger" />
+        </div>
+      {/if}
+    </div>
+  {:else}
+    <div class="update-school-form">
+      <form bind:this={updateSchoolForm}>
+        <ds-field class="ds-field content-item">
+          <label class="ds-label" data-weight="medium" for="schoolName">
+            Skolenavn
+            <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
+          </label>
+          <div class="ds-field-affixes">
+            <input class="ds-input" type="text" id="schoolName" pattern={schoolNameValidation.pattern.source} minlength={schoolNameValidation.minLength} maxlength={schoolNameValidation.maxLength} bind:value={updateSchoolName} required>
+          </div>
+        </ds-field>
+
+        <div class="content-item">
+          <h2 class="ds-heading">Skolenummer</h2>
+          <p class="ds-paragraph">{currentSchool.schoolNumber}</p>
+        </div>
+
+        <div class="content-item">
+          <h2 class="ds-heading">Kilde</h2>
+          <p class="ds-paragraph">{currentSchool.source}</p>
+        </div>
+
+        <div class="update-school-actions">
+          <AsyncButton onClick={updateSchool} buttonText="Lagre" iconName="save" reloadPageDataOnSuccess={true} disabled={isDisabled()} />
+          <button class="ds-button" type="button" data-variant="secondary" onclick={abortUpdateSchool}>
+            <span class="material-symbols-outlined">close</span>
+            Avbryt
+          </button>
+        </div>
+      </form>
+    </div>
   {/if}
-
-  <p>Skolenummer: {currentSchool.schoolNumber}</p>
-  <p>Kilde: {currentSchool.source}</p>
-
 
   <h2>Skoleledere</h2>
   <p>Kan administrere tilganger på skolen, og se alle elevene på skolen</p>
@@ -113,6 +210,20 @@
   {/each}
 </div>
 
-
 <style>
+  .update-school-link {
+    padding-bottom: var(--ds-size-4);
+  }
+
+  .update-school {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ds-size-4);
+  }
+
+  .update-school-actions {
+    display: flex;
+    gap: var(--ds-size-2);
+    justify-content: flex-end;
+  }
 </style>

@@ -21,8 +21,8 @@ export class SchoolsDbClient implements ISchoolsDbClient {
   }
 
   async createSchool(school: NewSchool): Promise<string> {
-    const existingSchool = await this.schoolsCollection.find({ schoolNumber: school.schoolNumber }).toArray()
-    if (existingSchool.length > 0) {
+    const existingSchool = await this.schoolsCollection.countDocuments({ schoolNumber: school.schoolNumber })
+    if (existingSchool > 0) {
       throw new Error(`School with schoolNumber: ${school.schoolNumber} already exists`)
     }
 

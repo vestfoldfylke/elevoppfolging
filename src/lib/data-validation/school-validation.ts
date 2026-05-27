@@ -1,5 +1,5 @@
 import type { ValidationResult } from "$lib/types/data-validation"
-import type { NewSchool } from "$lib/types/db/shared-types"
+import type { NewSchool, UpdateSchool } from "$lib/types/db/shared-types"
 
 export const schoolNameValidation = {
   pattern: /^[A-Za-zÆØÅæøå\-\s].+$/,
@@ -13,7 +13,7 @@ export const schoolNumberValidation = {
   maxLength: 20
 }
 
-export const validateSchoolData = (schoolData: NewSchool): ValidationResult => {
+export const validateSchoolData = (schoolData: NewSchool | UpdateSchool): ValidationResult => {
   if (!schoolData.name || !schoolData.schoolNumber) {
     return { valid: false, message: "Both 'name' and 'schoolNumber' are required" }
   }
