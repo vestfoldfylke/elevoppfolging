@@ -504,7 +504,6 @@
   </div>
 {/snippet}
 
-
 <div class="page-content">
   <PageHeader title={`Skoleadministrasjon - ${currentSchool.name}`} />
 

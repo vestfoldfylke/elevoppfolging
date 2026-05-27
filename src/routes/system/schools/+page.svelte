@@ -52,50 +52,88 @@
 <div class="page-content">
   <PageHeader title="Skoleadministrasjon" />
 
+  {#if !newSchoolOpen}
+    <div class="header-with-action">
+      <button class="ds-button" onclick={() => newSchoolOpen = true}><span class="material-symbols-outlined">add</span>Opprett ny skole</button>
+    </div>
+  {:else}
+    <h2 class="ds-heading">Legg til ny skole</h2>
+  {/if}
+
   <div class="add-school">
-    {#if !newSchoolOpen}
-      <button onclick={() => newSchoolOpen = true}><span class="material-symbols-outlined">add</span>Opprett ny skole</button>
-    {/if}
     {#if newSchoolOpen}
-      <h2>Legg til ny skole</h2>
       <form bind:this={newSchoolForm}>
-        <div class="form-group">
-          <label for="schoolName">Skolenavn</label>
-          <input id="schoolName" name="schoolName" type="text" bind:value={newSchoolData.name} required pattern={schoolNameValidation.pattern.source} minlength={schoolNameValidation.minLength} maxlength={schoolNameValidation.maxLength}>
-        </div>
-        <div class="form-group">
-          <label for="schoolNumber">Skolenummer</label>
-          <input id="schoolNumber" name="schoolNumber" type="text" bind:value={newSchoolData.schoolNumber} required pattern={schoolNumberValidation.pattern.source} minlength={schoolNumberValidation.minLength} maxlength={schoolNumberValidation.maxLength}>
-        </div>
+        <ds-field class="ds-field content-item">
+          <label class="ds-label" data-weight="medium" for="schoolName">
+            Skolenavn
+            <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
+          </label>
+          <div class="ds-field-affixes">
+            <input class="ds-input" id="schoolName" name="schoolName" type="text" bind:value={newSchoolData.name} required pattern={schoolNameValidation.pattern.source} minlength={schoolNameValidation.minLength} maxlength={schoolNameValidation.maxLength}>
+          </div>
+        </ds-field>
+        <ds-field class="ds-field content-item">
+          <label class="ds-label" data-weight="medium" for="schoolNumber">
+            Skolenummer
+            <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
+          </label>
+          <div class="ds-field-affixes">
+            <input class="ds-input" id="schoolNumber" name="schoolNumber" type="text" bind:value={newSchoolData.schoolNumber} required pattern={schoolNumberValidation.pattern.source} minlength={schoolNumberValidation.minLength} maxlength={schoolNumberValidation.maxLength}>
+          </div>
+        </ds-field>
       </form>
+
       <div class="new-school-actions">
-        <AsyncButton onClick={newSchool} buttonText="Legg til skole" reloadPageDataOnSuccess={true} iconName="add" callBackAfterReloadPageData={() => newSchoolOpen = false} />
-        <button onclick={() => newSchoolOpen = false} class="filled danger">Avbryt</button>
+        <AsyncButton onClick={newSchool} buttonText="Legg til ny skole" reloadPageDataOnSuccess={true} iconName="add" callBackAfterReloadPageData={() => newSchoolOpen = false} />
+        <button class="ds-button" type="button" data-variant="secondary" onclick={() => newSchoolOpen = false}>
+          <span class="material-symbols-outlined">close</span>
+          Avbryt
+        </button>
       </div>
     {/if}
   </div>
 
-  <h2>Skoler</h2>
-
-  {#each data.schools as school}
-    <div class="school">
-      <a href={`/system/schools/${school.schoolNumber}`}><h3>{school.name}</h3></a>
-      <p>Skolenummer: {school.schoolNumber}</p>
-      <p>Kilde: {school.source}</p>
-    </div>
-  {/each}
+  <div class="schools">
+    {#if data.schools.length > 0}
+      <table class="ds-table">
+        <thead>
+          <tr>
+            <th>Skolenavn</th>
+            <th>Skolenummer</th>
+            <th>Kilde</th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each data.schools as school}
+            <tr>
+              <td>
+                <a href={`/system/schools/${school.schoolNumber}`} class="ds-link" rel="noopener noreferrer">{school.name}</a>
+              </td>
+              <td>{school.schoolNumber}</td>
+              <td>{school.source}</td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    {:else}
+      Ingen skoler å se her
+    {/if}
+  </div>
 </div>
 
-
 <style>
-  .form-group {
-    max-width: 20rem;
+  .header-with-action {
     display: flex;
-    flex-direction: column;
-    margin-bottom: 1rem;
+    justify-content: flex-end;
   }
+
   .new-school-actions {
     display: flex;
-    gap: 1rem;
+    gap: 0.5rem;
+    justify-content: flex-end;
+  }
+
+  .schools {
+    margin-top: var(--ds-size-4);
   }
 </style>
