@@ -16,6 +16,7 @@ AZURE_CLIENT_SECRET="your-azure-client-secret" # Used for client-side encryption
 AZURE_TENANT_ID="00000000-0000-0000-0000-000000000000" # Used for client-side encryption and decryption of sensitive data in MongoDB
 WEB_APP_URL="http://localhost:5173" # The URL where your SvelteKit app will be running, used in email alerts to provide deep links back to the app
 DOCUMENT_LOCK_START_MM_DD="07-01" # The start date (month and day) for the document lock period, decides when the school year starts/ends
+PUBLIC_STUDENT_OVERVIEW_TOP="100" # The number of students to show in the student overview page. This is a public variable that can be accessed in the frontend using import.meta.env.PUBLIC_STUDENT_OVERVIEW_TOP
 ```
 
 ### Document lock
