@@ -31,6 +31,13 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
     throw new HTTPError(400, "Document ID is missing in request parameters")
   }
 
+  const dbClient: IDbClient = getDbClient()
+
+  const currentDocument = await dbClient.documents.getStudentDocumentById(documentId)
+  if (!currentDocument) {
+    throw new HTTPError(404, "Document not found, cannot add message to non-existing document...")
+  }
+
   // authorization check if principal has access to the student
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
@@ -45,6 +52,10 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
   const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, principalAccess)
   if (principalAccessForStudent.length === 0) {
     throw new HTTPError(403, noAccessMessage("No permission to add message to document"))
+  }
+
+  if (currentDocument.isDocumentLocked) {
+    throw new HTTPError(403, "Document is locked and cannot be edited")
   }
 
   const newMessageData: DocumentMessageInput = body
@@ -78,13 +89,6 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
       text: newMessageData.content.text
     },
     emailAlertReceivers: validEmailAlertReceivers
-  }
-
-  const dbClient: IDbClient = getDbClient()
-
-  const currentDocument = await dbClient.documents.getStudentDocumentById(documentId)
-  if (!currentDocument) {
-    throw new HTTPError(404, "Document not found, cannot add message to non-existing document...")
   }
 
   const studentDataSharingConsent = await dbClient.studentDataSharingConsents.getStudentDataSharingConsent(studentId)

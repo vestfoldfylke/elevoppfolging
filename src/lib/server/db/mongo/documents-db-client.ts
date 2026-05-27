@@ -1,4 +1,6 @@
+import { logger } from "@vestfoldfylke/loglady"
 import { type Binary, type Db, type DeleteResult, ObjectId } from "mongodb"
+import { env } from "$env/dynamic/private"
 import type { IDocumentsDbClient } from "$lib/types/db/db-client"
 import type {
   DbEncryptedDocumentMessage,
@@ -21,6 +23,13 @@ import type {
   StudentDocumentUpdate
 } from "$lib/types/db/shared-types"
 import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
+
+const documentLockStart: string | undefined = env.DOCUMENT_LOCK_START_MM_DD
+if (!documentLockStart) {
+  logger.warn("DOCUMENT_LOCK_START_MM_DD environment variable is not set. Document locking is disabled.")
+} else {
+  logger.warn("Document locking is enabled. Documents will be locked at school year end, currently set to {DocumentLockStart} (MM-DD)", documentLockStart)
+}
 
 export class DocumentsDbClient implements IDocumentsDbClient {
   private encryptionDb: Db
@@ -82,7 +91,8 @@ export class DocumentsDbClient implements IDocumentsDbClient {
         const studentDocument: StudentDocument = {
           ...document,
           student: { _id: document.student._id.toString() },
-          _id: document._id.toString()
+          _id: document._id.toString(),
+          isDocumentLocked: this.isDocumentLocked(document.created.at)
         }
         if (createdByDisplayName) {
           studentDocument.created.by.displayName = createdByDisplayName
@@ -104,7 +114,8 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     return {
       ...document,
       student: { _id: document.student._id.toString() },
-      _id: document._id.toString()
+      _id: document._id.toString(),
+      isDocumentLocked: this.isDocumentLocked(document.created.at)
     }
   }
 
@@ -326,7 +337,8 @@ export class DocumentsDbClient implements IDocumentsDbClient {
 
         const groupDocument: GroupDocument = {
           ...document,
-          _id: document._id.toString()
+          _id: document._id.toString(),
+          isDocumentLocked: this.isDocumentLocked(document.created.at)
         }
 
         if (createdByDisplayName) {
@@ -349,7 +361,8 @@ export class DocumentsDbClient implements IDocumentsDbClient {
 
     return {
       ...document,
-      _id: document._id.toString()
+      _id: document._id.toString(),
+      isDocumentLocked: this.isDocumentLocked(document.created.at)
     }
   }
 
@@ -533,5 +546,20 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     })
 
     return messageId
+  }
+
+  private isDocumentLocked = (documentCreatedAt: Date): boolean => {
+    if (!documentLockStart) {
+      return false
+    }
+
+    const dateNow: Date = new Date()
+    const currentlyInFirstPartOfSchoolYear: boolean = dateNow.getMonth() >= 6 && dateNow.getMonth() <= 11
+    const schoolStartYear: number = currentlyInFirstPartOfSchoolYear ? dateNow.getFullYear() : dateNow.getFullYear() - 1
+    const schoolStartDate: Date = new Date(`${schoolStartYear}-${documentLockStart}`)
+    const schoolEndYear: number = currentlyInFirstPartOfSchoolYear ? dateNow.getFullYear() + 1 : dateNow.getFullYear()
+    const schoolEndDate: Date = new Date(`${schoolEndYear}-${documentLockStart}`)
+
+    return !(documentCreatedAt >= schoolStartDate && documentCreatedAt <= schoolEndDate)
   }
 }

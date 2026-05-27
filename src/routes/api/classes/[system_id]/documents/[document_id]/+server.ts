@@ -37,6 +37,10 @@ const removeDocument: ApiNextFunction<RemoveDocumentResponse> = async ({ princip
     throw new HTTPError(404, "Document not found. Cannot delete non-existing document.")
   }
 
+  if (document.isDocumentLocked) {
+    throw new HTTPError(403, "Document is locked and cannot be removed")
+  }
+
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
     throw new HTTPError(403, noAccessMessage("No access found for principal"))
@@ -150,6 +154,10 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
 
   if (currentDocument.group.systemId !== systemId) {
     throw new HTTPError(400, "System ID in the document data does not match the System ID in the request parameters - what are you doing!!")
+  }
+
+  if (currentDocument.isDocumentLocked) {
+    throw new HTTPError(403, "Document is locked and cannot be edited")
   }
 
   const updateDocumentData: UpdateDocumentBody = body
