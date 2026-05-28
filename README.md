@@ -80,7 +80,7 @@ You can preview the production build with `npm run preview`.
 - Faglærer (fra undervisningsgruppe)
   - Lese og lage vanlige notater
 - Kontaktlærer
-  - Se alle notater?
+  - Se alle notater? Kanskje
 
 ### Klassenotat
 
