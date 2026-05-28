@@ -4,10 +4,12 @@
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import AsyncButton from "$lib/components/AsyncButton.svelte"
   import PageHeader from "$lib/components/PageHeader.svelte"
+  import SuggestionSelect from "$lib/components/SchoolAdministration/SuggestionSelect.svelte"
   import { schoolNameValidation } from "$lib/data-validation/school-validation"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
-  import type { UpdateSchool } from "$lib/types/db/shared-types"
+  import type { SuggestionSelectItem } from "$lib/types/app-types"
+  import type { Access, AppUser, SchoolLeaderManualAccessEntry, UpdateSchool } from "$lib/types/db/shared-types"
   import type { PageProps } from "./$types"
 
   let { data }: PageProps = $props()
@@ -23,6 +25,21 @@
     }
 
     return school
+  })
+
+  let schoolLeaders: AppUser[] = $derived.by(() => {
+    return data.schoolLeaderAccess
+      .filter((access: Access) => access.leaderForSchools.some((school: SchoolLeaderManualAccessEntry) => school.schoolNumber === currentSchool.schoolNumber))
+      .map((access: Access) => data.appUsers.find((appUser: AppUser) => appUser.entra.id === access.entraUserId))
+      .filter((user: AppUser | undefined) => user !== undefined)
+      .sort((a: AppUser, b: AppUser) => a.entra.displayName.localeCompare(b.entra.displayName))
+  })
+
+  let suggestionSelectUsers: SuggestionSelectItem[] = $derived.by(() => {
+    // TODO: Show only users for this school?
+    return data.appUsers
+      .sort((a: AppUser, b: AppUser) => a.entra.displayName.localeCompare(b.entra.displayName))
+      .map((appUser: AppUser) => ({ label: `${appUser.entra.displayName} (${appUser.entra.companyName})`, value: appUser.entra.id }))
   })
 
   let addSchoolLeaderOpen = $state(false)
@@ -80,6 +97,11 @@
 
   const isDisabled = (): boolean => {
     return updateSchoolName === currentSchool.name
+  }
+
+  const resetAddSchoolLeaderAccess = (): void => {
+    addSchoolLeaderOpen = false
+    selectedEntraUserId = ""
   }
 
   const addSchoolLeaderAccess = async (): Promise<void> => {
@@ -176,38 +198,55 @@
   {/if}
 
   <h2>Skoleledere</h2>
-  <p>Kan administrere tilganger på skolen, og se alle elevene på skolen</p>
+  <div class="ds-alert" data-color="info">Kan administrere tilganger på skolen, og se alle elevene på skolen</div>
 
-  <div class="add-school-leader">
-    {#if !addSchoolLeaderOpen}
-      <button onclick={() => addSchoolLeaderOpen = true}>Legg til ny skoleleder</button>
-    {/if}
-    {#if addSchoolLeaderOpen}
-      <h3>Legg til skoleleder</h3>
-      <form>
-        <div class="form-group">
-          <!-- TODO - lag en people select med litt søk og fancy, og bind mulighet -->
-          <label for="appUser">Velg bruker</label>
-          <select id="appUser" name="appUser" bind:value={selectedEntraUserId} required>
-            {#each data.appUsers as appUser}
-              <option value={appUser.entra.id}>{appUser.entra.displayName} ({appUser.entra.companyName})</option>
-            {/each}
-          </select>
-        </div>
-      </form>
-      <div class="new-school-leader-actions">
-        <AsyncButton onClick={addSchoolLeaderAccess} buttonText="Legg til skoleleder" reloadPageDataOnSuccess={true} iconName="add" callBackAfterReloadPageData={() => { addSchoolLeaderOpen = false; selectedEntraUserId = ""; }} />
-        <button onclick={() => addSchoolLeaderOpen = false} class="filled danger">Avbryt</button>
-      </div>
+  <div class="access-group">
+    {#if schoolLeaders.length > 0}
+      <table class="ds-table">
+        <thead>
+          <tr>
+            <th aria-sort="none">Bruker</th>
+            <th>Handling</th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each schoolLeaders as schoolLeader}
+            <tr>
+              <td>{schoolLeader.entra.displayName} ({schoolLeader.entra.companyName})</td>
+              <td>
+                <AsyncButton onClick={() => removeSchoolLeaderAccess(schoolLeader.entra.id)} reloadPageDataOnSuccess={true} buttonText="Fjern skoleleder" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    {:else}
+      <p class="ds-paragraph">Ingen skoleledere å se her</p>
     {/if}
   </div>
 
-  {#each data.schoolLeaderAccess.filter((access) => access.leaderForSchools.some((school) => school.schoolNumber === currentSchool.schoolNumber)) as schoolLeaderAccess}
-    <div class="school-leader-access-entry">
-      <p>Skoleleder: {schoolLeaderAccess.name}</p>
-      <AsyncButton onClick={() => removeSchoolLeaderAccess(schoolLeaderAccess.entraUserId)} reloadPageDataOnSuccess={true} buttonText="Fjern skoleleder" iconName="delete" />
-    </div>
-  {/each}
+  <div class="new-access">
+    {#if addSchoolLeaderOpen}
+      <h3 class="ds-heading">Legg til skoleleder</h3>
+      <form>
+        <SuggestionSelect items={suggestionSelectUsers} bind:value={selectedEntraUserId} label="Velg bruker" />
+
+        <div class="new-access-actions">
+          <AsyncButton onClick={addSchoolLeaderAccess} buttonText="Legg til skoleleder" reloadPageDataOnSuccess={true} iconName="add" callBackAfterReloadPageData={resetAddSchoolLeaderAccess} />
+
+          <button class="ds-button" type="button" data-variant="secondary" onclick={resetAddSchoolLeaderAccess}>
+            <span class="material-symbols-outlined">close</span>
+            Avbryt
+          </button>
+        </div>
+      </form>
+    {:else}
+      <button class="ds-button" type="button" data-variant="secondary" onclick={() => addSchoolLeaderOpen = true}>
+        <span class="material-symbols-outlined">add</span>
+        Legg til ny skoleleder
+      </button>
+    {/if}
+  </div>
 </div>
 
 <style>
@@ -225,5 +264,19 @@
     display: flex;
     gap: var(--ds-size-2);
     justify-content: flex-end;
+  }
+
+  .access-group {
+    margin: var(--ds-size-8) 0;
+  }
+
+  .new-access {
+    margin-top: var(--ds-size-4);
+  }
+
+  .new-access-actions {
+    display: flex;
+    gap: var(--ds-size-2);
+    margin-top: var(--ds-size-4);
   }
 </style>

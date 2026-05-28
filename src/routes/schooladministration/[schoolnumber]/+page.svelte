@@ -450,7 +450,7 @@
 </script>
 
 {#snippet newAccess(newManualAccessControl: NewManualAccessControl)}
-  <div class="new-access" style="margin-top: var(--ds-size-4)">
+  <div class="new-access">
     {#if newManualAccessControl.open}
       <h3 class="ds-heading" data-size="xs" style="margin-top: var(--ds-size-4)">Ny {newManualAccessControl.name}</h3>
       <form bind:this={newManualAccessControl.form}>
@@ -807,6 +807,10 @@
   }
   
   .manual-students {
+    margin-top: var(--ds-size-4);
+  }
+
+  .new-access {
     margin-top: var(--ds-size-4);
   }
 </style>

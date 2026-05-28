@@ -1,12 +1,10 @@
 <script lang="ts">
   import type { DSSuggestionElement } from "@digdir/designsystemet-web"
+  import type { SuggestionSelectItem } from "$lib/types/app-types"
 
   type SearchSelectProps = {
     label: string
-    items: {
-      label: string
-      value: string
-    }[]
+    items: SuggestionSelectItem[]
     value: string
   }
 

@@ -208,3 +208,8 @@ export type SchoolAdministrationManualStudent = {
   feideName: string
   hasBlockedAddress?: boolean
 }
+
+export type SuggestionSelectItem = {
+  label: string
+  value: string
+}
