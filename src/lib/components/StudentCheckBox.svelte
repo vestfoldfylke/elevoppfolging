@@ -4,16 +4,18 @@
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { StudentCheckBox, StudentCheckBoxInput } from "$lib/types/db/shared-types"
+  import { prettifyDateTime } from "$lib/utils/dates"
   import AsyncButton from "./AsyncButton.svelte"
 
   type StudentCheckBoxProps = {
     checkBox: StudentCheckBox
     editMode: boolean
+    name?: string
     callBackOnCreate?: () => void
     callBackOnCancel?: () => void
   }
 
-  let { checkBox, editMode, callBackOnCreate, callBackOnCancel }: StudentCheckBoxProps = $props()
+  let { checkBox, editMode, name, callBackOnCreate, callBackOnCancel }: StudentCheckBoxProps = $props()
 
   // svelte-ignore state_referenced_locally - we want a local copy
   let editableCheckBox: StudentCheckBoxInput = $state({
@@ -23,14 +25,24 @@
     sort: checkBox.sort
   } as StudentCheckBoxInput)
 
-  let studentCheckBoxForm: HTMLFormElement | undefined = $state()
+  let studentCheckBoxFormNew: HTMLFormElement | undefined = $state()
+  let studentCheckBoxFormEditName: HTMLFormElement | undefined = $state()
+  let studentCheckBoxFormEditSort: HTMLFormElement | undefined = $state()
+
+  const cancelStudentCheckBox = (): void => {
+    editMode = false
+
+    if (callBackOnCancel) {
+      callBackOnCancel()
+    }
+  }
 
   const createStudentCheckBox = async (): Promise<void> => {
-    if (!studentCheckBoxForm) {
-      throw new Error("Student checkbox form not found")
+    if (!studentCheckBoxFormNew) {
+      throw new Error("Student new checkbox form not found")
     }
-    const formIsValid = studentCheckBoxForm.reportValidity()
-    if (!formIsValid) {
+
+    if (!studentCheckBoxFormNew.reportValidity()) {
       throw new Error(INVALID_FORM_MESSAGE)
     }
 
@@ -47,6 +59,7 @@
     if (!checkBox._id) {
       throw new Error("Mangler id for å kunne slette")
     }
+
     const confirmation = confirm("Er du sikker på at du vil slette denne sjekkboksen? Den vil bli fjernet fra alle elever, og må legges til på nytt på hver elev dersom den skal legges til på nytt.")
     if (!confirmation) {
       return
@@ -61,11 +74,20 @@
     if (!checkBox._id) {
       throw new Error("Mangler id for å kunne oppdatere")
     }
-    if (!studentCheckBoxForm) {
-      throw new Error("Student checkbox form not found")
+
+    if (!studentCheckBoxFormEditName) {
+      throw new Error("Student edit checkbox name form not found")
     }
-    const formIsValid = studentCheckBoxForm.reportValidity()
-    if (!formIsValid) {
+
+    if (!studentCheckBoxFormEditName.reportValidity()) {
+      throw new Error(INVALID_FORM_MESSAGE)
+    }
+
+    if (!studentCheckBoxFormEditSort) {
+      throw new Error("Student edit checkbox sort form not found")
+    }
+
+    if (!studentCheckBoxFormEditSort.reportValidity()) {
       throw new Error(INVALID_FORM_MESSAGE)
     }
 
@@ -82,42 +104,110 @@
     if (callBackOnCreate) {
       callBackOnCreate()
     }
+
     editMode = false
   }
 </script>
 
-<div class="student-check-box">
-  {#if editMode}
-    <form bind:this={studentCheckBoxForm}>
-      <input type="text" bind:value={editableCheckBox.value} required minlength={studentCheckBoxValueValidation.minLength} maxlength={studentCheckBoxValueValidation.maxLength} />
-      <label>
-        <input type="checkbox" bind:checked={editableCheckBox.enabled} />
-        Aktiv
-      </label>
-      <label>
-        Sortering
-        <input type="number" bind:value={editableCheckBox.sort} required />
-      </label>
-    </form>
-    {#if !checkBox._id}
-      <AsyncButton onClick={createStudentCheckBox} buttonText="Opprett" iconName="add" reloadPageDataOnSuccess={true} {callBackAfterReloadPageData} />
-    {:else}
-      <AsyncButton onClick={updateStudentCheckBox} buttonText="Lagre endringer" iconName="save" reloadPageDataOnSuccess={true} {callBackAfterReloadPageData} />
-    {/if}
-    <button onclick={() => { editMode = false; if (callBackOnCancel) callBackOnCancel(); }}>Avbryt</button>
-  {:else}
-    <p><strong>{checkBox.value}</strong>{!checkBox.enabled ? " - Deaktivert (skjult)" : ""}</p>
-    <button onclick={() => editMode = true}><span class="material-symbols-outlined">edit</span>Rediger</button>
-    <AsyncButton onClick={deleteStudentCheckBox} buttonText="Slett" iconName="delete" reloadPageDataOnSuccess={true} {callBackAfterReloadPageData} />
-  {/if}
-</div>
+{#if typeof callBackOnCreate === "function" && editMode}
+  <form bind:this={studentCheckBoxFormNew}>
+    <div class="add-student-check-form">
+      <h2 class="ds-heading">{name}</h2>
 
+      <ds-field class="ds-field content-item">
+        <label class="ds-label" data-weight="medium" for="studentCheckBoxName">
+          Navn
+          <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
+        </label>
+        <div class="ds-field-affixes">
+          <input class="ds-input" id="studentCheckBoxName" type="text" bind:value={editableCheckBox.value} required minlength={studentCheckBoxValueValidation.minLength} maxlength={studentCheckBoxValueValidation.maxLength}>
+        </div>
+      </ds-field>
+
+      <ds-field class="ds-field content-item">
+        <label class="ds-label" data-weight="medium" for="studentCheckBoxSort">
+          Sortering
+          <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
+        </label>
+        <div class="ds-field-affixes">
+          <input class="ds-input" id="studentCheckBoxSort" type="number" bind:value={editableCheckBox.sort} required>
+        </div>
+      </ds-field>
+
+      <ds-field class="ds-field content-item">
+        <label class="ds-label" data-weight="medium" for="studentCheckBoxEnabled" data-clickdelegatefor="studentCheckBoxEnabled">
+          Aktiv
+        </label>
+        <input class="ds-input" type="checkbox" id="studentCheckBoxEnabled" bind:checked={editableCheckBox.enabled}>
+      </ds-field>
+
+      <div class="student_check_box_edit_actions">
+        <AsyncButton onClick={createStudentCheckBox} buttonText="Opprett" iconName="add" reloadPageDataOnSuccess={true} {callBackAfterReloadPageData} />
+        <button class="ds-button" type="button" data-variant="secondary" onclick={cancelStudentCheckBox}>Avbryt</button>
+      </div>
+    </div>
+  </form>
+{:else}
+  <td>
+    {#if editMode}
+      <form bind:this={studentCheckBoxFormEditName}>
+        <input class="ds-input" id="studentCheckBoxName" type="text" bind:value={editableCheckBox.value} required minlength={studentCheckBoxValueValidation.minLength} maxlength={studentCheckBoxValueValidation.maxLength}>
+      </form>
+    {:else}
+      {checkBox.value}
+    {/if}
+  </td>
+  <td>
+    {#if editMode}
+      <form bind:this={studentCheckBoxFormEditSort}>
+        <input class="ds-input" id="studentCheckBoxSort" type="number" bind:value={editableCheckBox.sort} required>
+      </form>
+    {:else}
+      {checkBox.sort}
+    {/if}
+  </td>
+  <td>
+    {#if editMode}
+      <input class="ds-input" type="checkbox" id="studentCheckBoxEnabled" bind:checked={editableCheckBox.enabled}>
+    {:else}
+      {checkBox.enabled ? "Aktiv" : "Deaktivert (skjult)"}
+    {/if}
+  </td>
+  <td>
+    <span class="ds-tag" data-color="neutral" data-size="sm">
+      <button data-popover="inline" popoverTarget="student-check-box-{checkBox._id}_created">{prettifyDateTime(checkBox.created.at)}</button>
+    </span>
+    <div id="student-check-box-{checkBox._id}_created" class="ds-popover" popover="auto" data-placement="top">
+      {checkBox.created.by.fallbackName}
+    </div>
+  </td>
+  <td>
+    <span class="ds-tag" data-color="neutral" data-size="sm">
+      <button data-popover="inline" popoverTarget="student-check-box-{checkBox._id}_modified">{prettifyDateTime(checkBox.modified.at)}</button>
+    </span>
+    <div id="student-check-box-{checkBox._id}_modified" class="ds-popover" popover="auto" data-placement="top">
+      {checkBox.modified.by.fallbackName}
+    </div>
+  </td>
+  <td>
+    <div class="student_check_box_edit_actions">
+      {#if !editMode}
+        <button class="ds-button" type="button" data-size="sm" onclick={() => editMode = true}><span class="material-symbols-outlined">edit</span>Rediger</button>
+        <AsyncButton onClick={deleteStudentCheckBox} buttonText="Slett" iconName="delete" dataSize="sm" color="danger" reloadPageDataOnSuccess={true} {callBackAfterReloadPageData} />
+      {:else}
+        <AsyncButton onClick={updateStudentCheckBox} buttonText="Lagre" iconName="save" dataSize="sm" reloadPageDataOnSuccess={true} {callBackAfterReloadPageData} />
+        <button class="ds-button" type="button" data-size="sm" data-variant="secondary" onclick={cancelStudentCheckBox}>Avbryt</button>
+      {/if}
+    </div>
+  </td>
+{/if}
 
 <style>
-
-.student-check-box {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
+  .student_check_box_edit_actions {
+    margin-top: var(--ds-size-4);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--ds-size-2);
+  }
 </style>
