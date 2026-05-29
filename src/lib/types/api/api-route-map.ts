@@ -15,7 +15,8 @@ import type {
   StudentCheckBoxInput,
   StudentDataSharingConsentInput,
   StudentImportantStuffInput,
-  UpdateManualStudentInput
+  UpdateManualStudentInput,
+  UpdateSchool
 } from "../db/shared-types"
 
 type ApiDocumentsIdMessages = {
@@ -29,7 +30,7 @@ type ApiTemplatesId = {
 
 type ApiSchoolsId = {
   DELETE: { res: { deletedSchoolNumber: string } }
-  PUT: { req: NewSchool; res: { updatedSchoolId: string } }
+  PUT: { req: UpdateSchool; res: { updatedSchoolId: string } }
 }
 
 type ApiAccessEntraUserIdAdd = {

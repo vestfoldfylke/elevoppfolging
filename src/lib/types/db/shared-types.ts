@@ -78,6 +78,8 @@ export type School = NewSchool & {
   _id: string
 }
 
+export type UpdateSchool = SchoolInfo
+
 export type DbSchool = NewSchool & {
   _id: ObjectId
 }

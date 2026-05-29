@@ -4,7 +4,12 @@
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import AsyncButton from "$lib/components/AsyncButton.svelte"
   import PageHeader from "$lib/components/PageHeader.svelte"
+  import SuggestionSelect from "$lib/components/SchoolAdministration/SuggestionSelect.svelte"
+  import { schoolNameValidation } from "$lib/data-validation/school-validation"
+  import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
+  import type { SuggestionSelectItem } from "$lib/types/app-types"
+  import type { Access, AppUser, SchoolLeaderManualAccessEntry, UpdateSchool } from "$lib/types/db/shared-types"
   import type { PageProps } from "./$types"
 
   let { data }: PageProps = $props()
@@ -13,11 +18,28 @@
     if (data.schools.length === 0) {
       throw new Error("Ingen skoler funnet")
     }
+
     const school = data.schools.find((school) => school.schoolNumber === page.params.schoolnumber)
     if (!school) {
       throw new Error("Skole ikke funnet")
     }
+
     return school
+  })
+
+  let schoolLeaders: AppUser[] = $derived.by(() => {
+    return data.schoolLeaderAccess
+      .filter((access: Access) => access.leaderForSchools.some((school: SchoolLeaderManualAccessEntry) => school.schoolNumber === currentSchool.schoolNumber))
+      .map((access: Access) => data.appUsers.find((appUser: AppUser) => appUser.entra.id === access.entraUserId))
+      .filter((user: AppUser | undefined) => user !== undefined)
+      .sort((a: AppUser, b: AppUser) => a.entra.displayName.localeCompare(b.entra.displayName))
+  })
+
+  let suggestionSelectUsers: SuggestionSelectItem[] = $derived.by(() => {
+    // TODO: Show only users for this school?
+    return data.appUsers
+      .sort((a: AppUser, b: AppUser) => a.entra.displayName.localeCompare(b.entra.displayName))
+      .map((appUser: AppUser) => ({ label: `${appUser.entra.displayName} (${appUser.entra.companyName})`, value: appUser.entra.id }))
   })
 
   let addSchoolLeaderOpen = $state(false)
@@ -38,6 +60,49 @@
   }
 
   let selectedEntraUserId = $state("")
+
+  let updateSchoolEdit: boolean = $state(false)
+  let updateSchoolForm: HTMLFormElement | undefined = $state()
+  let updateSchoolName: string = $derived.by(() => currentSchool.name)
+
+  const updateSchool = async (): Promise<void> => {
+    if (!updateSchoolForm?.reportValidity()) {
+      throw new Error(INVALID_FORM_MESSAGE)
+    }
+
+    if (!updateSchoolName) {
+      throw new Error("Skolenavn må være fylt ut")
+    }
+
+    const updateSchoolInput: UpdateSchool = {
+      name: updateSchoolName,
+      schoolNumber: currentSchool.schoolNumber
+    }
+
+    await apiFetch(`/api/schools/${currentSchool.schoolNumber as NoSlashString}`, {
+      method: "PUT",
+      body: updateSchoolInput,
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+
+    updateSchoolEdit = false
+  }
+
+  const abortUpdateSchool = () => {
+    updateSchoolEdit = false
+    updateSchoolName = currentSchool.name
+  }
+
+  const isDisabled = (): boolean => {
+    return updateSchoolName === currentSchool.name
+  }
+
+  const resetAddSchoolLeaderAccess = (): void => {
+    addSchoolLeaderOpen = false
+    selectedEntraUserId = ""
+  }
 
   const addSchoolLeaderAccess = async (): Promise<void> => {
     await apiFetch(`/api/access/${selectedEntraUserId as NoSlashString}/add`, {
@@ -67,52 +132,151 @@
 </script>
 
 <div class="page-content">
-  <PageHeader title="Skoleadministrasjon" />
+  <div class="update-school-link">
+    <a href="/system/schools" class="ds-link" rel="noopener noreferrer">
+      <span class="material-symbols-outlined">arrow_back</span>
+      Tilbake til skoler
+    </a>
+  </div>
 
-  <h2>{currentSchool.name}</h2>
-  {#if currentSchool.source === "MANUAL"}
-    <AsyncButton onClick={deleteManualSchool} buttonText="Slett skole" iconName="delete" />    
-  {/if}
+  <PageHeader title={`Skoleadministrasjon - ${currentSchool.name}`} />
 
-  <p>Skolenummer: {currentSchool.schoolNumber}</p>
-  <p>Kilde: {currentSchool.source}</p>
+  {#if !updateSchoolEdit}
+    <div class="update-school">
+      <div>
+        <h2 class="ds-heading">Skolenummer</h2>
+        <p class="ds-paragraph">{currentSchool.schoolNumber}</p>
+      </div>
 
+      <div>
+        <h2 class="ds-heading">Kilde</h2>
+        <p class="ds-paragraph">{currentSchool.source}</p>
+      </div>
 
-  <h2>Skoleledere</h2>
-  <p>Kan administrere tilganger på skolen, og se alle elevene på skolen</p>
+      {#if currentSchool.source === "MANUAL" }
+        <div class="update-school-actions">
+          <button onclick={() => updateSchoolEdit = true} class="ds-button" type="button">
+            <span class="material-symbols-outlined">edit</span>
+            Rediger
+          </button>
+          <AsyncButton onClick={deleteManualSchool} buttonText="Slett skole" iconName="delete" color="danger" />
+        </div>
+      {/if}
+    </div>
+  {:else}
+    <div class="update-school-form">
+      <form bind:this={updateSchoolForm}>
+        <ds-field class="ds-field content-item">
+          <label class="ds-label" data-weight="medium" for="schoolName">
+            Skolenavn
+            <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
+          </label>
+          <div class="ds-field-affixes">
+            <input class="ds-input" type="text" id="schoolName" pattern={schoolNameValidation.pattern.source} minlength={schoolNameValidation.minLength} maxlength={schoolNameValidation.maxLength} bind:value={updateSchoolName} required>
+          </div>
+        </ds-field>
 
-  <div class="add-school-leader">
-    {#if !addSchoolLeaderOpen}
-      <button onclick={() => addSchoolLeaderOpen = true}>Legg til ny skoleleder</button>
-    {/if}
-    {#if addSchoolLeaderOpen}
-      <h3>Legg til skoleleder</h3>
-      <form>
-        <div class="form-group">
-          <!-- TODO - lag en people select med litt søk og fancy, og bind mulighet -->
-          <label for="appUser">Velg bruker</label>
-          <select id="appUser" name="appUser" bind:value={selectedEntraUserId} required>
-            {#each data.appUsers as appUser}
-              <option value={appUser.entra.id}>{appUser.entra.displayName} ({appUser.entra.companyName})</option>
-            {/each}
-          </select>
+        <div class="content-item">
+          <h2 class="ds-heading">Skolenummer</h2>
+          <p class="ds-paragraph">{currentSchool.schoolNumber}</p>
+        </div>
+
+        <div class="content-item">
+          <h2 class="ds-heading">Kilde</h2>
+          <p class="ds-paragraph">{currentSchool.source}</p>
+        </div>
+
+        <div class="update-school-actions">
+          <AsyncButton onClick={updateSchool} buttonText="Lagre" iconName="save" reloadPageDataOnSuccess={true} disabled={isDisabled()} />
+          <button class="ds-button" type="button" data-variant="secondary" onclick={abortUpdateSchool}>
+            <span class="material-symbols-outlined">close</span>
+            Avbryt
+          </button>
         </div>
       </form>
-      <div class="new-school-leader-actions">
-        <AsyncButton onClick={addSchoolLeaderAccess} buttonText="Legg til skoleleder" reloadPageDataOnSuccess={true} iconName="add" callBackAfterReloadPageData={() => { addSchoolLeaderOpen = false; selectedEntraUserId = ""; }} />
-        <button onclick={() => addSchoolLeaderOpen = false} class="filled danger">Avbryt</button>
-      </div>
+    </div>
+  {/if}
+
+  <h2>Skoleledere</h2>
+  <div class="ds-alert" data-color="info">Kan administrere tilganger på skolen, og se alle elevene på skolen</div>
+
+  <div class="access-group">
+    {#if schoolLeaders.length > 0}
+      <table class="ds-table">
+        <thead>
+          <tr>
+            <th aria-sort="none">Bruker</th>
+            <th>Handling</th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each schoolLeaders as schoolLeader}
+            <tr>
+              <td>{schoolLeader.entra.displayName} ({schoolLeader.entra.companyName})</td>
+              <td>
+                <AsyncButton onClick={() => removeSchoolLeaderAccess(schoolLeader.entra.id)} reloadPageDataOnSuccess={true} buttonText="Fjern skoleleder" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    {:else}
+      <p class="ds-paragraph">Ingen skoleledere å se her</p>
     {/if}
   </div>
 
-  {#each data.schoolLeaderAccess.filter((access) => access.leaderForSchools.some((school) => school.schoolNumber === currentSchool.schoolNumber)) as schoolLeaderAccess}
-    <div class="school-leader-access-entry">
-      <p>Skoleleder: {schoolLeaderAccess.name}</p>
-      <AsyncButton onClick={() => removeSchoolLeaderAccess(schoolLeaderAccess.entraUserId)} reloadPageDataOnSuccess={true} buttonText="Fjern skoleleder" iconName="delete" />
-    </div>
-  {/each}
+  <div class="new-access">
+    {#if addSchoolLeaderOpen}
+      <h3 class="ds-heading">Legg til skoleleder</h3>
+      <form>
+        <SuggestionSelect items={suggestionSelectUsers} bind:value={selectedEntraUserId} label="Velg bruker" />
+
+        <div class="new-access-actions">
+          <AsyncButton onClick={addSchoolLeaderAccess} buttonText="Legg til skoleleder" reloadPageDataOnSuccess={true} iconName="add" callBackAfterReloadPageData={resetAddSchoolLeaderAccess} />
+
+          <button class="ds-button" type="button" data-variant="secondary" onclick={resetAddSchoolLeaderAccess}>
+            <span class="material-symbols-outlined">close</span>
+            Avbryt
+          </button>
+        </div>
+      </form>
+    {:else}
+      <button class="ds-button" type="button" data-variant="secondary" onclick={() => addSchoolLeaderOpen = true}>
+        <span class="material-symbols-outlined">add</span>
+        Legg til ny skoleleder
+      </button>
+    {/if}
+  </div>
 </div>
 
-
 <style>
+  .update-school-link {
+    padding-bottom: var(--ds-size-4);
+  }
+
+  .update-school {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ds-size-4);
+  }
+
+  .update-school-actions {
+    display: flex;
+    gap: var(--ds-size-2);
+    justify-content: flex-end;
+  }
+
+  .access-group {
+    margin: var(--ds-size-8) 0;
+  }
+
+  .new-access {
+    margin-top: var(--ds-size-4);
+  }
+
+  .new-access-actions {
+    display: flex;
+    gap: var(--ds-size-2);
+    margin-top: var(--ds-size-4);
+  }
 </style>
