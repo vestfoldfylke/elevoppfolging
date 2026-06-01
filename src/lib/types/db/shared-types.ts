@@ -167,6 +167,14 @@ export type ManageManualStudentsManualAccessEntryInput = {
 
 export type ManageManualStudentsManualAccessEntry = AccessEntryBase & ManageManualStudentsManualAccessEntryInput
 
+export type AllStudentsAtSchoolsManualAccessEntryInput = {
+  /** Hvilken skole gjelder tilgangen for */
+  schoolNumber: string
+  type: "MANUELL-ALLE-ELEVER-VED-SKOLE-TILGANG"
+}
+
+export type AllStudentsAtSchoolsManualAccessEntry = AccessEntryBase & AllStudentsAtSchoolsManualAccessEntryInput
+
 export type ProgramAreaManualAccessEntryInput = {
   /** Hvilken skole gjelder tilgangen for */
   schoolNumber: string
@@ -208,6 +216,7 @@ export type ClassManualAccessEntry = AccessEntryBase & ClassManualAccessEntryInp
 export type ManualAccessEntryInput =
   | SchoolLeaderManualAccessEntryInput
   | ManageManualStudentsManualAccessEntryInput
+  | AllStudentsAtSchoolsManualAccessEntryInput
   | ProgramAreaManualAccessEntryInput
   | StudentManualAccessEntryInput
   | ClassManualAccessEntryInput
@@ -240,6 +249,7 @@ export type NewAccess = {
   entraUserId: string
   name: string
   leaderForSchools: SchoolLeaderManualAccessEntry[]
+  allStudentsAtSchools: AllStudentsAtSchoolsManualAccessEntry[]
   manageManualStudentsForSchools: ManageManualStudentsManualAccessEntry[]
   programAreas: ProgramAreaManualAccessEntry[]
   classes: (ClassAutoAccessEntry | ClassManualAccessEntry)[]

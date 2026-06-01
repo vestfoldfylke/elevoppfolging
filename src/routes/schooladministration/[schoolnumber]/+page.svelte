@@ -11,6 +11,7 @@
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { NewManualAccessControl } from "$lib/types/app-types"
   import type {
+    AllStudentsAtSchoolsManualAccessEntry,
     ClassManualAccessEntry,
     ManageManualStudentsManualAccessEntry,
     ManualAccessEntryInput,
@@ -237,6 +238,41 @@
     })
   })
 
+  let allStudentsAtSchoolsAccessEntriesSort: { column: "bruker"; direction: SortDirection } = $state({
+    column: "bruker",
+    direction: "ascending"
+  })
+
+  type AllStudentsAtSchoolsAccessEntry = {
+    entraUser: {
+      id: string
+      name: string
+      companyName: string
+    }
+    accessEntry: AllStudentsAtSchoolsManualAccessEntry
+  }
+
+  let allStudentsAtSchoolsAccessEntries: AllStudentsAtSchoolsAccessEntry[] = $derived.by(() => {
+    const accessRows: AllStudentsAtSchoolsAccessEntry[] = []
+    for (const access of data.manualAccessForSchool) {
+      for (const allStudentsAccessEntry of access.allStudentsAtSchools) {
+        const appUserInfo = getAppUserInfo(access.entraUserId)
+        accessRows.push({
+          entraUser: {
+            id: access.entraUserId,
+            name: appUserInfo.displayName,
+            companyName: appUserInfo.companyName
+          },
+          accessEntry: allStudentsAccessEntry
+        })
+      }
+    }
+    return accessRows.sort((a, b) => {
+      const compareResult = a.entraUser.name.localeCompare(b.entraUser.name)
+      return allStudentsAtSchoolsAccessEntriesSort.direction === "ascending" ? compareResult : -compareResult
+    })
+  })
+
   let manageManualStudentsAccessEntriesSort: { column: "bruker"; direction: SortDirection } = $state({
     column: "bruker",
     direction: "ascending"
@@ -308,6 +344,14 @@
     entraUserId: ""
   })
 
+  let newAllStudentsAtSchoolsAccessControl: NewManualAccessControl = $state({
+    type: "MANUELL-ALLE-ELEVER-VED-SKOLE-TILGANG",
+    name: "tilgang til alle elever ved skolen",
+    open: false,
+    form: undefined,
+    entraUserId: ""
+  })
+
   const closeManualAccessControl = (newManualAccessControl: NewManualAccessControl) => {
     newManualAccessControl.open = false
     newManualAccessControl.programAreaId = ""
@@ -362,6 +406,7 @@
         break
       }
 
+      case "MANUELL-ALLE-ELEVER-VED-SKOLE-TILGANG":
       case "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG":
         accessEntryToAdd = { type: newManualAccessControl.type, schoolNumber: currentSchool.schoolNumber }
         break
@@ -628,6 +673,36 @@
           {/if}
 
           {@render newAccess(newStudentAccessControl)}
+        </div>
+
+        <div class="access-group">
+          <h2 class="ds-heading">Tilgang til alle elever ved skolen</h2>
+          {#if allStudentsAtSchoolsAccessEntries.length > 0}
+            <table class="ds-table" style="table-layout:fixed">
+              <thead>
+                <tr>
+                  <th aria-sort={allStudentsAtSchoolsAccessEntriesSort.column === "bruker" ? allStudentsAtSchoolsAccessEntriesSort.direction : "none"}>
+                    <button type="button" onclick={() => toggleSort(allStudentsAtSchoolsAccessEntriesSort, "bruker")}>Bruker</button>
+                  </th>
+                  <th>Handling</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each allStudentsAtSchoolsAccessEntries as allStudentsAccess}
+                  <tr>
+                    <td>{allStudentsAccess.entraUser.name} ({allStudentsAccess.entraUser.companyName})</td>
+                    <td>
+                      <AsyncButton onClick={() => removeManualAccessEntry(allStudentsAccess.entraUser.id, allStudentsAccess.accessEntry)} reloadPageDataOnSuccess={true} buttonText="Fjern tilgang" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
+                    </td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          {:else}
+            <p class="ds-paragraph">Ingen tilganger til alle elever ved skolen</p>
+          {/if}
+
+          {@render newAccess(newAllStudentsAtSchoolsAccessControl)}
         </div>
 
         <div class="access-group">

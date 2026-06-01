@@ -39,6 +39,9 @@ export class AccessDbClient implements IAccessDbClient {
             manageManualStudentsForSchools: { $exists: true, $ne: [], $elemMatch: { schoolNumber } }
           },
           {
+            allStudentsAtSchools: { $exists: true, $ne: [], $elemMatch: { schoolNumber } }
+          },
+          {
             programAreas: { $exists: true, $ne: [], $elemMatch: { schoolNumber } }
           },
           {
@@ -57,6 +60,7 @@ export class AccessDbClient implements IAccessDbClient {
         entraUserId: access.entraUserId,
         name: access.name,
         leaderForSchools: [],
+        allStudentsAtSchools: access.allStudentsAtSchools.filter((entry) => entry.schoolNumber === schoolNumber),
         manageManualStudentsForSchools: access.manageManualStudentsForSchools.filter((manageManualStudentAccessEntry) => manageManualStudentAccessEntry.schoolNumber === schoolNumber),
         programAreas: access.programAreas
           .filter((programArea) => programArea.schoolNumber === schoolNumber)
@@ -104,6 +108,9 @@ export class AccessDbClient implements IAccessDbClient {
     switch (accessEntry.type) {
       case "MANUELL-SKOLELEDER-TILGANG":
         updateResult = await this.accessCollection.findOneAndUpdate({ entraUserId }, { $push: { leaderForSchools: accessEntry } })
+        break
+      case "MANUELL-ALLE-ELEVER-VED-SKOLE-TILGANG":
+        updateResult = await this.accessCollection.findOneAndUpdate({ entraUserId }, { $push: { allStudentsAtSchools: accessEntry } })
         break
       case "MANUELL-ELEV-TILGANG":
         updateResult = await this.accessCollection.findOneAndUpdate({ entraUserId }, { $push: { students: { ...accessEntry, _id: new ObjectId(accessEntry._id) } } })
@@ -153,6 +160,9 @@ export class AccessDbClient implements IAccessDbClient {
     switch (accessEntry.type) {
       case "MANUELL-SKOLELEDER-TILGANG":
         updatedAccess = await this.accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { leaderForSchools: { schoolNumber: accessEntry.schoolNumber } } })
+        break
+      case "MANUELL-ALLE-ELEVER-VED-SKOLE-TILGANG":
+        updatedAccess = await this.accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { allStudentsAtSchools: { schoolNumber: accessEntry.schoolNumber } } })
         break
       case "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG":
         updatedAccess = await this.accessCollection.findOneAndUpdate({ entraUserId }, { $pull: { manageManualStudentsForSchools: { schoolNumber: accessEntry.schoolNumber } } })
@@ -217,6 +227,7 @@ export class AccessDbClient implements IAccessDbClient {
     const query: Filter<DbAccess> = {
       $or: [
         { "leaderForSchools.schoolNumber": { $in: studentMemberships.schoolNumbers } },
+        { "allStudentsAtSchools.schoolNumber": { $in: studentMemberships.schoolNumbers } },
         { "classes.systemId": { $in: studentMemberships.classes.map((c) => c.systemId) } },
         { "programAreas._id": { $in: studentProgramAreaIds.map((id) => new ObjectId(id)) } },
         {

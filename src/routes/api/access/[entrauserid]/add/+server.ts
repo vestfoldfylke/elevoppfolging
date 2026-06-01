@@ -70,6 +70,7 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
         }
         break
       }
+      case "MANUELL-ALLE-ELEVER-VED-SKOLE-TILGANG":
       case "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG":
       case "MANUELL-PROGRAMOMRÅDE-TILGANG":
         break
@@ -89,6 +90,7 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
       entraUserId,
       name: appUser.entra.displayName,
       leaderForSchools: [],
+      allStudentsAtSchools: [],
       programAreas: [],
       manageManualStudentsForSchools: [],
       classes: [],
@@ -107,6 +109,11 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
     switch (accessEntryInput.type) {
       case "MANUELL-SKOLELEDER-TILGANG":
         if (existingAccess.leaderForSchools.some((s) => s.schoolNumber === accessEntryInput.schoolNumber && s.type === "MANUELL-SKOLELEDER-TILGANG")) {
+          throw new HTTPError(400, "Access entry already exists")
+        }
+        break
+      case "MANUELL-ALLE-ELEVER-VED-SKOLE-TILGANG":
+        if (existingAccess.allStudentsAtSchools.some((s) => s.schoolNumber === accessEntryInput.schoolNumber && s.type === "MANUELL-ALLE-ELEVER-VED-SKOLE-TILGANG")) {
           throw new HTTPError(400, "Access entry already exists")
         }
         break
