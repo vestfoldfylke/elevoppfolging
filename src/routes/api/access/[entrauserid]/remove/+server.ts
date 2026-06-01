@@ -57,6 +57,11 @@ const removeAccess: ApiNextFunction<RemoveAccessResponse, RemoveAccessBody> = as
         throw new HTTPError(400, "Cannot remove access entry that does not exist")
       }
       break
+    case "MANUELL-ALLE-ELEVER-VED-SKOLE-TILGANG":
+      if (!existingAccess.allStudentsAtSchools.some((s) => s.schoolNumber === accessEntryToRemove.schoolNumber && s.type === "MANUELL-ALLE-ELEVER-VED-SKOLE-TILGANG")) {
+        throw new HTTPError(400, "Cannot remove access entry that does not exist")
+      }
+      break
     case "MANUELL-ELEV-TILGANG":
       if (!existingAccess.students.some((s) => s._id === accessEntryToRemove._id && s.schoolNumber === accessEntryToRemove.schoolNumber && s.type === "MANUELL-ELEV-TILGANG")) {
         throw new HTTPError(400, "Cannot remove access entry that does not exist")

@@ -11,6 +11,7 @@
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { NewManualAccessControl } from "$lib/types/app-types"
   import type {
+    AllStudentsAtSchoolsManualAccessEntry,
     ClassManualAccessEntry,
     ManageManualStudentsManualAccessEntry,
     ManualAccessEntryInput,
@@ -87,6 +88,8 @@
   let programAreaAccessEntries: ProgramAreaAccessEntry[] = $derived.by(() => {
     const programAreaAccessRows: ProgramAreaAccessEntry[] = []
     for (const access of data.manualAccessForSchool) {
+      const appUserInfo = getAppUserInfo(access.entraUserId)
+
       for (const programAreaAccessEntry of access.programAreas) {
         if (programAreaAccessEntry.type !== "MANUELL-PROGRAMOMRÅDE-TILGANG") {
           throw new Error(`Uventet access entry type for programområde: ${programAreaAccessEntry.type}`)
@@ -94,7 +97,6 @@
 
         const programAreaInfo = data.programAreasForSchool.find((programArea) => programArea._id === programAreaAccessEntry._id)
         const programAreaName = programAreaInfo ? programAreaInfo.name : `Inaktivt programområde (${programAreaAccessEntry._id})`
-        const appUserInfo = getAppUserInfo(access.entraUserId)
 
         programAreaAccessRows.push({
           programAreaName,
@@ -142,6 +144,8 @@
   let classAccessEntries: ClassAccessEntry[] = $derived.by(() => {
     const classAccessRows: ClassAccessEntry[] = []
     for (const access of data.manualAccessForSchool) {
+      const appUserInfo = getAppUserInfo(access.entraUserId)
+
       for (const classAccessEntry of access.classes) {
         if (classAccessEntry.type !== "MANUELL-KLASSE-TILGANG") {
           throw new Error(`Uventet access entry type for klasse: ${classAccessEntry.type}`)
@@ -149,7 +153,6 @@
 
         const classInfo = data.accessControlSchoolClasses.find((classGroup) => classGroup.systemId === classAccessEntry.systemId)
         const className = classInfo ? classInfo.name : `Utgått klasse (${classAccessEntry.systemId})`
-        const appUserInfo = getAppUserInfo(access.entraUserId)
 
         classAccessRows.push({
           className,
@@ -200,11 +203,12 @@
   let studentAccessEntries: StudentAccessEntry[] = $derived.by(() => {
     const studentAccessRows: StudentAccessEntry[] = []
     for (const access of data.manualAccessForSchool) {
+      const appUserInfo = getAppUserInfo(access.entraUserId)
+
       for (const studentAccessEntry of access.students) {
         const studentInfo = data.accessControlSchoolStudents.find((student) => student._id === studentAccessEntry._id)
         const studentName = studentInfo?.name || `Inaktiv elev (${studentAccessEntry._id})`
         const studentFeideName = studentInfo?.feideName || ""
-        const appUserInfo = getAppUserInfo(access.entraUserId)
 
         studentAccessRows.push({
           student: {
@@ -237,6 +241,42 @@
     })
   })
 
+  let allStudentsAtSchoolsAccessEntriesSort: { column: "bruker"; direction: SortDirection } = $state({
+    column: "bruker",
+    direction: "ascending"
+  })
+
+  type AllStudentsAtSchoolsAccessEntry = {
+    entraUser: {
+      id: string
+      name: string
+      companyName: string
+    }
+    accessEntry: AllStudentsAtSchoolsManualAccessEntry
+  }
+
+  let allStudentsAtSchoolsAccessEntries: AllStudentsAtSchoolsAccessEntry[] = $derived.by(() => {
+    const accessRows: AllStudentsAtSchoolsAccessEntry[] = []
+    for (const access of data.manualAccessForSchool) {
+      const appUserInfo = getAppUserInfo(access.entraUserId)
+
+      for (const allStudentsAccessEntry of access.allStudentsAtSchools) {
+        accessRows.push({
+          entraUser: {
+            id: access.entraUserId,
+            name: appUserInfo.displayName,
+            companyName: appUserInfo.companyName
+          },
+          accessEntry: allStudentsAccessEntry
+        })
+      }
+    }
+    return accessRows.sort((a, b) => {
+      const compareResult = a.entraUser.name.localeCompare(b.entraUser.name)
+      return allStudentsAtSchoolsAccessEntriesSort.direction === "ascending" ? compareResult : -compareResult
+    })
+  })
+
   let manageManualStudentsAccessEntriesSort: { column: "bruker"; direction: SortDirection } = $state({
     column: "bruker",
     direction: "ascending"
@@ -254,8 +294,9 @@
   let manageManualStudentsAccessEntries: ManualStudentsAccessEntry[] = $derived.by(() => {
     const accessRows: ManualStudentsAccessEntry[] = []
     for (const access of data.manualAccessForSchool) {
+      const appUserInfo = getAppUserInfo(access.entraUserId)
+
       for (const manageManualStudentsAccessEntry of access.manageManualStudentsForSchools) {
-        const appUserInfo = getAppUserInfo(access.entraUserId)
         accessRows.push({
           entraUser: {
             id: access.entraUserId,
@@ -303,6 +344,14 @@
   let newManageManualStudentsAccessControl: NewManualAccessControl = $state({
     type: "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG",
     name: "tilgang til å administrere manuelle elever",
+    open: false,
+    form: undefined,
+    entraUserId: ""
+  })
+
+  let newAllStudentsAtSchoolsAccessControl: NewManualAccessControl = $state({
+    type: "MANUELL-ALLE-ELEVER-VED-SKOLE-TILGANG",
+    name: "tilgang til alle elever ved skolen",
     open: false,
     form: undefined,
     entraUserId: ""
@@ -362,6 +411,7 @@
         break
       }
 
+      case "MANUELL-ALLE-ELEVER-VED-SKOLE-TILGANG":
       case "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG":
         accessEntryToAdd = { type: newManualAccessControl.type, schoolNumber: currentSchool.schoolNumber }
         break
@@ -628,6 +678,36 @@
           {/if}
 
           {@render newAccess(newStudentAccessControl)}
+        </div>
+
+        <div class="access-group">
+          <h2 class="ds-heading">Tilgang til alle elever ved skolen</h2>
+          {#if allStudentsAtSchoolsAccessEntries.length > 0}
+            <table class="ds-table" style="table-layout:fixed">
+              <thead>
+                <tr>
+                  <th aria-sort={allStudentsAtSchoolsAccessEntriesSort.column === "bruker" ? allStudentsAtSchoolsAccessEntriesSort.direction : "none"}>
+                    <button type="button" onclick={() => toggleSort(allStudentsAtSchoolsAccessEntriesSort, "bruker")}>Bruker</button>
+                  </th>
+                  <th>Handling</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each allStudentsAtSchoolsAccessEntries as allStudentsAccess}
+                  <tr>
+                    <td>{allStudentsAccess.entraUser.name} ({allStudentsAccess.entraUser.companyName})</td>
+                    <td>
+                      <AsyncButton onClick={() => removeManualAccessEntry(allStudentsAccess.entraUser.id, allStudentsAccess.accessEntry)} reloadPageDataOnSuccess={true} buttonText="Fjern tilgang" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
+                    </td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          {:else}
+            <p class="ds-paragraph">Ingen tilganger til alle elever ved skolen</p>
+          {/if}
+
+          {@render newAccess(newAllStudentsAtSchoolsAccessControl)}
         </div>
 
         <div class="access-group">

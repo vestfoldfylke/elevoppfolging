@@ -1,6 +1,7 @@
 import type { AuthenticatedPrincipal } from "./authentication"
 import type {
   Access,
+  AllStudentsAtSchoolsManualAccessEntry,
   AppStudent,
   AppUser,
   ClassAutoAccessEntry,
@@ -67,6 +68,7 @@ export type CachedFrontendStudentFilter = {
 export type AccessEntry =
   | SchoolLeaderManualAccessEntry
   | ManageManualStudentsManualAccessEntry
+  | AllStudentsAtSchoolsManualAccessEntry
   | ProgramAreaManualAccessEntry
   | StudentManualAccessEntry
   | ClassAutoAccessEntry

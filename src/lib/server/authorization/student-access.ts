@@ -43,6 +43,21 @@ export const getPrincipalAccessForStudent = (student: CachedFrontendStudent, pri
     }
   }
 
+  // Alle-elever-ved-skole-tilgang
+  for (const schoolAccess of principalAccess.allStudentsAtSchools) {
+    const schoolAccessForCurrentStudent = enrollmentsToCheck.some((enrollment) => {
+      return enrollment.school.schoolNumber === schoolAccess.schoolNumber
+    })
+    if (schoolAccessForCurrentStudent) {
+      principalAccessForCurrentStudent.push({
+        type: schoolAccess.type,
+        schoolNumber: schoolAccess.schoolNumber,
+        accessThroughResource: null,
+        source: schoolAccess.source
+      })
+    }
+  }
+
   // Programområde-tilgang
   for (const programAreaAccess of principalAccess.programAreas) {
     enrollmentsToCheck.forEach((enrollment) => {
