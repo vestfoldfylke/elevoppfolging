@@ -88,6 +88,8 @@
   let programAreaAccessEntries: ProgramAreaAccessEntry[] = $derived.by(() => {
     const programAreaAccessRows: ProgramAreaAccessEntry[] = []
     for (const access of data.manualAccessForSchool) {
+      const appUserInfo = getAppUserInfo(access.entraUserId)
+
       for (const programAreaAccessEntry of access.programAreas) {
         if (programAreaAccessEntry.type !== "MANUELL-PROGRAMOMRÅDE-TILGANG") {
           throw new Error(`Uventet access entry type for programområde: ${programAreaAccessEntry.type}`)
@@ -95,7 +97,6 @@
 
         const programAreaInfo = data.programAreasForSchool.find((programArea) => programArea._id === programAreaAccessEntry._id)
         const programAreaName = programAreaInfo ? programAreaInfo.name : `Inaktivt programområde (${programAreaAccessEntry._id})`
-        const appUserInfo = getAppUserInfo(access.entraUserId)
 
         programAreaAccessRows.push({
           programAreaName,
@@ -143,6 +144,8 @@
   let classAccessEntries: ClassAccessEntry[] = $derived.by(() => {
     const classAccessRows: ClassAccessEntry[] = []
     for (const access of data.manualAccessForSchool) {
+      const appUserInfo = getAppUserInfo(access.entraUserId)
+
       for (const classAccessEntry of access.classes) {
         if (classAccessEntry.type !== "MANUELL-KLASSE-TILGANG") {
           throw new Error(`Uventet access entry type for klasse: ${classAccessEntry.type}`)
@@ -150,7 +153,6 @@
 
         const classInfo = data.accessControlSchoolClasses.find((classGroup) => classGroup.systemId === classAccessEntry.systemId)
         const className = classInfo ? classInfo.name : `Utgått klasse (${classAccessEntry.systemId})`
-        const appUserInfo = getAppUserInfo(access.entraUserId)
 
         classAccessRows.push({
           className,
@@ -201,11 +203,12 @@
   let studentAccessEntries: StudentAccessEntry[] = $derived.by(() => {
     const studentAccessRows: StudentAccessEntry[] = []
     for (const access of data.manualAccessForSchool) {
+      const appUserInfo = getAppUserInfo(access.entraUserId)
+
       for (const studentAccessEntry of access.students) {
         const studentInfo = data.accessControlSchoolStudents.find((student) => student._id === studentAccessEntry._id)
         const studentName = studentInfo?.name || `Inaktiv elev (${studentAccessEntry._id})`
         const studentFeideName = studentInfo?.feideName || ""
-        const appUserInfo = getAppUserInfo(access.entraUserId)
 
         studentAccessRows.push({
           student: {
@@ -255,8 +258,9 @@
   let allStudentsAtSchoolsAccessEntries: AllStudentsAtSchoolsAccessEntry[] = $derived.by(() => {
     const accessRows: AllStudentsAtSchoolsAccessEntry[] = []
     for (const access of data.manualAccessForSchool) {
+      const appUserInfo = getAppUserInfo(access.entraUserId)
+
       for (const allStudentsAccessEntry of access.allStudentsAtSchools) {
-        const appUserInfo = getAppUserInfo(access.entraUserId)
         accessRows.push({
           entraUser: {
             id: access.entraUserId,
@@ -290,8 +294,9 @@
   let manageManualStudentsAccessEntries: ManualStudentsAccessEntry[] = $derived.by(() => {
     const accessRows: ManualStudentsAccessEntry[] = []
     for (const access of data.manualAccessForSchool) {
+      const appUserInfo = getAppUserInfo(access.entraUserId)
+      
       for (const manageManualStudentsAccessEntry of access.manageManualStudentsForSchools) {
-        const appUserInfo = getAppUserInfo(access.entraUserId)
         accessRows.push({
           entraUser: {
             id: access.entraUserId,
