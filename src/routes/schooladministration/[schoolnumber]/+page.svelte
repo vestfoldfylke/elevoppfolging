@@ -295,7 +295,7 @@
     const accessRows: ManualStudentsAccessEntry[] = []
     for (const access of data.manualAccessForSchool) {
       const appUserInfo = getAppUserInfo(access.entraUserId)
-      
+
       for (const manageManualStudentsAccessEntry of access.manageManualStudentsForSchools) {
         accessRows.push({
           entraUser: {
