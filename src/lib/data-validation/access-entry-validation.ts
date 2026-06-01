@@ -2,7 +2,7 @@ import type { ValidationResult } from "$lib/types/data-validation"
 import type { ManualAccessEntryInput } from "$lib/types/db/shared-types"
 
 export const validateAccessEntryInput = (accessEntry: ManualAccessEntryInput): ValidationResult => {
-  if (!accessEntry.schoolNumber || !accessEntry.type) {
+  if (!accessEntry.schoolNumber?.trim() || !accessEntry.type) {
     return { valid: false, message: "Both 'schoolNumber' and 'type' are required" }
   }
 
