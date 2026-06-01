@@ -6,6 +6,11 @@ export const validateAccessEntryInput = (accessEntry: ManualAccessEntryInput): V
     return { valid: false, message: "Both 'schoolNumber' and 'type' are required" }
   }
 
+  // Check if schoolNumber starts with whitespace or ends with whitespace
+  if (/^\s|\s$/.test(accessEntry.schoolNumber)) {
+    return { valid: false, message: "'schoolNumber' cannot start or end with whitespace" }
+  }
+
   switch (accessEntry.type) {
     case "MANUELL-SKOLELEDER-TILGANG":
     case "MANUELL-ALLE-ELEVER-VED-SKOLE-TILGANG":
