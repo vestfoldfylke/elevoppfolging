@@ -24,13 +24,13 @@ const getErrorException = (error: unknown): unknown => {
  */
 export const apiRequestMiddleware = async <TResponse extends object, TRequestBody = undefined>(requestEvent: RequestEvent, next: ApiNextFunction<TResponse, TRequestBody>): Promise<Response> => {
   const request = requestEvent.request
-  
+
   let loggerPrefix = `[API Request Middleware] - ${request.method} ${request.url}`
 
   logger.info(`${loggerPrefix} - Incoming request`)
 
   let principal: AuthenticatedPrincipal
-  
+
   try {
     principal = getAuthenticatedPrincipal(request.headers)
     loggerPrefix += ` - Principal: ${principal.id} (${principal.displayName})`
@@ -41,7 +41,7 @@ export const apiRequestMiddleware = async <TResponse extends object, TRequestBod
   }
 
   let body: TRequestBody | undefined
-  
+
   if (request.headers.get("Content-Type")?.includes("application/json")) {
     try {
       body = (await request.json()) as TRequestBody
@@ -62,7 +62,7 @@ export const apiRequestMiddleware = async <TResponse extends object, TRequestBod
       logger.errorException(getErrorException(error), `${loggerPrefix} - Error serializing response data - please provide data that can be serialized to JSON`)
       return json({ message: "Internal Server Error" }, { status: 500 })
     }
-    
+
     return json(data)
   } catch (error) {
     if (error instanceof HTTPError) {

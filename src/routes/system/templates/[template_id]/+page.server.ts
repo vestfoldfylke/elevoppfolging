@@ -48,7 +48,7 @@ const getTemplate: ServerLoadNextFunction<TemplatePageData> = async ({ principal
       content: [],
       sort: 20
     }
-    
+
     return {
       template: newTemplate
     }
