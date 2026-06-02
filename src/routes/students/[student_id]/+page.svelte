@@ -286,7 +286,7 @@
       <div class="consent-and-access-container">
         <DataSharingConsent canEdit={canEditStudentDataSharingConsent(data.principalAccessForStudent)} student={data.student} studentDataSharingConsent={data.studentDataSharingConsent} unavailableSchoolDocuments={data.unavailableSchoolDocuments} />
         
-        <div class="ds-card" data-variant="tinted" data-color="brand2">
+        <div class="ds-card access-container" data-variant="tinted" data-color="brand2">
           <div class="card-header">
             <div class="card-title">
               <span class="material-symbols-outlined">school</span>
@@ -457,6 +457,10 @@
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
+  }
+
+  .access-container {
+    flex: 3;
   }
 
   .documents {
