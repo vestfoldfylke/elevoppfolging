@@ -4,7 +4,7 @@
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { DocumentContentItem, DocumentContentTemplate } from "$lib/types/db/shared-types"
-  import AsyncButton from "../AsyncButton.svelte"
+  import AsyncButton, { type AsyncButtonResult } from "../AsyncButton.svelte"
   import DocumentContentItemComponent from "../Document/DocumentContentItem.svelte"
   import TemplateEditorItem from "./TemplateEditorItem.svelte"
   import { templateEditorContentItemIcons, templateEditorContentItemNames } from "./template-editor-constants"
@@ -113,10 +113,11 @@
     return templateForm.reportValidity()
   }
 
-  const newTemplate = async (): Promise<void> => {
+  const newTemplate = async (): Promise<AsyncButtonResult> => {
     const formIsValid = validateTemplate()
+    
     if (!formIsValid) {
-      throw new Error(INVALID_FORM_MESSAGE)
+      return { status: 'error', message: INVALID_FORM_MESSAGE }
     }
 
     const { templateId } = await apiFetch(`/api/templates`, {
@@ -131,12 +132,15 @@
 
     // redirect and reload page data
     await goto(`/system/templates/${templateId}`, { invalidateAll: true })
+
+    return { status: 'success' }
   }
 
-  const updateTemplate = async (): Promise<void> => {
+  const updateTemplate = async (): Promise<AsyncButtonResult> => {
     const formIsValid = validateTemplate()
+    
     if (!formIsValid) {
-      throw new Error(INVALID_FORM_MESSAGE)
+      return { status: 'error', message: INVALID_FORM_MESSAGE }
     }
 
     await apiFetch(`/api/templates/${editableTemplate._id as NoSlashString}`, {
@@ -147,13 +151,13 @@
       }
     })
 
-    previewMode = true
+    return { status: 'success', reloadPageData: true, callBack: () => { previewMode = true } }
   }
 
-  const deleteTemplate = async (): Promise<void> => {
+  const deleteTemplate = async (): Promise<AsyncButtonResult> => {
     const confirmDelete = confirm("Er du heeeelt sikker på du vil slette denne malen da? Den vil ikke kunne brukes lenger. Dokumentene som er laget med malen vil ikke bli slettet.")
     if (!confirmDelete) {
-      return
+      return { status: 'cancelled' }
     }
 
     await apiFetch(`/api/templates/${editableTemplate._id as NoSlashString}`, {
@@ -162,6 +166,8 @@
 
     // redirect and reload page data
     await goto(`/system/templates`, { invalidateAll: true })
+
+    return { status: 'success' }
   }
 </script>
 
@@ -234,7 +240,7 @@
     {#if !editableTemplate._id}
       <AsyncButton buttonText="Lagre mal" onClick={newTemplate} iconName="save" />
     {:else}
-      <AsyncButton disabled={JSON.stringify(editableTemplate) === JSON.stringify(template)} buttonText="Lagre endringer" onClick={updateTemplate} reloadPageDataOnSuccess={true} iconName="save" />
+      <AsyncButton disabled={JSON.stringify(editableTemplate) === JSON.stringify(template)} buttonText="Lagre endringer" onClick={updateTemplate} iconName="save" />
     {/if}
     <button class="ds-button" data-variant="secondary" type="button" onclick={() => previewMode = true}><span class="material-symbols-outlined">visibility</span>Forhåndsvis mal</button>
   {/if}

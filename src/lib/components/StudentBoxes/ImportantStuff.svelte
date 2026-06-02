@@ -5,7 +5,7 @@
   import type { FrontendStudent } from "$lib/types/app-types"
   import type { SchoolInfo, StudentCheckBox, StudentImportantStuff, StudentImportantStuffInput } from "$lib/types/db/shared-types"
   import { STUDENT_CHECKBOX_DISPLAY_NAMES } from "$lib/utils/student-checkbox-constants"
-  import AsyncButton from "../AsyncButton.svelte"
+  import AsyncButton, { type AsyncButtonResult } from "../AsyncButton.svelte"
   import EditorInfo from "../EditorInfo.svelte"
 
   type ImportantStuffProps = {
@@ -45,13 +45,13 @@
       .map((checkbox) => checkbox.value)
   }
 
-  const updateStudentImportantStuff = async (): Promise<void> => {
+  const updateStudentImportantStuff = async (): Promise<AsyncButtonResult> => {
     if (!importantStuffForm) {
-      throw new Error("Important stuff form not found")
+      return { status: 'error', message: "Important stuff form not found" }
     }
     const valid = importantStuffForm.reportValidity()
     if (!valid) {
-      throw new Error(INVALID_FORM_MESSAGE)
+      return { status: 'error', message: INVALID_FORM_MESSAGE }
     }
 
     await apiFetch(`/api/students/${student._id as NoSlashString}/importantstuff`, {
@@ -61,6 +61,8 @@
         "Content-Type": "application/json"
       }
     })
+
+    return { status: 'success', reloadPageData: true, callBack: () => { editMode = false } }
   }
 </script>
 
@@ -148,7 +150,7 @@
 
   {#if editMode}
     <div class="card-footer-actions">
-      <AsyncButton disabled={!hasMadeChanges} onClick={() => updateStudentImportantStuff()} reloadPageDataOnSuccess={true} buttonText="Lagre" iconName="save" callBackAfterReloadPageData={() => { editMode = false }} />
+      <AsyncButton disabled={!hasMadeChanges} onClick={updateStudentImportantStuff} buttonText="Lagre" iconName="save" />
       <button class="ds-button" data-variant="secondary" type="button" onclick={() => { editMode = false; editableImportantStuff = $state.snapshot(savedEditableImportantStuff); }}><span class="material-symbols-outlined">close</span>Avbryt</button>
     </div>
   {:else}

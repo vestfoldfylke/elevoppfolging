@@ -2,7 +2,7 @@
   import { goto } from "$app/navigation"
   import { page } from "$app/state"
   import { apiFetch } from "$lib/api-fetch/api-fetch"
-  import AsyncButton from "$lib/components/AsyncButton.svelte"
+  import AsyncButton, { type AsyncButtonResult } from "$lib/components/AsyncButton.svelte"
   import PageHeader from "$lib/components/PageHeader.svelte"
   import SuggestionSelect from "$lib/components/SchoolAdministration/SuggestionSelect.svelte"
   import { schoolNameValidation } from "$lib/data-validation/school-validation"
@@ -44,11 +44,11 @@
 
   let addSchoolLeaderOpen = $state(false)
 
-  const deleteManualSchool = async (): Promise<void> => {
+  const deleteManualSchool = async (): Promise<AsyncButtonResult> => {
     const confirmDelete = confirm(`Er du sikker på at du vil slette skolen "${currentSchool.name}"? Dette kan ikke angres.`)
 
     if (!confirmDelete) {
-      return
+      return { status: 'cancelled' }
     }
 
     await apiFetch(`/api/schools/${currentSchool.schoolNumber as NoSlashString}`, {
@@ -57,6 +57,8 @@
 
     // redirect to schools admin page and reload dependent data
     await goto("/system/schools", { invalidateAll: true })
+
+    return { status: 'success' }
   }
 
   let selectedEntraUserId = $state("")
@@ -65,7 +67,7 @@
   let updateSchoolForm: HTMLFormElement | undefined = $state()
   let updateSchoolName: string = $derived.by(() => currentSchool.name)
 
-  const updateSchool = async (): Promise<void> => {
+  const updateSchool = async (): Promise<AsyncButtonResult> => {
     if (!updateSchoolForm?.reportValidity()) {
       throw new Error(INVALID_FORM_MESSAGE)
     }
@@ -87,7 +89,7 @@
       }
     })
 
-    updateSchoolEdit = false
+    return { status: 'success', reloadPageData: true, callBack: () => { updateSchoolEdit = false } }
   }
 
   const abortUpdateSchool = () => {
@@ -104,7 +106,7 @@
     selectedEntraUserId = ""
   }
 
-  const addSchoolLeaderAccess = async (): Promise<void> => {
+  const addSchoolLeaderAccess = async (): Promise<AsyncButtonResult> => {
     await apiFetch(`/api/access/${selectedEntraUserId as NoSlashString}/add`, {
       method: "POST",
       body: {
@@ -115,9 +117,11 @@
         "Content-Type": "application/json"
       }
     })
+
+    return { status: 'success', reloadPageData: true, callBack: resetAddSchoolLeaderAccess }
   }
 
-  const removeSchoolLeaderAccess = async (entraUserId: string): Promise<void> => {
+  const removeSchoolLeaderAccess = async (entraUserId: string): Promise<AsyncButtonResult> => {
     await apiFetch(`/api/access/${entraUserId as NoSlashString}/remove`, {
       method: "POST",
       body: {
@@ -128,6 +132,8 @@
         "Content-Type": "application/json"
       }
     })
+
+    return { status: 'success', reloadPageData: true }
   }
 </script>
 
@@ -187,7 +193,7 @@
         </div>
 
         <div class="update-school-actions">
-          <AsyncButton onClick={updateSchool} buttonText="Lagre" iconName="save" reloadPageDataOnSuccess={true} disabled={isDisabled()} />
+          <AsyncButton onClick={updateSchool} buttonText="Lagre" iconName="save" disabled={isDisabled()} />
           <button class="ds-button" type="button" data-variant="secondary" onclick={abortUpdateSchool}>
             <span class="material-symbols-outlined">close</span>
             Avbryt
@@ -214,7 +220,7 @@
             <tr>
               <td>{schoolLeader.entra.displayName} ({schoolLeader.entra.companyName})</td>
               <td>
-                <AsyncButton onClick={() => removeSchoolLeaderAccess(schoolLeader.entra.id)} reloadPageDataOnSuccess={true} buttonText="Fjern skoleleder" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
+                <AsyncButton onClick={() => removeSchoolLeaderAccess(schoolLeader.entra.id)} buttonText="Fjern skoleleder" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
               </td>
             </tr>
           {/each}
@@ -232,7 +238,7 @@
         <SuggestionSelect items={suggestionSelectUsers} bind:value={selectedEntraUserId} label="Velg bruker" />
 
         <div class="new-access-actions">
-          <AsyncButton onClick={addSchoolLeaderAccess} buttonText="Legg til skoleleder" reloadPageDataOnSuccess={true} iconName="add" callBackAfterReloadPageData={resetAddSchoolLeaderAccess} />
+          <AsyncButton onClick={addSchoolLeaderAccess} buttonText="Legg til skoleleder" iconName="add" />
 
           <button class="ds-button" type="button" data-variant="secondary" onclick={resetAddSchoolLeaderAccess}>
             <span class="material-symbols-outlined">close</span>

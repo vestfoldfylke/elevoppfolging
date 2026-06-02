@@ -3,7 +3,7 @@
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { ClassGroup, GroupImportantStuff, GroupImportantStuffInput, SchoolInfo } from "$lib/types/db/shared-types"
-  import AsyncButton from "./AsyncButton.svelte"
+  import AsyncButton, { type AsyncButtonResult } from "./AsyncButton.svelte"
   import EditorInfo from "./EditorInfo.svelte"
 
   type GroupImportantStuffProps = {
@@ -31,14 +31,14 @@
     return JSON.stringify(savedEditableGroupImportantStuff) !== JSON.stringify(editableGroupImportantStuff)
   })
 
-  const updateGroupImportantStuff = async (): Promise<void> => {
+  const updateGroupImportantStuff = async (): Promise<AsyncButtonResult> => {
     if (!groupImportantStuffForm) {
-      throw new Error("Important stuff form not found")
+      return { status: 'error', message: "Important stuff form not found" }
     }
 
     const valid = groupImportantStuffForm.reportValidity()
     if (!valid) {
-      throw new Error(INVALID_FORM_MESSAGE)
+      return { status: 'error', message: INVALID_FORM_MESSAGE }
     }
 
     await apiFetch(`/api/classes/${group.systemId as NoSlashString}/importantstuff`, {
@@ -48,6 +48,8 @@
         "Content-Type": "application/json"
       }
     })
+
+    return { status: 'success', reloadPageData: true, callBack: () => { editMode = false } }
   }
 </script>
 
@@ -85,7 +87,7 @@
 
   {#if editMode}
     <div class="card-footer-actions">
-      <AsyncButton disabled={!hasMadeChanges} onClick={() => updateGroupImportantStuff()} reloadPageDataOnSuccess={true} buttonText="Lagre" iconName="save" callBackAfterReloadPageData={() => { editMode = false }} />
+      <AsyncButton disabled={!hasMadeChanges} onClick={updateGroupImportantStuff} buttonText="Lagre" iconName="save" />
       <button class="ds-button" data-variant="secondary" type="button" onclick={() => { editMode = false; editableGroupImportantStuff = $state.snapshot(savedEditableGroupImportantStuff); }}><span class="material-symbols-outlined">close</span>Avbryt</button>
     </div>
   {:else}

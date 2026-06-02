@@ -4,7 +4,7 @@
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { StudentAccessPerson } from "$lib/types/app-types"
   import type { DocumentInput, SchoolInfo } from "$lib/types/db/shared-types"
-  import AsyncButton from "../AsyncButton.svelte"
+  import AsyncButton, { type AsyncButtonResult } from "../AsyncButton.svelte"
   import DocumentContentItem from "./DocumentContentItem.svelte"
   import EmailAlertSelector from "./EmailAlertSelector.svelte"
 
@@ -38,14 +38,14 @@
     currentDocument.documentAccess = currentDocument.documentAccess === "ALL_WITH_STUDENT_ACCESS" ? "EXCLUDE_SUBJECT_TEACHERS" : "ALL_WITH_STUDENT_ACCESS"
   }
 
-  const newDocument = async (): Promise<void> => {
+  const newDocument = async (): Promise<AsyncButtonResult> => {
     if (!documentEditorForm) {
-      throw new Error("Document editor form not found")
+      return { status: 'error', message: "Document editor form not found" }
     }
 
     const formIsValid = documentEditorForm.reportValidity()
     if (!formIsValid) {
-      throw new Error(INVALID_FORM_MESSAGE)
+      return { status: 'error', message: INVALID_FORM_MESSAGE }
     }
 
     if (groupSystemId) {
@@ -59,7 +59,7 @@
         }
       })
 
-      return
+      return { status: 'success', reloadPageData: true, callBack: closeEditor }
     }
 
     if (studentId) {
@@ -73,20 +73,22 @@
         }
       })
     }
+
+    return { status: 'success', reloadPageData: true, callBack: closeEditor }
   }
 
-  const updateDocument = async (): Promise<void> => {
+  const updateDocument = async (): Promise<AsyncButtonResult> => {
     if (!documentId) {
-      throw new Error("Document ID is required for updating a document")
+      return { status: 'error', message: "Document ID is required to update document" }
     }
 
     if (!documentEditorForm) {
-      throw new Error("Document editor form not found")
+      return { status: 'error', message: "Document editor form not found" }
     }
 
     const formIsValid = documentEditorForm.reportValidity()
     if (!formIsValid) {
-      throw new Error(INVALID_FORM_MESSAGE)
+      return { status: 'error', message: INVALID_FORM_MESSAGE }
     }
 
     if (groupSystemId) {
@@ -100,7 +102,7 @@
         }
       })
 
-      return
+      return { status: 'success', reloadPageData: true, callBack: closeEditor }
     }
 
     if (studentId) {
@@ -114,6 +116,8 @@
         }
       })
     }
+
+    return { status: 'success', reloadPageData: true, callBack: closeEditor }
   }
 </script>
 
@@ -201,10 +205,10 @@
 </div>
 <div class="document-actions">
   {#if !documentId}
-    <AsyncButton buttonText="Lagre notat" onClick={newDocument} reloadPageDataOnSuccess={true} callBackAfterReloadPageData={closeEditor} iconName="save" />
+    <AsyncButton buttonText="Lagre notat" onClick={newDocument} iconName="save" />
   {/if}
   {#if documentId}
-    <AsyncButton disabled={!documentEdited} buttonText="Lagre endringer" onClick={updateDocument} reloadPageDataOnSuccess={true} callBackAfterReloadPageData={closeEditor} iconName="save" />
+    <AsyncButton disabled={!documentEdited} buttonText="Lagre endringer" onClick={updateDocument} iconName="save" />
   {/if}
   <button class="ds-button" type="button" data-variant="secondary" onclick={closeEditor}><span class="material-symbols-outlined">close</span>Avbryt</button>
 </div>

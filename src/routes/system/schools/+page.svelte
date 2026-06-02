@@ -1,6 +1,6 @@
 <script lang="ts">
   import { apiFetch } from "$lib/api-fetch/api-fetch"
-  import AsyncButton from "$lib/components/AsyncButton.svelte"
+  import AsyncButton, { type AsyncButtonResult } from "$lib/components/AsyncButton.svelte"
   import PageHeader from "$lib/components/PageHeader.svelte"
   import { schoolNameValidation, schoolNumberValidation } from "$lib/data-validation/school-validation"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
@@ -29,14 +29,14 @@
     modified: mockEditor
   }
 
-  const newSchool = async (): Promise<void> => {
+  const newSchool = async (): Promise<AsyncButtonResult> => {
     if (!newSchoolForm) {
-      throw new Error("New school form not found")
+      return { status: 'error', message: "New school form not found" }
     }
 
     const formIsValid = newSchoolForm.reportValidity()
     if (!formIsValid) {
-      throw new Error(INVALID_FORM_MESSAGE)
+      return { status: 'error', message: INVALID_FORM_MESSAGE }
     }
 
     await apiFetch("/api/schools", {
@@ -46,6 +46,8 @@
         "Content-Type": "application/json"
       }
     })
+
+    return { status: 'success', reloadPageData: true, callBack: () => { newSchoolOpen = false } }
   }
 </script>
 
@@ -84,7 +86,7 @@
       </form>
 
       <div class="new-school-actions">
-        <AsyncButton onClick={newSchool} buttonText="Legg til ny skole" reloadPageDataOnSuccess={true} iconName="add" callBackAfterReloadPageData={() => newSchoolOpen = false} />
+        <AsyncButton onClick={newSchool} buttonText="Legg til ny skole" iconName="add" />
         <button class="ds-button" type="button" data-variant="secondary" onclick={() => newSchoolOpen = false}>
           <span class="material-symbols-outlined">close</span>
           Avbryt

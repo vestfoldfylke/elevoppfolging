@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from "$app/state"
   import { apiFetch } from "$lib/api-fetch/api-fetch"
-  import AsyncButton from "$lib/components/AsyncButton.svelte"
+  import AsyncButton, { type AsyncButtonResult } from "$lib/components/AsyncButton.svelte"
   import PageHeader from "$lib/components/PageHeader.svelte"
   import ProgramAreaComponent from "$lib/components/SchoolAdministration/ProgramArea.svelte"
   import SuggestionSelect from "$lib/components/SchoolAdministration/SuggestionSelect.svelte"
@@ -365,7 +365,7 @@
     newManualAccessControl.entraUserId = ""
   }
 
-  const addManualAccessEntry = async (newManualAccessControl: NewManualAccessControl): Promise<void> => {
+  const addManualAccessEntry = async (newManualAccessControl: NewManualAccessControl): Promise<AsyncButtonResult> => {
     if (!newManualAccessControl.form) {
       throw new Error("Form reference is missing")
     }
@@ -387,7 +387,7 @@
     switch (newManualAccessControl.type) {
       case "MANUELL-PROGRAMOMRÅDE-TILGANG": {
         if (!newManualAccessControl.programAreaId) {
-          throw new Error("Programområde must be selected")
+          return { status: 'error', message: "Programområde ID must be selected" }
         }
         accessEntryToAdd = { type: newManualAccessControl.type, schoolNumber: currentSchool.schoolNumber, _id: newManualAccessControl.programAreaId }
         break
@@ -395,7 +395,7 @@
 
       case "MANUELL-KLASSE-TILGANG": {
         if (!newManualAccessControl.classId) {
-          throw new Error("Class ID must be selected")
+          return { status: 'error', message: "Class ID must be selected" }
         }
 
         accessEntryToAdd = { type: newManualAccessControl.type, schoolNumber: currentSchool.schoolNumber, systemId: newManualAccessControl.classId }
@@ -404,7 +404,7 @@
 
       case "MANUELL-ELEV-TILGANG": {
         if (!newManualAccessControl.studentId) {
-          throw new Error("Student ID must be selected")
+          return { status: 'error', message: "Student ID must be selected" }
         }
 
         accessEntryToAdd = { type: newManualAccessControl.type, schoolNumber: currentSchool.schoolNumber, _id: newManualAccessControl.studentId }
@@ -417,7 +417,7 @@
         break
 
       default:
-        throw new Error(`Invalid access entry type: ${newManualAccessControl.type}`)
+        return { status: 'error', message: `Invalid access entry type: ${newManualAccessControl.type}` }
     }
 
     await apiFetch(`/api/access/${newManualAccessControl.entraUserId as NoSlashString}/add`, {
@@ -427,9 +427,11 @@
         "Content-Type": "application/json"
       }
     })
+
+    return { status: 'success', reloadPageData: true, callBack: () => closeManualAccessControl(newManualAccessControl) }
   }
 
-  const removeManualAccessEntry = async (entraUserId: string, accessEntry: ManualAccessEntryInput): Promise<void> => {
+  const removeManualAccessEntry = async (entraUserId: string, accessEntry: ManualAccessEntryInput): Promise<AsyncButtonResult> => {
     await apiFetch(`/api/access/${entraUserId as NoSlashString}/remove`, {
       method: "POST",
       body: accessEntry,
@@ -437,6 +439,8 @@
         "Content-Type": "application/json"
       }
     })
+
+    return { status: 'success', reloadPageData: true }
   }
 
   /* --- PROGRAM AREAS --- */
@@ -450,17 +454,17 @@
   let newManualStudentHasBlockedAddress = $state(false)
   let newManualStudentFormOpen = $state(false)
 
-  const addNewManualStudent = async (): Promise<void> => {
+  const addNewManualStudent = async (): Promise<AsyncButtonResult> => {
     if (!addManualStudentForm?.reportValidity()) {
-      throw new Error(INVALID_FORM_MESSAGE)
+      return { status: 'error', message: INVALID_FORM_MESSAGE }
     }
 
     if (!newManualStudentFnr) {
-      throw new Error("Fødselsnummer må være fylt ut")
+      return { status: 'error', message: "Fødselsnummer må være fylt ut" }
     }
 
     if (!newManualStudentName) {
-      throw new Error("Navn må være fylt ut")
+      return { status: 'error', message: "Navn må være fylt ut" }
     }
 
     const newManualStudentInput: NewManualStudentInput = {
@@ -477,6 +481,8 @@
         "Content-Type": "application/json"
       }
     })
+
+    return { status: 'success', reloadPageData: true, callBack: closeNewManualStudentForm }
   }
 
   let canManageManualStudents = $derived.by(() => {
@@ -539,7 +545,7 @@
         {/if}
 
         <div class="new-manual-access-actions">
-          <AsyncButton onClick={() => addManualAccessEntry(newManualAccessControl)} reloadPageDataOnSuccess={true} buttonText="Legg til tilgang" iconName="add" callBackAfterReloadPageData={() => closeManualAccessControl(newManualAccessControl)} />
+          <AsyncButton onClick={() => addManualAccessEntry(newManualAccessControl)} buttonText="Legg til tilgang" iconName="add" />
 
           <button class="ds-button" type="button" data-variant="secondary" onclick={() => closeManualAccessControl(newManualAccessControl)}>
             <span class="material-symbols-outlined">close</span>Lukk
@@ -600,7 +606,7 @@
                     <td>{programAreaAccess.programAreaName}</td>
                     <td>{programAreaAccess.entraUser.name} ({programAreaAccess.entraUser.companyName})</td>
                     <td>
-                      <AsyncButton onClick={() => removeManualAccessEntry(programAreaAccess.entraUser.id, programAreaAccess.accessEntry)} reloadPageDataOnSuccess={true} buttonText="Fjern tilgang" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
+                      <AsyncButton onClick={() => removeManualAccessEntry(programAreaAccess.entraUser.id, programAreaAccess.accessEntry)} buttonText="Fjern tilgang" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
                     </td>
                   </tr>
                 {/each}
@@ -633,7 +639,7 @@
                     <td>{classAccess.className}</td>
                     <td>{classAccess.entraUser.name} ({classAccess.entraUser.companyName})</td>
                     <td>
-                      <AsyncButton onClick={() => removeManualAccessEntry(classAccess.entraUser.id, classAccess.accessEntry)} reloadPageDataOnSuccess={true} buttonText="Fjern tilgang" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
+                      <AsyncButton onClick={() => removeManualAccessEntry(classAccess.entraUser.id, classAccess.accessEntry)} buttonText="Fjern tilgang" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
                     </td>
                   </tr>
                 {/each}
@@ -667,7 +673,7 @@
                     <td>{studentAccess.student.name} ({studentAccess.student.feideName})</td>
                     <td>{studentAccess.entraUser.name} ({studentAccess.entraUser.companyName})</td>
                     <td>
-                      <AsyncButton onClick={() => removeManualAccessEntry(studentAccess.entraUser.id, studentAccess.accessEntry)} reloadPageDataOnSuccess={true} buttonText="Fjern tilgang" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
+                      <AsyncButton onClick={() => removeManualAccessEntry(studentAccess.entraUser.id, studentAccess.accessEntry)} buttonText="Fjern tilgang" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
                     </td>
                   </tr>
                 {/each}
@@ -697,7 +703,7 @@
                   <tr>
                     <td>{allStudentsAccess.entraUser.name} ({allStudentsAccess.entraUser.companyName})</td>
                     <td>
-                      <AsyncButton onClick={() => removeManualAccessEntry(allStudentsAccess.entraUser.id, allStudentsAccess.accessEntry)} reloadPageDataOnSuccess={true} buttonText="Fjern tilgang" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
+                      <AsyncButton onClick={() => removeManualAccessEntry(allStudentsAccess.entraUser.id, allStudentsAccess.accessEntry)} buttonText="Fjern tilgang" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
                     </td>
                   </tr>
                 {/each}
@@ -729,7 +735,7 @@
                       {manualStudentsAccess.entraUser.name} ({manualStudentsAccess.entraUser.companyName})
                     </td>
                     <td>
-                      <AsyncButton onClick={() => removeManualAccessEntry(manualStudentsAccess.entraUser.id, manualStudentsAccess.accessEntry)} reloadPageDataOnSuccess={true} buttonText="Fjern tilgang" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
+                      <AsyncButton onClick={() => removeManualAccessEntry(manualStudentsAccess.entraUser.id, manualStudentsAccess.accessEntry)} buttonText="Fjern tilgang" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
                     </td>
                   </tr>
                 {/each}
@@ -809,7 +815,7 @@
             </form>
   
             <div class="manual-student-actions">
-              <AsyncButton onClick={addNewManualStudent} reloadPageDataOnSuccess={true} buttonText="Legg til ny manuell elev" iconName="add" callBackAfterReloadPageData={closeNewManualStudentForm} />
+              <AsyncButton onClick={addNewManualStudent} buttonText="Legg til ny manuell elev" iconName="add" />
               <button class="ds-button" type="button" data-variant="secondary" onclick={closeNewManualStudentForm}><span class="material-symbols-outlined">close</span>Avbryt</button>
             </div>
           </div>

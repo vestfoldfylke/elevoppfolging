@@ -6,7 +6,7 @@
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { StudentAccessPerson } from "$lib/types/app-types"
   import type { DocumentMessage, DocumentMessageInput, GroupDocument, StudentDocument } from "$lib/types/db/shared-types"
-  import AsyncButton from "../AsyncButton.svelte"
+  import AsyncButton, { type AsyncButtonResult } from "../AsyncButton.svelte"
   import EditorInfo from "../EditorInfo.svelte"
   import EmailAlertSelector from "./EmailAlertSelector.svelte"
 
@@ -57,14 +57,14 @@
     editMode = false
   }
 
-  const newMessage = async (): Promise<void> => {
+  const newMessage = async (): Promise<AsyncButtonResult> => {
     if (!messageForm) {
-      throw new Error("Message form not found")
+      return { status: 'error', message: "Message form not found" }
     }
 
     const formIsValid = messageForm.reportValidity()
     if (!formIsValid) {
-      throw new Error(INVALID_FORM_MESSAGE)
+      return { status: 'error', message: INVALID_FORM_MESSAGE }
     }
 
     if ("group" in document) {
@@ -78,7 +78,7 @@
         }
       })
 
-      return
+      return { status: 'success', reloadPageData: true, callBack: callBackOnSuccessOrCancel }
     }
 
     if ("student" in document) {
@@ -92,20 +92,22 @@
         }
       })
     }
+
+    return { status: 'success', reloadPageData: true, callBack: callBackOnSuccessOrCancel }
   }
 
-  const updateMessage = async (): Promise<void> => {
+  const updateMessage = async (): Promise<AsyncButtonResult> => {
     if (!messageForm) {
-      throw new Error("Message form not found")
+      return { status: 'error', message: "Message form not found" }
     }
 
     const formIsValid = messageForm.reportValidity()
     if (!formIsValid) {
-      throw new Error(INVALID_FORM_MESSAGE)
+      return { status: 'error', message: INVALID_FORM_MESSAGE }
     }
 
     if (!message.messageId) {
-      throw new Error("messageId is required to update a message")
+      return { status: 'error', message: "messageId is required to update a message" }
     }
 
     if ("group" in document) {
@@ -119,7 +121,7 @@
         }
       })
 
-      return
+      return { status: 'success', reloadPageData: true, callBack: callBackOnSuccessOrCancel }
     }
 
     if ("student" in document) {
@@ -133,6 +135,8 @@
         }
       })
     }
+
+    return { status: 'success', reloadPageData: true, callBack: callBackOnSuccessOrCancel }
   }
 </script>
 
@@ -191,9 +195,9 @@
 {#if editMode}
   <div class="message-actions">
     {#if !message.messageId}
-      <AsyncButton buttonText="Lagre" onClick={newMessage} reloadPageDataOnSuccess={true} callBackAfterReloadPageData={callBackOnSuccessOrCancel} iconName="save" />
+      <AsyncButton buttonText="Lagre" onClick={newMessage} iconName="save" />
     {:else}
-      <AsyncButton disabled={!messageEdited} buttonText="Lagre endringer" onClick={updateMessage} reloadPageDataOnSuccess={true} callBackAfterReloadPageData={callBackOnSuccessOrCancel} iconName="save" />
+      <AsyncButton disabled={!messageEdited} buttonText="Lagre endringer" onClick={updateMessage} iconName="save" />
     {/if}
     <button class="ds-button" data-variant="secondary" onclick={callBackOnSuccessOrCancel}><span class="material-symbols-outlined">close</span>Avbryt</button>
   </div>

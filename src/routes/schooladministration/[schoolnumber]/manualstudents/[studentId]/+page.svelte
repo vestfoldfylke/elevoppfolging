@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from "$app/state"
   import { apiFetch } from "$lib/api-fetch/api-fetch"
-  import AsyncButton from "$lib/components/AsyncButton.svelte"
+  import AsyncButton, { type AsyncButtonResult } from "$lib/components/AsyncButton.svelte"
   import PageHeader from "$lib/components/PageHeader.svelte"
   import { nameValidation, ssnValidation } from "$lib/data-validation/manual-student-validation"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
@@ -30,17 +30,17 @@
   let updateManualStudentName: string = $derived.by(() => data.manualStudent.name)
   let updateManualStudentHasBlockedAddress: boolean = $derived.by(() => data.manualStudent.hasBlockedAddress ?? false)
 
-  const updateManualStudent = async (): Promise<void> => {
+  const updateManualStudent = async (): Promise<AsyncButtonResult> => {
     if (!updateManualStudentForm?.reportValidity()) {
-      throw new Error(INVALID_FORM_MESSAGE)
+      return { status: 'error', message: INVALID_FORM_MESSAGE }
     }
 
     if (!updateManualStudentFnr) {
-      throw new Error("Fødselsnummer må være fylt ut")
+      return { status: 'error', message: "Fødselsnummer må være fylt ut" }
     }
 
     if (!updateManualStudentName) {
-      throw new Error("Navn må være fylt ut")
+      return { status: 'error', message: "Navn må være fylt ut" }
     }
 
     const updateManualStudentInput: UpdateManualStudentInput = {
@@ -59,7 +59,7 @@
       }
     })
 
-    updateManualStudentEdit = false
+    return { status: 'success', reloadPageData: true, callBack: () => { updateManualStudentEdit = false } }
   }
 
   const abortUpdateManualStudent = () => {
@@ -135,7 +135,7 @@
       </form>
 
       <div class="manual-student-save-actions">
-        <AsyncButton onClick={updateManualStudent} buttonText="Lagre" iconName="save" reloadPageDataOnSuccess={true} disabled={isDisabled()} />
+        <AsyncButton onClick={updateManualStudent} buttonText="Lagre" iconName="save" disabled={isDisabled()} />
         <button class="ds-button" type="button" data-variant="secondary" onclick={abortUpdateManualStudent}><span class="material-symbols-outlined">close</span>Avbryt</button>
       </div>
     </div>

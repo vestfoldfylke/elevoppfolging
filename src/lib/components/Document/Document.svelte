@@ -2,7 +2,7 @@
   import { onMount } from "svelte"
   import { page } from "$app/state"
   import { apiFetch } from "$lib/api-fetch/api-fetch"
-  import AsyncButton from "$lib/components/AsyncButton.svelte"
+  import AsyncButton, { type AsyncButtonResult } from "$lib/components/AsyncButton.svelte"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { StudentAccessPerson } from "$lib/types/app-types"
   import type { AuditEntryInput, DocumentInput, GroupDocument, MetricCount, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
@@ -138,10 +138,10 @@
     })
   }
 
-  const handleDocumentRemove = async (): Promise<void> => {
+  const handleDocumentRemove = async (): Promise<AsyncButtonResult> => {
     const confirmDelete = confirm("Er du heeeelt sikker på du vil slette dette notatet da? Notatet og alle tilhørende oppdateringer vil bli borte borte")
     if (!confirmDelete) {
-      return
+      return { status: 'cancelled' }
     }
 
     if (studentName && "student" in document) {
@@ -151,11 +151,9 @@
         method: "DELETE"
       })
 
-      if (documentDialog) {
-        documentDialog.close()
-      }
+      documentDialog?.close()
 
-      return
+      return { status: 'success', reloadPageData: true }
     }
 
     if (groupName && "group" in document) {
@@ -165,12 +163,12 @@
         method: "DELETE"
       })
 
-      if (documentDialog) {
-        documentDialog.close()
-      }
+      documentDialog?.close()
 
-      return
+      return { status: 'success', reloadPageData: true }
     }
+
+    return { status: 'error', message: 'Document was neither student or group document??' }
   }
 
   // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounts ved endring av document (ha en key på document i parent)
@@ -280,7 +278,7 @@
                   </button>
                 {/if}
                 {#if canRemoveDocument}
-                  <AsyncButton buttonText="Slett notat" onClick={handleDocumentRemove} dataSize="sm" iconName="delete" color="danger" reloadPageDataOnSuccess={true} />
+                  <AsyncButton buttonText="Slett notat" onClick={handleDocumentRemove} dataSize="sm" iconName="delete" color="danger" />
                 {/if}
               </div>
             {/if}

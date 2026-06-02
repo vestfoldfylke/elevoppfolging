@@ -6,7 +6,7 @@
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { AccessControlClass } from "$lib/types/app-types"
   import type { ProgramArea, ProgramAreaInput } from "$lib/types/db/shared-types"
-  import AsyncButton from "../AsyncButton.svelte"
+  import AsyncButton, { type AsyncButtonResult } from "../AsyncButton.svelte"
 
   type ProgramAreaProps = {
     programArea?: ProgramArea | undefined
@@ -83,7 +83,7 @@
     }
   }
 
-  const createProgramArea = async (): Promise<void> => {
+  const createProgramArea = async (): Promise<AsyncButtonResult> => {
     const newProgramAreaInput = validateAndGetProgramAreaInput()
 
     await apiFetch(`/api/programareas`, {
@@ -93,11 +93,13 @@
         "Content-Type": "application/json"
       }
     })
+
+    return { status: 'success', reloadPageData: true, callBack: closeEditMode }
   }
 
-  const updateProgramArea = async (): Promise<void> => {
+  const updateProgramArea = async (): Promise<AsyncButtonResult> => {
     if (!programArea) {
-      throw new Error("Kan ikke oppdatere programområde uten å vite hvilket programområde det er snakk om")
+      return { status: 'error', message: "Kan ikke oppdatere programområde uten å vite hvilket programområde det er snakk om" }
     }
 
     const updatedProgramAreaInput = validateAndGetProgramAreaInput()
@@ -109,16 +111,20 @@
         "Content-Type": "application/json"
       }
     })
+
+    return { status: 'success', reloadPageData: true, callBack: closeEditMode }
   }
 
-  const deleteProgramArea = async (): Promise<void> => {
+  const deleteProgramArea = async (): Promise<AsyncButtonResult> => {
     if (!programArea) {
-      throw new Error("Kan ikke slette programområde uten å vite hvilket programområde det er snakk om")
+      return { status: 'error', message: "Kan ikke slette programområde uten å vite hvilket programområde det er snakk om" }
     }
 
     await apiFetch(`/api/programareas/${programArea._id as NoSlashString}`, {
       method: "DELETE"
     })
+
+    return { status: 'success', reloadPageData: true, callBack: closeEditMode }
   }
 
   const closeEditMode = (): void => {
@@ -188,10 +194,10 @@
 
     <div class="program-area-actions">
       {#if programArea}
-        <AsyncButton disabled={!programAreaEdited && nonExistingProgramAreas.length === 0} onClick={updateProgramArea} buttonText="Lagre endringer" iconName="save" reloadPageDataOnSuccess={true} callBackAfterReloadPageData={closeEditMode} />
-        <AsyncButton onClick={deleteProgramArea} buttonText="Slett programområde" iconName="delete" color="danger" reloadPageDataOnSuccess={true} callBackAfterReloadPageData={closeEditMode} />
+        <AsyncButton disabled={!programAreaEdited && nonExistingProgramAreas.length === 0} onClick={updateProgramArea} buttonText="Lagre endringer" iconName="save" />
+        <AsyncButton onClick={deleteProgramArea} buttonText="Slett programområde" iconName="delete" color="danger" />
       {:else}
-        <AsyncButton onClick={createProgramArea} buttonText="Opprett programområde" iconName="save" reloadPageDataOnSuccess={true} callBackAfterReloadPageData={closeEditMode} />
+        <AsyncButton onClick={createProgramArea} buttonText="Opprett programområde" iconName="save" />
       {/if}
       <button class="ds-button" data-variant="secondary" onclick={closeEditMode}><span class="material-symbols-outlined">close</span>Avbryt</button>
     </div>
