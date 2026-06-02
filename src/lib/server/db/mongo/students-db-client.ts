@@ -1,20 +1,25 @@
 import { logger } from "@vestfoldfylke/loglady"
-import { type Collection, type Db, type InsertOneResult, ObjectId, type UpdateResult, type WithId } from "mongodb"
+import { type Binary, type Db, type InsertOneResult, ObjectId, type UpdateResult, type WithId } from "mongodb"
 import type { FrontendStudent } from "$lib/types/app-types"
 import type { IStudentsDbClient } from "$lib/types/db/db-client"
 import type { KeysToNumber } from "$lib/types/db/db-helpers"
-import type { AppStudent, DbAppStudent, MetricCount, MetricLabel, NewAppStudent, StudentEnrollment, UpdateAppStudent } from "$lib/types/db/shared-types"
+import type { AppStudent, DbAppStudent, DbEncryptedAppStudent, MetricCount, MetricLabel, NewAppStudent, StudentEnrollment, UpdateAppStudent } from "$lib/types/db/shared-types"
 import { APP_INFO } from "../../app-info"
 import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
 
 export class StudentsDbClient implements IStudentsDbClient {
-  private studentsCollection: Collection<NewAppStudent>
+  private encryptionDb: Db
+  private readonly encryptValue: (value: unknown) => Promise<Binary>
+  private readonly studentsCollectionName: string = "students"
 
-  constructor(db: Db) {
-    this.studentsCollection = db.collection<NewAppStudent>("students")
+  constructor(db: Db, encryptValue: (value: unknown) => Promise<Binary>) {
+    this.encryptionDb = db
+    this.encryptValue = encryptValue
   }
 
   async getAllStudents(): Promise<FrontendStudent[]> {
+    const studentsCollection = this.encryptionDb.collection<DbAppStudent>(this.studentsCollectionName)
+
     const projection: KeysToNumber<WithId<FrontendStudent>> = {
       _id: 1,
       feideName: 1,
@@ -32,7 +37,7 @@ export class StudentsDbClient implements IStudentsDbClient {
     endDateMustBeAfter.setDate(endDateMustBeAfter.getDate() - APP_INFO.STUDENT_ACCESS_AFTER_EXPIRE_DAYS)
 
     // Get all students that has an enrollment with end date after the today minus STUDENT_ACCESS_AFTER_EXPIRE_DAYS, or no end date at all (active enrollments)
-    const students = await this.studentsCollection
+    const students = await studentsCollection
       .find<FrontendStudent>({ $or: [{ "studentEnrollments.period.end": { $eq: null } }, { "studentEnrollments.period.end": { $gte: endDateMustBeAfter } }] }, { projection })
       .toArray()
 
@@ -43,6 +48,8 @@ export class StudentsDbClient implements IStudentsDbClient {
   }
 
   async getStudentBySsn(ssn: string): Promise<FrontendStudent | null> {
+    const studentsCollection = this.encryptionDb.collection<DbAppStudent>(this.studentsCollectionName)
+
     logger.info("Getting student by ssn")
 
     const projection: KeysToNumber<WithId<FrontendStudent>> = {
@@ -58,7 +65,7 @@ export class StudentsDbClient implements IStudentsDbClient {
       hasBlockedAddress: 1
     }
 
-    const student: WithId<DbAppStudent> | null = await this.studentsCollection.findOne({ ssn }, { projection })
+    const student: DbAppStudent | null = await studentsCollection.findOne({ ssn }, { projection })
     if (!student) {
       return null
     }
@@ -80,6 +87,8 @@ export class StudentsDbClient implements IStudentsDbClient {
   }
 
   async getManualStudentById(studentId: string): Promise<AppStudent | null> {
+    const studentsCollection = this.encryptionDb.collection<DbAppStudent>(this.studentsCollectionName)
+
     logger.info("Getting manual student by id")
 
     const projection: KeysToNumber<WithId<AppStudent>> = {
@@ -96,7 +105,7 @@ export class StudentsDbClient implements IStudentsDbClient {
       hasBlockedAddress: 1
     }
 
-    const student: WithId<DbAppStudent> | null = await this.studentsCollection.findOne({ _id: new ObjectId(studentId), source: "MANUAL" }, { projection })
+    const student: DbAppStudent | null = await studentsCollection.findOne({ _id: new ObjectId(studentId), source: "MANUAL" }, { projection })
     if (!student) {
       return null
     }
@@ -119,9 +128,19 @@ export class StudentsDbClient implements IStudentsDbClient {
   }
 
   async createManualStudent(manualStudent: NewAppStudent): Promise<string> {
+    const studentsCollection = this.encryptionDb.collection<DbEncryptedAppStudent>(this.studentsCollectionName)
+
     logger.info("Creating new manual student with systemId: {SystemId}", manualStudent.systemId)
 
-    const result: InsertOneResult<DbAppStudent> = await this.studentsCollection.insertOne(manualStudent)
+    const encryptedHasBlockedAddress: Binary = await this.encryptValue(manualStudent.hasBlockedAddress ?? false)
+
+    const encryptedManualStudent: DbEncryptedAppStudent = {
+      ...manualStudent,
+      _id: new ObjectId(),
+      hasBlockedAddress: encryptedHasBlockedAddress
+    }
+
+    const result: InsertOneResult<DbEncryptedAppStudent> = await studentsCollection.insertOne(encryptedManualStudent)
 
     const mainSchoolNumber: string | undefined = manualStudent.studentEnrollments.find((enrollment: StudentEnrollment) => enrollment.mainSchool)?.school.schoolNumber
     const metricBody: MetricCount = {
@@ -152,14 +171,19 @@ export class StudentsDbClient implements IStudentsDbClient {
   }
 
   async updateManualStudent(manualStudent: UpdateAppStudent): Promise<string> {
+    const studentsCollection = this.encryptionDb.collection<DbEncryptedAppStudent>(this.studentsCollectionName)
+
     logger.info("Updating manual student with Id: {Id}", manualStudent._id)
 
-    const manualStudentWithId: DbAppStudent = {
+    const encryptedHasBlockedAddress: Binary = await this.encryptValue(manualStudent.hasBlockedAddress ?? false)
+
+    const manualStudentWithId: DbEncryptedAppStudent = {
       ...manualStudent,
-      _id: new ObjectId(manualStudent._id)
+      _id: new ObjectId(manualStudent._id),
+      hasBlockedAddress: encryptedHasBlockedAddress
     }
 
-    const result: UpdateResult<DbAppStudent> = await this.studentsCollection.updateOne({ _id: new ObjectId(manualStudent._id) }, { $set: manualStudentWithId })
+    const result: UpdateResult<DbEncryptedAppStudent> = await studentsCollection.updateOne({ _id: manualStudentWithId._id }, { $set: manualStudentWithId })
 
     const mainSchoolNumber: string | undefined = manualStudent.studentEnrollments.find((enrollment: StudentEnrollment) => enrollment.mainSchool)?.school.schoolNumber
     const metricBody: MetricCount = {

@@ -123,7 +123,6 @@
 
   .ds-card {
     flex: 1;
-    min-width: 20rem;
+    min-width: 25rem;
   }
-
 </style>
