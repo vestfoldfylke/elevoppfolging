@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { env } from "$env/dynamic/public"
   import favicon16 from "$lib/assets/favicon-32x32.png"
   import favicon32 from "$lib/assets/favicon-32x32.png"
   import "@digdir/designsystemet-web" // For ds to work
