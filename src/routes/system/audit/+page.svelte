@@ -1,6 +1,6 @@
 <script lang="ts">
   import { apiFetch } from "$lib/api-fetch/api-fetch"
-  import AsyncButton from "$lib/components/AsyncButton.svelte"
+  import AsyncButton, { type AsyncButtonResult } from "$lib/components/AsyncButton.svelte"
   import type { AuditEntry, AuditSearchQueryResult, AuditSearchTerms, ConstantDisplayNameEntry } from "$lib/types/db/shared-types"
   import { AUDIT_ENTRY_ACTION_DISPLAY_NAMES, AUDIT_ENTRY_RESOURCE_DISPLAY_NAMES } from "$lib/utils/audit-constants"
   import { getDateDaysBack, getDateValue, prettifyDateTime } from "$lib/utils/dates"
@@ -58,7 +58,7 @@
     }
   })
 
-  const handleSearch = async (): Promise<void> => {
+  const handleSearch = async (): Promise<AsyncButtonResult> => {
     const queriedAuditEntries: AuditSearchQueryResult = await apiFetch("/api/audit/query", {
       headers: {
         "Content-Type": "application/json"
@@ -69,6 +69,8 @@
 
     auditEntries = queriedAuditEntries.entries
     auditSearchError = queriedAuditEntries.errorMessage
+
+    return { status: "success" }
   }
 
   const getStringifiedMetadata = (metaData: AuditEntry["metaData"]): string => {

@@ -5,7 +5,7 @@
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { FrontendStudent, StudentUnavailableSchoolDocuments } from "$lib/types/app-types"
   import type { StudentDataSharingConsent, StudentDataSharingConsentInput } from "$lib/types/db/shared-types"
-  import AsyncButton from "../AsyncButton.svelte"
+  import AsyncButton, { type AsyncButtonResult } from "../AsyncButton.svelte"
   import EditorInfo from "../EditorInfo.svelte"
 
   type DataSharingConsentProps = {
@@ -35,13 +35,13 @@
     return JSON.stringify(savedEditableSharingConsent) !== JSON.stringify(editableSharingConsent)
   })
 
-  const updateStudentDataSharingConsent = async (): Promise<void> => {
+  const updateStudentDataSharingConsent = async (): Promise<AsyncButtonResult> => {
     if (!consentForm) {
-      throw new Error("Consent form not found")
+      return { status: "error", message: "Consent form not found" }
     }
     const valid = consentForm.reportValidity()
     if (!valid) {
-      throw new Error(INVALID_FORM_MESSAGE)
+      return { status: "error", message: INVALID_FORM_MESSAGE }
     }
 
     await apiFetch(`/api/students/${student._id as NoSlashString}/consent`, {
@@ -51,6 +51,14 @@
         "Content-Type": "application/json"
       }
     })
+
+    return {
+      status: "success",
+      reloadPageData: true,
+      callBack: () => {
+        editMode = false
+      }
+    }
   }
 </script>
 
@@ -104,7 +112,7 @@
   </div>
   {#if editMode}
     <div class="card-footer-actions">
-      <AsyncButton disabled={!hasMadeChanges} onClick={() => updateStudentDataSharingConsent()} reloadPageDataOnSuccess={true} buttonText="Lagre" iconName="save" callBackAfterReloadPageData={() => { editMode = false }} />
+      <AsyncButton disabled={!hasMadeChanges} onClick={updateStudentDataSharingConsent} buttonText="Lagre" iconName="save" />
       <button class="ds-button" data-variant="secondary" type="button" onclick={() => { editMode = false; editableSharingConsent = $state.snapshot(savedEditableSharingConsent); }}><span class="material-symbols-outlined">close</span>Avbryt</button>
     </div>
   {:else}

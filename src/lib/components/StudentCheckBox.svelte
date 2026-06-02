@@ -5,7 +5,7 @@
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { StudentCheckBox, StudentCheckBoxInput } from "$lib/types/db/shared-types"
   import { prettifyDateTime } from "$lib/utils/dates"
-  import AsyncButton from "./AsyncButton.svelte"
+  import AsyncButton, { type AsyncButtonResult } from "./AsyncButton.svelte"
 
   type StudentCheckBoxProps = {
     checkBox: StudentCheckBox
@@ -37,13 +37,13 @@
     }
   }
 
-  const createStudentCheckBox = async (): Promise<void> => {
+  const createStudentCheckBox = async (): Promise<AsyncButtonResult> => {
     if (!studentCheckBoxFormNew) {
-      throw new Error("Student new checkbox form not found")
+      return { status: "error", message: "Student new checkbox form not found" }
     }
 
     if (!studentCheckBoxFormNew.reportValidity()) {
-      throw new Error(INVALID_FORM_MESSAGE)
+      return { status: "error", message: INVALID_FORM_MESSAGE }
     }
 
     await apiFetch("/api/studentcheckboxes", {
@@ -53,42 +53,60 @@
         "Content-Type": "application/json"
       }
     })
+
+    return {
+      status: "success",
+      reloadPageData: true,
+      callBack: () => {
+        callBackOnCreate?.()
+        editMode = false
+      }
+    }
   }
 
-  const deleteStudentCheckBox = async (): Promise<void> => {
+  const deleteStudentCheckBox = async (): Promise<AsyncButtonResult> => {
     if (!checkBox._id) {
-      throw new Error("Mangler id for å kunne slette")
+      return { status: "error", message: "Mangler id for å kunne slette" }
     }
 
     const confirmation = confirm("Er du sikker på at du vil slette denne sjekkboksen? Den vil bli fjernet fra alle elever, og må legges til på nytt på hver elev dersom den skal legges til på nytt.")
     if (!confirmation) {
-      return
+      return { status: "cancelled" }
     }
 
     await apiFetch(`/api/studentcheckboxes/${checkBox._id as NoSlashString}`, {
       method: "DELETE"
     })
+
+    return {
+      status: "success",
+      reloadPageData: true,
+      callBack: () => {
+        callBackOnCreate?.()
+        editMode = false
+      }
+    }
   }
 
-  const updateStudentCheckBox = async (): Promise<void> => {
+  const updateStudentCheckBox = async (): Promise<AsyncButtonResult> => {
     if (!checkBox._id) {
-      throw new Error("Mangler id for å kunne oppdatere")
+      return { status: "error", message: "Mangler id for å kunne oppdatere" }
     }
 
     if (!studentCheckBoxFormEditName) {
-      throw new Error("Student edit checkbox name form not found")
+      return { status: "error", message: "Student edit checkbox name form not found" }
     }
 
     if (!studentCheckBoxFormEditName.reportValidity()) {
-      throw new Error(INVALID_FORM_MESSAGE)
+      return { status: "error", message: INVALID_FORM_MESSAGE }
     }
 
     if (!studentCheckBoxFormEditSort) {
-      throw new Error("Student edit checkbox sort form not found")
+      return { status: "error", message: "Student edit checkbox sort form not found" }
     }
 
     if (!studentCheckBoxFormEditSort.reportValidity()) {
-      throw new Error(INVALID_FORM_MESSAGE)
+      return { status: "error", message: INVALID_FORM_MESSAGE }
     }
 
     await apiFetch(`/api/studentcheckboxes/${checkBox._id as NoSlashString}`, {
@@ -98,14 +116,15 @@
         "Content-Type": "application/json"
       }
     })
-  }
 
-  const callBackAfterReloadPageData = (): void => {
-    if (callBackOnCreate) {
-      callBackOnCreate()
+    return {
+      status: "success",
+      reloadPageData: true,
+      callBack: () => {
+        callBackOnCreate?.()
+        editMode = false
+      }
     }
-
-    editMode = false
   }
 </script>
 
@@ -142,7 +161,7 @@
       </ds-field>
 
       <div class="student_check_box_edit_actions">
-        <AsyncButton onClick={createStudentCheckBox} buttonText="Opprett" iconName="add" reloadPageDataOnSuccess={true} {callBackAfterReloadPageData} />
+        <AsyncButton onClick={createStudentCheckBox} buttonText="Opprett" iconName="add" />
         <button class="ds-button" type="button" data-variant="secondary" onclick={cancelStudentCheckBox}>Avbryt</button>
       </div>
     </div>
@@ -193,9 +212,9 @@
     <div class="student_check_box_edit_actions">
       {#if !editMode}
         <button class="ds-button" type="button" data-size="sm" onclick={() => editMode = true}><span class="material-symbols-outlined">edit</span>Rediger</button>
-        <AsyncButton onClick={deleteStudentCheckBox} buttonText="Slett" iconName="delete" dataSize="sm" color="danger" reloadPageDataOnSuccess={true} {callBackAfterReloadPageData} />
+        <AsyncButton onClick={deleteStudentCheckBox} buttonText="Slett" iconName="delete" dataSize="sm" color="danger" />
       {:else}
-        <AsyncButton onClick={updateStudentCheckBox} buttonText="Lagre" iconName="save" dataSize="sm" reloadPageDataOnSuccess={true} {callBackAfterReloadPageData} />
+        <AsyncButton onClick={updateStudentCheckBox} buttonText="Lagre" iconName="save" dataSize="sm" />
         <button class="ds-button" type="button" data-size="sm" data-variant="secondary" onclick={cancelStudentCheckBox}>Avbryt</button>
       {/if}
     </div>
