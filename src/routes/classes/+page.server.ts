@@ -15,10 +15,7 @@ const getClassGroups: ServerLoadNextFunction<ClassesPageData> = async ({ princip
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
     return {
-      data: {
-        principalClasses: []
-      },
-      isAuthorized: true
+      principalClasses: []
     }
   }
 
@@ -27,10 +24,7 @@ const getClassGroups: ServerLoadNextFunction<ClassesPageData> = async ({ princip
   const principalClasses: StudentClassGroup[] = getAccessibleClassesFromStudents(principalAccess, principalStudents)
 
   return {
-    data: {
-      principalClasses
-    },
-    isAuthorized: true
+    principalClasses
   }
 }
 

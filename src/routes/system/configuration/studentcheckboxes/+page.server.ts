@@ -21,10 +21,7 @@ const getStudentCheckBoxes: ServerLoadNextFunction<StudentCheckBoxesPageData> = 
   const checkBoxes = await dbClient.studentCheckBoxes.getStudentCheckBoxes()
 
   return {
-    data: {
-      checkBoxes: checkBoxes.sort((a, b) => a.sort - b.sort)
-    },
-    isAuthorized: true
+    checkBoxes: checkBoxes.sort((a, b) => a.sort - b.sort)
   }
 }
 

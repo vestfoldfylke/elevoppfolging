@@ -19,10 +19,7 @@ const getAudits: ServerLoadNextFunction<AuditPageData> = async ({ principal }) =
   const audits: AuditEntry[] = await queryAuditEntries()
 
   return {
-    data: {
-      audits
-    },
-    isAuthorized: true
+    audits
   }
 }
 

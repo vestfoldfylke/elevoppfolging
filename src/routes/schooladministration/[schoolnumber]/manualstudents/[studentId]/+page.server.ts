@@ -40,10 +40,7 @@ const getSchoolAdministrationManualStudentManagementData: ServerLoadNextFunction
   }
 
   return {
-    data: {
-      manualStudent
-    },
-    isAuthorized: true
+    manualStudent
   }
 }
 

@@ -21,10 +21,7 @@ const getTemplates: ServerLoadNextFunction<TemplatePageData> = async ({ principa
   const templates = await dbClient.documentContentTemplates.getDocumentContentTemplates()
 
   return {
-    data: {
-      templates: templates.sort((a, b) => a.sort - b.sort)
-    },
-    isAuthorized: true
+    templates: templates.sort((a, b) => a.sort - b.sort)
   }
 }
 

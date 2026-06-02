@@ -48,11 +48,9 @@ const getTemplate: ServerLoadNextFunction<TemplatePageData> = async ({ principal
       content: [],
       sort: 20
     }
+    
     return {
-      data: {
-        template: newTemplate
-      },
-      isAuthorized: true
+      template: newTemplate
     }
   }
 
@@ -64,10 +62,7 @@ const getTemplate: ServerLoadNextFunction<TemplatePageData> = async ({ principal
   }
 
   return {
-    data: {
-      template
-    },
-    isAuthorized: true
+    template
   }
 }
 

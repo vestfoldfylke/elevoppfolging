@@ -96,17 +96,14 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
   const studentAccessPersons: StudentAccessPerson[] = await getStudentAccessPersonsFromCache(studentId)
 
   return {
-    data: {
-      student,
-      principalAccessForStudent: principalAccessForStudent,
-      importantStuff: studentImportantStuff,
-      studentDataSharingConsent,
-      documents,
-      unavailableSchoolDocuments,
-      documentContentTemplates: documentContentTemplates.sort((a, b) => a.sort - b.sort),
-      studentAccessPersons
-    },
-    isAuthorized: true
+    student,
+    principalAccessForStudent: principalAccessForStudent,
+    importantStuff: studentImportantStuff,
+    studentDataSharingConsent,
+    documents,
+    unavailableSchoolDocuments,
+    documentContentTemplates: documentContentTemplates.sort((a, b) => a.sort - b.sort),
+    studentAccessPersons
   }
 }
 
