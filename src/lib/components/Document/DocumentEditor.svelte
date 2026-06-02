@@ -12,6 +12,7 @@
     documentId?: string
     studentId?: string
     groupSystemId?: string
+    documentEdited?: boolean
     currentDocument: DocumentInput
     accessSchools: SchoolInfo[]
     studentDataSharingConsent?: boolean
@@ -20,7 +21,7 @@
     closeEditor: () => void
   }
 
-  let { documentId, studentId, groupSystemId, accessSchools, currentDocument = $bindable(), studentDataSharingConsent, studentAccessPersons, emailAlertAvailable, closeEditor }: EditorProps = $props()
+  let { documentId, studentId, groupSystemId, accessSchools, currentDocument = $bindable(), studentDataSharingConsent, studentAccessPersons, emailAlertAvailable, documentEdited, closeEditor }: EditorProps = $props()
 
   // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounts ved endring av studentId/groupSystemId
   if (!studentId && !groupSystemId) {
@@ -203,8 +204,7 @@
     <AsyncButton buttonText="Lagre notat" onClick={newDocument} reloadPageDataOnSuccess={true} callBackAfterReloadPageData={closeEditor} iconName="save" />
   {/if}
   {#if documentId}
-    <!--TODO sjekk om det er gjort endringer først da... -->
-    <AsyncButton buttonText="Lagre endringer" onClick={updateDocument} reloadPageDataOnSuccess={true} callBackAfterReloadPageData={closeEditor} iconName="save" />
+    <AsyncButton disabled={!documentEdited} buttonText="Lagre endringer" onClick={updateDocument} reloadPageDataOnSuccess={true} callBackAfterReloadPageData={closeEditor} iconName="save" />
   {/if}
   <button class="ds-button" type="button" data-variant="secondary" onclick={closeEditor}><span class="material-symbols-outlined">close</span>Avbryt</button>
 </div>

@@ -176,6 +176,10 @@
   // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounts ved endring av document (ha en key på document i parent)
   let editableDocument: DocumentInput = $state(editableDocumentFromDocument())
 
+  let documentEdited: boolean = $derived.by(() => {
+    return JSON.stringify(editableDocumentFromDocument()) !== JSON.stringify(editableDocument)
+  })
+
   let editMode = $state(false)
 </script>
 
@@ -236,7 +240,7 @@
           {/each}
 
         {:else}
-          <DocumentEditor documentId={document._id} studentId={"student" in document ? document.student._id : undefined} groupSystemId={"group" in document ? document.group.systemId : undefined} bind:currentDocument={editableDocument} {accessSchools} closeEditor={() => { editMode = false; editableDocument = editableDocumentFromDocument(); }} />
+          <DocumentEditor documentId={document._id} studentId={"student" in document ? document.student._id : undefined} groupSystemId={"group" in document ? document.group.systemId : undefined} bind:currentDocument={editableDocument} {accessSchools} {documentEdited} closeEditor={() => { editMode = false; editableDocument = editableDocumentFromDocument(); }} />
         {/if}
 
         <div class="document-footer">
