@@ -106,7 +106,7 @@ if (env.MOCK_DB === "true") {
     schools: new SchoolsDbClient(dbWithEncryption),
     studentCheckBoxes: new StudentCheckBoxDbClient(dbWithEncryption, encryptValue),
     studentDataSharingConsents: new StudentDataSharingConsentsDbClient(dbWithEncryption),
-    students: new StudentsDbClient(dbWithEncryption)
+    students: new StudentsDbClient(dbWithEncryption, encryptValue)
   }
 }
 

@@ -132,6 +132,10 @@ export type DbAppStudent = NewAppStudent & {
   _id: ObjectId
 }
 
+export type DbEncryptedAppStudent = Omit<DbAppStudent, "hasBlockedAddress"> & {
+  hasBlockedAddress: Binary
+}
+
 export type UpdateAppStudent = AppStudent
 
 export type NewManualStudentInput = {
