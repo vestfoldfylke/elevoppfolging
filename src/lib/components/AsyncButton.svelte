@@ -65,11 +65,6 @@
           }
           result.callBack?.()
           return
-
-        default: {
-          const _exhaustive: never = result
-          throw new Error(`Unhandled AsyncButtonResult status: ${JSON.stringify(_exhaustive)}`)
-        }
       }
     } catch (error) {
       buttonState.errorMessage = error instanceof Error ? error.message : "An error occurred. Please try again."
