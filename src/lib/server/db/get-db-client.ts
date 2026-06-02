@@ -71,6 +71,9 @@ if (env.MOCK_DB === "true") {
   } catch (error) {
     logger.errorException(error, "Error when fetching encryption keys from MongoDB, check your configuration")
     await logger.flush()
+
+    await mongoEncryptionClient.close()
+
     throw error
   }
 
