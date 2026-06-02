@@ -50,11 +50,8 @@ if (env.MOCK_DB === "true") {
     }
   })
 
-  const mongoClient = new MongoClient(env.MONGODB_CONNECTION_STRING)
-
   try {
     await mongoEncryptionClient.connect()
-    await mongoClient.connect()
   } catch (error) {
     logger.errorException(error, "Error when connecting to MongoDB - check your configuration")
     await logger.flush()
@@ -62,7 +59,6 @@ if (env.MOCK_DB === "true") {
   }
 
   const dbWithEncryption = mongoEncryptionClient.db(env.MONGODB_DATABASE_NAME)
-  const dbWithoutEncryption = mongoClient.db(env.MONGODB_DATABASE_NAME)
 
   const encryptionClient = new ClientEncryption(mongoEncryptionClient, {
     keyVaultNamespace: keyVaultNamespace,
@@ -87,18 +83,18 @@ if (env.MOCK_DB === "true") {
   }
 
   dbClient = {
-    appUsers: new AppUsersDbClient(dbWithoutEncryption),
-    access: new AccessDbClient(dbWithoutEncryption),
-    auditLogs: new AuditLogsDbClient(dbWithoutEncryption),
-    documentContentTemplates: new DocumentContentTemplatesDbClient(dbWithoutEncryption),
+    appUsers: new AppUsersDbClient(dbWithEncryption),
+    access: new AccessDbClient(dbWithEncryption),
+    auditLogs: new AuditLogsDbClient(dbWithEncryption),
+    documentContentTemplates: new DocumentContentTemplatesDbClient(dbWithEncryption),
     documents: new DocumentsDbClient(dbWithEncryption, encryptValue),
-    emailAlerts: new EmailAlertsDbClient(dbWithoutEncryption),
+    emailAlerts: new EmailAlertsDbClient(dbWithEncryption),
     importantStuff: new ImportantStuffDbClient(dbWithEncryption, encryptValue),
-    programAreas: new ProgramAreasDbClient(dbWithoutEncryption),
-    schools: new SchoolsDbClient(dbWithoutEncryption),
+    programAreas: new ProgramAreasDbClient(dbWithEncryption),
+    schools: new SchoolsDbClient(dbWithEncryption),
     studentCheckBoxes: new StudentCheckBoxDbClient(dbWithEncryption, encryptValue),
-    studentDataSharingConsents: new StudentDataSharingConsentsDbClient(dbWithoutEncryption),
-    students: new StudentsDbClient(dbWithoutEncryption)
+    studentDataSharingConsents: new StudentDataSharingConsentsDbClient(dbWithEncryption),
+    students: new StudentsDbClient(dbWithEncryption)
   }
 }
 
