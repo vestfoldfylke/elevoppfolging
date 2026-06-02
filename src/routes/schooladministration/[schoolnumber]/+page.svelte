@@ -367,19 +367,19 @@
 
   const addManualAccessEntry = async (newManualAccessControl: NewManualAccessControl): Promise<AsyncButtonResult> => {
     if (!newManualAccessControl.form) {
-      throw new Error("Form reference is missing")
+      return { status: 'error', message: "Form not found for new manual access control" }
     }
 
     if (!newManualAccessControl.form.reportValidity()) {
-      throw new Error(INVALID_FORM_MESSAGE)
+      return { status: 'error', message: INVALID_FORM_MESSAGE }
     }
 
     if (!newManualAccessControl.type) {
-      throw new Error("Access type must be selected")
+      return { status: 'error', message: "Access type must be selected" }
     }
 
     if (!newManualAccessControl.entraUserId) {
-      throw new Error("Entra user ID must be selected")
+      return { status: 'error', message: "Entra user ID must be selected" }
     }
 
     let accessEntryToAdd: ManualAccessEntryInput

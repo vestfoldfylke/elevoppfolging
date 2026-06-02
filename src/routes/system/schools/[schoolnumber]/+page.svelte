@@ -69,11 +69,11 @@
 
   const updateSchool = async (): Promise<AsyncButtonResult> => {
     if (!updateSchoolForm?.reportValidity()) {
-      throw new Error(INVALID_FORM_MESSAGE)
+      return { status: 'error', message: INVALID_FORM_MESSAGE }
     }
 
     if (!updateSchoolName) {
-      throw new Error("Skolenavn må være fylt ut")
+      return { status: 'error', message: "Skolenavn må fylles ut" }
     }
 
     const updateSchoolInput: UpdateSchool = {
