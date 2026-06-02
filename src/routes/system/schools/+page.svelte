@@ -31,12 +31,12 @@
 
   const newSchool = async (): Promise<AsyncButtonResult> => {
     if (!newSchoolForm) {
-      return { status: 'error', message: "New school form not found" }
+      return { status: "error", message: "New school form not found" }
     }
 
     const formIsValid = newSchoolForm.reportValidity()
     if (!formIsValid) {
-      return { status: 'error', message: INVALID_FORM_MESSAGE }
+      return { status: "error", message: INVALID_FORM_MESSAGE }
     }
 
     await apiFetch("/api/schools", {
@@ -47,7 +47,13 @@
       }
     })
 
-    return { status: 'success', reloadPageData: true, callBack: () => { newSchoolOpen = false } }
+    return {
+      status: "success",
+      reloadPageData: true,
+      callBack: () => {
+        newSchoolOpen = false
+      }
+    }
   }
 </script>
 

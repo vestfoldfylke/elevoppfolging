@@ -33,12 +33,12 @@
 
   const updateGroupImportantStuff = async (): Promise<AsyncButtonResult> => {
     if (!groupImportantStuffForm) {
-      return { status: 'error', message: "Important stuff form not found" }
+      return { status: "error", message: "Important stuff form not found" }
     }
 
     const valid = groupImportantStuffForm.reportValidity()
     if (!valid) {
-      return { status: 'error', message: INVALID_FORM_MESSAGE }
+      return { status: "error", message: INVALID_FORM_MESSAGE }
     }
 
     await apiFetch(`/api/classes/${group.systemId as NoSlashString}/importantstuff`, {
@@ -49,7 +49,13 @@
       }
     })
 
-    return { status: 'success', reloadPageData: true, callBack: () => { editMode = false } }
+    return {
+      status: "success",
+      reloadPageData: true,
+      callBack: () => {
+        editMode = false
+      }
+    }
   }
 </script>
 

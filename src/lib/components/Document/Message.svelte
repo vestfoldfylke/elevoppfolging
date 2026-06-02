@@ -59,12 +59,12 @@
 
   const newMessage = async (): Promise<AsyncButtonResult> => {
     if (!messageForm) {
-      return { status: 'error', message: "Message form not found" }
+      return { status: "error", message: "Message form not found" }
     }
 
     const formIsValid = messageForm.reportValidity()
     if (!formIsValid) {
-      return { status: 'error', message: INVALID_FORM_MESSAGE }
+      return { status: "error", message: INVALID_FORM_MESSAGE }
     }
 
     if ("group" in document) {
@@ -78,7 +78,7 @@
         }
       })
 
-      return { status: 'success', reloadPageData: true, callBack: callBackOnSuccessOrCancel }
+      return { status: "success", reloadPageData: true, callBack: callBackOnSuccessOrCancel }
     }
 
     if ("student" in document) {
@@ -93,21 +93,21 @@
       })
     }
 
-    return { status: 'success', reloadPageData: true, callBack: callBackOnSuccessOrCancel }
+    return { status: "success", reloadPageData: true, callBack: callBackOnSuccessOrCancel }
   }
 
   const updateMessage = async (): Promise<AsyncButtonResult> => {
     if (!messageForm) {
-      return { status: 'error', message: "Message form not found" }
+      return { status: "error", message: "Message form not found" }
     }
 
     const formIsValid = messageForm.reportValidity()
     if (!formIsValid) {
-      return { status: 'error', message: INVALID_FORM_MESSAGE }
+      return { status: "error", message: INVALID_FORM_MESSAGE }
     }
 
     if (!message.messageId) {
-      return { status: 'error', message: "messageId is required to update a message" }
+      return { status: "error", message: "messageId is required to update a message" }
     }
 
     if ("group" in document) {
@@ -121,7 +121,7 @@
         }
       })
 
-      return { status: 'success', reloadPageData: true, callBack: callBackOnSuccessOrCancel }
+      return { status: "success", reloadPageData: true, callBack: callBackOnSuccessOrCancel }
     }
 
     if ("student" in document) {
@@ -136,7 +136,7 @@
       })
     }
 
-    return { status: 'success', reloadPageData: true, callBack: callBackOnSuccessOrCancel }
+    return { status: "success", reloadPageData: true, callBack: callBackOnSuccessOrCancel }
   }
 </script>
 

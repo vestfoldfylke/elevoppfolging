@@ -21,7 +21,18 @@
     closeEditor: () => void
   }
 
-  let { documentId, studentId, groupSystemId, accessSchools, currentDocument = $bindable(), studentDataSharingConsent, studentAccessPersons, emailAlertAvailable, documentEdited, closeEditor }: EditorProps = $props()
+  let {
+    documentId,
+    studentId,
+    groupSystemId,
+    accessSchools,
+    currentDocument = $bindable(),
+    studentDataSharingConsent,
+    studentAccessPersons,
+    emailAlertAvailable,
+    documentEdited,
+    closeEditor
+  }: EditorProps = $props()
 
   // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounts ved endring av studentId/groupSystemId
   if (!studentId && !groupSystemId) {
@@ -40,12 +51,12 @@
 
   const newDocument = async (): Promise<AsyncButtonResult> => {
     if (!documentEditorForm) {
-      return { status: 'error', message: "Document editor form not found" }
+      return { status: "error", message: "Document editor form not found" }
     }
 
     const formIsValid = documentEditorForm.reportValidity()
     if (!formIsValid) {
-      return { status: 'error', message: INVALID_FORM_MESSAGE }
+      return { status: "error", message: INVALID_FORM_MESSAGE }
     }
 
     if (groupSystemId) {
@@ -59,7 +70,7 @@
         }
       })
 
-      return { status: 'success', reloadPageData: true, callBack: closeEditor }
+      return { status: "success", reloadPageData: true, callBack: closeEditor }
     }
 
     if (studentId) {
@@ -74,21 +85,21 @@
       })
     }
 
-    return { status: 'success', reloadPageData: true, callBack: closeEditor }
+    return { status: "success", reloadPageData: true, callBack: closeEditor }
   }
 
   const updateDocument = async (): Promise<AsyncButtonResult> => {
     if (!documentId) {
-      return { status: 'error', message: "Document ID is required to update document" }
+      return { status: "error", message: "Document ID is required to update document" }
     }
 
     if (!documentEditorForm) {
-      return { status: 'error', message: "Document editor form not found" }
+      return { status: "error", message: "Document editor form not found" }
     }
 
     const formIsValid = documentEditorForm.reportValidity()
     if (!formIsValid) {
-      return { status: 'error', message: INVALID_FORM_MESSAGE }
+      return { status: "error", message: INVALID_FORM_MESSAGE }
     }
 
     if (groupSystemId) {
@@ -102,7 +113,7 @@
         }
       })
 
-      return { status: 'success', reloadPageData: true, callBack: closeEditor }
+      return { status: "success", reloadPageData: true, callBack: closeEditor }
     }
 
     if (studentId) {
@@ -117,7 +128,7 @@
       })
     }
 
-    return { status: 'success', reloadPageData: true, callBack: closeEditor }
+    return { status: "success", reloadPageData: true, callBack: closeEditor }
   }
 </script>
 

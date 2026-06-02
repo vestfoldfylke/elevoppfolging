@@ -115,9 +115,9 @@
 
   const newTemplate = async (): Promise<AsyncButtonResult> => {
     const formIsValid = validateTemplate()
-    
+
     if (!formIsValid) {
-      return { status: 'error', message: INVALID_FORM_MESSAGE }
+      return { status: "error", message: INVALID_FORM_MESSAGE }
     }
 
     const { templateId } = await apiFetch(`/api/templates`, {
@@ -133,14 +133,14 @@
     // redirect and reload page data
     await goto(`/system/templates/${templateId}`, { invalidateAll: true })
 
-    return { status: 'success' }
+    return { status: "success" }
   }
 
   const updateTemplate = async (): Promise<AsyncButtonResult> => {
     const formIsValid = validateTemplate()
-    
+
     if (!formIsValid) {
-      return { status: 'error', message: INVALID_FORM_MESSAGE }
+      return { status: "error", message: INVALID_FORM_MESSAGE }
     }
 
     await apiFetch(`/api/templates/${editableTemplate._id as NoSlashString}`, {
@@ -151,13 +151,19 @@
       }
     })
 
-    return { status: 'success', reloadPageData: true, callBack: () => { previewMode = true } }
+    return {
+      status: "success",
+      reloadPageData: true,
+      callBack: () => {
+        previewMode = true
+      }
+    }
   }
 
   const deleteTemplate = async (): Promise<AsyncButtonResult> => {
     const confirmDelete = confirm("Er du heeeelt sikker på du vil slette denne malen da? Den vil ikke kunne brukes lenger. Dokumentene som er laget med malen vil ikke bli slettet.")
     if (!confirmDelete) {
-      return { status: 'cancelled' }
+      return { status: "cancelled" }
     }
 
     await apiFetch(`/api/templates/${editableTemplate._id as NoSlashString}`, {
@@ -167,7 +173,7 @@
     // redirect and reload page data
     await goto(`/system/templates`, { invalidateAll: true })
 
-    return { status: 'success' }
+    return { status: "success" }
   }
 </script>
 

@@ -47,11 +47,11 @@
 
   const updateStudentImportantStuff = async (): Promise<AsyncButtonResult> => {
     if (!importantStuffForm) {
-      return { status: 'error', message: "Important stuff form not found" }
+      return { status: "error", message: "Important stuff form not found" }
     }
     const valid = importantStuffForm.reportValidity()
     if (!valid) {
-      return { status: 'error', message: INVALID_FORM_MESSAGE }
+      return { status: "error", message: INVALID_FORM_MESSAGE }
     }
 
     await apiFetch(`/api/students/${student._id as NoSlashString}/importantstuff`, {
@@ -62,7 +62,13 @@
       }
     })
 
-    return { status: 'success', reloadPageData: true, callBack: () => { editMode = false } }
+    return {
+      status: "success",
+      reloadPageData: true,
+      callBack: () => {
+        editMode = false
+      }
+    }
   }
 </script>
 

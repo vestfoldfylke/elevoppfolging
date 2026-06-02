@@ -94,12 +94,12 @@
       }
     })
 
-    return { status: 'success', reloadPageData: true, callBack: closeEditMode }
+    return { status: "success", reloadPageData: true, callBack: closeEditMode }
   }
 
   const updateProgramArea = async (): Promise<AsyncButtonResult> => {
     if (!programArea) {
-      return { status: 'error', message: "Kan ikke oppdatere programområde uten å vite hvilket programområde det er snakk om" }
+      return { status: "error", message: "Kan ikke oppdatere programområde uten å vite hvilket programområde det er snakk om" }
     }
 
     const updatedProgramAreaInput = validateAndGetProgramAreaInput()
@@ -112,19 +112,19 @@
       }
     })
 
-    return { status: 'success', reloadPageData: true, callBack: closeEditMode }
+    return { status: "success", reloadPageData: true, callBack: closeEditMode }
   }
 
   const deleteProgramArea = async (): Promise<AsyncButtonResult> => {
     if (!programArea) {
-      return { status: 'error', message: "Kan ikke slette programområde uten å vite hvilket programområde det er snakk om" }
+      return { status: "error", message: "Kan ikke slette programområde uten å vite hvilket programområde det er snakk om" }
     }
 
     await apiFetch(`/api/programareas/${programArea._id as NoSlashString}`, {
       method: "DELETE"
     })
 
-    return { status: 'success', reloadPageData: true, callBack: closeEditMode }
+    return { status: "success", reloadPageData: true, callBack: closeEditMode }
   }
 
   const closeEditMode = (): void => {

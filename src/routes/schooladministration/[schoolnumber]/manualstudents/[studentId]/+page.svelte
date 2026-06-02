@@ -32,15 +32,15 @@
 
   const updateManualStudent = async (): Promise<AsyncButtonResult> => {
     if (!updateManualStudentForm?.reportValidity()) {
-      return { status: 'error', message: INVALID_FORM_MESSAGE }
+      return { status: "error", message: INVALID_FORM_MESSAGE }
     }
 
     if (!updateManualStudentFnr) {
-      return { status: 'error', message: "Fødselsnummer må være fylt ut" }
+      return { status: "error", message: "Fødselsnummer må være fylt ut" }
     }
 
     if (!updateManualStudentName) {
-      return { status: 'error', message: "Navn må være fylt ut" }
+      return { status: "error", message: "Navn må være fylt ut" }
     }
 
     const updateManualStudentInput: UpdateManualStudentInput = {
@@ -59,7 +59,13 @@
       }
     })
 
-    return { status: 'success', reloadPageData: true, callBack: () => { updateManualStudentEdit = false } }
+    return {
+      status: "success",
+      reloadPageData: true,
+      callBack: () => {
+        updateManualStudentEdit = false
+      }
+    }
   }
 
   const abortUpdateManualStudent = () => {

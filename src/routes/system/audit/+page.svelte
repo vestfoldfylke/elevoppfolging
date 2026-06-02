@@ -70,7 +70,7 @@
     auditEntries = queriedAuditEntries.entries
     auditSearchError = queriedAuditEntries.errorMessage
 
-    return { status: 'success' }
+    return { status: "success" }
   }
 
   const getStringifiedMetadata = (metaData: AuditEntry["metaData"]): string => {

@@ -141,7 +141,7 @@
   const handleDocumentRemove = async (): Promise<AsyncButtonResult> => {
     const confirmDelete = confirm("Er du heeeelt sikker på du vil slette dette notatet da? Notatet og alle tilhørende oppdateringer vil bli borte borte")
     if (!confirmDelete) {
-      return { status: 'cancelled' }
+      return { status: "cancelled" }
     }
 
     if (studentName && "student" in document) {
@@ -153,7 +153,7 @@
 
       documentDialog?.close()
 
-      return { status: 'success', reloadPageData: true }
+      return { status: "success", reloadPageData: true }
     }
 
     if (groupName && "group" in document) {
@@ -165,10 +165,10 @@
 
       documentDialog?.close()
 
-      return { status: 'success', reloadPageData: true }
+      return { status: "success", reloadPageData: true }
     }
 
-    return { status: 'error', message: 'Document was neither student or group document??' }
+    return { status: "error", message: "Document was neither student or group document??" }
   }
 
   // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounts ved endring av document (ha en key på document i parent)

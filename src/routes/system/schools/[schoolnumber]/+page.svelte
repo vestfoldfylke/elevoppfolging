@@ -48,7 +48,7 @@
     const confirmDelete = confirm(`Er du sikker på at du vil slette skolen "${currentSchool.name}"? Dette kan ikke angres.`)
 
     if (!confirmDelete) {
-      return { status: 'cancelled' }
+      return { status: "cancelled" }
     }
 
     await apiFetch(`/api/schools/${currentSchool.schoolNumber as NoSlashString}`, {
@@ -58,7 +58,7 @@
     // redirect to schools admin page and reload dependent data
     await goto("/system/schools", { invalidateAll: true })
 
-    return { status: 'success' }
+    return { status: "success" }
   }
 
   let selectedEntraUserId = $state("")
@@ -69,11 +69,11 @@
 
   const updateSchool = async (): Promise<AsyncButtonResult> => {
     if (!updateSchoolForm?.reportValidity()) {
-      return { status: 'error', message: INVALID_FORM_MESSAGE }
+      return { status: "error", message: INVALID_FORM_MESSAGE }
     }
 
     if (!updateSchoolName) {
-      return { status: 'error', message: "Skolenavn må fylles ut" }
+      return { status: "error", message: "Skolenavn må fylles ut" }
     }
 
     const updateSchoolInput: UpdateSchool = {
@@ -89,7 +89,13 @@
       }
     })
 
-    return { status: 'success', reloadPageData: true, callBack: () => { updateSchoolEdit = false } }
+    return {
+      status: "success",
+      reloadPageData: true,
+      callBack: () => {
+        updateSchoolEdit = false
+      }
+    }
   }
 
   const abortUpdateSchool = () => {
@@ -118,7 +124,7 @@
       }
     })
 
-    return { status: 'success', reloadPageData: true, callBack: resetAddSchoolLeaderAccess }
+    return { status: "success", reloadPageData: true, callBack: resetAddSchoolLeaderAccess }
   }
 
   const removeSchoolLeaderAccess = async (entraUserId: string): Promise<AsyncButtonResult> => {
@@ -133,7 +139,7 @@
       }
     })
 
-    return { status: 'success', reloadPageData: true }
+    return { status: "success", reloadPageData: true }
   }
 </script>
 

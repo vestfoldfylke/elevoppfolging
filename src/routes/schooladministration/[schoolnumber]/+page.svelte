@@ -367,19 +367,19 @@
 
   const addManualAccessEntry = async (newManualAccessControl: NewManualAccessControl): Promise<AsyncButtonResult> => {
     if (!newManualAccessControl.form) {
-      return { status: 'error', message: "Form not found for new manual access control" }
+      return { status: "error", message: "Form not found for new manual access control" }
     }
 
     if (!newManualAccessControl.form.reportValidity()) {
-      return { status: 'error', message: INVALID_FORM_MESSAGE }
+      return { status: "error", message: INVALID_FORM_MESSAGE }
     }
 
     if (!newManualAccessControl.type) {
-      return { status: 'error', message: "Access type must be selected" }
+      return { status: "error", message: "Access type must be selected" }
     }
 
     if (!newManualAccessControl.entraUserId) {
-      return { status: 'error', message: "Entra user ID must be selected" }
+      return { status: "error", message: "Entra user ID must be selected" }
     }
 
     let accessEntryToAdd: ManualAccessEntryInput
@@ -387,7 +387,7 @@
     switch (newManualAccessControl.type) {
       case "MANUELL-PROGRAMOMRÅDE-TILGANG": {
         if (!newManualAccessControl.programAreaId) {
-          return { status: 'error', message: "Programområde ID must be selected" }
+          return { status: "error", message: "Programområde ID must be selected" }
         }
         accessEntryToAdd = { type: newManualAccessControl.type, schoolNumber: currentSchool.schoolNumber, _id: newManualAccessControl.programAreaId }
         break
@@ -395,7 +395,7 @@
 
       case "MANUELL-KLASSE-TILGANG": {
         if (!newManualAccessControl.classId) {
-          return { status: 'error', message: "Class ID must be selected" }
+          return { status: "error", message: "Class ID must be selected" }
         }
 
         accessEntryToAdd = { type: newManualAccessControl.type, schoolNumber: currentSchool.schoolNumber, systemId: newManualAccessControl.classId }
@@ -404,7 +404,7 @@
 
       case "MANUELL-ELEV-TILGANG": {
         if (!newManualAccessControl.studentId) {
-          return { status: 'error', message: "Student ID must be selected" }
+          return { status: "error", message: "Student ID must be selected" }
         }
 
         accessEntryToAdd = { type: newManualAccessControl.type, schoolNumber: currentSchool.schoolNumber, _id: newManualAccessControl.studentId }
@@ -417,7 +417,7 @@
         break
 
       default:
-        return { status: 'error', message: `Invalid access entry type: ${newManualAccessControl.type}` }
+        return { status: "error", message: `Invalid access entry type: ${newManualAccessControl.type}` }
     }
 
     await apiFetch(`/api/access/${newManualAccessControl.entraUserId as NoSlashString}/add`, {
@@ -428,7 +428,7 @@
       }
     })
 
-    return { status: 'success', reloadPageData: true, callBack: () => closeManualAccessControl(newManualAccessControl) }
+    return { status: "success", reloadPageData: true, callBack: () => closeManualAccessControl(newManualAccessControl) }
   }
 
   const removeManualAccessEntry = async (entraUserId: string, accessEntry: ManualAccessEntryInput): Promise<AsyncButtonResult> => {
@@ -440,7 +440,7 @@
       }
     })
 
-    return { status: 'success', reloadPageData: true }
+    return { status: "success", reloadPageData: true }
   }
 
   /* --- PROGRAM AREAS --- */
@@ -456,15 +456,15 @@
 
   const addNewManualStudent = async (): Promise<AsyncButtonResult> => {
     if (!addManualStudentForm?.reportValidity()) {
-      return { status: 'error', message: INVALID_FORM_MESSAGE }
+      return { status: "error", message: INVALID_FORM_MESSAGE }
     }
 
     if (!newManualStudentFnr) {
-      return { status: 'error', message: "Fødselsnummer må være fylt ut" }
+      return { status: "error", message: "Fødselsnummer må være fylt ut" }
     }
 
     if (!newManualStudentName) {
-      return { status: 'error', message: "Navn må være fylt ut" }
+      return { status: "error", message: "Navn må være fylt ut" }
     }
 
     const newManualStudentInput: NewManualStudentInput = {
@@ -482,7 +482,7 @@
       }
     })
 
-    return { status: 'success', reloadPageData: true, callBack: closeNewManualStudentForm }
+    return { status: "success", reloadPageData: true, callBack: closeNewManualStudentForm }
   }
 
   let canManageManualStudents = $derived.by(() => {

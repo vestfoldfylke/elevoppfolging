@@ -1,9 +1,9 @@
 <script lang="ts">
   import { invalidateAll } from "$app/navigation"
 
-  export type SuccessResult = { status: 'success'; reloadPageData?: boolean; callBack?: () => void }
-  export type CancelResult = { status: 'cancelled', callBack?: () => void }
-  export type ErrorResult = { status: 'error'; message: string }
+  export type SuccessResult = { status: "success"; reloadPageData?: boolean; callBack?: () => void }
+  export type CancelResult = { status: "cancelled"; callBack?: () => void }
+  export type ErrorResult = { status: "error"; message: string }
   export type AsyncButtonResult = SuccessResult | CancelResult | ErrorResult
 
   type AsyncButtonProps = {
@@ -16,15 +16,7 @@
     disabled?: boolean
   }
 
-  let {
-    buttonText,
-    onClick,
-    iconName,
-    variant = "primary",
-    color = "accent",
-    dataSize = "md",
-    disabled = false
-  }: AsyncButtonProps = $props()
+  let { buttonText, onClick, iconName, variant = "primary", color = "accent", dataSize = "md", disabled = false }: AsyncButtonProps = $props()
 
   type ButtonState = {
     loading: boolean
@@ -59,21 +51,21 @@
       const result = await onClick()
 
       switch (result.status) {
-        case 'cancelled':
+        case "cancelled":
           result.callBack?.()
           return
 
-        case 'error':
+        case "error":
           buttonState.errorMessage = result.message
           return
 
-        case 'success':
+        case "success":
           if (result.reloadPageData) {
-             await invalidateAll()
+            await invalidateAll()
           }
           result.callBack?.()
           return
-          
+
         default: {
           const _exhaustive: never = result
           throw new Error(`Unhandled AsyncButtonResult status: ${JSON.stringify(_exhaustive)}`)

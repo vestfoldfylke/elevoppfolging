@@ -39,11 +39,11 @@
 
   const createStudentCheckBox = async (): Promise<AsyncButtonResult> => {
     if (!studentCheckBoxFormNew) {
-      return { status: 'error', message: "Student new checkbox form not found" }
+      return { status: "error", message: "Student new checkbox form not found" }
     }
 
     if (!studentCheckBoxFormNew.reportValidity()) {
-      return { status: 'error', message: INVALID_FORM_MESSAGE }
+      return { status: "error", message: INVALID_FORM_MESSAGE }
     }
 
     await apiFetch("/api/studentcheckboxes", {
@@ -54,45 +54,59 @@
       }
     })
 
-    return { status: 'success', reloadPageData: true, callBack: () => { callBackOnCreate?.(); editMode = false } }
+    return {
+      status: "success",
+      reloadPageData: true,
+      callBack: () => {
+        callBackOnCreate?.()
+        editMode = false
+      }
+    }
   }
 
   const deleteStudentCheckBox = async (): Promise<AsyncButtonResult> => {
     if (!checkBox._id) {
-      return { status: 'error', message: "Mangler id for å kunne slette" }
+      return { status: "error", message: "Mangler id for å kunne slette" }
     }
 
     const confirmation = confirm("Er du sikker på at du vil slette denne sjekkboksen? Den vil bli fjernet fra alle elever, og må legges til på nytt på hver elev dersom den skal legges til på nytt.")
     if (!confirmation) {
-      return { status: 'cancelled' }
+      return { status: "cancelled" }
     }
 
     await apiFetch(`/api/studentcheckboxes/${checkBox._id as NoSlashString}`, {
       method: "DELETE"
     })
 
-    return { status: 'success', reloadPageData: true, callBack: () => { callBackOnCreate?.(); editMode = false } }
+    return {
+      status: "success",
+      reloadPageData: true,
+      callBack: () => {
+        callBackOnCreate?.()
+        editMode = false
+      }
+    }
   }
 
   const updateStudentCheckBox = async (): Promise<AsyncButtonResult> => {
     if (!checkBox._id) {
-      return { status: 'error', message: "Mangler id for å kunne oppdatere" }
+      return { status: "error", message: "Mangler id for å kunne oppdatere" }
     }
 
     if (!studentCheckBoxFormEditName) {
-      return { status: 'error', message: "Student edit checkbox name form not found" }
+      return { status: "error", message: "Student edit checkbox name form not found" }
     }
 
     if (!studentCheckBoxFormEditName.reportValidity()) {
-      return { status: 'error', message: INVALID_FORM_MESSAGE }
+      return { status: "error", message: INVALID_FORM_MESSAGE }
     }
 
     if (!studentCheckBoxFormEditSort) {
-      return { status: 'error', message: "Student edit checkbox sort form not found" }
+      return { status: "error", message: "Student edit checkbox sort form not found" }
     }
 
     if (!studentCheckBoxFormEditSort.reportValidity()) {
-      return { status: 'error', message: INVALID_FORM_MESSAGE }
+      return { status: "error", message: INVALID_FORM_MESSAGE }
     }
 
     await apiFetch(`/api/studentcheckboxes/${checkBox._id as NoSlashString}`, {
@@ -103,7 +117,14 @@
       }
     })
 
-    return { status: 'success', reloadPageData: true, callBack: () => { callBackOnCreate?.(); editMode = false } }
+    return {
+      status: "success",
+      reloadPageData: true,
+      callBack: () => {
+        callBackOnCreate?.()
+        editMode = false
+      }
+    }
   }
 </script>
 
