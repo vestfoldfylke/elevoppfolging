@@ -47,11 +47,8 @@ const getAdministrationAccessData: ServerLoadNextFunction<AdministrationAccessLa
     .sort((a, b) => a.displayName.localeCompare(b.displayName))
 
   return {
-    data: {
-      accessSchools: allowedToAdministrateSchools,
-      appUsers: accessControlAppUsers
-    },
-    isAuthorized: true
+    accessSchools: allowedToAdministrateSchools,
+    appUsers: accessControlAppUsers
   }
 }
 

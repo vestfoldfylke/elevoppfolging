@@ -78,14 +78,11 @@ const getSchoolAccessAdministrationData: ServerLoadNextFunction<SchoolAccessAdmi
     .sort((a, b) => a.name.localeCompare(b.name))
 
   return {
-    data: {
-      manualAccessForSchool,
-      programAreasForSchool,
-      accessControlSchoolStudents,
-      accessControlSchoolClasses,
-      manualSchoolStudents: schoolManualStudents
-    },
-    isAuthorized: true
+    manualAccessForSchool,
+    programAreasForSchool,
+    accessControlSchoolStudents,
+    accessControlSchoolClasses,
+    manualSchoolStudents: schoolManualStudents
   }
 }
 

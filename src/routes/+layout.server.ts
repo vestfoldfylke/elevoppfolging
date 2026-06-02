@@ -17,14 +17,11 @@ const layoutLoad: ServerLoadNextFunction<RootLayoutData> = async ({ principal })
   if (!principalAccess) {
     logger.info(`No access entry found for user ${principal.id}, but apparently have access through entra, quick return with no students, schools or anything`)
     return {
-      data: {
-        authenticatedPrincipal: principal,
-        APP_INFO,
-        principalAccess,
-        studentCheckBoxes: [],
-        schools: []
-      },
-      isAuthorized: true
+      authenticatedPrincipal: principal,
+      APP_INFO,
+      principalAccess,
+      studentCheckBoxes: [],
+      schools: []
     }
   }
 
@@ -41,14 +38,11 @@ const layoutLoad: ServerLoadNextFunction<RootLayoutData> = async ({ principal })
   logger.info(`Found ${schoolsFromDb.length} schools`)
 
   return {
-    data: {
-      authenticatedPrincipal: principal,
-      APP_INFO,
-      principalAccess,
-      studentCheckBoxes: studentCheckBoxes.sort((a, b) => a.sort - b.sort),
-      schools: schoolsInfo
-    },
-    isAuthorized: true
+    authenticatedPrincipal: principal,
+    APP_INFO,
+    principalAccess,
+    studentCheckBoxes: studentCheckBoxes.sort((a, b) => a.sort - b.sort),
+    schools: schoolsInfo
   }
 }
 

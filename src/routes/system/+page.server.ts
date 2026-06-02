@@ -10,10 +10,7 @@ const onSystemPageLoad: ServerLoadNextFunction<Record<string, never>> = async ({
     throw new HTTPError(403, noAccessMessage("No permission to access system page"))
   }
 
-  return {
-    data: {},
-    isAuthorized: true
-  }
+  return {}
 }
 
 export const load: PageServerLoad = async (requestEvent) => {

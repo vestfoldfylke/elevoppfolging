@@ -53,14 +53,11 @@ const getClassGroup: ServerLoadNextFunction<ClassPageData> = async ({ principal,
   const documentContentTemplates: DocumentContentTemplate[] = await dbClient.documentContentTemplates.getDocumentContentTemplates({ group: true })
 
   return {
-    data: {
-      classGroup,
-      classStudents,
-      groupImportantStuff,
-      documents: groupDocuments,
-      documentContentTemplates: documentContentTemplates.sort((a, b) => a.sort - b.sort)
-    },
-    isAuthorized: true
+    classGroup,
+    classStudents,
+    groupImportantStuff,
+    documents: groupDocuments,
+    documentContentTemplates: documentContentTemplates.sort((a, b) => a.sort - b.sort)
   }
 }
 
