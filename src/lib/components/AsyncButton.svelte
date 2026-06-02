@@ -1,17 +1,18 @@
 <script lang="ts">
   import { invalidateAll } from "$app/navigation"
 
+  export type SuccessResult = { status: 'success'; reloadPageData?: boolean; callBack?: () => void }
+  export type CancelResult = { status: 'cancelled', callBack?: () => void }
+  export type ErrorResult = { status: 'error'; message: string }
+  export type AsyncButtonResult = SuccessResult | CancelResult | ErrorResult
+
   type AsyncButtonProps = {
     buttonText: string
-    onClick: () => Promise<void>
+    onClick: () => Promise<AsyncButtonResult>
     variant?: "primary" | "secondary" | "tertiary"
     color?: "accent" | "danger"
     dataSize?: "sm" | "md" | "lg"
     iconName?: string
-    reloadPageDataOnSuccess?: boolean
-    /** If you need anything to trigger after page data is reloaded (requires reloadPageDataOnSuccess to be true) */
-    callBackAfterReloadPageData?: () => void
-    errorMessage?: string
     disabled?: boolean
   }
 
@@ -22,9 +23,6 @@
     variant = "primary",
     color = "accent",
     dataSize = "md",
-    reloadPageDataOnSuccess = false,
-    callBackAfterReloadPageData,
-    errorMessage = $bindable(),
     disabled = false
   }: AsyncButtonProps = $props()
 
@@ -55,37 +53,37 @@
 
   const wrappedOnClick = async () => {
     buttonState.loading = true
-
     buttonState.errorMessage = null
-    if (typeof errorMessage === "string") {
-      errorMessage = ""
-    }
 
     try {
-      await onClick()
+      const result = await onClick()
 
-      if (!reloadPageDataOnSuccess) {
-        buttonState.loading = false
-        return
-      }
+      switch (result.status) {
+        case 'cancelled':
+          result.callBack?.()
+          return
 
-      await invalidateAll()
-      console.log("Page data invalidated successfully")
+        case 'error':
+          buttonState.errorMessage = result.message
+          return
 
-      if (callBackAfterReloadPageData) {
-        callBackAfterReloadPageData()
+        case 'success':
+          if (result.reloadPageData) {
+             await invalidateAll()
+          }
+          result.callBack?.()
+          return
+          
+        default: {
+          const _exhaustive: never = result
+          throw new Error(`Unhandled AsyncButtonResult status: ${JSON.stringify(_exhaustive)}`)
+        }
       }
     } catch (error) {
-      console.error("Error in AsyncButton onClick:", error)
-
       buttonState.errorMessage = error instanceof Error ? error.message : "An error occurred. Please try again."
-
-      if (typeof errorMessage === "string") {
-        errorMessage = buttonState.errorMessage
-      }
+    } finally {
+      buttonState.loading = false
     }
-
-    buttonState.loading = false
   }
 </script>
 
