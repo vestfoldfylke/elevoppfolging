@@ -2,6 +2,7 @@
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import { studentDataSharingConsentMessageValidation } from "$lib/data-validation/student-consent-validation"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
+  import { createEditableDraft, type EditableDraft } from "$lib/runes/create-editable-draft.svelte";
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { FrontendStudent, StudentUnavailableSchoolDocuments } from "$lib/types/app-types"
   import type { StudentDataSharingConsent, StudentDataSharingConsentInput } from "$lib/types/db/shared-types"
@@ -20,19 +21,11 @@
   let editMode = $state(false)
   let consentForm: HTMLFormElement | undefined = $state()
 
-  // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounts ved endring av student
-  const savedEditableSharingConsent: StudentDataSharingConsentInput = $derived.by(() => {
+  let editableSharingConsent: EditableDraft<StudentDataSharingConsentInput> = createEditableDraft(() => {
     return {
       consent: studentDataSharingConsent?.consent ?? false,
       message: studentDataSharingConsent?.message ?? ""
     }
-  })
-
-  // svelte-ignore state_referenced_locally - det går bra, vi ønsker en lokal kopi
-  let editableSharingConsent: StudentDataSharingConsentInput = $state(savedEditableSharingConsent)
-
-  let hasMadeChanges = $derived.by(() => {
-    return JSON.stringify(savedEditableSharingConsent) !== JSON.stringify(editableSharingConsent)
   })
 
   const updateStudentDataSharingConsent = async (): Promise<AsyncButtonResult> => {
@@ -46,7 +39,7 @@
 
     await apiFetch(`/api/students/${student._id as NoSlashString}/consent`, {
       method: "PATCH",
-      body: editableSharingConsent,
+      body: editableSharingConsent.draft,
       headers: {
         "Content-Type": "application/json"
       }
@@ -79,7 +72,7 @@
     {#if editMode}
       <form bind:this={consentForm}>
         <ds-field class="ds-field">
-          <input id="sharing-consent-checkbox" class="ds-input" type="checkbox" bind:checked={editableSharingConsent.consent} />
+          <input id="sharing-consent-checkbox" class="ds-input" type="checkbox" bind:checked={editableSharingConsent.draft.consent} />
           <label class="ds-label" data-weight="regular" for="sharing-consent-checkbox">Eleven har samtykket til deling av notater på tvers av skoler</label>
           <!--<div data-field="description">Description</div>-->
         </ds-field>
@@ -90,14 +83,14 @@
           <div data-field="description">
             Hvor er samtykket dokumentert, eventuelt annen relevant informasjon om samtykket
           </div>
-          <textarea id="sharing-consent-message" rows="4" required={editableSharingConsent.consent} minlength={editableSharingConsent.consent ? studentDataSharingConsentMessageValidation.minLength : 0} maxlength={studentDataSharingConsentMessageValidation.maxLength} bind:value={editableSharingConsent.message} class="ds-input"></textarea>
+          <textarea id="sharing-consent-message" rows="4" required={editableSharingConsent.draft.consent} minlength={editableSharingConsent.draft.consent ? studentDataSharingConsentMessageValidation.minLength : 0} maxlength={studentDataSharingConsentMessageValidation.maxLength} bind:value={editableSharingConsent.draft.message} class="ds-input"></textarea>
         </ds-field>
       </form>
     {:else}
-      <p class="ds-paragraph">Eleven har {savedEditableSharingConsent.consent ? "samtykket til deling av data" : "ikke samtykket til deling av data"}</p>
-      {#if savedEditableSharingConsent.message}
+      <p class="ds-paragraph">Eleven har {studentDataSharingConsent?.consent ? "samtykket til deling av data" : "ikke samtykket til deling av data"}</p>
+      {#if studentDataSharingConsent?.message}
         <h3 class="ds-heading" data-size="xs">Dokumentasjon</h3>
-        <p class="ds-paragraph">{savedEditableSharingConsent.message}</p>
+        <p class="ds-paragraph">{studentDataSharingConsent.message}</p>
       {/if}
 
       {#if unavailableSchoolDocuments.length > 0}
@@ -112,8 +105,8 @@
   </div>
   {#if editMode}
     <div class="card-footer-actions">
-      <AsyncButton disabled={!hasMadeChanges} onClick={updateStudentDataSharingConsent} buttonText="Lagre" iconName="save" />
-      <button class="ds-button" data-variant="secondary" type="button" onclick={() => { editMode = false; editableSharingConsent = $state.snapshot(savedEditableSharingConsent); }}><span class="material-symbols-outlined">close</span>Avbryt</button>
+      <AsyncButton disabled={!editableSharingConsent.isDirty} onClick={updateStudentDataSharingConsent} buttonText="Lagre" iconName="save" />
+      <button class="ds-button" data-variant="secondary" type="button" onclick={() => { editMode = false; editableSharingConsent.cancel() }}><span class="material-symbols-outlined">close</span>Avbryt</button>
     </div>
   {:else}
     {#if studentDataSharingConsent?.modified && !editMode}
