@@ -1,6 +1,7 @@
 <script lang="ts">
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
+  import { createEditableDraft, type EditableDraft } from "$lib/runes/create-editable-draft.svelte"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { FrontendStudent } from "$lib/types/app-types"
   import type { SchoolInfo, StudentCheckBox, StudentImportantStuff, StudentImportantStuffInput } from "$lib/types/db/shared-types"
@@ -21,21 +22,14 @@
   let editMode = $state(false)
   let importantStuffForm: HTMLFormElement | undefined = $state()
 
-  let savedEditableImportantStuff: StudentImportantStuffInput = $derived.by(() => {
-    return {
-      school: school,
-      importantInfo: importantStuff?.importantInfo || "",
-      facilitation: importantStuff?.facilitation.filter((facilitationId) => studentCheckBoxes.find((checkbox) => checkbox._id === facilitationId && checkbox.enabled)) || [],
-      followUp: importantStuff?.followUp.filter((followUpId) => studentCheckBoxes.find((checkbox) => checkbox._id === followUpId && checkbox.enabled)) || []
-    }
-  })
+  let importantStuffSource: StudentImportantStuffInput = $derived.by(() => ({
+    school,
+    importantInfo: importantStuff?.importantInfo || "",
+    facilitation: importantStuff?.facilitation.filter((facilitationId) => studentCheckBoxes.find((checkbox) => checkbox._id === facilitationId && checkbox.enabled)) || [],
+    followUp: importantStuff?.followUp.filter((followUpId) => studentCheckBoxes.find((checkbox) => checkbox._id === followUpId && checkbox.enabled)) || []
+  }))
 
-  // svelte-ignore state_referenced_locally - det går bra, vi håndterer intern state i klassen EditableImportantStuffHandler
-  let editableImportantStuff: StudentImportantStuffInput = $state(savedEditableImportantStuff)
-
-  let hasMadeChanges = $derived.by(() => {
-    return JSON.stringify(savedEditableImportantStuff) !== JSON.stringify(editableImportantStuff)
-  })
+  let editableImportantStuff: EditableDraft<StudentImportantStuffInput> = createEditableDraft(() => importantStuffSource)
 
   const getStudentCheckBoxValues = (checkboxIds: string[]): string[] => {
     return checkboxIds
@@ -56,7 +50,7 @@
 
     await apiFetch(`/api/students/${student._id as NoSlashString}/importantstuff`, {
       method: "PATCH",
-      body: editableImportantStuff,
+      body: editableImportantStuff.draft,
       headers: {
         "Content-Type": "application/json"
       }
@@ -93,11 +87,11 @@
             <div data-field="description">
               Skriv inn informasjon som eleven har godtatt at deles
             </div>
-            <textarea rows="5" bind:value={editableImportantStuff.importantInfo} class="ds-input"></textarea>
+            <textarea rows="5" bind:value={editableImportantStuff.draft.importantInfo} class="ds-input"></textarea>
           </ds-field>
         {:else}
           <p class="ds-paragraph important-info-text">
-            {savedEditableImportantStuff.importantInfo || "Ingen informasjon lagt til"}
+            {importantStuffSource.importantInfo || "Ingen informasjon lagt til"}
           </p>
         {/if}
       </div>
@@ -109,17 +103,17 @@
             <fieldset class="ds-fieldset">
               {#each studentCheckBoxes.filter(checkbox => checkbox.enabled && checkbox.type === "FOLLOW_UP") as followUpCheckbox}
                 <ds-field class="ds-field">
-                  <input id={followUpCheckbox._id} class="ds-input" type="checkbox" bind:group={editableImportantStuff.followUp} value={followUpCheckbox._id} />
+                  <input id={followUpCheckbox._id} class="ds-input" type="checkbox" bind:group={editableImportantStuff.draft.followUp} value={followUpCheckbox._id} />
                   <label for={followUpCheckbox._id} class="ds-label" data-weight="regular">{followUpCheckbox.value}</label>
                 </ds-field>
               {/each}
             </fieldset>
           {:else}
-            {#if savedEditableImportantStuff.followUp.length === 0}
+            {#if importantStuffSource.followUp.length === 0}
               Ingen {STUDENT_CHECKBOX_DISPLAY_NAMES.FOLLOW_UP.plural.toLowerCase()}
             {:else}
               <ul class="ds-list">
-                {#each getStudentCheckBoxValues(savedEditableImportantStuff.followUp) as followUpValue}
+                {#each getStudentCheckBoxValues(importantStuffSource.followUp) as followUpValue}
                   <li>{followUpValue}</li>
                 {/each}
               </ul>
@@ -133,17 +127,17 @@
             <fieldset class="ds-fieldset">
               {#each studentCheckBoxes.filter(checkbox => checkbox.enabled && checkbox.type === "FACILITATION") as facilitationCheckbox}
                 <ds-field class="ds-field">
-                  <input id={facilitationCheckbox._id} class="ds-input" type="checkbox" bind:group={editableImportantStuff.facilitation} value={facilitationCheckbox._id} />
+                  <input id={facilitationCheckbox._id} class="ds-input" type="checkbox" bind:group={editableImportantStuff.draft.facilitation} value={facilitationCheckbox._id} />
                   <label for={facilitationCheckbox._id} class="ds-label" data-weight="regular">{facilitationCheckbox.value}</label>
                 </ds-field>
               {/each}
             </fieldset>
           {:else}
-            {#if savedEditableImportantStuff.facilitation.length === 0}
+            {#if importantStuffSource.facilitation.length === 0}
               Ingen {STUDENT_CHECKBOX_DISPLAY_NAMES.FACILITATION.plural.toLowerCase()}
             {:else}
               <ul class="ds-list">
-                {#each getStudentCheckBoxValues(savedEditableImportantStuff.facilitation) as facilitationValue}
+                {#each getStudentCheckBoxValues(importantStuffSource.facilitation) as facilitationValue}
                   <li>{facilitationValue}</li>
                 {/each}
               </ul>
@@ -156,8 +150,8 @@
 
   {#if editMode}
     <div class="card-footer-actions">
-      <AsyncButton disabled={!hasMadeChanges} onClick={updateStudentImportantStuff} buttonText="Lagre" iconName="save" />
-      <button class="ds-button" data-variant="secondary" type="button" onclick={() => { editMode = false; editableImportantStuff = $state.snapshot(savedEditableImportantStuff); }}><span class="material-symbols-outlined">close</span>Avbryt</button>
+      <AsyncButton disabled={!editableImportantStuff.isDirty} onClick={updateStudentImportantStuff} buttonText="Lagre" iconName="save" />
+      <button class="ds-button" data-variant="secondary" type="button" onclick={() => { editMode = false; editableImportantStuff.cancel() }}><span class="material-symbols-outlined">close</span>Avbryt</button>
     </div>
   {:else}
     {#if importantStuff?.modified && !editMode}
