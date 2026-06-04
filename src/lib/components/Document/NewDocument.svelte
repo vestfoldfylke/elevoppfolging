@@ -16,7 +16,7 @@
 
   let { documentContentTemplates, accessSchools, studentId, studentName, groupSystemId, groupName, studentDataSharingConsent, studentAccessPersons }: PageProps = $props()
 
-  let _pagePropsGuard = $derived.by(() => { 
+  $effect(() => {
     if (!studentId && !groupSystemId) {
       throw new Error("Student ID or Group System ID is required to create a new document")
     }
@@ -29,7 +29,6 @@
     if (documentContentTemplates.length === 0) {
       throw new Error("At least one document content template is required to create a new document")
     }
-    return true
   })
 
   let newDocumentDialog: HTMLDialogElement | undefined

@@ -27,7 +27,6 @@
 
   let { document, accessSchools, canEditDocument, canRemoveDocument, studentName, groupName, studentDataSharingConsent, studentAccessPersons, referencedOpen = false }: PageProps = $props()
 
-
   let documentDialog: HTMLDialogElement | undefined = $state()
 
   let originalDialogParent: HTMLElement | undefined = $state()

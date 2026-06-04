@@ -2,7 +2,7 @@
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import { studentDataSharingConsentMessageValidation } from "$lib/data-validation/student-consent-validation"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
-  import { createEditableDraft, type EditableDraft } from "$lib/runes/create-editable-draft.svelte";
+  import { createEditableDraft, type EditableDraft } from "$lib/runes/create-editable-draft.svelte"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { FrontendStudent, StudentUnavailableSchoolDocuments } from "$lib/types/app-types"
   import type { StudentDataSharingConsent, StudentDataSharingConsentInput } from "$lib/types/db/shared-types"
