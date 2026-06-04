@@ -2,6 +2,7 @@
   import { goto } from "$app/navigation"
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
+  import { createEditableDraft, type EditableDraft } from "$lib/runes/create-editable-draft.svelte"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { DocumentContentItem, DocumentContentTemplate } from "$lib/types/db/shared-types"
   import AsyncButton, { type AsyncButtonResult } from "../AsyncButton.svelte"
@@ -15,10 +16,9 @@
 
   let { template }: TemplateEditorProps = $props()
 
-  // svelte-ignore state_referenced_locally (vi vil ha en kopi her, så kan den bli satt tilbake hvis det trengs via #key)
-  let editableTemplate = $state(template)
+  let editableTemplate: EditableDraft<DocumentContentTemplate> = createEditableDraft(() => template)
 
-  let previewMode = $state(Boolean(editableTemplate._id))
+  let previewMode = $state(Boolean(editableTemplate.draft._id))
 
   let templateForm: HTMLFormElement | undefined = $state()
 
@@ -90,20 +90,20 @@
     if (!newItem) {
       throw new Error("Ugyldig item-type")
     }
-    editableTemplate.content.push(JSON.parse(JSON.stringify(newItem)))
+    editableTemplate.draft.content.push(JSON.parse(JSON.stringify(newItem)))
   }
 
   const moveTemplateItem = (currentIndex: number, toIndex: number) => {
-    if (toIndex < 0 || toIndex >= editableTemplate.content.length || currentIndex === toIndex) {
+    if (toIndex < 0 || toIndex >= editableTemplate.draft.content.length || currentIndex === toIndex) {
       return
     }
-    const itemToMove = editableTemplate.content[currentIndex]
-    editableTemplate.content.splice(currentIndex, 1)
-    editableTemplate.content.splice(toIndex, 0, itemToMove)
+    const itemToMove = editableTemplate.draft.content[currentIndex]
+    editableTemplate.draft.content.splice(currentIndex, 1)
+    editableTemplate.draft.content.splice(toIndex, 0, itemToMove)
   }
 
   const removeTemplateItem = (index: number) => {
-    editableTemplate.content.splice(index, 1)
+    editableTemplate.draft.content.splice(index, 1)
   }
 
   const validateTemplate = (): boolean => {
@@ -122,7 +122,7 @@
 
     const { templateId } = await apiFetch(`/api/templates`, {
       method: "POST",
-      body: editableTemplate,
+      body: editableTemplate.draft,
       headers: {
         "Content-Type": "application/json"
       }
@@ -143,9 +143,9 @@
       return { status: "error", message: INVALID_FORM_MESSAGE }
     }
 
-    await apiFetch(`/api/templates/${editableTemplate._id as NoSlashString}`, {
+    await apiFetch(`/api/templates/${editableTemplate.draft._id as NoSlashString}`, {
       method: "PUT",
-      body: editableTemplate,
+      body: editableTemplate.draft,
       headers: {
         "Content-Type": "application/json"
       }
@@ -166,7 +166,7 @@
       return { status: "cancelled" }
     }
 
-    await apiFetch(`/api/templates/${editableTemplate._id as NoSlashString}`, {
+    await apiFetch(`/api/templates/${editableTemplate.draft._id as NoSlashString}`, {
       method: "DELETE"
     })
 
@@ -183,14 +183,14 @@
       <label for="template-name" class="ds-label" data-weight="medium">
         Navn på notat-typen
       </label>
-      <input required id="template-name" class="ds-input" type="text" bind:value={editableTemplate.name} />
+      <input required id="template-name" class="ds-input" type="text" bind:value={editableTemplate.draft.name} />
     </ds-field>
 
     <ds-field class="ds-field">
       <label for="template-sort" class="ds-label" data-weight="medium">
         Sorteringsrekkefølge
       </label>
-      <input required id="template-sort" class="ds-input" type="number" bind:value={editableTemplate.sort} />
+      <input required id="template-sort" class="ds-input" type="number" bind:value={editableTemplate.draft.sort} />
     </ds-field>
 
     <div class="template-editor">
@@ -200,22 +200,22 @@
             Tilgjengelig som
           </legend>
           <ds-field class="ds-field">
-            <input class="ds-input" id="available-for-students" type="checkbox" bind:checked={editableTemplate.availableForDocumentType.student} />
+            <input class="ds-input" id="available-for-students" type="checkbox" bind:checked={editableTemplate.draft.availableForDocumentType.student} />
             <label class="ds-label" for="available-for-students">Elevnotat</label>
           </ds-field>
           <ds-field class="ds-field">
-            <input class="ds-input" id="available-for-groups" type="checkbox" bind:checked={editableTemplate.availableForDocumentType.group} />
+            <input class="ds-input" id="available-for-groups" type="checkbox" bind:checked={editableTemplate.draft.availableForDocumentType.group} />
             <label class="ds-label" for="available-for-groups">Klassenotat</label>
           </ds-field>
         </fieldset>
       </div>
 
       <div class="template-content">
-        {#if editableTemplate.content.length === 0}
+        {#if editableTemplate.draft.content.length === 0}
           <p>Ingen elementer i malen enda</p>
         {/if}
-        {#each editableTemplate.content as _contentItem, index}
-          <TemplateEditorItem bind:contentItem={editableTemplate.content[index]} index={index} contentItemsLength={editableTemplate.content.length} moveItem={toIndex => moveTemplateItem(index, toIndex)} removeItem={() => removeTemplateItem(index)} />
+        {#each editableTemplate.draft.content as _contentItem, index}
+          <TemplateEditorItem bind:contentItem={editableTemplate.draft.content[index]} index={index} contentItemsLength={editableTemplate.draft.content.length} moveItem={toIndex => moveTemplateItem(index, toIndex)} removeItem={() => removeTemplateItem(index)} />
         {/each}
       </div>
     </div>
@@ -232,7 +232,7 @@
 </div>
 
 <div class="template-preview" class:hidden={!previewMode}>
-  {#each editableTemplate.content as contentItem, index}
+  {#each editableTemplate.draft.content as contentItem, index}
     <DocumentContentItemComponent editMode={true} previewMode={true} {index} {contentItem} />
   {/each}
 </div>
@@ -243,15 +243,15 @@
   {#if previewMode}
     <button class="ds-button" data-variant="secondary" type="button" onclick={() => previewMode = false}><span class="material-symbols-outlined">edit</span>Rediger mal</button>
   {:else}
-    {#if !editableTemplate._id}
+    {#if !editableTemplate.draft._id}
       <AsyncButton buttonText="Lagre mal" onClick={newTemplate} iconName="save" />
     {:else}
-      <AsyncButton disabled={JSON.stringify(editableTemplate) === JSON.stringify(template)} buttonText="Lagre endringer" onClick={updateTemplate} iconName="save" />
+      <AsyncButton disabled={!editableTemplate.isDirty} buttonText="Lagre endringer" onClick={updateTemplate} iconName="save" />
     {/if}
     <button class="ds-button" data-variant="secondary" type="button" onclick={() => previewMode = true}><span class="material-symbols-outlined">visibility</span>Forhåndsvis mal</button>
   {/if}
   <a href="/system/templates" class="ds-button" data-variant="secondary"><span class="material-symbols-outlined">arrow_back</span>Tilbake til maler</a>
-  {#if editableTemplate._id}
+  {#if editableTemplate.draft._id}
     <AsyncButton buttonText="Slett mal" onClick={deleteTemplate} iconName="delete" color="danger" />
   {/if}
 </div>
