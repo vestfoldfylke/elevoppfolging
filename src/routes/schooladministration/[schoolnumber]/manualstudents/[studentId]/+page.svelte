@@ -5,6 +5,7 @@
   import PageHeader from "$lib/components/PageHeader.svelte"
   import { nameValidation, ssnValidation } from "$lib/data-validation/manual-student-validation"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
+  import { createEditableDraft } from "$lib/runes/create-editable-draft.svelte"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { UpdateManualStudentInput } from "$lib/types/db/shared-types"
   import type { PageProps } from "./$types"
@@ -26,27 +27,32 @@
 
   let updateManualStudentEdit: boolean = $state(false)
   let updateManualStudentForm: HTMLFormElement | undefined = $state()
-  let updateManualStudentFnr: string = $derived.by(() => data.manualStudent.ssn)
-  let updateManualStudentName: string = $derived.by(() => data.manualStudent.name)
-  let updateManualStudentHasBlockedAddress: boolean = $derived.by(() => data.manualStudent.hasBlockedAddress ?? false)
+
+  let manualStudentSource = $derived.by(() => ({
+    ssn: data.manualStudent.ssn,
+    name: data.manualStudent.name,
+    hasBlockedAddress: data.manualStudent.hasBlockedAddress ?? false
+  }))
+
+  let editableManualStudent = createEditableDraft(() => manualStudentSource)
 
   const updateManualStudent = async (): Promise<AsyncButtonResult> => {
     if (!updateManualStudentForm?.reportValidity()) {
       return { status: "error", message: INVALID_FORM_MESSAGE }
     }
 
-    if (!updateManualStudentFnr) {
+    if (!editableManualStudent.draft.ssn) {
       return { status: "error", message: "Fødselsnummer må være fylt ut" }
     }
 
-    if (!updateManualStudentName) {
+    if (!editableManualStudent.draft.name) {
       return { status: "error", message: "Navn må være fylt ut" }
     }
 
     const updateManualStudentInput: UpdateManualStudentInput = {
-      ssn: updateManualStudentFnr,
-      name: updateManualStudentName,
-      hasBlockedAddress: updateManualStudentHasBlockedAddress,
+      ssn: editableManualStudent.draft.ssn,
+      name: editableManualStudent.draft.name,
+      hasBlockedAddress: editableManualStudent.draft.hasBlockedAddress,
       school: currentSchool,
       studentId: data.manualStudent._id
     }
@@ -70,17 +76,7 @@
 
   const abortUpdateManualStudent = () => {
     updateManualStudentEdit = false
-    updateManualStudentFnr = data.manualStudent.ssn
-    updateManualStudentName = data.manualStudent.name
-    updateManualStudentHasBlockedAddress = data.manualStudent.hasBlockedAddress ?? false
-  }
-
-  const isDisabled = (): boolean => {
-    return (
-      updateManualStudentFnr === data.manualStudent.ssn &&
-      updateManualStudentName === data.manualStudent.name &&
-      updateManualStudentHasBlockedAddress === (data.manualStudent.hasBlockedAddress ?? false)
-    )
+    editableManualStudent.cancel()
   }
 </script>
 
@@ -98,11 +94,11 @@
     <div class="update-manual-student">
       <div>
         <h2 class="ds-heading">Fødselsnummer</h2>
-        <p class="ds-paragraph">{updateManualStudentFnr}</p>
+        <p class="ds-paragraph">{data.manualStudent.ssn}</p>
       </div>
       <div>
         <h2 class="ds-heading">Adressesperre</h2>
-        <p class="ds-paragraph">{updateManualStudentHasBlockedAddress ? "Ja" : "Nei"}</p>
+        <p class="ds-paragraph">{(data.manualStudent.hasBlockedAddress ?? false) ? "Ja" : "Nei"}</p>
       </div>
       <div>
         <button onclick={() => updateManualStudentEdit = true} class="ds-button">
@@ -120,7 +116,7 @@
             <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
           </label>
           <div class="ds-field-affixes">
-            <input class="ds-input" inputmode="numeric" type="text" id="fnr" pattern={ssnValidation.pattern.source} minlength={ssnValidation.minLength} maxlength={ssnValidation.maxLength} bind:value={updateManualStudentFnr} required>
+            <input class="ds-input" inputmode="numeric" type="text" id="fnr" pattern={ssnValidation.pattern.source} minlength={ssnValidation.minLength} maxlength={ssnValidation.maxLength} bind:value={editableManualStudent.draft.ssn} required>
           </div>
         </ds-field>
 
@@ -130,18 +126,18 @@
             <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
           </label>
           <div class="ds-field-affixes">
-            <input class="ds-input" type="text" id="name" pattern={nameValidation.pattern.source} minlength={nameValidation.minLength} maxlength={nameValidation.maxLength} bind:value={updateManualStudentName} required>
+            <input class="ds-input" type="text" id="name" pattern={nameValidation.pattern.source} minlength={nameValidation.minLength} maxlength={nameValidation.maxLength} bind:value={editableManualStudent.draft.name} required>
           </div>
         </ds-field>
 
         <ds-field class="ds-field content-item">
           <label class="ds-label" data-weight="medium" for="blockedAddress" data-clickdelegatefor="blockedAddress">Adressesperre</label>
-          <input class="ds-input" type="checkbox" id="blockedAddress" bind:checked={updateManualStudentHasBlockedAddress}>
+          <input class="ds-input" type="checkbox" id="blockedAddress" bind:checked={editableManualStudent.draft.hasBlockedAddress}>
         </ds-field>
       </form>
 
       <div class="manual-student-save-actions">
-        <AsyncButton onClick={updateManualStudent} buttonText="Lagre" iconName="save" disabled={isDisabled()} />
+        <AsyncButton onClick={updateManualStudent} buttonText="Lagre" iconName="save" disabled={!editableManualStudent.isDirty} />
         <button class="ds-button" type="button" data-variant="secondary" onclick={abortUpdateManualStudent}><span class="material-symbols-outlined">close</span>Avbryt</button>
       </div>
     </div>
