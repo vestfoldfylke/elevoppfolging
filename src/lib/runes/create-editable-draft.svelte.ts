@@ -45,13 +45,18 @@ export const createEditableDraft = <T>(getSource: () => T) => {
   $effect(() => {
     const latestClonedSource = getClonedSource()
     untrack(() => {
-      draft.value = latestClonedSource
+      if (JSON.stringify(draft.value) !== JSON.stringify(latestClonedSource)) {
+        draft.value = latestClonedSource
+      }
     })
   })
 
   return {
     get draft() {
       return draft.value as T
+    },
+    set draft(newDraft: T) {
+      draft.value = newDraft as ReturnType<typeof getClonedSource>
     },
     get isDirty() {
       return isDirty
