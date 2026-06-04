@@ -16,22 +16,21 @@
 
   let { documentContentTemplates, accessSchools, studentId, studentName, groupSystemId, groupName, studentDataSharingConsent, studentAccessPersons }: PageProps = $props()
 
-  // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounts ved endring av studentId/groupSystemId
-  if (!studentId && !groupSystemId) {
-    throw new Error("Student ID or Group System ID is required to create a new document")
-  }
-  // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounts ved endring av studentId/groupSystemId
-  if (studentId && groupSystemId) {
-    throw new Error("Both Student ID and Group System ID provided, only one should be provided")
-  }
-  // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounts ved endring av studentId/groupSystemId
-  if (accessSchools.length === 0) {
-    throw new Error("At least one access school is required to create a new document")
-  }
-  // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounts ved endring av studentId/groupSystemId
-  if (documentContentTemplates.length === 0) {
-    throw new Error("At least one document content template is required to create a new document")
-  }
+  let _pagePropsGuard = $derived.by(() => { 
+    if (!studentId && !groupSystemId) {
+      throw new Error("Student ID or Group System ID is required to create a new document")
+    }
+    if (studentId && groupSystemId) {
+      throw new Error("Both Student ID and Group System ID provided, only one should be provided")
+    }
+    if (accessSchools.length === 0) {
+      throw new Error("At least one access school is required to create a new document")
+    }
+    if (documentContentTemplates.length === 0) {
+      throw new Error("At least one document content template is required to create a new document")
+    }
+    return true
+  })
 
   let newDocumentDialog: HTMLDialogElement | undefined
 
@@ -50,8 +49,7 @@
     }
   }
 
-  // svelte-ignore state_referenced_locally det går bra så lenge denne komponenten remounts ved endring av studentId/groupSystemId TODO - sjekk om det skal være derived
-  const newDocumentTemplates = documentContentTemplates.map((template) => newDocumentTemplate(template))
+  const newDocumentTemplates = $derived.by(() => documentContentTemplates.map((template) => newDocumentTemplate(template)))
 
   let newDocument: DocumentInput | null = $state(null)
 
