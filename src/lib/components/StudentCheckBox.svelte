@@ -18,14 +18,12 @@
 
   let { checkBox, editMode, name, callBackOnCreate, callBackOnCancel }: StudentCheckBoxProps = $props()
 
-  let checkBoxSource = $derived.by(() => ({
+  let editableCheckBox: EditableDraft<StudentCheckBoxInput> = createEditableDraft(() => ({
     enabled: checkBox.enabled,
     type: checkBox.type,
     value: checkBox.value,
     sort: checkBox.sort
   }))
-
-  let editableCheckBox: EditableDraft<StudentCheckBoxInput> = createEditableDraft(() => checkBoxSource)
 
   let studentCheckBoxFormNew: HTMLFormElement | undefined = $state()
   let studentCheckBoxFormEditName: HTMLFormElement | undefined = $state()
