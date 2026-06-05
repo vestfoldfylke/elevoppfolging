@@ -2,6 +2,7 @@
   import { page } from "$app/state"
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
+  import { createEditableDraft, type EditableDraft } from "$lib/runes/create-editable-draft.svelte"
   import { canEditDocumentMessage } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { StudentAccessPerson } from "$lib/types/app-types"
@@ -22,26 +23,8 @@
 
   let { document, message, editMode, studentDataSharingConsent, studentAccessPersons, emailAlertAvailable, callback }: PageProps = $props()
 
-  // svelte-ignore state_referenced_locally (we don't want to modify the original), remember key on the outside
-  let editableMessage: DocumentMessageInput = $state({
-    type: message.type,
-    content: {
-      title: message.content.title,
-      text: message.content.text
-    },
-    emailAlertReceivers: message.emailAlertReceivers || []
-  })
-
-  let canEditMessage: boolean = $derived.by(() => canEditDocumentMessage(page.data.authenticatedPrincipal, message))
-
-  let messageEdited = $derived.by(() => {
-    return editableMessage.type !== message.type || editableMessage.content.title !== message.content.title || editableMessage.content.text !== message.content.text
-  })
-
-  let messageForm: HTMLFormElement | undefined = $state()
-
-  const callBackOnSuccessOrCancel = () => {
-    editableMessage = {
+  let messageSource: DocumentMessageInput = $derived.by(() => {
+    return {
       type: message.type,
       content: {
         title: message.content.title,
@@ -49,6 +32,16 @@
       },
       emailAlertReceivers: message.emailAlertReceivers || []
     }
+  })
+
+  let editableMessage: EditableDraft<DocumentMessageInput> = createEditableDraft(() => messageSource)
+
+  let canEditMessage: boolean = $derived.by(() => canEditDocumentMessage(page.data.authenticatedPrincipal, message))
+
+  let messageForm: HTMLFormElement | undefined = $state()
+
+  const callBackOnSuccessOrCancel = () => {
+    editableMessage.cancel()
 
     if (callback) {
       callback()
@@ -72,7 +65,7 @@
 
       await apiFetch(createMessageRoute, {
         method: "POST",
-        body: editableMessage,
+        body: editableMessage.draft,
         headers: {
           "Content-Type": "application/json"
         }
@@ -86,7 +79,7 @@
 
       await apiFetch(createMessageRoute, {
         method: "POST",
-        body: editableMessage,
+        body: editableMessage.draft,
         headers: {
           "Content-Type": "application/json"
         }
@@ -115,7 +108,7 @@
 
       await apiFetch(updateMessageRoute, {
         method: "PATCH",
-        body: editableMessage,
+        body: editableMessage.draft,
         headers: {
           "Content-Type": "application/json"
         }
@@ -129,7 +122,7 @@
 
       await apiFetch(updateMessageRoute, {
         method: "PATCH",
-        body: editableMessage,
+        body: editableMessage.draft,
         headers: {
           "Content-Type": "application/json"
         }
@@ -151,13 +144,13 @@
 
   {#if editMode}
     <form bind:this={messageForm}>
-      {#if editableMessage.type === "update"}
+      {#if editableMessage.draft.type === "update"}
         <ds-field class="ds-field content-item">
           <label for="message-title-{message.messageId || document._id}" class="ds-label" data-weight="medium">
             Tittel
             <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
           </label>
-          <input autocomplete="off" class="ds-input" type="text" id="message-title-{message.messageId || document._id}" name="messageTitle" required bind:value={editableMessage.content.title} />
+          <input autocomplete="off" class="ds-input" type="text" id="message-title-{message.messageId || document._id}" name="messageTitle" required bind:value={editableMessage.draft.content.title} />
         </ds-field>
         
         <ds-field class="ds-field content-item">
@@ -165,7 +158,7 @@
             Oppdatering
             <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
           </label>
-          <textarea required class="ds-input" name="messageContent" id="message-content-{message.messageId || document._id}" rows={5} bind:value={editableMessage.content.text}></textarea>
+          <textarea required class="ds-input" name="messageContent" id="message-content-{message.messageId || document._id}" rows={5} bind:value={editableMessage.draft.content.text}></textarea>
         </ds-field>
       {/if}
 
@@ -179,7 +172,7 @@
           {studentDataSharingConsent}
           schoolNumber={document.school.schoolNumber}
           documentAccess={document.documentAccess}
-          bind:emailAlertReceivers={editableMessage.emailAlertReceivers}
+          bind:emailAlertReceivers={editableMessage.draft.emailAlertReceivers}
         />
       {/if}
     </form>
@@ -197,7 +190,7 @@
     {#if !message.messageId}
       <AsyncButton buttonText="Lagre" onClick={newMessage} iconName="save" />
     {:else}
-      <AsyncButton disabled={!messageEdited} buttonText="Lagre endringer" onClick={updateMessage} iconName="save" />
+      <AsyncButton disabled={!editableMessage.isDirty} buttonText="Lagre endringer" onClick={updateMessage} iconName="save" />
     {/if}
     <button class="ds-button" data-variant="secondary" onclick={callBackOnSuccessOrCancel}><span class="material-symbols-outlined">close</span>Avbryt</button>
   </div>

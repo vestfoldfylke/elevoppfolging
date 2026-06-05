@@ -3,6 +3,7 @@
   import { page } from "$app/state"
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import AsyncButton, { type AsyncButtonResult } from "$lib/components/AsyncButton.svelte"
+  import { createEditableDraft, type EditableDraft } from "$lib/runes/create-editable-draft.svelte"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { StudentAccessPerson } from "$lib/types/app-types"
   import type { AuditEntryInput, DocumentInput, GroupDocument, MetricCount, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
@@ -25,19 +26,6 @@
   }
 
   let { document, accessSchools, canEditDocument, canRemoveDocument, studentName, groupName, studentDataSharingConsent, studentAccessPersons, referencedOpen = false }: PageProps = $props()
-
-  const editableDocumentFromDocument = () => {
-    return JSON.parse(
-      JSON.stringify({
-        content: document.content,
-        school: document.school,
-        template: document.template,
-        title: document.title,
-        documentAccess: document.documentAccess || "EXCLUDE_SUBJECT_TEACHERS", // default value, because old documents doesn't have this field, and we don't want to break the editor for those
-        emailAlertReceivers: document.emailAlertReceivers || []
-      } as DocumentInput)
-    )
-  }
 
   let documentDialog: HTMLDialogElement | undefined = $state()
 
@@ -171,11 +159,15 @@
     return { status: "error", message: "Document was neither student or group document??" }
   }
 
-  // svelte-ignore state_referenced_locally - det går bra så lenge denne komponenten remounts ved endring av document (ha en key på document i parent)
-  let editableDocument: DocumentInput = $state(editableDocumentFromDocument())
-
-  let documentEdited: boolean = $derived.by(() => {
-    return JSON.stringify(editableDocumentFromDocument()) !== JSON.stringify(editableDocument)
+  let editableDocument: EditableDraft<DocumentInput> = createEditableDraft(() => {
+    return {
+      content: document.content,
+      school: document.school,
+      template: document.template,
+      title: document.title,
+      documentAccess: document.documentAccess || "EXCLUDE_SUBJECT_TEACHERS",
+      emailAlertReceivers: document.emailAlertReceivers || []
+    }
   })
 
   let editMode = $state(false)
@@ -190,7 +182,7 @@
           <span class="material-symbols-outlined" data-tooltip="Dette notatet er skrivebeskyttet fordi det tilhører et tidligere skoleår">lock</span>
         {/if}
       </div>
-      <button id="document-modal-{document._id}-open" class="ds-button card-button" onclick={() => handleDocumentOpen(document)} data-size="lg" data-variant="tertiary" aria-label="{document.template.name}: {editableDocument.title}">{document.template.name}</button>
+      <button id="document-modal-{document._id}-open" class="ds-button card-button" onclick={() => handleDocumentOpen(document)} data-size="lg" data-variant="tertiary" aria-label="{document.template.name}: {document.title}">{document.template.name}</button>
       <p class="ds-paragraph" style="margin: 0;">{document.title}</p>
       <EditorInfo editorInfo={document.created} isEdited={document.modified.at.getTime() > document.created.at.getTime()} timestamp={false} modifiedIndicator={true} style="margin-top: var(--ds-size-2);" />
     </div>
@@ -216,7 +208,7 @@
           </span>
           <span class="ds-tag" data-color="brand1" data-size="lg">
             <span class="material-symbols-outlined" style="margin-right: var(--ds-size-2);">school</span>
-            {studentName || groupName} - {editableDocument.school.name}
+            {studentName || groupName} - {editableDocument.draft.school.name}
           </span>
           {#if document.isDocumentLocked}
             <span class="ds-tag" data-color="danger" data-size="lg" data-tooltip="Dette notatet er skrivebeskyttet fordi det tilhører et tidligere skoleår">
@@ -226,7 +218,7 @@
         </div>
 
         {#if !editMode}
-          <h2 class="ds-heading" style="font-weight: bold;">{editableDocument.title}</h2>
+          <h2 class="ds-heading" style="font-weight: bold;">{document.title}</h2>
           <EditorInfo editorInfo={document.created} isEdited={document.modified.at.getTime() > document.created.at.getTime()} timestamp={true} modifiedIndicator={true} />
         {/if}
       </div>
@@ -238,7 +230,7 @@
           {/each}
 
         {:else}
-          <DocumentEditor documentId={document._id} studentId={"student" in document ? document.student._id : undefined} groupSystemId={"group" in document ? document.group.systemId : undefined} bind:currentDocument={editableDocument} {accessSchools} {documentEdited} closeEditor={() => { editMode = false; editableDocument = editableDocumentFromDocument(); }} />
+          <DocumentEditor documentId={document._id} studentId={"student" in document ? document.student._id : undefined} groupSystemId={"group" in document ? document.group.systemId : undefined} bind:currentDocument={editableDocument.draft} {accessSchools} documentEdited={editableDocument.isDirty} closeEditor={() => { editMode = false; editableDocument.cancel() }} />
         {/if}
 
         <div class="document-footer">

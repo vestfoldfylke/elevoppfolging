@@ -1,6 +1,7 @@
 <script lang="ts">
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
+  import { createEditableDraft, type EditableDraft } from "$lib/runes/create-editable-draft.svelte"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { ClassGroup, GroupImportantStuff, GroupImportantStuffInput, SchoolInfo } from "$lib/types/db/shared-types"
   import AsyncButton, { type AsyncButtonResult } from "./AsyncButton.svelte"
@@ -17,19 +18,12 @@
   let editMode = $state(false)
   let groupImportantStuffForm: HTMLFormElement | undefined = $state()
 
-  let savedEditableGroupImportantStuff: GroupImportantStuffInput = $derived.by(() => {
-    return {
-      school: school,
-      importantInfo: groupImportantStuff?.importantInfo || ""
-    }
-  })
+  let groupImportantStuffSource: GroupImportantStuffInput = $derived.by(() => ({
+    school,
+    importantInfo: groupImportantStuff?.importantInfo || ""
+  }))
 
-  // svelte-ignore state_referenced_locally - det går bra, vi håndterer intern state i klassen EditableGroupImportantStuffHandler
-  let editableGroupImportantStuff: GroupImportantStuffInput = $state(savedEditableGroupImportantStuff)
-
-  let hasMadeChanges = $derived.by(() => {
-    return JSON.stringify(savedEditableGroupImportantStuff) !== JSON.stringify(editableGroupImportantStuff)
-  })
+  let editableGroupImportantStuff: EditableDraft<GroupImportantStuffInput> = createEditableDraft(() => groupImportantStuffSource)
 
   const updateGroupImportantStuff = async (): Promise<AsyncButtonResult> => {
     if (!groupImportantStuffForm) {
@@ -43,7 +37,7 @@
 
     await apiFetch(`/api/classes/${group.systemId as NoSlashString}/importantstuff`, {
       method: "PATCH",
-      body: editableGroupImportantStuff,
+      body: editableGroupImportantStuff.draft,
       headers: {
         "Content-Type": "application/json"
       }
@@ -80,11 +74,11 @@
             <div data-field="description">
               Skriv inn informasjon om klassen
             </div>
-            <textarea rows="5" bind:value={editableGroupImportantStuff.importantInfo} class="ds-input"></textarea>
+            <textarea rows="5" bind:value={editableGroupImportantStuff.draft.importantInfo} class="ds-input"></textarea>
           </ds-field>
         {:else}
           <p class="ds-paragraph important-info-text">
-            {savedEditableGroupImportantStuff.importantInfo || "Ingen informasjon lagt til"}
+            {groupImportantStuffSource.importantInfo || "Ingen informasjon lagt til"}
           </p>
         {/if}
       </div>
@@ -93,8 +87,8 @@
 
   {#if editMode}
     <div class="card-footer-actions">
-      <AsyncButton disabled={!hasMadeChanges} onClick={updateGroupImportantStuff} buttonText="Lagre" iconName="save" />
-      <button class="ds-button" data-variant="secondary" type="button" onclick={() => { editMode = false; editableGroupImportantStuff = $state.snapshot(savedEditableGroupImportantStuff); }}><span class="material-symbols-outlined">close</span>Avbryt</button>
+      <AsyncButton disabled={!editableGroupImportantStuff.isDirty} onClick={updateGroupImportantStuff} buttonText="Lagre" iconName="save" />
+      <button class="ds-button" data-variant="secondary" type="button" onclick={() => { editMode = false; editableGroupImportantStuff.cancel() }}><span class="material-symbols-outlined">close</span>Avbryt</button>
     </div>
   {:else}
     {#if groupImportantStuff?.modified && !editMode}

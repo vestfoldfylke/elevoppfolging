@@ -3,6 +3,7 @@
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import { nameValidation } from "$lib/data-validation/program-area-validation"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
+  import { createEditableDraft, type EditableDraft } from "$lib/runes/create-editable-draft.svelte"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { AccessControlClass } from "$lib/types/app-types"
   import type { ProgramArea, ProgramAreaInput } from "$lib/types/db/shared-types"
@@ -17,12 +18,13 @@
 
   let { programArea = undefined, schoolClasses, schoolNumber, editMode = $bindable(false) }: ProgramAreaProps = $props()
 
-  // svelte-ignore state_referenced_locally - det går bra så lenge du har en key på _id utsida
-  let editableProgramAreaName: string = $state(programArea?.name || "")
+  let editableProgramArea: EditableDraft<{ name: string }> = createEditableDraft(() => {
+    return { name: programArea?.name || "" }
+  })
+
+  let classesChanged = $state(false)
   let classesSuggestionElement: DSSuggestionElement | undefined = $state()
   let programAreaForm: HTMLFormElement | undefined = $state()
-
-  let programAreaEdited = $state(false)
 
   let nonExistingProgramAreas: string[] = $derived.by(() => {
     if (!programArea) {
@@ -33,21 +35,14 @@
   })
 
   const programAreaHasBeenEdited = (): void => {
-    if (!programArea) {
-      programAreaEdited = false
+    if (!programArea || !classesSuggestionElement) {
+      classesChanged = false
       return
     }
 
-    const nameChanged = editableProgramAreaName !== programArea.name
-    let classesChanged = false
-    if (classesSuggestionElement) {
-      const selectedClassIds = classesSuggestionElement.values
-      const originalClassIds = programArea.classes?.map((classGroup) => classGroup.systemId) || []
-      // Sjekk om de valgte klassene er forskjellige fra de originale
-      classesChanged = selectedClassIds.length !== originalClassIds.length || !selectedClassIds.every((id) => originalClassIds.includes(id))
-    }
-
-    programAreaEdited = nameChanged || classesChanged
+    const selectedClassIds = classesSuggestionElement.values
+    const originalClassIds = programArea.classes?.map((classGroup) => classGroup.systemId) || []
+    classesChanged = selectedClassIds.length !== originalClassIds.length || !selectedClassIds.every((id) => originalClassIds.includes(id))
   }
 
   const validateAndGetProgramAreaInput = (): ProgramAreaInput => {
@@ -55,7 +50,7 @@
       throw new Error(INVALID_FORM_MESSAGE)
     }
 
-    if (!editableProgramAreaName) {
+    if (!editableProgramArea.draft.name) {
       throw new Error("Navn på programområde må være fylt ut")
     }
 
@@ -64,12 +59,12 @@
     }
 
     return {
-      name: editableProgramAreaName,
+      name: editableProgramArea.draft.name,
       classes: classesSuggestionElement.values
         .map((value) => {
           const matchingClass = schoolClasses.find((classGroup) => classGroup.systemId === value)
           if (!matchingClass) {
-            console.warn("Klasse med systemId", value, "ikke funnet. Den vil bli fjernet fra programområde", editableProgramAreaName)
+            console.warn("Klasse med systemId", value, "ikke funnet. Den vil bli fjernet fra programområde", editableProgramArea.draft.name)
             return null
           }
 
@@ -129,8 +124,8 @@
 
   const closeEditMode = (): void => {
     editMode = false
-    editableProgramAreaName = programArea?.name || ""
-    programAreaEdited = false
+    editableProgramArea.cancel()
+    classesChanged = false
   }
 </script>
 
@@ -150,7 +145,7 @@
           <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
         </label>
         <div class="ds-field-affixes">
-          <input class="ds-input" type="text" id="program-area-name" maxlength={nameValidation.maxLength} minlength={nameValidation.minLength} pattern={nameValidation.pattern.source} bind:value={editableProgramAreaName} oninput={programAreaHasBeenEdited} required>
+          <input class="ds-input" type="text" id="program-area-name" maxlength={nameValidation.maxLength} minlength={nameValidation.minLength} pattern={nameValidation.pattern.source} bind:value={editableProgramArea.draft.name} required>
         </div>
       </ds-field>
 
@@ -194,7 +189,7 @@
 
     <div class="program-area-actions">
       {#if programArea}
-        <AsyncButton disabled={!programAreaEdited && nonExistingProgramAreas.length === 0} onClick={updateProgramArea} buttonText="Lagre endringer" iconName="save" />
+        <AsyncButton disabled={!editableProgramArea.isDirty && !classesChanged && nonExistingProgramAreas.length === 0} onClick={updateProgramArea} buttonText="Lagre endringer" iconName="save" />
         <AsyncButton onClick={deleteProgramArea} buttonText="Slett programområde" iconName="delete" color="danger" />
       {:else}
         <AsyncButton onClick={createProgramArea} buttonText="Opprett programområde" iconName="save" />

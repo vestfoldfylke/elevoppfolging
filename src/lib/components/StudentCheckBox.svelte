@@ -2,6 +2,7 @@
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import { studentCheckBoxValueValidation } from "$lib/data-validation/student-check-box-validation"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
+  import { createEditableDraft, type EditableDraft } from "$lib/runes/create-editable-draft.svelte"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { StudentCheckBox, StudentCheckBoxInput } from "$lib/types/db/shared-types"
   import { prettifyDateTime } from "$lib/utils/dates"
@@ -17,13 +18,12 @@
 
   let { checkBox, editMode, name, callBackOnCreate, callBackOnCancel }: StudentCheckBoxProps = $props()
 
-  // svelte-ignore state_referenced_locally - we want a local copy
-  let editableCheckBox: StudentCheckBoxInput = $state({
+  let editableCheckBox: EditableDraft<StudentCheckBoxInput> = createEditableDraft(() => ({
     enabled: checkBox.enabled,
     type: checkBox.type,
     value: checkBox.value,
     sort: checkBox.sort
-  } as StudentCheckBoxInput)
+  }))
 
   let studentCheckBoxFormNew: HTMLFormElement | undefined = $state()
   let studentCheckBoxFormEditName: HTMLFormElement | undefined = $state()
@@ -31,6 +31,7 @@
 
   const cancelStudentCheckBox = (): void => {
     editMode = false
+    editableCheckBox.cancel()
 
     if (callBackOnCancel) {
       callBackOnCancel()
@@ -48,7 +49,7 @@
 
     await apiFetch("/api/studentcheckboxes", {
       method: "POST",
-      body: editableCheckBox,
+      body: editableCheckBox.draft,
       headers: {
         "Content-Type": "application/json"
       }
@@ -111,7 +112,7 @@
 
     await apiFetch(`/api/studentcheckboxes/${checkBox._id as NoSlashString}`, {
       method: "PATCH",
-      body: editableCheckBox,
+      body: editableCheckBox.draft,
       headers: {
         "Content-Type": "application/json"
       }
@@ -139,7 +140,7 @@
           <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
         </label>
         <div class="ds-field-affixes">
-          <input class="ds-input" id="studentCheckBoxName" type="text" bind:value={editableCheckBox.value} required minlength={studentCheckBoxValueValidation.minLength} maxlength={studentCheckBoxValueValidation.maxLength}>
+          <input class="ds-input" id="studentCheckBoxName" type="text" bind:value={editableCheckBox.draft.value} required minlength={studentCheckBoxValueValidation.minLength} maxlength={studentCheckBoxValueValidation.maxLength}>
         </div>
       </ds-field>
 
@@ -149,7 +150,7 @@
           <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
         </label>
         <div class="ds-field-affixes">
-          <input class="ds-input" id="studentCheckBoxSort" type="number" bind:value={editableCheckBox.sort} required>
+          <input class="ds-input" id="studentCheckBoxSort" type="number" bind:value={editableCheckBox.draft.sort} required>
         </div>
       </ds-field>
 
@@ -157,7 +158,7 @@
         <label class="ds-label" data-weight="medium" for="studentCheckBoxEnabled" data-clickdelegatefor="studentCheckBoxEnabled">
           Aktiv
         </label>
-        <input class="ds-input" type="checkbox" id="studentCheckBoxEnabled" bind:checked={editableCheckBox.enabled}>
+        <input class="ds-input" type="checkbox" id="studentCheckBoxEnabled" bind:checked={editableCheckBox.draft.enabled}>
       </ds-field>
 
       <div class="student_check_box_edit_actions">
@@ -170,7 +171,7 @@
   <td>
     {#if editMode}
       <form bind:this={studentCheckBoxFormEditName}>
-        <input class="ds-input" id="studentCheckBoxName" type="text" bind:value={editableCheckBox.value} required minlength={studentCheckBoxValueValidation.minLength} maxlength={studentCheckBoxValueValidation.maxLength}>
+        <input class="ds-input" id="studentCheckBoxName" type="text" bind:value={editableCheckBox.draft.value} required minlength={studentCheckBoxValueValidation.minLength} maxlength={studentCheckBoxValueValidation.maxLength}>
       </form>
     {:else}
       {checkBox.value}
@@ -179,7 +180,7 @@
   <td>
     {#if editMode}
       <form bind:this={studentCheckBoxFormEditSort}>
-        <input class="ds-input" id="studentCheckBoxSort" type="number" bind:value={editableCheckBox.sort} required>
+        <input class="ds-input" id="studentCheckBoxSort" type="number" bind:value={editableCheckBox.draft.sort} required>
       </form>
     {:else}
       {checkBox.sort}
@@ -187,7 +188,7 @@
   </td>
   <td>
     {#if editMode}
-      <input class="ds-input" type="checkbox" id="studentCheckBoxEnabled" bind:checked={editableCheckBox.enabled}>
+      <input class="ds-input" type="checkbox" id="studentCheckBoxEnabled" bind:checked={editableCheckBox.draft.enabled}>
     {:else}
       {checkBox.enabled ? "Aktiv" : "Deaktivert (skjult)"}
     {/if}
@@ -214,7 +215,7 @@
         <button class="ds-button" type="button" data-size="sm" onclick={() => editMode = true}><span class="material-symbols-outlined">edit</span>Rediger</button>
         <AsyncButton onClick={deleteStudentCheckBox} buttonText="Slett" iconName="delete" dataSize="sm" color="danger" />
       {:else}
-        <AsyncButton onClick={updateStudentCheckBox} buttonText="Lagre" iconName="save" dataSize="sm" />
+        <AsyncButton disabled={!editableCheckBox.isDirty} onClick={updateStudentCheckBox} buttonText="Lagre" iconName="save" dataSize="sm" />
         <button class="ds-button" type="button" data-size="sm" data-variant="secondary" onclick={cancelStudentCheckBox}>Avbryt</button>
       {/if}
     </div>

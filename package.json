@@ -10,7 +10,8 @@
     "prepare": "svelte-kit sync || echo ''",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "test": "tsc --noEmit && biome check && npm run check && npm run build",
+    "test:vite": "vitest --watch=false",
+    "test": "tsc --noEmit && biome check && npm run check && npm run test:vite && npm run build",
     "lint": "npx @biomejs/biome check",
     "lint:fix": "npx @biomejs/biome check --write"
   },
@@ -21,10 +22,12 @@
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@types/luxon": "^3.7.1",
     "@types/node": "^25.9.1",
+    "happy-dom": "^20.9.0",
     "svelte": "^5.55.9",
     "svelte-check": "^4.4.8",
     "typescript": "^6.0.3",
-    "vite": "^8.0.14"
+    "vite": "^8.0.14",
+    "vitest": "^4.1.7"
   },
   "dependencies": {
     "@digdir/designsystemet-css": "^1.14.0",
