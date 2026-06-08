@@ -125,10 +125,16 @@ export type ApplicationInfo = {
   SCREEN_SAVER_INACTIVITY_TIMEOUT_SECONDS: number
 }
 
+export type DocumentTemplateFilterOption = {
+  _id: string
+  name: string
+}
+
 export type RootLayoutData = {
   APP_INFO: ApplicationInfo
   authenticatedPrincipal: AuthenticatedPrincipal
   principalAccess: PrincipalAccess | null
+  documentTemplateFilterOptions: DocumentTemplateFilterOption[]
   studentCheckBoxes: StudentCheckBox[]
   schools: SchoolInfo[]
 }

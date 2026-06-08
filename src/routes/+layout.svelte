@@ -11,7 +11,7 @@
   import AppHeader from "$lib/components/AppHeader.svelte"
   import ScreenSaver from "$lib/components/ScreenSaver.svelte"
   import type { NoSlashString } from "$lib/types/api/api-route-map.js"
-  import type { FrontendOverviewStudent, FrontendOverviewStudentFilter } from "$lib/types/app-types.js"
+  import type { DocumentTemplateFilterOption, FrontendOverviewStudent, FrontendOverviewStudentFilter } from "$lib/types/app-types.js"
   import type { StudentCheckBox } from "$lib/types/db/shared-types.js"
   import { prettifyDateTime } from "$lib/utils/dates.js"
   import { STUDENT_CHECKBOX_DISPLAY_NAMES } from "$lib/utils/student-checkbox-constants"
@@ -29,8 +29,13 @@
   const followUpStudentCheckBoxes: StudentCheckBox[] = enabledStudentCheckBoxes.filter((checkbox: StudentCheckBox) => checkbox.type === "FOLLOW_UP")
   const facilitationStudentCheckBoxes: StudentCheckBox[] = enabledStudentCheckBoxes.filter((checkbox: StudentCheckBox) => checkbox.type === "FACILITATION")
 
+  // svelte-ignore state_referenced_locally
+  const studentDocumentTemplates: DocumentTemplateFilterOption[] = data.documentTemplateFilterOptions
+
   let selectedFollowUpStudentCheckBoxes: string[] = $state([])
   let selectedFacilitationStudentCheckBoxes: string[] = $state([])
+  let selectedTemplateIds: string[] = $state([])
+  let hasNoDocuments: boolean = $state(false)
 
   let studentOverviewFilter: FrontendOverviewStudentFilter = $state({
     className: "",
@@ -65,6 +70,18 @@
     }
 
     selectedFacilitationStudentCheckBoxes = selectedFacilitationStudentCheckBoxes.filter((id: string) => id !== studentCheckBoxId)
+  }
+
+  const getTemplate = (templateId: string): DocumentTemplateFilterOption => {
+    const template = studentDocumentTemplates.find((t: DocumentTemplateFilterOption) => t._id === templateId)
+    if (!template) {
+      throw new Error(`No template found for id ${templateId}`)
+    }
+    return template
+  }
+
+  const removeTemplateFilter = (templateId: string): void => {
+    selectedTemplateIds = selectedTemplateIds.filter((id: string) => id !== templateId)
   }
 
   type OverviewStudentsState = {
@@ -102,6 +119,12 @@
     selectedFollowUpStudentCheckBoxes.forEach((id) => {
       queryParams.append("studentCheckBoxIds", id)
     })
+    selectedTemplateIds.forEach((id) => {
+      queryParams.append("templateIds", id)
+    })
+    if (hasNoDocuments) {
+      queryParams.append("hasNoDocuments", "true")
+    }
 
     if (studentOverviewFilter.sortBy) {
       queryParams.append("sortBy", studentOverviewFilter.sortBy)
@@ -143,8 +166,10 @@
   // Instant load on checkbox-filters, sorting and on mount
   $effect(() => {
     const _studentCheckBoxIds = [...selectedFacilitationStudentCheckBoxes, ...selectedFollowUpStudentCheckBoxes]
+    const _documentFilters = [...selectedTemplateIds, hasNoDocuments]
     const _sorting = studentOverviewFilter.sortBy ? { sortBy: studentOverviewFilter.sortBy, sortDirection: studentOverviewFilter.sortDirection } : undefined
     void _studentCheckBoxIds // read to register reactive dependency before untrack() - this line is here only to silence the warning about unused constant
+    void _documentFilters // read to register reactive dependency before untrack() - this line is here only to silence the warning about unused constant
     void _sorting // read to register reactive dependency before untrack() - this line is here only to silence the warning about unused constant
 
     untrack(() => {
@@ -200,6 +225,12 @@
             {#each selectedFacilitationStudentCheckBoxes.map(getStudentCheckBox) as selectedFacilitationStudentCheckBox}
               <button class="ds-chip chip-facilitation" id={selectedFacilitationStudentCheckBox._id} aria-label={`Fjern ${selectedFacilitationStudentCheckBox.value}`} onclick={() => removeFacilitationStudentCheckBoxFilter(selectedFacilitationStudentCheckBox._id)} data-removable="true">{selectedFacilitationStudentCheckBox.value}</button>
             {/each}
+            {#each selectedTemplateIds.map(getTemplate) as template}
+              <button class="ds-chip chip-document-template" id={template._id} aria-label={`Fjern ${template.name}`} onclick={() => removeTemplateFilter(template._id)} data-removable="true">{template.name}</button>
+            {/each}
+            {#if hasNoDocuments}
+              <button class="ds-chip chip-no-documents" aria-label="Fjern filter: Uten dokumenter" onclick={() => { hasNoDocuments = false }} data-removable="true">Uten dokumenter</button>
+            {/if}
           </div>
 
           <div class="student-filters-content">
@@ -251,6 +282,51 @@
                   </ul>
                   <hr class="ds-divider" />
                   <button class="ds-button" data-variant="tertiary" data-size="sm" type="button" onclick={() => selectedFacilitationStudentCheckBoxes = []} disabled={selectedFacilitationStudentCheckBoxes.length === 0}>Fjern alle filter</button>
+                </div>
+              {/if}
+            </div>
+
+            <button
+              class="ds-button"
+              data-variant="secondary"
+              type="button"
+              popovertarget="document-filters-action-container"
+              aria-label="Dokumentfilter"
+              data-tooltip="Dokumentfilter"
+              data-placement="top"
+              data-autoplacement="true"
+            >
+              <span class="material-symbols-outlined">description</span>
+            </button>
+            <div id="document-filters-action-container" class="ds-popover ds-dropdown" popover="auto" data-placement="bottom-end" data-variant="default">
+              <div class="document-filters-status">
+                <h2 class="ds-heading">Dokumentstatus</h2>
+                <hr class="ds-divider" />
+                <ul class="ds-list">
+                  <li>
+                    <ds-field class="ds-field">
+                      <input id="document-filters-no-documents" bind:checked={hasNoDocuments} onchange={() => { selectedTemplateIds = [] }} class="ds-input" type="checkbox" />
+                      <label for="document-filters-no-documents" class="ds-label" data-weight="regular">Uten dokumenter</label>
+                    </ds-field>
+                  </li>
+                </ul>
+              </div>
+              {#if studentDocumentTemplates.length > 0}
+                <div class="document-filters-templates">
+                  <h2 class="ds-heading">Maler</h2>
+                  <hr class="ds-divider" />
+                  <ul class="ds-list">
+                    {#each studentDocumentTemplates as template}
+                      <li>
+                        <ds-field class="ds-field">
+                          <input id="document-filters-{template._id}" bind:group={selectedTemplateIds} onchange={() => { hasNoDocuments = false }} class="ds-input" type="checkbox" value={template._id} />
+                          <label for="document-filters-{template._id}" class="ds-label" data-weight="regular">{template.name}</label>
+                        </ds-field>
+                      </li>
+                    {/each}
+                  </ul>
+                  <hr class="ds-divider" />
+                  <button class="ds-button" data-variant="tertiary" data-size="sm" type="button" onclick={() => selectedTemplateIds = []} disabled={selectedTemplateIds.length === 0}>Fjern alle filter</button>
                 </div>
               {/if}
             </div>
@@ -443,6 +519,30 @@
 
     .chip-facilitation {
         background-color: var(--ds-color-brand1-text-subtle);
+    }
+
+    .chip-document-template {
+        background-color: var(--ds-color-brand2-text-subtle);
+    }
+
+    .chip-no-documents {
+        background-color: var(--ds-color-neutral-text-subtle);
+    }
+
+    #document-filters-action-container {
+        --dsc-popover-max-width: 100%;
+    }
+
+    #document-filters-action-container:popover-open {
+        display: flex;
+    }
+
+    .document-filters-status > ul > li, .document-filters-templates > ul > li {
+        list-style: none;
+    }
+
+    .document-filters-status > ul, .document-filters-templates > ul {
+        padding-left: var(--ds-size-2);
     }
 
     .students-side-menu {
