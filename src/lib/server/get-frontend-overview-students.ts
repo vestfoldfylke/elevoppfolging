@@ -94,17 +94,41 @@ export const getFrontendOverviewStudents = async (principalAccess: PrincipalAcce
   }
 
   const timeTaken = Date.now() - now
-  logger.debug(`Finished filtering students and adding important stuff. Time taken: {TimeTaken} ms. Returning {OverviewStudentCount} overview students`, timeTaken, overviewStudents.length)
+  logger.debug(`Finished filtering students and adding important stuff. Time taken: {TimeTaken} ms.`, timeTaken)
 
-  const studentReturnLength = studentFilter?.top ?? overviewStudents.length
+  const timeBeforeDocumentFiltering = Date.now()
+
+  // Apply document filters
+  let documentFilteredStudents = overviewStudents
+
+  if (Array.isArray(studentFilter?.templateIds) && studentFilter.templateIds.length > 0) {
+    logger.info("Filtering students by templateIds: {TemplateIds}", studentFilter.templateIds)
+    const candidateIds = overviewStudents.map((s) => s._id)
+    const matchingIds = new Set(await dbClient.documents.getStudentIdsWithDocumentForTemplates(candidateIds, studentFilter.templateIds))
+    documentFilteredStudents = overviewStudents.filter((s) => matchingIds.has(s._id))
+    logger.info("After templateIds filter: {FilteredCount} of {TotalCount} students remain", documentFilteredStudents.length, overviewStudents.length)
+  }
+
+  if (studentFilter?.hasNoDocuments === true) {
+    logger.info("Filtering students to those without any documents")
+    const candidateIds = documentFilteredStudents.map((s) => s._id)
+    const idsWithoutDocuments = new Set(await dbClient.documents.getStudentIdsWithoutDocuments(candidateIds))
+    documentFilteredStudents = documentFilteredStudents.filter((s) => idsWithoutDocuments.has(s._id))
+    logger.info("After hasNoDocuments filter: {FilteredCount} of {TotalCount} students remain", documentFilteredStudents.length, overviewStudents.length)
+  }
+
+  const documentFilteringTimeTaken = Date.now() - timeBeforeDocumentFiltering
+  logger.debug(`Finished applying document filters. Time taken: {TimeTaken} ms. Returning {FilteredCount} of {TotalCount} students`, documentFilteringTimeTaken, documentFilteredStudents.length, overviewStudents.length)
+
+  const studentReturnLength = studentFilter?.top ?? documentFilteredStudents.length
 
   logger.info(
     `Finished filtering students and adding important stuff. Returning {OverviewStudentCount} overview students capped to {OverviewStudentCountCapped}`,
-    overviewStudents.length,
+    documentFilteredStudents.length,
     studentReturnLength
   )
 
-  const students = overviewStudents
+  const students = documentFilteredStudents
     .sort((a, b) => {
       const sortBy = studentFilter?.sortBy || "studentName"
       const sortDirection = studentFilter?.sortDirection === "descending" ? -1 : 1

@@ -182,6 +182,8 @@ export type TemplateInfo = {
 
 export type FrontendOverviewStudentFilter = Omit<CachedFrontendStudentFilter, "sortBy"> & {
   studentCheckBoxIds?: string[]
+  templateIds?: string[]
+  hasNoDocuments?: boolean
   sortBy?: "studentName" | "className" | "contactTeacherName" | "lastActivity"
   sortDirection?: "ascending" | "descending"
   top?: number

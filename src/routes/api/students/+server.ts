@@ -35,14 +35,23 @@ const getStudents: ApiNextFunction<GetStudentsResponse, void> = async ({ princip
     throw new HTTPError(400, `Invalid sortDirection value. Valid values are: ${validSortDirectionValues.join(", ")}`)
   }
 
+  const hasNoDocuments = requestEvent.url.searchParams.get("hasNoDocuments") === "true" ? true : undefined
+
   const studentFilter: FrontendOverviewStudentFilter = {
     studentName: requestEvent.url.searchParams.get("studentName") || undefined,
     className: requestEvent.url.searchParams.get("className") || undefined,
     contactTeacherName: requestEvent.url.searchParams.get("contactTeacherName") || undefined,
     studentCheckBoxIds: requestEvent.url.searchParams.getAll("studentCheckBoxIds"),
+    templateIds: requestEvent.url.searchParams.getAll("templateIds"),
+    hasNoDocuments,
     sortBy: (sortBy as FrontendOverviewStudentFilter["sortBy"]) || undefined,
     sortDirection: (sortDirection as FrontendOverviewStudentFilter["sortDirection"]) || undefined,
     top: Number(requestEvent.url.searchParams.get("top")) || undefined
+  }
+
+  // Check that not both hasNoDocuments and templateIds filters are applied at the same time, as this is not supported
+  if (studentFilter.hasNoDocuments && studentFilter.templateIds && studentFilter.templateIds.length > 0) {
+    throw new HTTPError(400, "Cannot apply both hasNoDocuments and templateIds filters at the same time, as this is not supported")
   }
 
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
