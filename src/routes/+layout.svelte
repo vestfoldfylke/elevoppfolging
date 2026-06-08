@@ -37,6 +37,30 @@
   let selectedTemplateIds: string[] = $state([])
   let hasNoDocuments: boolean = $state(false)
 
+  let appliedFollowUpStudentCheckBoxes: string[] = $state([])
+  let appliedFacilitationStudentCheckBoxes: string[] = $state([])
+  let appliedTemplateIds: string[] = $state([])
+  let appliedHasNoDocuments: boolean = $state(false)
+
+  function hasTheSameItems(arr1: string[], arr2: string[]): boolean {
+    if (arr1.length !== arr2.length) {
+      return false;
+    }
+    const set2 = new Set(arr2);
+    return arr1.every(item => set2.has(item));
+  }
+
+  const hasCheckboxFilterChanges: boolean = $derived.by(() => {
+    return !hasTheSameItems(selectedFollowUpStudentCheckBoxes, appliedFollowUpStudentCheckBoxes) ||
+           !hasTheSameItems(selectedFacilitationStudentCheckBoxes, appliedFacilitationStudentCheckBoxes)
+  })
+
+  const hasDocumentFilterChanges: boolean = $derived.by(() => {
+    if (!hasTheSameItems(selectedTemplateIds, appliedTemplateIds)) { return true }
+    if (hasNoDocuments !== appliedHasNoDocuments) { return true }
+    return false
+  })
+
   let studentOverviewFilter: FrontendOverviewStudentFilter = $state({
     className: "",
     contactTeacherName: "",
@@ -56,22 +80,6 @@
     return studentCheckBox
   }
 
-  const removeFollowUpStudentCheckBoxFilter = (studentCheckBoxId: string): void => {
-    if (!selectedFollowUpStudentCheckBoxes.includes(studentCheckBoxId)) {
-      throw new Error("Trying to remove document filter that is not selected, something wrong here gitt")
-    }
-
-    selectedFollowUpStudentCheckBoxes = selectedFollowUpStudentCheckBoxes.filter((id: string) => id !== studentCheckBoxId)
-  }
-
-  const removeFacilitationStudentCheckBoxFilter = (studentCheckBoxId: string): void => {
-    if (!selectedFacilitationStudentCheckBoxes.includes(studentCheckBoxId)) {
-      throw new Error("Trying to remove document filter that is not selected, something wrong here gitt")
-    }
-
-    selectedFacilitationStudentCheckBoxes = selectedFacilitationStudentCheckBoxes.filter((id: string) => id !== studentCheckBoxId)
-  }
-
   const getTemplate = (templateId: string): DocumentTemplateFilterOption => {
     const template = studentDocumentTemplates.find((t: DocumentTemplateFilterOption) => t._id === templateId)
     if (!template) {
@@ -80,8 +88,12 @@
     return template
   }
 
-  const removeTemplateFilter = (templateId: string): void => {
-    selectedTemplateIds = selectedTemplateIds.filter((id: string) => id !== templateId)
+  function applyFilters(): void {
+    appliedFollowUpStudentCheckBoxes = [...selectedFollowUpStudentCheckBoxes]
+    appliedFacilitationStudentCheckBoxes = [...selectedFacilitationStudentCheckBoxes]
+    appliedTemplateIds = [...selectedTemplateIds]
+    appliedHasNoDocuments = hasNoDocuments
+    updateOverviewStudents()
   }
 
   type OverviewStudentsState = {
@@ -98,7 +110,7 @@
     totalStudentCount: 0
   })
 
-  const updateOverviewStudents = async (): Promise<void> => {
+  async function updateOverviewStudents(): Promise<void> {
     overviewStudents.isLoading = true
     overviewStudents.errorMessage = null
 
@@ -163,14 +175,10 @@
     }, 300)
   }
 
-  // Instant load on checkbox-filters, sorting and on mount
+  // Instant load on sort change and on mount
   $effect(() => {
-    const _studentCheckBoxIds = [...selectedFacilitationStudentCheckBoxes, ...selectedFollowUpStudentCheckBoxes]
-    const _documentFilters = [...selectedTemplateIds, hasNoDocuments]
     const _sorting = studentOverviewFilter.sortBy ? { sortBy: studentOverviewFilter.sortBy, sortDirection: studentOverviewFilter.sortDirection } : undefined
-    void _studentCheckBoxIds // read to register reactive dependency before untrack() - this line is here only to silence the warning about unused constant
-    void _documentFilters // read to register reactive dependency before untrack() - this line is here only to silence the warning about unused constant
-    void _sorting // read to register reactive dependency before untrack() - this line is here only to silence the warning about unused constant
+    void _sorting // read to register reactive dependency before untrack()
 
     untrack(() => {
       updateOverviewStudents()
@@ -219,17 +227,17 @@
 
         <div class="student-filters-container">
           <div class="student-filters-selected">
-            {#each selectedFollowUpStudentCheckBoxes.map(getStudentCheckBox) as selectedFollowUpStudentCheckBox}
-              <button class="ds-chip chip-followup" id={selectedFollowUpStudentCheckBox._id} aria-label={`Fjern ${selectedFollowUpStudentCheckBox.value}`} onclick={() => removeFollowUpStudentCheckBoxFilter(selectedFollowUpStudentCheckBox._id)} data-removable="true">{selectedFollowUpStudentCheckBox.value}</button>
+            {#each appliedFollowUpStudentCheckBoxes.map(getStudentCheckBox) as selectedFollowUpStudentCheckBox}
+              <span class="ds-tag" data-variant="outline" data-color="brand1">{selectedFollowUpStudentCheckBox.value}</span>
             {/each}
-            {#each selectedFacilitationStudentCheckBoxes.map(getStudentCheckBox) as selectedFacilitationStudentCheckBox}
-              <button class="ds-chip chip-facilitation" id={selectedFacilitationStudentCheckBox._id} aria-label={`Fjern ${selectedFacilitationStudentCheckBox.value}`} onclick={() => removeFacilitationStudentCheckBoxFilter(selectedFacilitationStudentCheckBox._id)} data-removable="true">{selectedFacilitationStudentCheckBox.value}</button>
+            {#each appliedFacilitationStudentCheckBoxes.map(getStudentCheckBox) as selectedFacilitationStudentCheckBox}
+              <span class="ds-tag" data-variant="outline" data-color="brand2">{selectedFacilitationStudentCheckBox.value}</span>
             {/each}
-            {#each selectedTemplateIds.map(getTemplate) as template}
-              <button class="ds-chip chip-document-template" id={template._id} aria-label={`Fjern ${template.name}`} onclick={() => removeTemplateFilter(template._id)} data-removable="true">{template.name}</button>
+            {#each appliedTemplateIds.map(getTemplate) as template}
+              <span class="ds-tag" data-variant="outline" data-color="brand3">{template.name}</span>
             {/each}
-            {#if hasNoDocuments}
-              <button class="ds-chip chip-no-documents" aria-label="Fjern filter: Uten dokumenter" onclick={() => { hasNoDocuments = false }} data-removable="true">Uten dokumenter</button>
+            {#if appliedHasNoDocuments}
+              <span class="ds-tag" data-variant="outline" data-color="neutral">Uten dokumenter</span>
             {/if}
           </div>
 
@@ -248,42 +256,48 @@
               <span class="material-symbols-outlined">filter_list</span>
             </button>
             <div id="student-filters-action-container" class="ds-popover ds-dropdown" popover="auto" data-placement="bottom-end" data-variant="default">
-              {#if followUpStudentCheckBoxes.length > 0}
-                <div class="student-filters-followup">
-                  <h2 class="ds-heading">{STUDENT_CHECKBOX_DISPLAY_NAMES.FOLLOW_UP.single}</h2>
-                  <hr class="ds-divider" />
-                  <ul class="ds-list">
-                    {#each followUpStudentCheckBoxes as followUpStudentCheckBox}
-                      <li>
-                        <ds-field class="ds-field">
-                          <input id="student-filters-{followUpStudentCheckBox._id}" bind:group={selectedFollowUpStudentCheckBoxes} class="ds-input" type="checkbox" value={followUpStudentCheckBox._id} />
-                          <label for="student-filters-{followUpStudentCheckBox._id}" class="ds-label" data-weight="regular">{followUpStudentCheckBox.value}</label>
-                        </ds-field>
-                      </li>
-                    {/each}
-                  </ul>
-                  <hr class="ds-divider" />
-                  <button class="ds-button" data-variant="tertiary" data-size="sm" type="button" onclick={() => selectedFollowUpStudentCheckBoxes = []} disabled={selectedFollowUpStudentCheckBoxes.length === 0}>Fjern alle filter</button>
-                </div>
-              {/if}
-              {#if facilitationStudentCheckBoxes.length > 0}
-                <div class="student-filters-facilitation">
-                  <h2 class="ds-heading">{STUDENT_CHECKBOX_DISPLAY_NAMES.FACILITATION.plural}</h2>
-                  <hr class="ds-divider" />
-                  <ul class="ds-list">
-                    {#each facilitationStudentCheckBoxes as facilitationStudentCheckBox}
-                      <li>
-                        <ds-field class="ds-field">
-                          <input id="student-filters-{facilitationStudentCheckBox._id}" bind:group={selectedFacilitationStudentCheckBoxes} class="ds-input" type="checkbox" value={facilitationStudentCheckBox._id} />
-                          <label for="student-filters-{facilitationStudentCheckBox._id}" class="ds-label" data-weight="regular">{facilitationStudentCheckBox.value}</label>
-                        </ds-field>
-                      </li>
-                    {/each}
-                  </ul>
-                  <hr class="ds-divider" />
-                  <button class="ds-button" data-variant="tertiary" data-size="sm" type="button" onclick={() => selectedFacilitationStudentCheckBoxes = []} disabled={selectedFacilitationStudentCheckBoxes.length === 0}>Fjern alle filter</button>
-                </div>
-              {/if}
+              <div class="student-filters">
+                {#if followUpStudentCheckBoxes.length > 0}
+                  <div class="student-filters-followup">
+                    <h2 class="ds-heading">{STUDENT_CHECKBOX_DISPLAY_NAMES.FOLLOW_UP.single}</h2>
+                    <hr class="ds-divider" />
+                    <ul class="ds-list">
+                      {#each followUpStudentCheckBoxes as followUpStudentCheckBox}
+                        <li>
+                          <ds-field class="ds-field">
+                            <input id="student-filters-{followUpStudentCheckBox._id}" bind:group={selectedFollowUpStudentCheckBoxes} class="ds-input" type="checkbox" value={followUpStudentCheckBox._id} />
+                            <label for="student-filters-{followUpStudentCheckBox._id}" class="ds-label" data-weight="regular">{followUpStudentCheckBox.value}</label>
+                          </ds-field>
+                        </li>
+                      {/each}
+                    </ul>
+                  </div>
+                {/if}
+                {#if facilitationStudentCheckBoxes.length > 0}
+                  <div class="student-filters-facilitation">
+                    <h2 class="ds-heading">{STUDENT_CHECKBOX_DISPLAY_NAMES.FACILITATION.plural}</h2>
+                    <hr class="ds-divider" />
+                    <ul class="ds-list">
+                      {#each facilitationStudentCheckBoxes as facilitationStudentCheckBox}
+                        <li>
+                          <ds-field class="ds-field">
+                            <input id="student-filters-{facilitationStudentCheckBox._id}" bind:group={selectedFacilitationStudentCheckBoxes} class="ds-input" type="checkbox" value={facilitationStudentCheckBox._id} />
+                            <label for="student-filters-{facilitationStudentCheckBox._id}" class="ds-label" data-weight="regular">{facilitationStudentCheckBox.value}</label>
+                          </ds-field>
+                        </li>
+                      {/each}
+                    </ul>
+                  </div>
+                {/if}
+              </div>
+              <hr class="ds-divider" />
+              <div class="filters-footer">
+                <button class="ds-button" data-variant="tertiary" data-size="sm" type="button" onclick={() => { selectedFollowUpStudentCheckBoxes = []; selectedFacilitationStudentCheckBoxes = []; }} disabled={selectedFollowUpStudentCheckBoxes.length === 0 && selectedFacilitationStudentCheckBoxes.length === 0}>Fjern alle filter</button>
+                <button class="ds-button" data-variant="primary" data-size="sm" type="button" onclick={applyFilters} disabled={!hasCheckboxFilterChanges}>
+                  <span class="material-symbols-outlined">check</span>
+                  Bruk filter
+                </button>            
+              </div>
             </div>
 
             <button
@@ -298,37 +312,37 @@
             >
               <span class="material-symbols-outlined">description</span>
             </button>
+
             <div id="document-filters-action-container" class="ds-popover ds-dropdown" popover="auto" data-placement="bottom-end" data-variant="default">
-              <div class="document-filters-status">
-                <h2 class="ds-heading">Dokumentstatus</h2>
+              <div class="document-filters-templates">
+                <h2 class="ds-heading">Notat-typer</h2>
                 <hr class="ds-divider" />
                 <ul class="ds-list">
                   <li>
                     <ds-field class="ds-field">
-                      <input id="document-filters-no-documents" bind:checked={hasNoDocuments} onchange={() => { selectedTemplateIds = [] }} class="ds-input" type="checkbox" />
-                      <label for="document-filters-no-documents" class="ds-label" data-weight="regular">Uten dokumenter</label>
+                      <input id="document-filters-no-documents" bind:checked={hasNoDocuments} onclick={() => { selectedTemplateIds = [] }} class="ds-input" type="checkbox" />
+                      <label for="document-filters-no-documents" class="ds-label" data-weight="regular">Har ingen notater</label>
                     </ds-field>
                   </li>
+                  <hr class="ds-divider" />
+                  {#each studentDocumentTemplates as template}
+                    <li>
+                      <ds-field class="ds-field">
+                        <input id="document-filters-{template._id}" bind:group={selectedTemplateIds} onclick={() => { hasNoDocuments = false }} class="ds-input" type="checkbox" value={template._id} />
+                        <label for="document-filters-{template._id}" class="ds-label" data-weight="regular">{template.name}</label>
+                      </ds-field>
+                    </li>
+                  {/each}
                 </ul>
-              </div>
-              {#if studentDocumentTemplates.length > 0}
-                <div class="document-filters-templates">
-                  <h2 class="ds-heading">Maler</h2>
-                  <hr class="ds-divider" />
-                  <ul class="ds-list">
-                    {#each studentDocumentTemplates as template}
-                      <li>
-                        <ds-field class="ds-field">
-                          <input id="document-filters-{template._id}" bind:group={selectedTemplateIds} onchange={() => { hasNoDocuments = false }} class="ds-input" type="checkbox" value={template._id} />
-                          <label for="document-filters-{template._id}" class="ds-label" data-weight="regular">{template.name}</label>
-                        </ds-field>
-                      </li>
-                    {/each}
-                  </ul>
-                  <hr class="ds-divider" />
+                <hr class="ds-divider" />
+                <div class="filters-footer">
                   <button class="ds-button" data-variant="tertiary" data-size="sm" type="button" onclick={() => selectedTemplateIds = []} disabled={selectedTemplateIds.length === 0}>Fjern alle filter</button>
+                  <button class="ds-button" data-variant="primary" data-size="sm" type="button" onclick={applyFilters} disabled={!hasDocumentFilterChanges} popovertarget="document-filters-action-container" popovertargetaction="hide">
+                    <span class="material-symbols-outlined">check</span>
+                    Bruk filter
+                  </button>
                 </div>
-              {/if}
+              </div>
             </div>
           </div>
         </div>
@@ -485,6 +499,11 @@
         align-items: center;
     }
 
+    .student-filters-content {
+        display: flex;
+        gap: var(--ds-size-2);
+    }
+
     #student-filters-action-container {
         --dsc-popover-max-width: 100%;
     }
@@ -503,30 +522,21 @@
         padding-left: var(--ds-size-2);
     }
 
-    #student-filters-action-container:popover-open {
+    .student-filters {
         display: flex;
+        gap: var(--ds-size-4);
+    }
+
+    .filters-footer {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--ds-size-2);
     }
 
     .student-filters-selected {
         display: flex;
         gap: var(--ds-size-1) var(--ds-size-2);
         flex-wrap: wrap;
-    }
-
-    .chip-followup {
-        background-color: var(--dsc-chip-background--checked)
-    }
-
-    .chip-facilitation {
-        background-color: var(--ds-color-brand1-text-subtle);
-    }
-
-    .chip-document-template {
-        background-color: var(--ds-color-brand2-text-subtle);
-    }
-
-    .chip-no-documents {
-        background-color: var(--ds-color-neutral-text-subtle);
     }
 
     #document-filters-action-container {
@@ -537,11 +547,11 @@
         display: flex;
     }
 
-    .document-filters-status > ul > li, .document-filters-templates > ul > li {
+    .document-filters-templates > ul > li {
         list-style: none;
     }
 
-    .document-filters-status > ul, .document-filters-templates > ul {
+    .document-filters-templates > ul {
         padding-left: var(--ds-size-2);
     }
 
