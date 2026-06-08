@@ -1,7 +1,7 @@
 import { logger } from "@vestfoldfylke/loglady"
-import { type Binary, type Db, type DeleteResult, ObjectId } from "mongodb"
+import { type Binary, type Db, type DeleteResult, type Filter, ObjectId } from "mongodb"
 import { env } from "$env/dynamic/private"
-import type { IDocumentsDbClient } from "$lib/types/db/db-client"
+import type { IDocumentsDbClient, StudentDocumentAccess } from "$lib/types/db/db-client"
 import type {
   DbEncryptedDocumentMessage,
   DbEncryptedGroupDocument,
@@ -29,6 +29,37 @@ if (!documentLockStart) {
   logger.warn("DOCUMENT_LOCK_START_MM_DD environment variable is not set. Document locking is disabled.")
 } else {
   logger.warn("Document locking is enabled. Documents will be locked at school year end, currently set to {DocumentLockStart} (MM-DD)", documentLockStart)
+}
+
+function buildStudentAccessCondition({ studentId, schoolNumbers, subjectTeacherOnlySchoolNumbers, hasDataSharingConsent, principalEntraUserId }: StudentDocumentAccess): Filter<DbStudentDocument> {
+  const id = new ObjectId(studentId)
+
+  if (subjectTeacherOnlySchoolNumbers.length === 0) {
+    if (hasDataSharingConsent) {
+      return { "student._id": id }
+    }
+    return { "student._id": id, "school.schoolNumber": { $in: schoolNumbers } }
+  }
+
+  const subjectTeacherOnlySet = new Set(subjectTeacherOnlySchoolNumbers)
+  const fullAccessSchools = schoolNumbers.filter((s) => !subjectTeacherOnlySet.has(s))
+
+  // At subject-teacher-only schools: visible if access is granted to all, OR the principal created the document themselves
+  const subjectTeacherClause = {
+    "school.schoolNumber": { $in: subjectTeacherOnlySchoolNumbers },
+    $or: [{ documentAccess: "ALL_WITH_STUDENT_ACCESS" as const }, { "created.by.entraUserId": principalEntraUserId }]
+  }
+
+  if (hasDataSharingConsent) {
+    return {
+      "student._id": id,
+      $or: [{ "school.schoolNumber": { $nin: subjectTeacherOnlySchoolNumbers } }, subjectTeacherClause]
+    }
+  }
+
+  const orClauses = fullAccessSchools.length > 0 ? [{ "school.schoolNumber": { $in: fullAccessSchools } }, subjectTeacherClause] : [subjectTeacherClause]
+
+  return { "student._id": id, $or: orClauses }
 }
 
 export class DocumentsDbClient implements IDocumentsDbClient {
@@ -103,24 +134,32 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       .sort((a: StudentDocument, b: StudentDocument) => b.created.at.getTime() - a.created.at.getTime()) // Sort by created date descending
   }
 
-  async getStudentIdsWithoutDocuments(studentIds: string[]): Promise<string[]> {
+  async getStudentIdsWithoutDocuments(studentAccess: StudentDocumentAccess[]): Promise<string[]> {
+    if (studentAccess.length === 0) {
+      return []
+    }
+
     const documentsCollection = this.encryptionDb.collection<DbStudentDocument>(this.documentsCollectionName)
 
-    const objectIds = studentIds.map((id) => new ObjectId(id))
-    const studentIdsWithDocuments = await documentsCollection.distinct("student._id", { "student._id": { $in: objectIds } })
-    const studentIdsWithDocumentsSet = new Set(studentIdsWithDocuments.map((id) => id.toString()))
+    const studentIdsWithDocuments = await documentsCollection.distinct("student._id", {
+      $or: studentAccess.map((access) => buildStudentAccessCondition(access))
+    })
 
-    return studentIds.filter((id) => !studentIdsWithDocumentsSet.has(id))
+    const studentIdsWithDocumentsSet = new Set(studentIdsWithDocuments.map((id) => id.toString()))
+    return studentAccess.filter(({ studentId }) => !studentIdsWithDocumentsSet.has(studentId)).map(({ studentId }) => studentId)
   }
 
-  async getStudentIdsWithDocumentForTemplates(studentIds: string[], templateIds: string[]): Promise<string[]> {
+  async getStudentIdsWithDocumentForTemplates(studentAccess: StudentDocumentAccess[], templateIds: string[]): Promise<string[]> {
+    if (studentAccess.length === 0) {
+      return []
+    }
+
     const documentsCollection = this.encryptionDb.collection<DbStudentDocument>(this.documentsCollectionName)
 
-    const studentObjectIds = studentIds.map((id) => new ObjectId(id))
     const templateObjectIds = templateIds.map((id) => new ObjectId(id))
     const studentIdsWithDocuments = await documentsCollection.distinct("student._id", {
-      "student._id": { $in: studentObjectIds },
-      "template._id": { $in: templateObjectIds }
+      "template._id": { $in: templateObjectIds },
+      $or: studentAccess.map((access) => buildStudentAccessCondition(access))
     })
 
     return studentIdsWithDocuments.map((id) => id.toString())

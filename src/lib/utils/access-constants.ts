@@ -1,5 +1,7 @@
 import type { AccessEntry } from "$lib/types/app-types"
 
+export const SUBJECT_TEACHER_ACCESS_TYPES = ["AUTOMATISK-UNDERVISNINGSGRUPPE-TILGANG", "AUTOMATISK-KLASSE-TILGANG"] as const
+
 export const ACCESS_TYPE_DISPLAY_NAMES: Record<AccessEntry["type"], string> = {
   "AUTOMATISK-KLASSE-TILGANG": "Klasselærer (InSchool) for",
   "AUTOMATISK-KONTAKTLÆRERGRUPPE-TILGANG": "Kontaktlærer (InSchool) for",

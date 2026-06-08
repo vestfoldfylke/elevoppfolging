@@ -1,10 +1,34 @@
 import { logger } from "@vestfoldfylke/loglady"
 import type { FrontendOverviewStudent, FrontendOverviewStudentFilter, FrontendOverviewStudentResponse, PrincipalAccess } from "$lib/types/app-types"
-import type { IDbClient } from "$lib/types/db/db-client"
+import type { IDbClient, StudentDocumentAccess } from "$lib/types/db/db-client"
 import type { StudentDataSharingConsent, StudentImportantStuff } from "$lib/types/db/shared-types"
+import { SUBJECT_TEACHER_ACCESS_TYPES } from "$lib/utils/access-constants"
 import { getStudentsFromCache } from "./cache/students-cache"
 import { getDbClient } from "./db/get-db-client"
 import { HTTPError } from "./middleware/http-error"
+
+function buildStudentDocumentAccess(students: FrontendOverviewStudent[], principalEntraUserId: string): StudentDocumentAccess[] {
+  return students.map((s) => {
+    const schoolAccessTypes = new Map<string, Set<string>>()
+    for (const a of s.principalAccessForStudent) {
+      const existing = schoolAccessTypes.get(a.schoolNumber) ?? new Set<string>()
+      existing.add(a.type)
+      schoolAccessTypes.set(a.schoolNumber, existing)
+    }
+
+    const subjectTeacherOnlySchoolNumbers = [...schoolAccessTypes.entries()]
+      .filter(([, types]) => [...types].every((type) => (SUBJECT_TEACHER_ACCESS_TYPES as readonly string[]).includes(type)))
+      .map(([schoolNumber]) => schoolNumber)
+
+    return {
+      studentId: s._id,
+      schoolNumbers: [...new Set(s.principalAccessForStudent.map((a) => a.schoolNumber))],
+      subjectTeacherOnlySchoolNumbers,
+      hasDataSharingConsent: s.dataSharingConsent,
+      principalEntraUserId
+    }
+  })
+}
 
 export const getFrontendOverviewStudents = async (principalAccess: PrincipalAccess, studentFilter?: FrontendOverviewStudentFilter): Promise<FrontendOverviewStudentResponse> => {
   logger.info("Fetching students for principal")
@@ -103,22 +127,27 @@ export const getFrontendOverviewStudents = async (principalAccess: PrincipalAcce
 
   if (Array.isArray(studentFilter?.templateIds) && studentFilter.templateIds.length > 0) {
     logger.info("Filtering students by templateIds: {TemplateIds}", studentFilter.templateIds)
-    const candidateIds = overviewStudents.map((s) => s._id)
-    const matchingIds = new Set(await dbClient.documents.getStudentIdsWithDocumentForTemplates(candidateIds, studentFilter.templateIds))
+    const studentAccess = buildStudentDocumentAccess(overviewStudents, principalAccess.entraUserId)
+    const matchingIds = new Set(await dbClient.documents.getStudentIdsWithDocumentForTemplates(studentAccess, studentFilter.templateIds))
     documentFilteredStudents = overviewStudents.filter((s) => matchingIds.has(s._id))
     logger.info("After templateIds filter: {FilteredCount} of {TotalCount} students remain", documentFilteredStudents.length, overviewStudents.length)
   }
 
   if (studentFilter?.hasNoDocuments === true) {
     logger.info("Filtering students to those without any documents")
-    const candidateIds = documentFilteredStudents.map((s) => s._id)
-    const idsWithoutDocuments = new Set(await dbClient.documents.getStudentIdsWithoutDocuments(candidateIds))
+    const studentAccess = buildStudentDocumentAccess(documentFilteredStudents, principalAccess.entraUserId)
+    const idsWithoutDocuments = new Set(await dbClient.documents.getStudentIdsWithoutDocuments(studentAccess))
     documentFilteredStudents = documentFilteredStudents.filter((s) => idsWithoutDocuments.has(s._id))
     logger.info("After hasNoDocuments filter: {FilteredCount} of {TotalCount} students remain", documentFilteredStudents.length, overviewStudents.length)
   }
 
   const documentFilteringTimeTaken = Date.now() - timeBeforeDocumentFiltering
-  logger.debug(`Finished applying document filters. Time taken: {TimeTaken} ms. Returning {FilteredCount} of {TotalCount} students`, documentFilteringTimeTaken, documentFilteredStudents.length, overviewStudents.length)
+  logger.debug(
+    `Finished applying document filters. Time taken: {TimeTaken} ms. Resulting student count {FilteredCount} of {TotalCount} students`,
+    documentFilteringTimeTaken,
+    documentFilteredStudents.length,
+    overviewStudents.length
+  )
 
   const studentReturnLength = studentFilter?.top ?? documentFilteredStudents.length
 
@@ -159,6 +188,6 @@ export const getFrontendOverviewStudents = async (principalAccess: PrincipalAcce
 
   return {
     students,
-    totalStudentCount: overviewStudents.length
+    totalStudentCount: documentFilteredStudents.length
   }
 }

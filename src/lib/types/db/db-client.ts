@@ -75,11 +75,23 @@ export interface IStudentsDbClient {
   updateManualStudent(manualStudent: UpdateAppStudent): Promise<string>
 }
 
+export type StudentDocumentAccess = {
+  studentId: string
+  /** Direct school access derived from principalAccessForStudent */
+  schoolNumbers: string[]
+  /** Subset of schoolNumbers where the principal's only access type is subject teacher */
+  subjectTeacherOnlySchoolNumbers: string[]
+  /** When true, the principal has consent-based access to all of the student's schools */
+  hasDataSharingConsent: boolean
+  /** entraUserId of the principal — used to include documents the principal themselves created, even at subject-teacher-only schools */
+  principalEntraUserId: string
+}
+
 export interface IDocumentsDbClient {
   getStudentDocuments(studentId: string): Promise<StudentDocument[]>
   getStudentDocumentById(documentId: string): Promise<StudentDocument | null>
-  getStudentIdsWithoutDocuments(studentIds: string[]): Promise<string[]>
-  getStudentIdsWithDocumentForTemplates(studentIds: string[], templateIds: string[]): Promise<string[]>
+  getStudentIdsWithoutDocuments(studentAccess: StudentDocumentAccess[]): Promise<string[]>
+  getStudentIdsWithDocumentForTemplates(studentAccess: StudentDocumentAccess[], templateIds: string[]): Promise<string[]>
   createStudentDocument(document: NewStudentDocument): Promise<string>
   updateStudentDocument(documentId: string, documentUpdate: StudentDocumentUpdate): Promise<string>
   deleteStudentDocument(document: StudentDocument): Promise<void>
