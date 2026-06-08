@@ -31,6 +31,14 @@ if (!documentLockStart) {
   logger.warn("Document locking is enabled. Documents will be locked at school year end, currently set to {DocumentLockStart} (MM-DD)", documentLockStart)
 }
 
+function chunkArray<T>(arr: T[], size: number): T[][] {
+  const chunks: T[][] = []
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size))
+  }
+  return chunks
+}
+
 function buildStudentAccessCondition({ studentId, schoolNumbers, subjectTeacherOnlySchoolNumbers, hasDataSharingConsent, principalEntraUserId }: StudentDocumentAccess): Filter<DbStudentDocument> {
   const id = new ObjectId(studentId)
 
@@ -141,12 +149,13 @@ export class DocumentsDbClient implements IDocumentsDbClient {
 
     const documentsCollection = this.encryptionDb.collection<DbStudentDocument>(this.documentsCollectionName)
 
-    const studentIdsWithDocuments = await documentsCollection.distinct("student._id", {
-      $or: studentAccess.map((access) => buildStudentAccessCondition(access))
-    })
+    const chunks = chunkArray(studentAccess, 500)
+    const results = await Promise.all(
+      chunks.map((chunk) => documentsCollection.distinct("student._id", { $or: chunk.map(buildStudentAccessCondition) }))
+    )
 
-    const studentIdsWithDocumentsSet = new Set(studentIdsWithDocuments.map((id) => id.toString()))
-    return studentAccess.filter(({ studentId }) => !studentIdsWithDocumentsSet.has(studentId)).map(({ studentId }) => studentId)
+    const studentIdsWithDocuments = new Set(results.flat().map((id) => id.toString()))
+    return studentAccess.filter(({ studentId }) => !studentIdsWithDocuments.has(studentId)).map(({ studentId }) => studentId)
   }
 
   async getStudentIdsWithDocumentForTemplates(studentAccess: StudentDocumentAccess[], templateIds: string[]): Promise<string[]> {
@@ -157,12 +166,17 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     const documentsCollection = this.encryptionDb.collection<DbStudentDocument>(this.documentsCollectionName)
 
     const templateObjectIds = templateIds.map((id) => new ObjectId(id))
-    const studentIdsWithDocuments = await documentsCollection.distinct("student._id", {
-      "template._id": { $in: templateObjectIds },
-      $or: studentAccess.map((access) => buildStudentAccessCondition(access))
-    })
+    const chunks = chunkArray(studentAccess, 500)
+    const results = await Promise.all(
+      chunks.map((chunk) =>
+        documentsCollection.distinct("student._id", {
+          "template._id": { $in: templateObjectIds },
+          $or: chunk.map(buildStudentAccessCondition)
+        })
+      )
+    )
 
-    return studentIdsWithDocuments.map((id) => id.toString())
+    return [...new Set(results.flat().map((id) => id.toString()))]
   }
 
   async getStudentDocumentById(documentId: string): Promise<StudentDocument | null> {
