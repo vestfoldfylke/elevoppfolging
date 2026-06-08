@@ -29,7 +29,7 @@
   const followUpStudentCheckBoxes: StudentCheckBox[] = enabledStudentCheckBoxes.filter((checkbox: StudentCheckBox) => checkbox.type === "FOLLOW_UP")
   const facilitationStudentCheckBoxes: StudentCheckBox[] = enabledStudentCheckBoxes.filter((checkbox: StudentCheckBox) => checkbox.type === "FACILITATION")
 
-  // svelte-ignore state_referenced_locally
+  // svelte-ignore state_referenced_locally - det går bra så lenge ikke system admin kødder med document template filter options, da kan de bare refresh sida
   const studentDocumentTemplates: DocumentTemplateFilterOption[] = data.documentTemplateFilterOptions
 
   let selectedFollowUpStudentCheckBoxes: string[] = $state([])

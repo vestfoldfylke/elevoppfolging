@@ -122,6 +122,10 @@ export const getFrontendOverviewStudents = async (principalAccess: PrincipalAcce
 
   const timeBeforeDocumentFiltering = Date.now()
 
+  if (studentFilter?.hasNoDocuments && studentFilter.templateIds && studentFilter.templateIds.length > 0) {
+    throw new HTTPError(400, "hasNoDocuments and templateIds filters cannot be combined")
+  }
+
   // Apply document filters
   let documentFilteredStudents = overviewStudents
 
