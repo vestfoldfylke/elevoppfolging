@@ -91,6 +91,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
         const studentDocument: StudentDocument = {
           ...document,
           student: { _id: document.student._id.toString() },
+          template: { _id: document.template._id.toString(), name: document.template.name, version: document.template.version },
           _id: document._id.toString(),
           isDocumentLocked: this.isDocumentLocked(document.created.at)
         }
@@ -114,6 +115,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     return {
       ...document,
       student: { _id: document.student._id.toString() },
+      template: { _id: document.template._id.toString(), name: document.template.name, version: document.template.version },
       _id: document._id.toString(),
       isDocumentLocked: this.isDocumentLocked(document.created.at)
     }
@@ -128,7 +130,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       content: await this.encryptValue(document.content),
       title: await this.encryptValue(document.title),
       template: {
-        _id: document.template._id,
+        _id: new ObjectId(document.template._id),
         name: await this.encryptValue(document.template.name),
         version: document.template.version
       },
@@ -168,7 +170,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       content: await this.encryptValue(documentUpdate.content),
       title: await this.encryptValue(documentUpdate.title),
       template: {
-        _id: documentUpdate.template._id,
+        _id: new ObjectId(documentUpdate.template._id),
         name: await this.encryptValue(documentUpdate.template.name),
         version: documentUpdate.template.version
       }
@@ -336,7 +338,16 @@ export class DocumentsDbClient implements IDocumentsDbClient {
         delete document.tyler_the_creator
 
         const groupDocument: GroupDocument = {
-          ...document,
+          created: document.created,
+          modified: document.modified,
+          school: document.school,
+          title: document.title,
+          template: { _id: document.template._id.toString(), name: document.template.name, version: document.template.version },
+          content: document.content,
+          documentAccess: document.documentAccess,
+          emailAlertReceivers: document.emailAlertReceivers,
+          messages: document.messages,
+          group: document.group,
           _id: document._id.toString(),
           isDocumentLocked: this.isDocumentLocked(document.created.at)
         }
@@ -360,7 +371,16 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     }
 
     return {
-      ...document,
+      created: document.created,
+      modified: document.modified,
+      school: document.school,
+      title: document.title,
+      template: { _id: document.template._id.toString(), name: document.template.name, version: document.template.version },
+      content: document.content,
+      documentAccess: document.documentAccess,
+      emailAlertReceivers: document.emailAlertReceivers,
+      messages: document.messages,
+      group: document.group,
       _id: document._id.toString(),
       isDocumentLocked: this.isDocumentLocked(document.created.at)
     }
@@ -384,7 +404,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       content: await this.encryptValue(document.content),
       title: await this.encryptValue(document.title),
       template: {
-        _id: document.template._id,
+        _id: new ObjectId(document.template._id),
         name: await this.encryptValue(document.template.name),
         version: document.template.version
       },
@@ -424,7 +444,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       content: await this.encryptValue(documentUpdate.content),
       title: await this.encryptValue(documentUpdate.title),
       template: {
-        _id: documentUpdate.template._id,
+        _id: new ObjectId(documentUpdate.template._id),
         name: await this.encryptValue(documentUpdate.template.name),
         version: documentUpdate.template.version
       }
