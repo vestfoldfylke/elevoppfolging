@@ -44,20 +44,23 @@
 
   function hasTheSameItems(arr1: string[], arr2: string[]): boolean {
     if (arr1.length !== arr2.length) {
-      return false;
+      return false
     }
-    const set2 = new Set(arr2);
-    return arr1.every(item => set2.has(item));
+    const set2 = new Set(arr2)
+    return arr1.every((item) => set2.has(item))
   }
 
   const hasCheckboxFilterChanges: boolean = $derived.by(() => {
-    return !hasTheSameItems(selectedFollowUpStudentCheckBoxes, appliedFollowUpStudentCheckBoxes) ||
-           !hasTheSameItems(selectedFacilitationStudentCheckBoxes, appliedFacilitationStudentCheckBoxes)
+    return !hasTheSameItems(selectedFollowUpStudentCheckBoxes, appliedFollowUpStudentCheckBoxes) || !hasTheSameItems(selectedFacilitationStudentCheckBoxes, appliedFacilitationStudentCheckBoxes)
   })
 
   const hasDocumentFilterChanges: boolean = $derived.by(() => {
-    if (!hasTheSameItems(selectedTemplateIds, appliedTemplateIds)) { return true }
-    if (hasNoDocuments !== appliedHasNoDocuments) { return true }
+    if (!hasTheSameItems(selectedTemplateIds, appliedTemplateIds)) {
+      return true
+    }
+    if (hasNoDocuments !== appliedHasNoDocuments) {
+      return true
+    }
     return false
   })
 
