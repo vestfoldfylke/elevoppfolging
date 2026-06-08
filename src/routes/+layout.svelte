@@ -128,16 +128,16 @@
       queryParams.append("contactTeacherName", studentOverviewFilter.contactTeacherName)
     }
 
-    selectedFacilitationStudentCheckBoxes.forEach((id) => {
+    appliedFacilitationStudentCheckBoxes.forEach((id) => {
       queryParams.append("studentCheckBoxIds", id)
     })
-    selectedFollowUpStudentCheckBoxes.forEach((id) => {
+    appliedFollowUpStudentCheckBoxes.forEach((id) => {
       queryParams.append("studentCheckBoxIds", id)
     })
-    selectedTemplateIds.forEach((id) => {
+    appliedTemplateIds.forEach((id) => {
       queryParams.append("templateIds", id)
     })
-    if (hasNoDocuments) {
+    if (appliedHasNoDocuments) {
       queryParams.append("hasNoDocuments", "true")
     }
 
@@ -295,7 +295,7 @@
               </div>
               <hr class="ds-divider" />
               <div class="filters-footer">
-                <button class="ds-button" data-variant="tertiary" data-size="sm" type="button" onclick={() => { selectedFollowUpStudentCheckBoxes = []; selectedFacilitationStudentCheckBoxes = []; }} disabled={selectedFollowUpStudentCheckBoxes.length === 0 && selectedFacilitationStudentCheckBoxes.length === 0}>Fjern alle filter</button>
+                <button class="ds-button" data-variant="tertiary" data-size="sm" type="button" onclick={() => { selectedFollowUpStudentCheckBoxes = []; selectedFacilitationStudentCheckBoxes = []; applyFilters() }} disabled={appliedFollowUpStudentCheckBoxes.length === 0 && appliedFacilitationStudentCheckBoxes.length === 0}>Fjern alle filter</button>
                 <button class="ds-button" data-variant="primary" data-size="sm" type="button" onclick={applyFilters} disabled={!hasCheckboxFilterChanges}>
                   <span class="material-symbols-outlined">check</span>
                   Bruk filter
@@ -339,7 +339,7 @@
                 </ul>
                 <hr class="ds-divider" />
                 <div class="filters-footer">
-                  <button class="ds-button" data-variant="tertiary" data-size="sm" type="button" onclick={() => selectedTemplateIds = []} disabled={selectedTemplateIds.length === 0}>Fjern alle filter</button>
+                  <button class="ds-button" data-variant="tertiary" data-size="sm" type="button" onclick={() => { selectedTemplateIds = []; hasNoDocuments = false; applyFilters() }} disabled={appliedTemplateIds.length === 0 && !appliedHasNoDocuments}>Fjern alle filter</button>
                   <button class="ds-button" data-variant="primary" data-size="sm" type="button" onclick={applyFilters} disabled={!hasDocumentFilterChanges} popovertarget="document-filters-action-container" popovertargetaction="hide">
                     <span class="material-symbols-outlined">check</span>
                     Bruk filter
