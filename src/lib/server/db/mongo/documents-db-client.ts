@@ -103,6 +103,29 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       .sort((a: StudentDocument, b: StudentDocument) => b.created.at.getTime() - a.created.at.getTime()) // Sort by created date descending
   }
 
+  async getStudentIdsWithoutDocuments(studentIds: string[]): Promise<string[]> {
+    const documentsCollection = this.encryptionDb.collection<DbStudentDocument>(this.documentsCollectionName)
+
+    const objectIds = studentIds.map((id) => new ObjectId(id))
+    const studentIdsWithDocuments = await documentsCollection.distinct("student._id", { "student._id": { $in: objectIds } })
+    const studentIdsWithDocumentsSet = new Set(studentIdsWithDocuments.map((id) => id.toString()))
+
+    return studentIds.filter((id) => !studentIdsWithDocumentsSet.has(id))
+  }
+
+  async getStudentIdsWithDocumentForTemplates(studentIds: string[], templateIds: string[]): Promise<string[]> {
+    const documentsCollection = this.encryptionDb.collection<DbStudentDocument>(this.documentsCollectionName)
+
+    const studentObjectIds = studentIds.map((id) => new ObjectId(id))
+    const templateObjectIds = templateIds.map((id) => new ObjectId(id))
+    const studentIdsWithDocuments = await documentsCollection.distinct("student._id", {
+      "student._id": { $in: studentObjectIds },
+      "template._id": { $in: templateObjectIds }
+    })
+
+    return studentIdsWithDocuments.map((id) => id.toString())
+  }
+
   async getStudentDocumentById(documentId: string): Promise<StudentDocument | null> {
     const documentsCollection = this.encryptionDb.collection<DbStudentDocument>(this.documentsCollectionName)
 

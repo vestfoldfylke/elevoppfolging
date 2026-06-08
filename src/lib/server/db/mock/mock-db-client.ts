@@ -42,6 +42,8 @@ export const mockDbClient: IDbClient = {
   documents: {
     getStudentDocuments: notImplemented,
     getStudentDocumentById: notImplemented,
+    getStudentIdsWithoutDocuments: notImplemented,
+    getStudentIdsWithDocumentForTemplates: notImplemented,
     createStudentDocument: notImplemented,
     updateStudentDocument: notImplemented,
     deleteStudentDocument: notImplemented,

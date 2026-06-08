@@ -78,6 +78,8 @@ export interface IStudentsDbClient {
 export interface IDocumentsDbClient {
   getStudentDocuments(studentId: string): Promise<StudentDocument[]>
   getStudentDocumentById(documentId: string): Promise<StudentDocument | null>
+  getStudentIdsWithoutDocuments(studentIds: string[]): Promise<string[]>
+  getStudentIdsWithDocumentForTemplates(studentIds: string[], templateIds: string[]): Promise<string[]>
   createStudentDocument(document: NewStudentDocument): Promise<string>
   updateStudentDocument(documentId: string, documentUpdate: StudentDocumentUpdate): Promise<string>
   deleteStudentDocument(document: StudentDocument): Promise<void>
