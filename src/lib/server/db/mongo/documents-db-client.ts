@@ -31,6 +31,8 @@ if (!documentLockStart) {
   logger.warn("Document locking is enabled. Documents will be locked at school year end, currently set to {DocumentLockStart} (MM-DD)", documentLockStart)
 }
 
+const CHUNK_SIZE = 5000
+
 function chunkArray<T>(arr: T[], size: number): T[][] {
   const chunks: T[][] = []
   for (let i = 0; i < arr.length; i += size) {
@@ -53,9 +55,9 @@ function buildStudentAccessCondition({ studentId, schoolNumbers, subjectTeacherO
   const fullAccessSchools = schoolNumbers.filter((s) => !subjectTeacherOnlySet.has(s))
 
   // At subject-teacher-only schools: visible if access is granted to all, OR the principal created the document themselves
-  const subjectTeacherClause = {
+  const subjectTeacherClause: Filter<DbStudentDocument> = {
     "school.schoolNumber": { $in: subjectTeacherOnlySchoolNumbers },
-    $or: [{ documentAccess: "ALL_WITH_STUDENT_ACCESS" as const }, { "created.by.entraUserId": principalEntraUserId }]
+    $or: [{ documentAccess: "ALL_WITH_STUDENT_ACCESS" }, { "created.by.entraUserId": principalEntraUserId }]
   }
 
   if (hasDataSharingConsent) {
@@ -149,10 +151,8 @@ export class DocumentsDbClient implements IDocumentsDbClient {
 
     const documentsCollection = this.encryptionDb.collection<DbStudentDocument>(this.documentsCollectionName)
 
-    const chunks = chunkArray(studentAccess, 500)
-    const results = await Promise.all(
-      chunks.map((chunk) => documentsCollection.distinct("student._id", { $or: chunk.map(buildStudentAccessCondition) }))
-    )
+    const chunks = chunkArray(studentAccess, CHUNK_SIZE)
+    const results = await Promise.all(chunks.map((chunk) => documentsCollection.distinct("student._id", { $or: chunk.map(buildStudentAccessCondition) })))
 
     const studentIdsWithDocuments = new Set(results.flat().map((id) => id.toString()))
     return studentAccess.filter(({ studentId }) => !studentIdsWithDocuments.has(studentId)).map(({ studentId }) => studentId)
@@ -165,18 +165,32 @@ export class DocumentsDbClient implements IDocumentsDbClient {
 
     const documentsCollection = this.encryptionDb.collection<DbStudentDocument>(this.documentsCollectionName)
 
-    const templateObjectIds = templateIds.map((id) => new ObjectId(id))
-    const chunks = chunkArray(studentAccess, 500)
-    const results = await Promise.all(
-      chunks.map((chunk) =>
-        documentsCollection.distinct("student._id", {
-          "template._id": { $in: templateObjectIds },
-          $or: chunk.map(buildStudentAccessCondition)
-        })
-      )
+    const chunks = chunkArray(studentAccess, CHUNK_SIZE)
+
+    const setsPerTemplate = await Promise.all(
+      templateIds.map(async (templateId) => {
+        const results = await Promise.all(
+          chunks.map((chunk) =>
+            documentsCollection.distinct("student._id", {
+              "template._id": new ObjectId(templateId),
+              $or: chunk.map(buildStudentAccessCondition)
+            })
+          )
+        )
+        return new Set(results.flat().map((id) => id.toString()))
+      })
     )
 
-    return [...new Set(results.flat().map((id) => id.toString()))]
+    const [first, ...rest] = setsPerTemplate
+    const intersection = rest.reduce((acc, set) => {
+      for (const id of acc) {
+        if (!set.has(id)) {
+          acc.delete(id)
+        }
+      }
+      return acc
+    }, first)
+    return [...(intersection ?? [])]
   }
 
   async getStudentDocumentById(documentId: string): Promise<StudentDocument | null> {
