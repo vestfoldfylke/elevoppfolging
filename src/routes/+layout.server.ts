@@ -39,7 +39,9 @@ const layoutLoad: ServerLoadNextFunction<RootLayoutData> = async ({ principal })
   logger.info(`Found ${schoolsFromDb.length} schools`)
 
   logger.info("Fetching student document templates")
-  const documentTemplateFilterOptions: DocumentTemplateFilterOption[] = (await dbClient.documentContentTemplates.getDocumentContentTemplates({ student: true })).map(({ _id, name }) => ({ _id, name }))
+  const documentTemplateFilterOptions: DocumentTemplateFilterOption[] = (await dbClient.documentContentTemplates.getDocumentContentTemplates({ student: true }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ _id, name }) => ({ _id, name }))
   logger.info(`Found ${documentTemplateFilterOptions.length} document content templates`)
 
   return {

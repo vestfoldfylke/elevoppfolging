@@ -172,6 +172,7 @@
 
   const debouncedUpdateOverviewStudents = (): void => {
     clearTimeout(debounceTimer)
+    overviewStudents.isLoading = true
 
     debounceTimer = setTimeout(() => {
       updateOverviewStudents()
@@ -213,141 +214,143 @@
     {#if showStudentOverview}
       <div class="page-content">
         <h1 class="ds-heading" data-size="lg">Elever</h1>
-        <div class="student-search-container">
-          <ds-field class="ds-field">
-            <label for="student-name-search" class="ds-label" data-weight="medium">Navn</label>
-            <input id="student-name-search" class="ds-input" type="text" placeholder="Søk etter elev" bind:value={studentOverviewFilter.studentName} oninput={debouncedUpdateOverviewStudents} autocomplete="off" >
-          </ds-field>
-          <ds-field class="ds-field">
-            <label for="student-class-search" class="ds-label" data-weight="medium">Klasse</label>
-            <input id="student-class-search" class="ds-input" placeholder="Søk etter klasse" type="text" bind:value={studentOverviewFilter.className} oninput={debouncedUpdateOverviewStudents} autocomplete="off" />
-          </ds-field>
-          <ds-field class="ds-field">
-            <label for="student-teacher-search" class="ds-label" data-weight="medium">Kontaktlærer</label>
-            <input id="student-teacher-search" class="ds-input" placeholder="Søk etter kontaktlærer" type="text" bind:value={studentOverviewFilter.contactTeacherName} oninput={debouncedUpdateOverviewStudents} autocomplete="off" />
-          </ds-field>
-        </div>
-
-        <div class="student-filters-container">
-          <div class="student-filters-selected">
-            {#each appliedFollowUpStudentCheckBoxes.map(getStudentCheckBox) as selectedFollowUpStudentCheckBox}
-              <span class="ds-tag" data-variant="outline" data-color="brand1">{selectedFollowUpStudentCheckBox.value}</span>
-            {/each}
-            {#each appliedFacilitationStudentCheckBoxes.map(getStudentCheckBox) as selectedFacilitationStudentCheckBox}
-              <span class="ds-tag" data-variant="outline" data-color="brand2">{selectedFacilitationStudentCheckBox.value}</span>
-            {/each}
-            {#each appliedTemplateIds.map(getTemplate) as template}
-              <span class="ds-tag" data-variant="outline" data-color="brand3">{template.name}</span>
-            {/each}
-            {#if appliedHasNoDocuments}
-              <span class="ds-tag" data-variant="outline" data-color="neutral">Uten dokumenter</span>
-            {/if}
+        <div class="student-search-and-filter-container">
+          <div class="student-search-container">
+            <ds-field class="ds-field">
+              <label for="student-name-search" class="ds-label" data-weight="medium">Navn</label>
+              <input id="student-name-search" class="ds-input" type="text" placeholder="Søk etter elev" bind:value={studentOverviewFilter.studentName} oninput={debouncedUpdateOverviewStudents} autocomplete="off" >
+            </ds-field>
+            <ds-field class="ds-field">
+              <label for="student-class-search" class="ds-label" data-weight="medium">Klasse</label>
+              <input id="student-class-search" class="ds-input" placeholder="Søk etter klasse" type="text" bind:value={studentOverviewFilter.className} oninput={debouncedUpdateOverviewStudents} autocomplete="off" />
+            </ds-field>
+            <ds-field class="ds-field">
+              <label for="student-teacher-search" class="ds-label" data-weight="medium">Kontaktlærer</label>
+              <input id="student-teacher-search" class="ds-input" placeholder="Søk etter kontaktlærer" type="text" bind:value={studentOverviewFilter.contactTeacherName} oninput={debouncedUpdateOverviewStudents} autocomplete="off" />
+            </ds-field>
           </div>
 
-          <div class="student-filters-content">
-            <button
-              disabled={facilitationStudentCheckBoxes.length === 0 && followUpStudentCheckBoxes.length === 0}
-              class="ds-button"
-              data-variant="secondary"
-              type="button"
-              popovertarget="student-filters-action-container"
-              aria-label="Elevfilter"
-              data-tooltip="Elevfilter"
-              data-placement="top"
-              data-autoplacement="true"
-            >
-              <span class="material-symbols-outlined">filter_list</span>
-            </button>
-            <div id="student-filters-action-container" class="ds-popover ds-dropdown" popover="auto" data-placement="bottom-end" data-variant="default">
-              <div class="student-filters">
-                {#if followUpStudentCheckBoxes.length > 0}
-                  <div class="student-filters-followup">
-                    <h2 class="ds-heading">{STUDENT_CHECKBOX_DISPLAY_NAMES.FOLLOW_UP.single}</h2>
-                    <hr class="ds-divider" />
-                    <ul class="ds-list">
-                      {#each followUpStudentCheckBoxes as followUpStudentCheckBox}
-                        <li>
-                          <ds-field class="ds-field">
-                            <input id="student-filters-{followUpStudentCheckBox._id}" bind:group={selectedFollowUpStudentCheckBoxes} class="ds-input" type="checkbox" value={followUpStudentCheckBox._id} />
-                            <label for="student-filters-{followUpStudentCheckBox._id}" class="ds-label" data-weight="regular">{followUpStudentCheckBox.value}</label>
-                          </ds-field>
-                        </li>
-                      {/each}
-                    </ul>
-                  </div>
-                {/if}
-                {#if facilitationStudentCheckBoxes.length > 0}
-                  <div class="student-filters-facilitation">
-                    <h2 class="ds-heading">{STUDENT_CHECKBOX_DISPLAY_NAMES.FACILITATION.plural}</h2>
-                    <hr class="ds-divider" />
-                    <ul class="ds-list">
-                      {#each facilitationStudentCheckBoxes as facilitationStudentCheckBox}
-                        <li>
-                          <ds-field class="ds-field">
-                            <input id="student-filters-{facilitationStudentCheckBox._id}" bind:group={selectedFacilitationStudentCheckBoxes} class="ds-input" type="checkbox" value={facilitationStudentCheckBox._id} />
-                            <label for="student-filters-{facilitationStudentCheckBox._id}" class="ds-label" data-weight="regular">{facilitationStudentCheckBox.value}</label>
-                          </ds-field>
-                        </li>
-                      {/each}
-                    </ul>
-                  </div>
-                {/if}
-              </div>
-              <hr class="ds-divider" />
-              <div class="filters-footer">
-                <button class="ds-button" data-variant="tertiary" data-size="sm" type="button" onclick={() => { selectedFollowUpStudentCheckBoxes = []; selectedFacilitationStudentCheckBoxes = []; applyFilters() }} disabled={appliedFollowUpStudentCheckBoxes.length === 0 && appliedFacilitationStudentCheckBoxes.length === 0}>Fjern alle filter</button>
-                <button class="ds-button" data-variant="primary" data-size="sm" type="button" onclick={applyFilters} disabled={!hasCheckboxFilterChanges}>
-                  <span class="material-symbols-outlined">check</span>
-                  Bruk filter
-                </button>            
-              </div>
-            </div>
-
-            <button
-              class="ds-button"
-              data-variant="secondary"
-              type="button"
-              popovertarget="document-filters-action-container"
-              aria-label="Dokumentfilter"
-              data-tooltip="Dokumentfilter"
-              data-placement="top"
-              data-autoplacement="true"
-            >
-              <span class="material-symbols-outlined">description</span>
-            </button>
-
-            <div id="document-filters-action-container" class="ds-popover ds-dropdown" popover="auto" data-placement="bottom-end" data-variant="default">
-              <div class="document-filters-templates">
-                <h2 class="ds-heading">Notat-typer</h2>
-                <hr class="ds-divider" />
-                <ul class="ds-list">
-                  <li>
-                    <ds-field class="ds-field">
-                      <input id="document-filters-no-documents" bind:checked={hasNoDocuments} onclick={() => { selectedTemplateIds = [] }} class="ds-input" type="checkbox" />
-                      <label for="document-filters-no-documents" class="ds-label" data-weight="regular">Har ingen notater</label>
-                    </ds-field>
-                  </li>
-                  <hr class="ds-divider" />
-                  {#each studentDocumentTemplates as template}
-                    <li>
-                      <ds-field class="ds-field">
-                        <input id="document-filters-{template._id}" bind:group={selectedTemplateIds} onclick={() => { hasNoDocuments = false }} class="ds-input" type="checkbox" value={template._id} />
-                        <label for="document-filters-{template._id}" class="ds-label" data-weight="regular">{template.name}</label>
-                      </ds-field>
-                    </li>
-                  {/each}
-                </ul>
+          <div class="student-filters-container">
+            <div class="student-filters-content">
+              <button
+                disabled={facilitationStudentCheckBoxes.length === 0 && followUpStudentCheckBoxes.length === 0}
+                class="ds-button"
+                data-variant="secondary"
+                type="button"
+                popovertarget="student-filters-action-container"
+                aria-label="Elevfilter"
+                data-tooltip="Elevfilter"
+                data-placement="top"
+                data-autoplacement="true"
+              >
+                <span class="material-symbols-outlined">filter_list</span>
+              </button>
+              <div id="student-filters-action-container" class="ds-popover ds-dropdown" popover="auto" data-placement="bottom-end" data-variant="default">
+                <div class="student-filters">
+                  {#if followUpStudentCheckBoxes.length > 0}
+                    <div class="student-filters-followup">
+                      <h2 class="ds-heading">{STUDENT_CHECKBOX_DISPLAY_NAMES.FOLLOW_UP.single}</h2>
+                      <hr class="ds-divider" />
+                      <ul class="ds-list">
+                        {#each followUpStudentCheckBoxes as followUpStudentCheckBox}
+                          <li>
+                            <ds-field class="ds-field">
+                              <input id="student-filters-{followUpStudentCheckBox._id}" bind:group={selectedFollowUpStudentCheckBoxes} class="ds-input" type="checkbox" value={followUpStudentCheckBox._id} />
+                              <label for="student-filters-{followUpStudentCheckBox._id}" class="ds-label" data-weight="regular">{followUpStudentCheckBox.value}</label>
+                            </ds-field>
+                          </li>
+                        {/each}
+                      </ul>
+                    </div>
+                  {/if}
+                  {#if facilitationStudentCheckBoxes.length > 0}
+                    <div class="student-filters-facilitation">
+                      <h2 class="ds-heading">{STUDENT_CHECKBOX_DISPLAY_NAMES.FACILITATION.plural}</h2>
+                      <hr class="ds-divider" />
+                      <ul class="ds-list">
+                        {#each facilitationStudentCheckBoxes as facilitationStudentCheckBox}
+                          <li>
+                            <ds-field class="ds-field">
+                              <input id="student-filters-{facilitationStudentCheckBox._id}" bind:group={selectedFacilitationStudentCheckBoxes} class="ds-input" type="checkbox" value={facilitationStudentCheckBox._id} />
+                              <label for="student-filters-{facilitationStudentCheckBox._id}" class="ds-label" data-weight="regular">{facilitationStudentCheckBox.value}</label>
+                            </ds-field>
+                          </li>
+                        {/each}
+                      </ul>
+                    </div>
+                  {/if}
+                </div>
                 <hr class="ds-divider" />
                 <div class="filters-footer">
-                  <button class="ds-button" data-variant="tertiary" data-size="sm" type="button" onclick={() => { selectedTemplateIds = []; hasNoDocuments = false; applyFilters() }} disabled={appliedTemplateIds.length === 0 && !appliedHasNoDocuments}>Fjern alle filter</button>
-                  <button class="ds-button" data-variant="primary" data-size="sm" type="button" onclick={applyFilters} disabled={!hasDocumentFilterChanges} popovertarget="document-filters-action-container" popovertargetaction="hide">
+                  <button class="ds-button" data-variant="tertiary" data-size="sm" type="button" onclick={() => { selectedFollowUpStudentCheckBoxes = []; selectedFacilitationStudentCheckBoxes = [] }} disabled={selectedFollowUpStudentCheckBoxes.length === 0 && selectedFacilitationStudentCheckBoxes.length === 0}>Fjern alle filter</button>
+                  <button class="ds-button" data-variant="primary" data-size="sm" type="button" onclick={applyFilters} disabled={!hasCheckboxFilterChanges}>
                     <span class="material-symbols-outlined">check</span>
                     Bruk filter
-                  </button>
+                  </button>            
+                </div>
+              </div>
+
+              <button
+                class="ds-button"
+                data-variant="secondary"
+                type="button"
+                popovertarget="document-filters-action-container"
+                aria-label="Notatfilter"
+                data-tooltip="Notatfilter"
+                data-placement="top"
+                data-autoplacement="true"
+              >
+                <span class="material-symbols-outlined">description</span>
+              </button>
+
+              <div id="document-filters-action-container" class="ds-popover ds-dropdown" popover="auto" data-placement="bottom-end" data-variant="default">
+                <div class="document-filters-templates">
+                  <h2 class="ds-heading">Notat-typer</h2>
+                  <hr class="ds-divider" />
+                  <ul class="ds-list">
+                    <li>
+                      <ds-field class="ds-field">
+                        <input id="document-filters-no-documents" bind:checked={hasNoDocuments} onclick={() => { selectedTemplateIds = [] }} class="ds-input" type="checkbox" />
+                        <label for="document-filters-no-documents" class="ds-label" data-weight="regular">Har ingen notater</label>
+                      </ds-field>
+                    </li>
+                    <hr class="ds-divider" />
+                    {#each studentDocumentTemplates as template}
+                      <li>
+                        <ds-field class="ds-field">
+                          <input id="document-filters-{template._id}" bind:group={selectedTemplateIds} onclick={() => { hasNoDocuments = false }} class="ds-input" type="checkbox" value={template._id} />
+                          <label for="document-filters-{template._id}" class="ds-label" data-weight="regular">{template.name}</label>
+                        </ds-field>
+                      </li>
+                    {/each}
+                  </ul>
+                  <hr class="ds-divider" />
+                  <div class="filters-footer">
+                    <button class="ds-button" data-variant="tertiary" data-size="sm" type="button" onclick={() => { selectedTemplateIds = []; hasNoDocuments = false; }} disabled={selectedTemplateIds.length === 0 && !hasNoDocuments}>Fjern alle filter</button>
+                    <button class="ds-button" data-variant="primary" data-size="sm" type="button" onclick={applyFilters} disabled={!hasDocumentFilterChanges}>
+                      <span class="material-symbols-outlined">check</span>
+                      Bruk filter
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+
+        <div class="student-filters-selected">
+          {#each appliedFollowUpStudentCheckBoxes.map(getStudentCheckBox) as selectedFollowUpStudentCheckBox}
+            <span class="ds-tag" data-variant="outline" data-color="brand1">{selectedFollowUpStudentCheckBox.value}</span>
+          {/each}
+          {#each appliedFacilitationStudentCheckBoxes.map(getStudentCheckBox) as selectedFacilitationStudentCheckBox}
+            <span class="ds-tag" data-variant="outline" data-color="brand2">{selectedFacilitationStudentCheckBox.value}</span>
+          {/each}
+          {#each appliedTemplateIds.map(getTemplate) as template}
+            <span class="ds-tag" data-variant="outline" data-color="brand3">{template.name}</span>
+          {/each}
+          {#if appliedHasNoDocuments}
+            <span class="ds-tag" data-variant="outline" data-color="neutral">Uten dokumenter</span>
+          {/if}
         </div>
 
         <div>
@@ -488,6 +491,13 @@
         display: flex;
     }
 
+    .student-search-and-filter-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
     .student-search-container {
         display: flex;
         gap: var(--ds-size-4);
@@ -540,6 +550,7 @@
         display: flex;
         gap: var(--ds-size-1) var(--ds-size-2);
         flex-wrap: wrap;
+        margin-bottom: var(--ds-size-4);
     }
 
     #document-filters-action-container {
