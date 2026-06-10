@@ -10,6 +10,7 @@ import type {
   StudentDataSharingConsent,
   StudentDocument
 } from "$lib/types/db/shared-types"
+import { SUBJECT_TEACHER_ACCESS_TYPES } from "$lib/utils/access-constants"
 
 export const isSystemAdmin = (authenticatedPrincipal: AuthenticatedPrincipal, APP_INFO: ApplicationInfo): boolean => {
   return authenticatedPrincipal.roles.includes(APP_INFO.ROLES.ADMIN)
@@ -49,7 +50,7 @@ export const canManageManualStudentsOnSchool = (principalAccess: Access, schoolN
 }
 
 export const isOnlySubjectTeacher = (accessToStudent: PrincipalAccessForStudent[]): boolean => {
-  return accessToStudent.every((accessEntry) => accessEntry.type === "AUTOMATISK-UNDERVISNINGSGRUPPE-TILGANG" || accessEntry.type === "AUTOMATISK-KLASSE-TILGANG")
+  return accessToStudent.every((accessEntry) => (SUBJECT_TEACHER_ACCESS_TYPES as readonly string[]).includes(accessEntry.type))
 }
 
 export const canViewStudentDocument = (

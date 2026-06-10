@@ -1,7 +1,7 @@
 import { logger } from "@vestfoldfylke/loglady"
-import { type Binary, type Db, type DeleteResult, ObjectId } from "mongodb"
+import { type Binary, type Db, type DeleteResult, type Filter, ObjectId } from "mongodb"
 import { env } from "$env/dynamic/private"
-import type { IDocumentsDbClient } from "$lib/types/db/db-client"
+import type { IDocumentsDbClient, StudentDocumentAccess } from "$lib/types/db/db-client"
 import type {
   DbEncryptedDocumentMessage,
   DbEncryptedGroupDocument,
@@ -29,6 +29,47 @@ if (!documentLockStart) {
   logger.warn("DOCUMENT_LOCK_START_MM_DD environment variable is not set. Document locking is disabled.")
 } else {
   logger.warn("Document locking is enabled. Documents will be locked at school year end, currently set to {DocumentLockStart} (MM-DD)", documentLockStart)
+}
+
+const CHUNK_SIZE = 5000 // Only a security guard if someone suddenly has access to 10 000s of students, to avoid creating too large queries for MongoDB which can cause it to be really slow.
+
+function chunkArray<T>(arr: T[], size: number): T[][] {
+  const chunks: T[][] = []
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size))
+  }
+  return chunks
+}
+
+function buildStudentAccessCondition({ studentId, schoolNumbers, subjectTeacherOnlySchoolNumbers, hasDataSharingConsent, principalEntraUserId }: StudentDocumentAccess): Filter<DbStudentDocument> {
+  const id = new ObjectId(studentId)
+
+  if (subjectTeacherOnlySchoolNumbers.length === 0) {
+    if (hasDataSharingConsent) {
+      return { "student._id": id }
+    }
+    return { "student._id": id, "school.schoolNumber": { $in: schoolNumbers } }
+  }
+
+  const subjectTeacherOnlySet = new Set(subjectTeacherOnlySchoolNumbers)
+  const fullAccessSchools = schoolNumbers.filter((s) => !subjectTeacherOnlySet.has(s))
+
+  // At subject-teacher-only schools: visible if access is granted to all, OR the principal created the document themselves
+  const subjectTeacherClause: Filter<DbStudentDocument> = {
+    "school.schoolNumber": { $in: subjectTeacherOnlySchoolNumbers },
+    $or: [{ documentAccess: "ALL_WITH_STUDENT_ACCESS" }, { "created.by.entraUserId": principalEntraUserId }]
+  }
+
+  if (hasDataSharingConsent) {
+    return {
+      "student._id": id,
+      $or: [{ "school.schoolNumber": { $nin: subjectTeacherOnlySchoolNumbers } }, subjectTeacherClause]
+    }
+  }
+
+  const orClauses = fullAccessSchools.length > 0 ? [{ "school.schoolNumber": { $in: fullAccessSchools } }, subjectTeacherClause] : [subjectTeacherClause]
+
+  return { "student._id": id, $or: orClauses }
 }
 
 export class DocumentsDbClient implements IDocumentsDbClient {
@@ -91,6 +132,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
         const studentDocument: StudentDocument = {
           ...document,
           student: { _id: document.student._id.toString() },
+          template: { _id: document.template._id.toString(), name: document.template.name, version: document.template.version },
           _id: document._id.toString(),
           isDocumentLocked: this.isDocumentLocked(document.created.at)
         }
@@ -100,6 +142,55 @@ export class DocumentsDbClient implements IDocumentsDbClient {
         return studentDocument
       })
       .sort((a: StudentDocument, b: StudentDocument) => b.created.at.getTime() - a.created.at.getTime()) // Sort by created date descending
+  }
+
+  async getStudentIdsWithoutDocuments(studentAccess: StudentDocumentAccess[]): Promise<string[]> {
+    if (studentAccess.length === 0) {
+      return []
+    }
+
+    const documentsCollection = this.encryptionDb.collection<DbStudentDocument>(this.documentsCollectionName)
+
+    const chunks = chunkArray(studentAccess, CHUNK_SIZE)
+    const results = await Promise.all(chunks.map((chunk) => documentsCollection.distinct("student._id", { $or: chunk.map(buildStudentAccessCondition) })))
+
+    const studentIdsWithDocuments = new Set(results.flat().map((id) => id.toString()))
+    return studentAccess.filter(({ studentId }) => !studentIdsWithDocuments.has(studentId)).map(({ studentId }) => studentId)
+  }
+
+  async getStudentIdsWithDocumentForTemplates(studentAccess: StudentDocumentAccess[], templateIds: string[]): Promise<string[]> {
+    if (studentAccess.length === 0) {
+      return []
+    }
+
+    const documentsCollection = this.encryptionDb.collection<DbStudentDocument>(this.documentsCollectionName)
+
+    const chunks = chunkArray(studentAccess, CHUNK_SIZE)
+
+    const setsPerTemplate = await Promise.all(
+      templateIds.map(async (templateId) => {
+        const results = await Promise.all(
+          chunks.map((chunk) =>
+            documentsCollection.distinct("student._id", {
+              "template._id": new ObjectId(templateId),
+              $or: chunk.map(buildStudentAccessCondition)
+            })
+          )
+        )
+        return new Set(results.flat().map((id) => id.toString()))
+      })
+    )
+
+    const [first, ...rest] = setsPerTemplate
+    const intersection = rest.reduce((acc, set) => {
+      for (const id of acc) {
+        if (!set.has(id)) {
+          acc.delete(id)
+        }
+      }
+      return acc
+    }, first)
+    return [...(intersection ?? [])]
   }
 
   async getStudentDocumentById(documentId: string): Promise<StudentDocument | null> {
@@ -114,6 +205,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     return {
       ...document,
       student: { _id: document.student._id.toString() },
+      template: { _id: document.template._id.toString(), name: document.template.name, version: document.template.version },
       _id: document._id.toString(),
       isDocumentLocked: this.isDocumentLocked(document.created.at)
     }
@@ -128,7 +220,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       content: await this.encryptValue(document.content),
       title: await this.encryptValue(document.title),
       template: {
-        _id: document.template._id,
+        _id: new ObjectId(document.template._id),
         name: await this.encryptValue(document.template.name),
         version: document.template.version
       },
@@ -168,7 +260,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       content: await this.encryptValue(documentUpdate.content),
       title: await this.encryptValue(documentUpdate.title),
       template: {
-        _id: documentUpdate.template._id,
+        _id: new ObjectId(documentUpdate.template._id),
         name: await this.encryptValue(documentUpdate.template.name),
         version: documentUpdate.template.version
       }
@@ -336,7 +428,16 @@ export class DocumentsDbClient implements IDocumentsDbClient {
         delete document.tyler_the_creator
 
         const groupDocument: GroupDocument = {
-          ...document,
+          created: document.created,
+          modified: document.modified,
+          school: document.school,
+          title: document.title,
+          template: { _id: document.template._id.toString(), name: document.template.name, version: document.template.version },
+          content: document.content,
+          documentAccess: document.documentAccess,
+          emailAlertReceivers: document.emailAlertReceivers,
+          messages: document.messages,
+          group: document.group,
           _id: document._id.toString(),
           isDocumentLocked: this.isDocumentLocked(document.created.at)
         }
@@ -360,7 +461,16 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     }
 
     return {
-      ...document,
+      created: document.created,
+      modified: document.modified,
+      school: document.school,
+      title: document.title,
+      template: { _id: document.template._id.toString(), name: document.template.name, version: document.template.version },
+      content: document.content,
+      documentAccess: document.documentAccess,
+      emailAlertReceivers: document.emailAlertReceivers,
+      messages: document.messages,
+      group: document.group,
       _id: document._id.toString(),
       isDocumentLocked: this.isDocumentLocked(document.created.at)
     }
@@ -384,7 +494,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       content: await this.encryptValue(document.content),
       title: await this.encryptValue(document.title),
       template: {
-        _id: document.template._id,
+        _id: new ObjectId(document.template._id),
         name: await this.encryptValue(document.template.name),
         version: document.template.version
       },
@@ -424,7 +534,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       content: await this.encryptValue(documentUpdate.content),
       title: await this.encryptValue(documentUpdate.title),
       template: {
-        _id: documentUpdate.template._id,
+        _id: new ObjectId(documentUpdate.template._id),
         name: await this.encryptValue(documentUpdate.template.name),
         version: documentUpdate.template.version
       }

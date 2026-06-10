@@ -455,7 +455,7 @@ export type StudentDocumentUpdate = DocumentBase & DocumentInput
 
 export type DbEncryptedStudentDocumentUpdate = Omit<StudentDocumentUpdate, "title" | "content" | "template"> & {
   template: {
-    _id: string
+    _id: ObjectId
     name: Binary
     version: number
   }
@@ -468,9 +468,14 @@ export type StudentDocument = NewStudentDocument & {
   isDocumentLocked: boolean
 }
 
-export type NewDbStudentDocument = Omit<NewStudentDocument, "student"> & {
+export type NewDbStudentDocument = Omit<NewStudentDocument, "student" | "template"> & {
   student: {
     _id: ObjectId
+  }
+  template: {
+    _id: ObjectId
+    name: string
+    version: number
   }
 }
 
@@ -480,7 +485,7 @@ export type DbStudentDocument = NewDbStudentDocument & {
 
 export type NewDbEncryptedStudentDocument = Omit<NewDbStudentDocument, "title" | "content" | "messages" | "template"> & {
   template: {
-    _id: string
+    _id: ObjectId
     name: Binary
     version: number
   }
@@ -505,7 +510,7 @@ export type GroupDocumentUpdate = DocumentBase & DocumentInput
 
 export type DbEncryptedGroupDocumentUpdate = Omit<GroupDocumentUpdate, "title" | "content" | "template"> & {
   template: {
-    _id: string
+    _id: ObjectId
     name: Binary
     version: number
   }
@@ -518,9 +523,14 @@ export type GroupDocument = NewGroupDocument & {
   isDocumentLocked: boolean
 }
 
-export type NewDbGroupDocument = Omit<NewGroupDocument, "group"> & {
+export type NewDbGroupDocument = Omit<NewGroupDocument, "group" | "template"> & {
   group: {
     systemId: string
+  }
+  template: {
+    _id: ObjectId
+    name: string
+    version: number
   }
 }
 
@@ -530,7 +540,7 @@ export type DbGroupDocument = NewDbGroupDocument & {
 
 export type NewDbEncryptedGroupDocument = Omit<NewDbGroupDocument, "title" | "content" | "messages" | "template"> & {
   template: {
-    _id: string
+    _id: ObjectId
     name: Binary
     version: number
   }

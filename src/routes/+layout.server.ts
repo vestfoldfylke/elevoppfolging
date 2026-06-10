@@ -3,7 +3,7 @@ import { APP_INFO } from "$lib/server/app-info"
 import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
-import type { PrincipalAccess, RootLayoutData } from "$lib/types/app-types"
+import type { DocumentTemplateFilterOption, PrincipalAccess, RootLayoutData } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { SchoolInfo } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
@@ -21,6 +21,7 @@ const layoutLoad: ServerLoadNextFunction<RootLayoutData> = async ({ principal })
       APP_INFO,
       principalAccess,
       studentCheckBoxes: [],
+      documentTemplateFilterOptions: [],
       schools: []
     }
   }
@@ -37,10 +38,17 @@ const layoutLoad: ServerLoadNextFunction<RootLayoutData> = async ({ principal })
   }))
   logger.info(`Found ${schoolsFromDb.length} schools`)
 
+  logger.info("Fetching student document templates")
+  const documentTemplateFilterOptions: DocumentTemplateFilterOption[] = (await dbClient.documentContentTemplates.getDocumentContentTemplates({ student: true }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ _id, name }) => ({ _id, name }))
+  logger.info(`Found ${documentTemplateFilterOptions.length} document content templates`)
+
   return {
     authenticatedPrincipal: principal,
     APP_INFO,
     principalAccess,
+    documentTemplateFilterOptions,
     studentCheckBoxes: studentCheckBoxes.sort((a, b) => a.sort - b.sort),
     schools: schoolsInfo
   }
