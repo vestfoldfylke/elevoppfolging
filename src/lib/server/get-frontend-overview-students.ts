@@ -8,12 +8,12 @@ import { getDbClient } from "./db/get-db-client"
 import { HTTPError } from "./middleware/http-error"
 
 function buildStudentDocumentAccess(students: FrontendOverviewStudent[], principalEntraUserId: string): StudentDocumentAccess[] {
-  return students.map((s) => {
+  return students.map((student) => {
     const schoolAccessTypes = new Map<string, Set<string>>()
-    for (const a of s.principalAccessForStudent) {
-      const existing = schoolAccessTypes.get(a.schoolNumber) ?? new Set<string>()
-      existing.add(a.type)
-      schoolAccessTypes.set(a.schoolNumber, existing)
+    for (const access of student.principalAccessForStudent) {
+      const existing = schoolAccessTypes.get(access.schoolNumber) ?? new Set<string>()
+      existing.add(access.type)
+      schoolAccessTypes.set(access.schoolNumber, existing)
     }
 
     const subjectTeacherOnlySchoolNumbers = [...schoolAccessTypes.entries()]
@@ -21,10 +21,10 @@ function buildStudentDocumentAccess(students: FrontendOverviewStudent[], princip
       .map(([schoolNumber]) => schoolNumber)
 
     return {
-      studentId: s._id,
-      schoolNumbers: [...new Set(s.principalAccessForStudent.map((a) => a.schoolNumber))],
+      studentId: student._id,
+      schoolNumbers: [...new Set(student.principalAccessForStudent.map((access) => access.schoolNumber))],
       subjectTeacherOnlySchoolNumbers,
-      hasDataSharingConsent: s.dataSharingConsent,
+      hasDataSharingConsent: student.dataSharingConsent,
       principalEntraUserId
     }
   })
@@ -133,7 +133,7 @@ export const getFrontendOverviewStudents = async (principalAccess: PrincipalAcce
     logger.info("Filtering students by templateIds: {TemplateIds}", studentFilter.templateIds)
     const studentAccess = buildStudentDocumentAccess(overviewStudents, principalAccess.entraUserId)
     const matchingIds = new Set(await dbClient.documents.getStudentIdsWithDocumentForTemplates(studentAccess, studentFilter.templateIds))
-    documentFilteredStudents = overviewStudents.filter((s) => matchingIds.has(s._id))
+    documentFilteredStudents = overviewStudents.filter((student) => matchingIds.has(student._id))
     logger.info("After templateIds filter: {FilteredCount} of {TotalCount} students remain", documentFilteredStudents.length, overviewStudents.length)
   }
 
@@ -141,7 +141,7 @@ export const getFrontendOverviewStudents = async (principalAccess: PrincipalAcce
     logger.info("Filtering students to those without any documents")
     const studentAccess = buildStudentDocumentAccess(documentFilteredStudents, principalAccess.entraUserId)
     const idsWithoutDocuments = new Set(await dbClient.documents.getStudentIdsWithoutDocuments(studentAccess))
-    documentFilteredStudents = documentFilteredStudents.filter((s) => idsWithoutDocuments.has(s._id))
+    documentFilteredStudents = documentFilteredStudents.filter((student) => idsWithoutDocuments.has(student._id))
     logger.info("After hasNoDocuments filter: {FilteredCount} of {TotalCount} students remain", documentFilteredStudents.length, overviewStudents.length)
   }
 
