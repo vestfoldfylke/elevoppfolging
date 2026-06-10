@@ -31,7 +31,7 @@ if (!documentLockStart) {
   logger.warn("Document locking is enabled. Documents will be locked at school year end, currently set to {DocumentLockStart} (MM-DD)", documentLockStart)
 }
 
-const CHUNK_SIZE = 5000
+const CHUNK_SIZE = 5000 // Only a security guard if someone suddenly has access to 10 000s of students, to avoid creating too large queries for MongoDB which can cause it to be really slow.
 
 function chunkArray<T>(arr: T[], size: number): T[][] {
   const chunks: T[][] = []
