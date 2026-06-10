@@ -349,7 +349,7 @@
             <span class="ds-tag" data-variant="outline" data-color="brand3">{template.name}</span>
           {/each}
           {#if appliedHasNoDocuments}
-            <span class="ds-tag" data-variant="outline" data-color="neutral">Uten dokumenter</span>
+            <span class="ds-tag" data-variant="outline" data-color="neutral">Har ingen notater</span>
           {/if}
         </div>
 
