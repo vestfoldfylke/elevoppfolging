@@ -262,9 +262,9 @@
                     <span class="ds-tag" data-color="neutral" data-size="sm">
                       <span class="material-symbols-outlined" style="margin-right: var(--ds-size-2);">{document.documentAccess === "EXCLUDE_SUBJECT_TEACHERS" || document.documentAccess === "ONLY_CREATOR" ? "visibility_off" : "visibility"}</span>
                       {#if document.documentAccess === "ALL_WITH_STUDENT_ACCESS"}
-                        Synlig for faglærere
+                        Synlig for alle med tilgang til eleven
                       {:else if document.documentAccess === "EXCLUDE_SUBJECT_TEACHERS"}
-                        Ikke synlig for faglærere
+                        Synlig for alle med tilgang til eleven unntatt faglærere
                       {:else if document.documentAccess === "ONLY_CREATOR"}
                         Kun synlig for {document.created.by.fallbackName}
                       {/if}
