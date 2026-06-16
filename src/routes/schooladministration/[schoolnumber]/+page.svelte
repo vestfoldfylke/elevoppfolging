@@ -809,7 +809,7 @@
               </ds-field>
 
               <ds-field class="ds-field content-item">
-                <label class="ds-label" data-weight="medium" for="blockedAddress" data-clickdelegatefor="blockedAddress">Adressesperre</label>
+                <label class="ds-label" data-weight="medium" for="blockedAddress" data-clickdelegatefor="blockedAddress">Adressesperre (kode 6 eller 7)</label>
                 <input class="ds-input" type="checkbox" id="blockedAddress" bind:checked={newManualStudentHasBlockedAddress}>
               </ds-field>
             </form>
