@@ -135,7 +135,7 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
       "Failed to update student {feideName} last activity timestamp after adding document message on document {documentId} for school {schoolNumber}. Returning documentId regardless",
       student.feideName,
       documentId,
-      newDocumentData.school
+      newDocumentData.school.schoolNumber
     )
   }
 

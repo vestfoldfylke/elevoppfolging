@@ -50,7 +50,7 @@
       method: "POST",
       body: {
         auditEntry,
-        errorMessage: "opening StudentId {StudentId}",
+        errorMessage: "opening StudentId",
         errorMessageObject: data.student._id
       },
       headers: {
