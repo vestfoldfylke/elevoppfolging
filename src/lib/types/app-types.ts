@@ -19,6 +19,7 @@ import type {
   SchoolLeaderManualAccessEntry,
   Source,
   StudentCheckBox,
+  StudentDocument,
   StudentImportantStuff,
   StudentManualAccessEntry,
   TeachingGroup,
@@ -222,4 +223,8 @@ export type SchoolAdministrationManualStudent = {
 export type SuggestionSelectItem = {
   label: string
   value: string
+}
+
+export type FrontendStudentDocument = StudentDocument & {
+  isDocumentContentHidden: boolean
 }

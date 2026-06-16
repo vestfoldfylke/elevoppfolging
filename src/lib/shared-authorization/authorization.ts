@@ -53,35 +53,61 @@ export const isOnlySubjectTeacher = (accessToStudent: PrincipalAccessForStudent[
   return accessToStudent.every((accessEntry) => (SUBJECT_TEACHER_ACCESS_TYPES as readonly string[]).includes(accessEntry.type))
 }
 
+type CanViewStudentDocumentTrueResult = {
+  canView: true
+  mustHideDocumentContent: boolean
+}
+
+type CanViewStudentDocumentFalseResult = {
+  canView: false
+  mustHideDocumentContent: null
+}
+
+export type CanViewStudentDocumentResult = CanViewStudentDocumentTrueResult | CanViewStudentDocumentFalseResult
+
 export const canViewStudentDocument = (
   authenticatedPrincipal: AuthenticatedPrincipal,
   accessToStudent: PrincipalAccessForStudent[],
   document: StudentDocument,
   studentDataSharingConsent: StudentDataSharingConsent | null
-): boolean => {
+): CanViewStudentDocumentResult => {
   if (accessToStudent.length === 0) {
-    return false
+    return { canView: false, mustHideDocumentContent: null }
   }
 
-  if (studentDataSharingConsent?.consent) {
+  const hasRequiredDocumentAccess = (): CanViewStudentDocumentResult => {
     if (authenticatedPrincipal.id === document.created.by.entraUserId) {
-      return true // man skal kunne se dokumentene man har opprettet selv hvis det foreligger samtykke, hvis man har tilgang til eleven
+      return { canView: true, mustHideDocumentContent: false }
+    }
+
+    if (document.documentAccess === "ONLY_CREATOR") {
+      if (accessToStudent.some((access) => access.type === "MANUELL-SKOLELEDER-TILGANG" && access.schoolNumber === document.school.schoolNumber)) {
+        return { canView: true, mustHideDocumentContent: true }
+      }
+
+      return { canView: false, mustHideDocumentContent: null }
+    }
+
+    if (document.documentAccess === "ALL_WITH_STUDENT_ACCESS") {
+      return { canView: true, mustHideDocumentContent: false }
     }
 
     return !(document.documentAccess === "EXCLUDE_SUBJECT_TEACHERS" && isOnlySubjectTeacher(accessToStudent))
+      ? { canView: true, mustHideDocumentContent: false }
+      : { canView: false, mustHideDocumentContent: null }
+  }
+
+  if (studentDataSharingConsent?.consent) {
+    return hasRequiredDocumentAccess()
   }
 
   // no consent - only documents from access schools
   const accessToStudentFromDocumentSchool: PrincipalAccessForStudent[] = accessToStudent.filter((access: PrincipalAccessForStudent) => access.schoolNumber === document.school.schoolNumber)
   if (accessToStudentFromDocumentSchool.length === 0) {
-    return false
+    return { canView: false, mustHideDocumentContent: null }
   }
 
-  if (document.created.by.entraUserId === authenticatedPrincipal.id) {
-    return true // man skal kunne se dokumentene man har opprettet selv hvis man har tilgang til eleven ved gitt skole
-  }
-
-  return !(document.documentAccess === "EXCLUDE_SUBJECT_TEACHERS" && isOnlySubjectTeacher(accessToStudentFromDocumentSchool))
+  return hasRequiredDocumentAccess()
 }
 
 export const canCreateStudentDocument = (accessToStudent: PrincipalAccessForStudent[], newDocument: DocumentInput): boolean => {

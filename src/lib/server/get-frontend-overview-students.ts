@@ -16,6 +16,8 @@ function buildStudentDocumentAccess(students: FrontendOverviewStudent[], princip
       schoolAccessTypes.set(access.schoolNumber, existing)
     }
 
+    const schoolLeaderSchoolNumbers = student.principalAccessForStudent.filter((access) => access.type === "MANUELL-SKOLELEDER-TILGANG").map((access) => access.schoolNumber)
+
     const subjectTeacherOnlySchoolNumbers = [...schoolAccessTypes.entries()]
       .filter(([, types]) => [...types].every((type) => (SUBJECT_TEACHER_ACCESS_TYPES as readonly string[]).includes(type)))
       .map(([schoolNumber]) => schoolNumber)
@@ -23,6 +25,7 @@ function buildStudentDocumentAccess(students: FrontendOverviewStudent[], princip
     return {
       studentId: student._id,
       schoolNumbers: [...new Set(student.principalAccessForStudent.map((access) => access.schoolNumber))],
+      schoolLeaderSchoolNumbers,
       subjectTeacherOnlySchoolNumbers,
       hasDataSharingConsent: student.dataSharingConsent,
       principalEntraUserId
