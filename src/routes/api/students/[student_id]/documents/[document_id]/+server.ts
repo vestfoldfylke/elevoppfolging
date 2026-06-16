@@ -213,7 +213,7 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
       "Failed to update student {feideName} last activity timestamp after updating document {documentId} for school {schoolNumber}. Returning documentId regardless",
       student.feideName,
       documentId,
-      updateDocumentData.school
+      updateDocumentData.school.schoolNumber
     )
   }
 

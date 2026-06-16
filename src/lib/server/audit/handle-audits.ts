@@ -5,12 +5,12 @@ import type { AuditEntry, AuditEntryInput, AuditSearchTerms } from "$lib/types/d
 
 const dbClient: IDbClient = getDbClient()
 
-export const insertAuditEntry = async (auditEntry: AuditEntryInput, errorMessage: string, errorMessageObject: string | object): Promise<boolean> => {
+export const insertAuditEntry = async (auditEntry: AuditEntryInput, errorMessage: string, errorMessageObject: string): Promise<boolean> => {
   try {
     await dbClient.auditLogs.createAuditEntry(auditEntry)
     return true
   } catch (error) {
-    logger.errorException(error, `Failed to create audit entry when ${errorMessage}. AuditEntry: {@AuditEntry}`, errorMessageObject, auditEntry)
+    logger.errorException(error, `Failed to create audit entry when ${errorMessage} {MessageObjectId}. AuditEntry: {@AuditEntry}`, errorMessageObject, auditEntry)
     return false
   }
 }
