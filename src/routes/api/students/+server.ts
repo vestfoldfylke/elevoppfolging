@@ -12,10 +12,12 @@ import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canManageManualStudentsOnSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { FrontendOverviewStudentFilter, FrontendStudent, PrincipalAccess } from "$lib/types/app-types"
+import type { AuthenticatedPrincipal } from "$lib/types/authentication"
 import type { ValidationResult } from "$lib/types/data-validation"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { Access, EditorData, NewAppStudent, Period, StudentEnrollment } from "$lib/types/db/shared-types"
+import type { Access, EditorData, NewAppStudent, Period, StudentEnrollment, UpdateAppStudent } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
+import { isActive } from "$lib/utils/period"
 import { generateUUID } from "$lib/utils/uuid"
 
 type GetStudentsResponse = ApiRouteMap[`/api/students${NoSlashString}`]["GET"]["res"]
@@ -103,14 +105,42 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
 
   const student: FrontendStudent | null = await dbClient.students.getStudentBySsn(newManualStudentData.ssn)
   if (student) {
-    if (student.studentEnrollments.length === 0) {
-      throw new HTTPError(500, "Fødselsnummer er allerede i bruk. Eleven har ingen elevforhold. Hvordan skal vi forholde oss til dette da? Ta kontakt med en voksen")
+    if (newManualStudentData.school.source === "AUTO") {
+      if (student.studentEnrollments.length === 0) {
+        throw new HTTPError(500, "Fødselsnummer er allerede i bruk. Eleven har ingen elevforhold. Hvordan skal vi forholde oss til dette da? Ta kontakt med en voksen")
+      }
+
+      const schoolName: string = student.studentEnrollments.find((enrollment: StudentEnrollment) => enrollment.mainSchool)?.school.name || student.studentEnrollments[0].school.name
+      throw new HTTPError(400, `Fødselsnummer er allerede i bruk på ${schoolName}. Ta kontakt med en voksen på denne skolen, eller no?`)
     }
 
-    const schoolName: string = student.studentEnrollments.find((enrollment: StudentEnrollment) => enrollment.mainSchool)?.school.name || student.studentEnrollments[0].school.name
-    throw new HTTPError(400, `Fødselsnummer er allerede i bruk på ${schoolName}. Ta kontakt med en voksen på denne skolen, eller no?`)
+    if (student.studentEnrollments.every((enrollment: StudentEnrollment) => !isActive(enrollment.period))) {
+      logger.warn(
+        "SSN is already in use by StudentId {StudentId}. Student has {EnrollmentCount} enrollments and all is inactive. Will change this student to MANUAL and add a manual enrollment",
+        student._id,
+        student.studentEnrollments.length
+      )
+    } else {
+      const schoolName: string = student.studentEnrollments.find((enrollment: StudentEnrollment) => enrollment.mainSchool)?.school.name || student.studentEnrollments[0].school.name
+      throw new HTTPError(
+        400,
+        `Fødselsnummer er allerede i bruk på ${schoolName}. Eleven har ${student.studentEnrollments.length} elevforhold, hvor minst ett er aktivt. Elev kan ikke legges til på denne skolen`
+      )
+    }
   }
 
+  const studentId: string = !student ? await handleNewManualStudent(principal, newManualStudentData) : await handleExistingManualStudent(principal, newManualStudentData, student)
+
+  return {
+    studentId
+  }
+}
+
+export const POST: RequestHandler = async (requestEvent) => {
+  return apiRequestMiddleware<AddManualStudentResponse, AddManualStudentBody>(requestEvent, addManualStudent)
+}
+
+const handleNewManualStudent = async (principal: AuthenticatedPrincipal, manualStudentData: AddManualStudentBody): Promise<string> => {
   const editorData: EditorData = {
     by: {
       entraUserId: principal.id,
@@ -129,11 +159,11 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
   const manualClassMembershipId: string = generateUUID("MANUAL")
 
   const newAppStudent: NewAppStudent = {
-    ssn: newManualStudentData.ssn,
+    ssn: manualStudentData.ssn,
     systemId: manualStudentId,
     studentNumber: manualStudentId,
     feideName: manualStudentId,
-    name: newManualStudentData.name,
+    name: manualStudentData.name,
     source: "MANUAL",
     created: editorData,
     modified: editorData,
@@ -143,16 +173,16 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
         systemId: manualEnrollmentId,
         period,
         school: {
-          schoolNumber: newManualStudentData.school.schoolNumber,
-          name: newManualStudentData.school.name
+          schoolNumber: manualStudentData.school.schoolNumber,
+          name: manualStudentData.school.name
         },
         mainSchool: true,
         classMemberships: [
           {
             classGroup: {
               source: "MANUAL",
-              name: `Manuelle elever på ${newManualStudentData.school.name}`,
-              systemId: `MANUELLE-ELEVER-${newManualStudentData.school.name}`,
+              name: `Manuelle elever på ${manualStudentData.school.name}`,
+              systemId: `MANUELLE-ELEVER-${manualStudentData.school.name}`,
               teachers: []
             },
             period,
@@ -163,8 +193,10 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
         teachingGroupMemberships: []
       }
     ],
-    hasBlockedAddress: newManualStudentData.hasBlockedAddress ?? false
+    hasBlockedAddress: manualStudentData.hasBlockedAddress ?? false
   }
+
+  const dbClient: IDbClient = getDbClient()
 
   let studentId: string
 
@@ -206,18 +238,103 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
       resourceName: newAppStudent.name,
       metaData: {
         parentResource: "School",
-        parentResourceId: newManualStudentData.school.schoolNumber
+        parentResourceId: manualStudentData.school.schoolNumber
       }
     })
   } catch (error) {
     logger.errorException(error, "Failed to create audit entry when creating ManualStudentId {ManualStudentId}", studentId)
   }
 
-  return {
-    studentId
-  }
+  return studentId
 }
 
-export const POST: RequestHandler = async (requestEvent) => {
-  return apiRequestMiddleware<AddManualStudentResponse, AddManualStudentBody>(requestEvent, addManualStudent)
+const handleExistingManualStudent = async (principal: AuthenticatedPrincipal, manualStudentData: AddManualStudentBody, student: FrontendStudent): Promise<string> => {
+  const editorData: EditorData = {
+    by: {
+      entraUserId: principal.id,
+      fallbackName: principal.displayName
+    },
+    at: new Date()
+  }
+
+  const period: Period = {
+    start: new Date(),
+    end: null
+  }
+
+  student.studentEnrollments.push({
+    source: "MANUAL",
+    systemId: generateUUID("MANUAL"),
+    period,
+    school: {
+      schoolNumber: manualStudentData.school.schoolNumber,
+      name: manualStudentData.school.name
+    },
+    mainSchool: true,
+    classMemberships: [
+      {
+        classGroup: {
+          source: "MANUAL",
+          name: `Manuelle elever på ${manualStudentData.school.name}`,
+          systemId: `MANUELLE-ELEVER-${manualStudentData.school.name}`,
+          teachers: []
+        },
+        period,
+        systemId: generateUUID("MANUAL")
+      }
+    ],
+    contactTeacherGroupMemberships: [],
+    teachingGroupMemberships: []
+  })
+
+  const updateAppStudent: UpdateAppStudent = {
+    ...student,
+    ssn: manualStudentData.ssn,
+    modified: editorData,
+    source: "MANUAL"
+  }
+
+  const dbClient: IDbClient = getDbClient()
+
+  let studentId: string
+
+  try {
+    studentId = await dbClient.students.updateManualStudent(updateAppStudent)
+  } catch (error) {
+    throw new HTTPError(500, "Feilet ved oppdatering av manuell bruker", error)
+  }
+
+  logger.info(
+    "Updated manual student with Id {Id} by user {DisplayName} ({PrincipalId}), added a manual enrollment to SchoolNumber {SchoolNumber}",
+    studentId,
+    principal.displayName,
+    principal.id,
+    manualStudentData.school.schoolNumber
+  )
+
+  await upsertStudentInCache(student)
+
+  try {
+    await dbClient.auditLogs.createAuditEntry({
+      created: {
+        by: {
+          entraUserId: principal.id,
+          fallbackName: principal.displayName
+        },
+        at: new Date()
+      },
+      action: "UPDATE",
+      resource: "ManualUser",
+      resourceId: studentId,
+      resourceName: updateAppStudent.name,
+      metaData: {
+        parentResource: "School",
+        parentResourceId: manualStudentData.school.schoolNumber
+      }
+    })
+  } catch (error) {
+    logger.errorException(error, "Failed to create audit entry when updating ManualStudentId {ManualStudentId}", studentId)
+  }
+
+  return studentId
 }
