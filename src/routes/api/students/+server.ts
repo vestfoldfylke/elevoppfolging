@@ -262,7 +262,12 @@ const handleExistingManualStudent = async (principal: AuthenticatedPrincipal, ma
     end: null
   }
 
-  student.studentEnrollments.push({
+  const newStudentEnrollments: StudentEnrollment[] = student.studentEnrollments.map((enrollment: StudentEnrollment) => {
+    enrollment.mainSchool = false
+    return enrollment
+  })
+
+  newStudentEnrollments.push({
     source: "MANUAL",
     systemId: generateUUID("MANUAL"),
     period,
@@ -290,6 +295,7 @@ const handleExistingManualStudent = async (principal: AuthenticatedPrincipal, ma
   const updateAppStudent: UpdateAppStudent = {
     ...student,
     ssn: manualStudentData.ssn,
+    studentEnrollments: newStudentEnrollments,
     modified: editorData,
     source: "MANUAL"
   }
