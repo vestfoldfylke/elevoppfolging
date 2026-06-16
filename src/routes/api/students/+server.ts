@@ -15,7 +15,7 @@ import type { FrontendOverviewStudentFilter, FrontendStudent, PrincipalAccess } 
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
 import type { ValidationResult } from "$lib/types/data-validation"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { Access, EditorData, NewAppStudent, Period, StudentEnrollment, UpdateAppStudent } from "$lib/types/db/shared-types"
+import type { Access, EditorData, NewAppStudent, Period, School, StudentEnrollment, UpdateAppStudent } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 import { isActive } from "$lib/utils/period"
 import { generateUUID } from "$lib/utils/uuid"
@@ -103,9 +103,15 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
     }
   }
 
+  const schools: School[] = await dbClient.schools.getSchools()
+  const schoolRecord: School | undefined = schools.find((school) => school.schoolNumber === newManualStudentData.school.schoolNumber)
+  if (!schoolRecord) {
+    throw new HTTPError(400, "Den angitte skolen eksisterer ikke")
+  }
+
   const student: FrontendStudent | null = await dbClient.students.getStudentBySsn(newManualStudentData.ssn)
   if (student) {
-    if (newManualStudentData.school.source === "AUTO") {
+    if (schoolRecord.source === "AUTO") {
       if (student.studentEnrollments.length === 0) {
         throw new HTTPError(500, "Fødselsnummer er allerede i bruk. Eleven har ingen elevforhold. Hvordan skal vi forholde oss til dette da? Ta kontakt med en voksen")
       }
