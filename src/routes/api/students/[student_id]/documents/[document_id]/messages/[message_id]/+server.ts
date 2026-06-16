@@ -137,7 +137,7 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
       student.feideName,
       messageId,
       documentId,
-      currentDocument.school
+      currentDocument.school.schoolNumber
     )
   }
 

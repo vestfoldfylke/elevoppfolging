@@ -139,7 +139,7 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
       "Failed to update student {feideName} last activity timestamp after adding document message on document {documentId} for school {schoolNumber}. Returning messageId regardless",
       student.feideName,
       documentId,
-      currentDocument.school
+      currentDocument.school.schoolNumber
     )
   }
 

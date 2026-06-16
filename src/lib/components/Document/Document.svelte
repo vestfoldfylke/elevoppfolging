@@ -117,7 +117,7 @@
       method: "POST",
       body: {
         auditEntry,
-        errorMessage: `opening ${errorMessageTemplateName} {${errorMessageTemplateName}}`,
+        errorMessage: `opening ${errorMessageTemplateName}`,
         errorMessageObject: document._id
       },
       headers: {

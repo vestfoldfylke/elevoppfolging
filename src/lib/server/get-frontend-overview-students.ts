@@ -130,7 +130,7 @@ export const getFrontendOverviewStudents = async (principalAccess: PrincipalAcce
   let documentFilteredStudents = overviewStudents
 
   if (Array.isArray(studentFilter?.templateIds) && studentFilter.templateIds.length > 0) {
-    logger.info("Filtering students by templateIds: {TemplateIds}", studentFilter.templateIds)
+    logger.info("Filtering students by templateIds: {@TemplateIds}", studentFilter.templateIds)
     const studentAccess = buildStudentDocumentAccess(overviewStudents, principalAccess.entraUserId)
     const matchingIds = new Set(await dbClient.documents.getStudentIdsWithDocumentForTemplates(studentAccess, studentFilter.templateIds))
     documentFilteredStudents = overviewStudents.filter((student) => matchingIds.has(student._id))
