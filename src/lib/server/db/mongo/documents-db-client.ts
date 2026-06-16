@@ -62,9 +62,9 @@ function buildStudentAccessCondition({
 
   if (subjectTeacherOnlySchoolNumbers.length === 0) {
     if (hasDataSharingConsent) {
-      return { "student._id": id, ...onlyCreatorVisibleClause }
+      return { "student._id": id, $and: [onlyCreatorVisibleClause] }
     }
-    return { "student._id": id, "school.schoolNumber": { $in: schoolNumbers }, ...onlyCreatorVisibleClause }
+    return { "student._id": id, $and: [{ "school.schoolNumber": { $in: schoolNumbers } }, onlyCreatorVisibleClause] }
   }
 
   const subjectTeacherOnlySet = new Set(subjectTeacherOnlySchoolNumbers)
