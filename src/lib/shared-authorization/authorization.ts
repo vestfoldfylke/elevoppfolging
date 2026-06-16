@@ -76,13 +76,13 @@ export const canViewStudentDocument = (
     return { canView: false, mustHideDocumentContent: null }
   }
 
-  const hasRequiredDocumentAccess = (): CanViewStudentDocumentResult => {
+  const hasRequiredDocumentAccess = (accessToStudentList: PrincipalAccessForStudent[]): CanViewStudentDocumentResult => {
     if (authenticatedPrincipal.id === document.created.by.entraUserId) {
       return { canView: true, mustHideDocumentContent: false }
     }
 
     if (document.documentAccess === "ONLY_CREATOR") {
-      if (accessToStudent.some((access) => access.type === "MANUELL-SKOLELEDER-TILGANG" && access.schoolNumber === document.school.schoolNumber)) {
+      if (accessToStudentList.some((access) => access.type === "MANUELL-SKOLELEDER-TILGANG" && access.schoolNumber === document.school.schoolNumber)) {
         return { canView: true, mustHideDocumentContent: true }
       }
 
@@ -93,13 +93,13 @@ export const canViewStudentDocument = (
       return { canView: true, mustHideDocumentContent: false }
     }
 
-    return !(document.documentAccess === "EXCLUDE_SUBJECT_TEACHERS" && isOnlySubjectTeacher(accessToStudent))
+    return !(document.documentAccess === "EXCLUDE_SUBJECT_TEACHERS" && isOnlySubjectTeacher(accessToStudentList))
       ? { canView: true, mustHideDocumentContent: false }
       : { canView: false, mustHideDocumentContent: null }
   }
 
   if (studentDataSharingConsent?.consent) {
-    return hasRequiredDocumentAccess()
+    return hasRequiredDocumentAccess(accessToStudent)
   }
 
   // no consent - only documents from access schools
@@ -108,7 +108,7 @@ export const canViewStudentDocument = (
     return { canView: false, mustHideDocumentContent: null }
   }
 
-  return hasRequiredDocumentAccess()
+  return hasRequiredDocumentAccess(accessToStudentFromDocumentSchool)
 }
 
 export const canCreateStudentDocument = (accessToStudent: PrincipalAccessForStudent[], newDocument: DocumentInput): boolean => {
