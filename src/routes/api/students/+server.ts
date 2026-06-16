@@ -140,6 +140,38 @@ export const POST: RequestHandler = async (requestEvent) => {
   return apiRequestMiddleware<AddManualStudentResponse, AddManualStudentBody>(requestEvent, addManualStudent)
 }
 
+const generateManualStudentEnrollment = (manualStudentData: AddManualStudentBody): StudentEnrollment => {
+  const period: Period = {
+    start: new Date(),
+    end: null
+  }
+
+  return {
+    source: "MANUAL",
+    systemId: generateUUID("MANUAL"),
+    period,
+    school: {
+      schoolNumber: manualStudentData.school.schoolNumber,
+      name: manualStudentData.school.name
+    },
+    mainSchool: true,
+    classMemberships: [
+      {
+        classGroup: {
+          source: "MANUAL",
+          name: `Manuelle elever på ${manualStudentData.school.name}`,
+          systemId: `MANUELLE-ELEVER-${manualStudentData.school.name}`,
+          teachers: []
+        },
+        period,
+        systemId: generateUUID("MANUAL")
+      }
+    ],
+    contactTeacherGroupMemberships: [],
+    teachingGroupMemberships: []
+  }
+}
+
 const handleNewManualStudent = async (principal: AuthenticatedPrincipal, manualStudentData: AddManualStudentBody): Promise<string> => {
   const editorData: EditorData = {
     by: {
@@ -149,14 +181,7 @@ const handleNewManualStudent = async (principal: AuthenticatedPrincipal, manualS
     at: new Date()
   }
 
-  const period: Period = {
-    start: new Date(),
-    end: null
-  }
-
   const manualStudentId: string = generateUUID("MANUAL")
-  const manualEnrollmentId: string = generateUUID("MANUAL")
-  const manualClassMembershipId: string = generateUUID("MANUAL")
 
   const newAppStudent: NewAppStudent = {
     ssn: manualStudentData.ssn,
@@ -167,32 +192,7 @@ const handleNewManualStudent = async (principal: AuthenticatedPrincipal, manualS
     source: "MANUAL",
     created: editorData,
     modified: editorData,
-    studentEnrollments: [
-      {
-        source: "MANUAL",
-        systemId: manualEnrollmentId,
-        period,
-        school: {
-          schoolNumber: manualStudentData.school.schoolNumber,
-          name: manualStudentData.school.name
-        },
-        mainSchool: true,
-        classMemberships: [
-          {
-            classGroup: {
-              source: "MANUAL",
-              name: `Manuelle elever på ${manualStudentData.school.name}`,
-              systemId: `MANUELLE-ELEVER-${manualStudentData.school.name}`,
-              teachers: []
-            },
-            period,
-            systemId: manualClassMembershipId
-          }
-        ],
-        contactTeacherGroupMemberships: [],
-        teachingGroupMemberships: []
-      }
-    ],
+    studentEnrollments: [generateManualStudentEnrollment(manualStudentData)],
     hasBlockedAddress: manualStudentData.hasBlockedAddress ?? false
   }
 
@@ -251,40 +251,12 @@ const handleExistingManualStudent = async (principal: AuthenticatedPrincipal, ma
     at: new Date()
   }
 
-  const period: Period = {
-    start: new Date(),
-    end: null
-  }
-
   const newStudentEnrollments: StudentEnrollment[] = student.studentEnrollments.map((enrollment: StudentEnrollment) => {
     enrollment.mainSchool = false
     return enrollment
   })
 
-  newStudentEnrollments.push({
-    source: "MANUAL",
-    systemId: generateUUID("MANUAL"),
-    period,
-    school: {
-      schoolNumber: manualStudentData.school.schoolNumber,
-      name: manualStudentData.school.name
-    },
-    mainSchool: true,
-    classMemberships: [
-      {
-        classGroup: {
-          source: "MANUAL",
-          name: `Manuelle elever på ${manualStudentData.school.name}`,
-          systemId: `MANUELLE-ELEVER-${manualStudentData.school.name}`,
-          teachers: []
-        },
-        period,
-        systemId: generateUUID("MANUAL")
-      }
-    ],
-    contactTeacherGroupMemberships: [],
-    teachingGroupMemberships: []
-  })
+  newStudentEnrollments.push(generateManualStudentEnrollment(manualStudentData))
 
   const updateAppStudent: UpdateAppStudent = {
     ...student,
