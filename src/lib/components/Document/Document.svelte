@@ -260,7 +260,7 @@
                 <div class="document-info">
                   {#if studentName}
                     <span class="ds-tag" data-color="neutral" data-size="sm">
-                      <span class="material-symbols-outlined" style="margin-right: var(--ds-size-2);">{document.documentAccess === "EXCLUDE_SUBJECT_TEACHERS" || ("student" in document && document.isDocumentContentHidden) ? "visibility_off" : "visibility"}</span>
+                      <span class="material-symbols-outlined" style="margin-right: var(--ds-size-2);">{document.documentAccess === "EXCLUDE_SUBJECT_TEACHERS" || document.documentAccess === "ONLY_CREATOR" ? "visibility_off" : "visibility"}</span>
                       {#if document.documentAccess === "ALL_WITH_STUDENT_ACCESS"}
                         Synlig for faglærere
                       {:else if document.documentAccess === "EXCLUDE_SUBJECT_TEACHERS"}
