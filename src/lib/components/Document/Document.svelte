@@ -195,7 +195,7 @@
           {/if}
         </div>
       </div>
-      <button id="document-modal-{document._id}-open" class="ds-button card-button" onclick={() => handleDocumentOpen(document)} data-size="lg" data-variant="tertiary" aria-label="{document.template.name}: {document.title}">{document.template.name}</button>
+      <button id="document-modal-{document._id}-open" class="ds-button card-button" onclick={() => handleDocumentOpen(document)} data-size="lg" data-variant="tertiary" aria-label="{document.template.name}: {document.title || "Tittelen er skjult"}">{document.template.name}</button>
       {#if !isDocumentContentHidden}
         <p class="ds-paragraph" style="margin: 0;">{document.title}</p>
       {/if}
