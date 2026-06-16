@@ -29,7 +29,7 @@ export const getStudentAccessPersonsFromCache = async (studentId: string): Promi
   const studentMemberships: StudentMemberships = await getStudentMembershipsFromCache(studentId)
   const dbClient = getDbClient()
 
-  // Trenger også å hente programområder som inneholder klasser eleven er i. Hente fra db - hvilke programområde-ider inneholder klasser fra studentMemberships
+  // Trenger også å hente gruppering av klasser som inneholder klasser eleven er i. Hente fra db - hvilke gruppering av klasser-ider inneholder klasser fra studentMemberships
   const programAreaIdsToCheck = (await dbClient.programAreas.getProgramAreasFromClassIds(studentMemberships.classes.map((classGroup) => classGroup.systemId))).map((programArea) => programArea._id)
 
   const studentAccess = await dbClient.access.getStudentAccess(studentId, studentMemberships, programAreaIdsToCheck)

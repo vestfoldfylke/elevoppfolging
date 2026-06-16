@@ -92,11 +92,11 @@
 
       for (const programAreaAccessEntry of access.programAreas) {
         if (programAreaAccessEntry.type !== "MANUELL-PROGRAMOMRÅDE-TILGANG") {
-          throw new Error(`Uventet access entry type for programområde: ${programAreaAccessEntry.type}`)
+          throw new Error(`Uventet access entry type for "gruppering av klasser": ${programAreaAccessEntry.type}`)
         }
 
         const programAreaInfo = data.programAreasForSchool.find((programArea) => programArea._id === programAreaAccessEntry._id)
-        const programAreaName = programAreaInfo ? programAreaInfo.name : `Inaktivt programområde (${programAreaAccessEntry._id})`
+        const programAreaName = programAreaInfo ? programAreaInfo.name : `Inaktiv gruppering av klasser (${programAreaAccessEntry._id})`
 
         programAreaAccessRows.push({
           programAreaName,
@@ -316,7 +316,7 @@
   // new access
   let newProgramAreaAccessControl: NewManualAccessControl = $state({
     type: "MANUELL-PROGRAMOMRÅDE-TILGANG",
-    name: "tilgang til programområde",
+    name: "tilgang til gruppering av klasser",
     open: false,
     form: undefined,
     programAreaId: "",
@@ -387,7 +387,7 @@
     switch (newManualAccessControl.type) {
       case "MANUELL-PROGRAMOMRÅDE-TILGANG": {
         if (!newManualAccessControl.programAreaId) {
-          return { status: "error", message: "Programområde ID must be selected" }
+          return { status: "error", message: "Gruppering av klasser ID must be selected" }
         }
         accessEntryToAdd = { type: newManualAccessControl.type, schoolNumber: currentSchool.schoolNumber, _id: newManualAccessControl.programAreaId }
         break
@@ -527,7 +527,7 @@
 
         {#if newManualAccessControl.type === "MANUELL-PROGRAMOMRÅDE-TILGANG"}
           <ds-field class="ds-field content-item">
-            <label for="{newManualAccessControl.name}-program-area" class="ds-label" data-weight="medium">Velg programområde</label>
+            <label for="{newManualAccessControl.name}-program-area" class="ds-label" data-weight="medium">Velg gruppering av klasser</label>
             <select id="{newManualAccessControl.name}-program-area" class="ds-input" bind:value={newManualAccessControl.programAreaId}>
               {#each data.programAreasForSchool.sort((a, b) => a.name.localeCompare(b.name)) as programArea}
                 <option value="{programArea._id}">{programArea.name}</option>
@@ -570,7 +570,7 @@
           Tilgangsstyring
         </ds-tab>
         <ds-tab aria-selected={selectedTab === programAreasTab}>
-          Programområder
+          Gruppering av klasser
         </ds-tab>
       {/if}
 
@@ -583,16 +583,16 @@
 
     {#if canManageAccess}
       <ds-tabpanel>
-        <div class="ds-alert" data-color="info">Tilganger for lærere styres i InSchool, her skal det kun administreres tilganger for rådgivere, elevtjeneste, osv. Tilganger som gis her, gir samme tilgang som en kontaktlærer, og kan gis på programområdenivå, klassenivå, eller direkte til elever.</div>
+        <div class="ds-alert" data-color="info">Tilganger for lærere styres i InSchool, her skal det kun administreres tilganger for rådgivere, elevtjeneste, osv. Tilganger som gis her, gir samme tilgang som en kontaktlærer, og kan gis på gruppering av klasser, klassenivå, eller direkte til elever.</div>
 
         <div class="access-group">
-          <h2 class="ds-heading">Tilgang til programområde</h2>
+          <h2 class="ds-heading">Tilgang til gruppering av klasser</h2>
           {#if programAreaAccessEntries.length > 0}
             <table class="ds-table" style="table-layout:fixed">
               <thead>
                 <tr>
                   <th aria-sort={programAreaEntriesSort.column === "programArea" ? programAreaEntriesSort.direction : "none"}>
-                    <button type="button" onclick={() => toggleSort(programAreaEntriesSort, "programArea")}>Programområde</button>
+                    <button type="button" onclick={() => toggleSort(programAreaEntriesSort, "programArea")}>Gruppering av klasser</button>
                   </th>
                   <th aria-sort={programAreaEntriesSort.column === "bruker" ? programAreaEntriesSort.direction : "none"}>
                     <button type="button" onclick={() => toggleSort(programAreaEntriesSort, "bruker")}>Bruker</button>
@@ -613,7 +613,7 @@
               </tbody>
             </table>
           {:else}
-            <p class="ds-paragraph">Ingen programområdetilganger</p>
+            <p class="ds-paragraph">Ingen gruppering av klasser tilganger</p>
           {/if}
           {@render newAccess(newProgramAreaAccessControl)}
         </div>
@@ -752,14 +752,14 @@
       <ds-tabpanel>
         <div class="header-with-action">
           {#if !newProgramAreaFormOpen}
-            <h2 class="ds-heading">Programområder</h2>
-            <button class="ds-button" onclick={() => { newProgramAreaFormOpen = true }}><span class="material-symbols-outlined">note_add</span>Nytt programområde</button>
+            <h2 class="ds-heading">Gruppering av klasser</h2>
+            <button class="ds-button" onclick={() => { newProgramAreaFormOpen = true }}><span class="material-symbols-outlined">note_add</span>Ny gruppering av klasser</button>
           {:else}
-            <h2 class="ds-heading">Nytt programområde</h2>
+            <h2 class="ds-heading">Ny gruppering av klasser</h2>
           {/if}
         </div>
 
-        <p class="ds-paragraph" style="margin-top: var(--ds-size-2)">Et programområde i denne sammenhengen er bare en samling av klasser. Disse brukes for enklere tilgangsstyring.</p>
+        <p class="ds-paragraph" style="margin-top: var(--ds-size-2)">En gruppering av klasser. Disse brukes for enklere tilgangsstyring.</p>
 
         {#if newProgramAreaFormOpen}
           <div class="new-program-area-form">
@@ -809,7 +809,7 @@
               </ds-field>
 
               <ds-field class="ds-field content-item">
-                <label class="ds-label" data-weight="medium" for="blockedAddress" data-clickdelegatefor="blockedAddress">Adressesperre</label>
+                <label class="ds-label" data-weight="medium" for="blockedAddress" data-clickdelegatefor="blockedAddress">Adressesperre (kode 6 eller 7)</label>
                 <input class="ds-input" type="checkbox" id="blockedAddress" bind:checked={newManualStudentHasBlockedAddress}>
               </ds-field>
             </form>

@@ -97,7 +97,7 @@
         <p class="ds-paragraph">{data.manualStudent.ssn}</p>
       </div>
       <div>
-        <h2 class="ds-heading">Adressesperre</h2>
+        <h2 class="ds-heading">Adressesperre (kode 6 eller 7)</h2>
         <p class="ds-paragraph">{(data.manualStudent.hasBlockedAddress ?? false) ? "Ja" : "Nei"}</p>
       </div>
       <div>
@@ -131,7 +131,7 @@
         </ds-field>
 
         <ds-field class="ds-field content-item">
-          <label class="ds-label" data-weight="medium" for="blockedAddress" data-clickdelegatefor="blockedAddress">Adressesperre</label>
+          <label class="ds-label" data-weight="medium" for="blockedAddress" data-clickdelegatefor="blockedAddress">Adressesperre (kode 6 eller 7)</label>
           <input class="ds-input" type="checkbox" id="blockedAddress" bind:checked={editableManualStudent.draft.hasBlockedAddress}>
         </ds-field>
       </form>

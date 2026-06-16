@@ -58,7 +58,7 @@ const addProgramArea: ApiNextFunction<AddProgramAreaResponse, AddProgramAreaBody
   try {
     programAreaId = await dbClient.programAreas.createProgramArea(newProgramArea)
   } catch (error) {
-    throw new HTTPError(500, "Feilet ved opprettelse av programområde", error)
+    throw new HTTPError(500, "Feilet ved opprettelse av gruppering av klasser", error)
   }
 
   try {

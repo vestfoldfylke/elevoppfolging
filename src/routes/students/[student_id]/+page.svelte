@@ -206,7 +206,7 @@
         <div class="ds-card__block student-summary-details">
           {#if studentSummaryDetails.importantInfo}
             <div style="flex: 1.2;">
-              <h3 class="ds-heading" data-size="xs">Informasjon</h3>
+              <h3 class="ds-heading" data-size="xs">Viktig informasjon</h3>
               <p class="ds-paragraph" style="white-space: pre-wrap;">
                 {studentSummaryDetails.importantInfo}
               </p>

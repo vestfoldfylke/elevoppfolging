@@ -34,8 +34,7 @@ export const AUDIT_ENTRY_RESOURCE_DISPLAY_NAMES: Record<AuditEntry["resource"], 
     single: "Manuell bruker"
   },
   ProgramArea: {
-    plural: "Programområder",
-    single: "Programområde"
+    plural: "Gruppering av klasser"
   },
   School: {
     plural: "Skoler",

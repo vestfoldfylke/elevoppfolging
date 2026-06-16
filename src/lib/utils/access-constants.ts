@@ -10,7 +10,7 @@ export const ACCESS_TYPE_DISPLAY_NAMES: Record<AccessEntry["type"], string> = {
   "MANUELL-ELEV-TILGANG": "Elevtilgang",
   "MANUELL-KLASSE-TILGANG": "Klassetilgang",
   "MANUELL-SKOLELEDER-TILGANG": "Skoleleder",
-  "MANUELL-PROGRAMOMRÅDE-TILGANG": "Programområde-tilgang",
+  "MANUELL-PROGRAMOMRÅDE-TILGANG": "Gruppering av klasser tilgang",
   "MANUELL-ALLE-ELEVER-VED-SKOLE-TILGANG": "Skoletilgang"
 }
 

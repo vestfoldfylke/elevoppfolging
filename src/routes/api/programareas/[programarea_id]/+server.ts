@@ -43,7 +43,7 @@ const deleteProgramArea: ApiNextFunction<DeleteProgramAreaResponse> = async ({ p
   try {
     await dbClient.programAreas.deleteProgramArea(programAreaToDelete)
   } catch (error) {
-    throw new HTTPError(500, "Feilet ved sletting av programområde", error)
+    throw new HTTPError(500, "Feilet ved sletting av gruppering av klasser", error)
   }
 
   // Invalidate cache entry
@@ -142,7 +142,7 @@ const updateProgramArea: ApiNextFunction<UpdateProgramAreaResponse, UpdateProgra
   try {
     updatedProgramAreaId = await dbClient.programAreas.updateProgramArea(programAreaId, updatedProgramArea)
   } catch (error) {
-    throw new HTTPError(500, "Feilet ved oppdatering av programområde", error)
+    throw new HTTPError(500, "Feilet ved oppdatering av gruppering av klasser", error)
   }
 
   // Invalidate cache entry
