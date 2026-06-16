@@ -51,7 +51,7 @@
     }
 
     if (!editableProgramArea.draft.name) {
-      throw new Error("Navn på programområde må være fylt ut")
+      throw new Error("Navn på gruppering av klasser må være fylt ut")
     }
 
     if (!classesSuggestionElement) {
@@ -64,7 +64,7 @@
         .map((value) => {
           const matchingClass = schoolClasses.find((classGroup) => classGroup.systemId === value)
           if (!matchingClass) {
-            console.warn("Klasse med systemId", value, "ikke funnet. Den vil bli fjernet fra programområde", editableProgramArea.draft.name)
+            console.warn("Klasse med systemId", value, "ikke funnet. Den vil bli fjernet fra denne grupperingen av klasser", editableProgramArea.draft.name)
             return null
           }
 
@@ -94,7 +94,7 @@
 
   const updateProgramArea = async (): Promise<AsyncButtonResult> => {
     if (!programArea) {
-      return { status: "error", message: "Kan ikke oppdatere programområde uten å vite hvilket programområde det er snakk om" }
+      return { status: "error", message: "Kan ikke oppdatere gruppering av klasser uten å vite hvilken gruppering av klasser det er snakk om" }
     }
 
     const updatedProgramAreaInput = validateAndGetProgramAreaInput()
@@ -112,7 +112,7 @@
 
   const deleteProgramArea = async (): Promise<AsyncButtonResult> => {
     if (!programArea) {
-      return { status: "error", message: "Kan ikke slette programområde uten å vite hvilket programområde det er snakk om" }
+      return { status: "error", message: "Kan ikke slette gruppering av klasser uten å vite hvilken gruppering av klasser det er snakk om" }
     }
 
     await apiFetch(`/api/programareas/${programArea._id as NoSlashString}`, {
@@ -131,9 +131,9 @@
 
 <div class="ds-card content-item">
   <div class="program-area-header">
-    <h3 class="ds-heading" data-size="xs">{programArea?.name || "Nytt programområde"}</h3>
+    <h3 class="ds-heading" data-size="xs">{programArea?.name || "Ny gruppering av klasser"}</h3>
     {#if programArea && !editMode}
-      <button class="ds-button" data-variant="secondary" onclick={() => editMode = true}><span class="material-symbols-outlined">edit</span>Rediger programområde</button>
+      <button class="ds-button" data-variant="secondary" onclick={() => editMode = true}><span class="material-symbols-outlined">edit</span>Rediger gruppering av klasser</button>
     {/if}
   </div>
 
@@ -141,7 +141,7 @@
     <form bind:this={programAreaForm}>
       <ds-field class="ds-field content-item">
         <label class="ds-label" data-weight="medium" for="program-area-name">
-          Navn på programområde
+          Navn på gruppering av klasser
           <span class="ds-tag" data-variant="outline" data-size="sm" data-color="warning" style="margin-inline-start:var(--ds-size-2)">Må fylles ut</span>
         </label>
         <div class="ds-field-affixes">
@@ -151,7 +151,7 @@
 
       <ds-field class="ds-field">
         <label class="ds-label" data-weight="medium" for="classes">
-          Klasser i programområdet
+          Klasser i grupperingen
         </label>
         <ds-suggestion bind:this={classesSuggestionElement} data-multiple="" class="ds-suggestion" /* @ts-expect-error (oncomboboxafterselect exists and works...) */ oncomboboxafterselect={programAreaHasBeenEdited}>
           {#if programArea}
@@ -182,7 +182,7 @@
       <div class="ds-alert" data-color="info">
         <h2 class="ds-heading" data-size="xs">{nonExistingProgramAreas.length} {nonExistingProgramAreas.length > 1 ? "utgåtte klasser" : "utgått klasse"}</h2>
         <p class="ds-paragraph" data-variant="default">
-          Klasser merket i rødt eksisterer ikke lenger på skolen eller har fått ny intern id og vil automatisk bli fjernet fra dette programområdet ved lagring. Legg til klassen på nytt dersom klassen skal være med i dette programområde. Dette skjer typisk ved nytt skoleår.
+          Klasser merket i rødt eksisterer ikke lenger på skolen eller har fått ny intern id og vil automatisk bli fjernet fra denne grupperingen av klasser ved lagring. Legg til klassen på nytt dersom klassen skal være med i denne grupperingen av klasser. Dette skjer typisk ved nytt skoleår.
         </p>
       </div>
     {/if}
@@ -190,9 +190,9 @@
     <div class="program-area-actions">
       {#if programArea}
         <AsyncButton disabled={!editableProgramArea.isDirty && !classesChanged && nonExistingProgramAreas.length === 0} onClick={updateProgramArea} buttonText="Lagre endringer" iconName="save" />
-        <AsyncButton onClick={deleteProgramArea} buttonText="Slett programområde" iconName="delete" color="danger" />
+        <AsyncButton onClick={deleteProgramArea} buttonText="Slett gruppering av klasser" iconName="delete" color="danger" />
       {:else}
-        <AsyncButton onClick={createProgramArea} buttonText="Opprett programområde" iconName="save" />
+        <AsyncButton onClick={createProgramArea} buttonText="Opprett gruppering av klasser" iconName="save" />
       {/if}
       <button class="ds-button" data-variant="secondary" onclick={closeEditMode}><span class="material-symbols-outlined">close</span>Avbryt</button>
     </div>
