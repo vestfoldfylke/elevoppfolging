@@ -27,6 +27,9 @@
       .filter((person) => person.principalAccessForStudent.length > 0)
 
     return withRelevantAccess.filter((person) => {
+      if (documentAccess === "ONLY_CREATOR") {
+        return false
+      }
       return documentAccess === "ALL_WITH_STUDENT_ACCESS" || !isOnlySubjectTeacher(person.principalAccessForStudent)
     })
   })

@@ -9,7 +9,7 @@
   import DataSharingConsent from "$lib/components/StudentBoxes/DataSharingConsent.svelte"
   import ImportantStuff from "$lib/components/StudentBoxes/ImportantStuff.svelte"
   import { canEditStudentDataSharingConsent, canEditStudentDocument, canEditStudentImportantStuff, isSchoolLeaderForSchool } from "$lib/shared-authorization/authorization"
-  import type { EnrollmentDetails, PeriodDetails, TemplateInfo } from "$lib/types/app-types"
+  import type { EnrollmentDetails, FrontendStudentDocument, PeriodDetails, TemplateInfo } from "$lib/types/app-types"
   import type { AuditEntryInput, Period, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
   import { prettifyDate } from "$lib/utils/dates"
   import { getEnrollmentDetails, getFrontendStudentMainDetails } from "$lib/utils/frontend-student-details"
@@ -137,7 +137,7 @@
 
   let documentTypes: TemplateInfo[] = $derived.by(() => {
     const templates: Map<string, string> = new Map()
-    data.documents.forEach((document: StudentDocument) => {
+    data.documents.forEach((document: FrontendStudentDocument) => {
       if (templates.has(document.template._id)) {
         return
       }
@@ -152,12 +152,12 @@
 
   let selectedDocumentTypes: string[] = $state([])
 
-  let filteredDocuments: StudentDocument[] = $derived.by(() => {
+  let filteredDocuments: FrontendStudentDocument[] = $derived.by(() => {
     if (selectedDocumentTypes.length === 0) {
       return data.documents
     }
 
-    return data.documents.filter((document: StudentDocument) => selectedDocumentTypes.includes(document.template._id))
+    return data.documents.filter((document: FrontendStudentDocument) => selectedDocumentTypes.includes(document.template._id))
   })
 
   const removeDocumentsFilter = (templateId: string): void => {

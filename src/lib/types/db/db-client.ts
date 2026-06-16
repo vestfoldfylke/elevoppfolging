@@ -79,6 +79,8 @@ export type StudentDocumentAccess = {
   studentId: string
   /** Direct school access derived from principalAccessForStudent */
   schoolNumbers: string[]
+  /** Subset of schoolNumbers where the principal has school leader access */
+  schoolLeaderSchoolNumbers: string[]
   /** Subset of schoolNumbers where the principal's only access type is subject teacher */
   subjectTeacherOnlySchoolNumbers: string[]
   /** When true, the principal has consent-based access to all of the student's schools */

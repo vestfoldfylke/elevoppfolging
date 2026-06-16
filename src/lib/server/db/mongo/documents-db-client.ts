@@ -41,18 +41,34 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
   return chunks
 }
 
-function buildStudentAccessCondition({ studentId, schoolNumbers, subjectTeacherOnlySchoolNumbers, hasDataSharingConsent, principalEntraUserId }: StudentDocumentAccess): Filter<DbStudentDocument> {
+function buildStudentAccessCondition({
+  studentId,
+  schoolNumbers,
+  schoolLeaderSchoolNumbers,
+  subjectTeacherOnlySchoolNumbers,
+  hasDataSharingConsent,
+  principalEntraUserId
+}: StudentDocumentAccess): Filter<DbStudentDocument> {
   const id = new ObjectId(studentId)
+
+  // ONLY_CREATOR documents are visible only to the document's creator or to school leaders for that school
+  const onlyCreatorVisibleClause: Filter<DbStudentDocument> = {
+    $or: [
+      { documentAccess: { $ne: "ONLY_CREATOR" } },
+      { "created.by.entraUserId": principalEntraUserId },
+      ...(schoolLeaderSchoolNumbers.length > 0 ? [{ "school.schoolNumber": { $in: schoolLeaderSchoolNumbers } }] : [])
+    ]
+  }
 
   if (subjectTeacherOnlySchoolNumbers.length === 0) {
     if (hasDataSharingConsent) {
-      return { "student._id": id }
+      return { "student._id": id, $and: [onlyCreatorVisibleClause] }
     }
-    return { "student._id": id, "school.schoolNumber": { $in: schoolNumbers } }
+    return { "student._id": id, $and: [{ "school.schoolNumber": { $in: schoolNumbers } }, onlyCreatorVisibleClause] }
   }
 
   const subjectTeacherOnlySet = new Set(subjectTeacherOnlySchoolNumbers)
-  const fullAccessSchools = schoolNumbers.filter((s) => !subjectTeacherOnlySet.has(s))
+  const fullAccessSchools = schoolNumbers.filter((schoolNumber) => !subjectTeacherOnlySet.has(schoolNumber))
 
   // At subject-teacher-only schools: visible if access is granted to all, OR the principal created the document themselves
   const subjectTeacherClause: Filter<DbStudentDocument> = {
@@ -63,13 +79,13 @@ function buildStudentAccessCondition({ studentId, schoolNumbers, subjectTeacherO
   if (hasDataSharingConsent) {
     return {
       "student._id": id,
-      $or: [{ "school.schoolNumber": { $nin: subjectTeacherOnlySchoolNumbers } }, subjectTeacherClause]
+      $and: [{ $or: [{ "school.schoolNumber": { $nin: subjectTeacherOnlySchoolNumbers } }, subjectTeacherClause] }, onlyCreatorVisibleClause]
     }
   }
 
   const orClauses = fullAccessSchools.length > 0 ? [{ "school.schoolNumber": { $in: fullAccessSchools } }, subjectTeacherClause] : [subjectTeacherClause]
 
-  return { "student._id": id, $or: orClauses }
+  return { "student._id": id, $and: [{ $or: orClauses }, onlyCreatorVisibleClause] }
 }
 
 export class DocumentsDbClient implements IDocumentsDbClient {

@@ -6,7 +6,7 @@ import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canViewStudentDocument, noAccessMessage } from "$lib/shared-authorization/authorization"
-import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent, StudentAccessPerson, StudentUnavailableSchoolDocuments } from "$lib/types/app-types"
+import type { CachedFrontendStudent, FrontendStudentDocument, PrincipalAccess, PrincipalAccessForStudent, StudentAccessPerson, StudentUnavailableSchoolDocuments } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { DocumentContentTemplate, SchoolInfo, StudentDataSharingConsent, StudentDocument, StudentImportantStuff } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
@@ -18,9 +18,27 @@ type StudentPageData = {
   importantStuff: StudentImportantStuff[]
   principalAccessForStudent: PrincipalAccessForStudent[]
   studentAccessPersons: StudentAccessPerson[]
-  documents: StudentDocument[]
+  documents: FrontendStudentDocument[]
   unavailableSchoolDocuments: StudentUnavailableSchoolDocuments[]
   documentContentTemplates: DocumentContentTemplate[]
+}
+
+const hideStudentDocumentContent = (document: StudentDocument): FrontendStudentDocument => {
+  return {
+    _id: document._id,
+    created: document.created,
+    modified: document.modified,
+    school: document.school,
+    title: "", // hide title
+    content: [], // hide content
+    template: document.template,
+    documentAccess: document.documentAccess,
+    emailAlertReceivers: [], // hide email alert receivers
+    messages: [], // hide messages
+    student: document.student,
+    isDocumentLocked: document.isDocumentLocked,
+    isDocumentContentHidden: true
+  }
 }
 
 const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, requestEvent }) => {
@@ -61,13 +79,20 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 
   const studentDataSharingConsent: StudentDataSharingConsent | null = await dbClient.studentDataSharingConsents.getStudentDataSharingConsent(studentId)
 
-  const documents = allStudentDocuments
-    .filter((document) => canViewStudentDocument(principal, principalAccessForStudent, document, studentDataSharingConsent))
+  const viewableStudentDocuments: FrontendStudentDocument[] = allStudentDocuments
     .sort((a, b) => {
       const aDate = a.messages.length > 0 ? Math.max(...a.messages.map((m) => m.created.at.getTime())) : a.created.at.getTime()
       const bDate = b.messages.length > 0 ? Math.max(...b.messages.map((m) => m.created.at.getTime())) : b.created.at.getTime()
       return bDate - aDate
     })
+    .map((document) => {
+      const canViewResult = canViewStudentDocument(principal, principalAccessForStudent, document, studentDataSharingConsent)
+      if (canViewResult.canView) {
+        return canViewResult.mustHideDocumentContent ? hideStudentDocumentContent(document) : { ...document, isDocumentContentHidden: false }
+      }
+      return null
+    })
+    .filter((document) => document !== null)
 
   const unavailableDocumentsAtOtherSchools: StudentDocument[] = allStudentDocuments.filter((document) => {
     if (studentDataSharingConsent?.consent) {
@@ -100,7 +125,7 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
     principalAccessForStudent: principalAccessForStudent,
     importantStuff: studentImportantStuff,
     studentDataSharingConsent,
-    documents,
+    documents: viewableStudentDocuments,
     unavailableSchoolDocuments,
     documentContentTemplates: documentContentTemplates.sort((a, b) => a.sort - b.sort),
     studentAccessPersons

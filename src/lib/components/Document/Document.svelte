@@ -5,7 +5,7 @@
   import AsyncButton, { type AsyncButtonResult } from "$lib/components/AsyncButton.svelte"
   import { createEditableDraft, type EditableDraft } from "$lib/runes/create-editable-draft.svelte"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
-  import type { StudentAccessPerson } from "$lib/types/app-types"
+  import type { FrontendStudentDocument, StudentAccessPerson } from "$lib/types/app-types"
   import type { AuditEntryInput, DocumentInput, GroupDocument, MetricCount, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
   import EditorInfo from "../EditorInfo.svelte"
   import DocumentContent from "./DocumentContentItem.svelte"
@@ -14,7 +14,7 @@
   import NewMessage from "./NewMessage.svelte"
 
   type PageProps = {
-    document: StudentDocument | GroupDocument
+    document: FrontendStudentDocument | GroupDocument
     accessSchools: SchoolInfo[]
     canEditDocument: boolean
     canRemoveDocument: boolean
@@ -30,6 +30,14 @@
   let documentDialog: HTMLDialogElement | undefined = $state()
 
   let originalDialogParent: HTMLElement | undefined = $state()
+
+  let isDocumentContentHidden = $derived.by(() => {
+    if (!("student" in document)) {
+      return false
+    }
+
+    return document.isDocumentContentHidden
+  })
 
   const openDialog = () => {
     if (!documentDialog) {
@@ -73,7 +81,7 @@
     }
   })
 
-  const handleDocumentOpen = (document: StudentDocument | GroupDocument): void => {
+  const handleDocumentOpen = (document: FrontendStudentDocument | GroupDocument): void => {
     openDialog()
 
     const metricBody: MetricCount = {
@@ -178,16 +186,23 @@
     <div class="ds-card__block">
       <div class="ds-paragraph document-card-title" data-size="xs" style="margin-bottom: var(--ds-size-2);">
         <div>{document.school.name}</div>
-        {#if document.isDocumentLocked}
-          <span class="material-symbols-outlined" data-tooltip="Dette notatet er skrivebeskyttet fordi det tilhører et tidligere skoleår">lock</span>
-        {/if}
+        <div class="document-card-title-icons">
+          {#if isDocumentContentHidden}
+            <span class="material-symbols-outlined" data-tooltip="Du har ikke tilgang til innholdet i dette notatet">visibility_off</span>
+          {/if}
+          {#if document.isDocumentLocked}
+            <span class="material-symbols-outlined" data-tooltip="Dette notatet er skrivebeskyttet fordi det tilhører et tidligere skoleår">lock</span>
+          {/if}
+        </div>
       </div>
-      <button id="document-modal-{document._id}-open" class="ds-button card-button" onclick={() => handleDocumentOpen(document)} data-size="lg" data-variant="tertiary" aria-label="{document.template.name}: {document.title}">{document.template.name}</button>
-      <p class="ds-paragraph" style="margin: 0;">{document.title}</p>
+      <button id="document-modal-{document._id}-open" class="ds-button card-button" onclick={() => handleDocumentOpen(document)} data-size="lg" data-variant="tertiary" aria-label="{document.template.name}: {document.title || "Tittelen er skjult"}">{document.template.name}</button>
+      {#if !isDocumentContentHidden}
+        <p class="ds-paragraph" style="margin: 0;">{document.title}</p>
+      {/if}
       <EditorInfo editorInfo={document.created} isEdited={document.modified.at.getTime() > document.created.at.getTime()} timestamp={false} modifiedIndicator={true} style="margin-top: var(--ds-size-2);" />
     </div>
 
-    {#if document.messages.length > 0}
+    {#if document.messages.length > 0 && !isDocumentContentHidden}
       <div class="ds-card__block">
         <div class="ds-label" data-weight="medium" data-size="xs">
           <EditorInfo editorInfo={document.messages[0].created} isEdited={document.messages[0].modified.at.getTime() > document.messages[0].created.at.getTime()} timestamp={false} modifiedIndicator={false} style="margin: 0;" prefix="{document.messages.length} oppdatering{document.messages.length > 1 ? 'er' : ''}. Siste oppdatering fra " />
@@ -218,17 +233,22 @@
         </div>
 
         {#if !editMode}
-          <h2 class="ds-heading" style="font-weight: bold;">{document.title}</h2>
+          {#if !isDocumentContentHidden}
+             <h2 class="ds-heading" style="font-weight: bold;">{document.title}</h2>
+          {/if}
           <EditorInfo editorInfo={document.created} isEdited={document.modified.at.getTime() > document.created.at.getTime()} timestamp={true} modifiedIndicator={true} />
         {/if}
       </div>
       
       <div>
         {#if !editMode}
-          {#each document.content as contentItem, index}
-            <DocumentContent {contentItem} editMode={false} {index} />
-          {/each}
-
+          {#if !isDocumentContentHidden}
+            {#each document.content as contentItem, index}
+              <DocumentContent {contentItem} editMode={false} {index} />
+            {/each}
+          {:else}
+            <h2 class="ds-heading" style="font-weight: bold; margin-bottom: var(--ds-size-4);">[Du har ikke tilgang til se innholdet]</h2>
+          {/if}
         {:else}
           <DocumentEditor documentId={document._id} studentId={"student" in document ? document.student._id : undefined} groupSystemId={"group" in document ? document.group.systemId : undefined} bind:currentDocument={editableDocument.draft} {accessSchools} documentEdited={editableDocument.isDirty} closeEditor={() => { editMode = false; editableDocument.cancel() }} />
         {/if}
@@ -240,8 +260,14 @@
                 <div class="document-info">
                   {#if studentName}
                     <span class="ds-tag" data-color="neutral" data-size="sm">
-                      <span class="material-symbols-outlined" style="margin-right: var(--ds-size-2);">{document.documentAccess === "ALL_WITH_STUDENT_ACCESS" ? "visibility" : "visibility_off"}</span>
-                      {document.documentAccess === "ALL_WITH_STUDENT_ACCESS" ? "Synlig for faglærere" : "Ikke synlig for faglærere"}
+                      <span class="material-symbols-outlined" style="margin-right: var(--ds-size-2);">{document.documentAccess === "EXCLUDE_SUBJECT_TEACHERS" || document.documentAccess === "ONLY_CREATOR" ? "visibility_off" : "visibility"}</span>
+                      {#if document.documentAccess === "ALL_WITH_STUDENT_ACCESS"}
+                        Synlig for alle med tilgang til eleven
+                      {:else if document.documentAccess === "EXCLUDE_SUBJECT_TEACHERS"}
+                        Synlig for alle med tilgang til eleven unntatt faglærere
+                      {:else if document.documentAccess === "ONLY_CREATOR"}
+                        Kun synlig for {document.created.by.fallbackName}
+                      {/if}
                     </span>
                   {/if}
 
@@ -279,17 +305,19 @@
       </div>
     </div>
 
-    {#each document.messages as message (message.messageId)}
-      {#if message.type === "update"}
-        <div class="ds-dialog__block message-block">
-          <div class="message-container">
-            <Message {message} editMode={false} {document} />
+    {#if !isDocumentContentHidden}
+      {#each document.messages as message (message.messageId)}
+        {#if message.type === "update"}
+          <div class="ds-dialog__block message-block">
+            <div class="message-container">
+              <Message {message} editMode={false} {document} />
+            </div>
           </div>
-        </div>
-      {/if}
-    {/each}
+        {/if}
+      {/each}
+    {/if}
 
-    {#if !document.isDocumentLocked}
+    {#if !document.isDocumentLocked && !isDocumentContentHidden}
       <div class="ds-dialog__block">
         <NewMessage {document} {studentDataSharingConsent} {studentAccessPersons} />
       </div>

@@ -23,10 +23,11 @@ export const canAddMessageToStudentDocument = (
   studentDataSharingConsent: StudentDataSharingConsent | null
 ): boolean => {
   // Hvis du kan åpne det kan du legge til melding på det
-  return (
-    canViewStudentDocument(authenticatedPrincipal, accessToStudent, document, studentDataSharingConsent) &&
-    accessToStudent.some((access: PrincipalAccessForStudent) => access.schoolNumber === document.school.schoolNumber)
-  )
+  const canViewResult = canViewStudentDocument(authenticatedPrincipal, accessToStudent, document, studentDataSharingConsent)
+  if (!canViewResult.canView || canViewResult.mustHideDocumentContent) {
+    return false
+  }
+  return accessToStudent.some((access: PrincipalAccessForStudent) => access.schoolNumber === document.school.schoolNumber)
 }
 
 export const canUpdateMessageInStudentDocument = (
@@ -53,35 +54,61 @@ export const isOnlySubjectTeacher = (accessToStudent: PrincipalAccessForStudent[
   return accessToStudent.every((accessEntry) => (SUBJECT_TEACHER_ACCESS_TYPES as readonly string[]).includes(accessEntry.type))
 }
 
+type CanViewStudentDocumentTrueResult = {
+  canView: true
+  mustHideDocumentContent: boolean
+}
+
+type CanViewStudentDocumentFalseResult = {
+  canView: false
+  mustHideDocumentContent: null
+}
+
+export type CanViewStudentDocumentResult = CanViewStudentDocumentTrueResult | CanViewStudentDocumentFalseResult
+
 export const canViewStudentDocument = (
   authenticatedPrincipal: AuthenticatedPrincipal,
   accessToStudent: PrincipalAccessForStudent[],
   document: StudentDocument,
   studentDataSharingConsent: StudentDataSharingConsent | null
-): boolean => {
+): CanViewStudentDocumentResult => {
   if (accessToStudent.length === 0) {
-    return false
+    return { canView: false, mustHideDocumentContent: null }
+  }
+
+  const hasRequiredDocumentAccess = (accessToStudentList: PrincipalAccessForStudent[]): CanViewStudentDocumentResult => {
+    if (authenticatedPrincipal.id === document.created.by.entraUserId) {
+      return { canView: true, mustHideDocumentContent: false }
+    }
+
+    if (document.documentAccess === "ONLY_CREATOR") {
+      if (accessToStudentList.some((access) => access.type === "MANUELL-SKOLELEDER-TILGANG" && access.schoolNumber === document.school.schoolNumber)) {
+        return { canView: true, mustHideDocumentContent: true }
+      }
+
+      return { canView: false, mustHideDocumentContent: null }
+    }
+
+    if (document.documentAccess === "ALL_WITH_STUDENT_ACCESS") {
+      return { canView: true, mustHideDocumentContent: false }
+    }
+
+    return !(document.documentAccess === "EXCLUDE_SUBJECT_TEACHERS" && isOnlySubjectTeacher(accessToStudentList))
+      ? { canView: true, mustHideDocumentContent: false }
+      : { canView: false, mustHideDocumentContent: null }
   }
 
   if (studentDataSharingConsent?.consent) {
-    if (authenticatedPrincipal.id === document.created.by.entraUserId) {
-      return true // man skal kunne se dokumentene man har opprettet selv hvis det foreligger samtykke, hvis man har tilgang til eleven
-    }
-
-    return !(document.documentAccess === "EXCLUDE_SUBJECT_TEACHERS" && isOnlySubjectTeacher(accessToStudent))
+    return hasRequiredDocumentAccess(accessToStudent)
   }
 
   // no consent - only documents from access schools
   const accessToStudentFromDocumentSchool: PrincipalAccessForStudent[] = accessToStudent.filter((access: PrincipalAccessForStudent) => access.schoolNumber === document.school.schoolNumber)
   if (accessToStudentFromDocumentSchool.length === 0) {
-    return false
+    return { canView: false, mustHideDocumentContent: null }
   }
 
-  if (document.created.by.entraUserId === authenticatedPrincipal.id) {
-    return true // man skal kunne se dokumentene man har opprettet selv hvis man har tilgang til eleven ved gitt skole
-  }
-
-  return !(document.documentAccess === "EXCLUDE_SUBJECT_TEACHERS" && isOnlySubjectTeacher(accessToStudentFromDocumentSchool))
+  return hasRequiredDocumentAccess(accessToStudentFromDocumentSchool)
 }
 
 export const canCreateStudentDocument = (accessToStudent: PrincipalAccessForStudent[], newDocument: DocumentInput): boolean => {

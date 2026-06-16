@@ -428,7 +428,7 @@ export type DocumentBase = {
   modified: EditorData
 }
 
-export type DocumentAccess = "ALL_WITH_STUDENT_ACCESS" | "EXCLUDE_SUBJECT_TEACHERS"
+export type DocumentAccess = "ALL_WITH_STUDENT_ACCESS" | "EXCLUDE_SUBJECT_TEACHERS" | "ONLY_CREATOR"
 
 export type DocumentInput = {
   school: SchoolInfo
