@@ -318,7 +318,20 @@ const handleExistingManualStudent = async (principal: AuthenticatedPrincipal, ma
     manualStudentData.school.schoolNumber
   )
 
-  await upsertStudentInCache(student)
+  const frontendStudent: FrontendStudent = {
+    _id: studentId,
+    systemId: updateAppStudent.systemId,
+    studentNumber: updateAppStudent.studentNumber,
+    feideName: updateAppStudent.feideName,
+    name: updateAppStudent.name,
+    source: updateAppStudent.source,
+    studentEnrollments: updateAppStudent.studentEnrollments,
+    created: updateAppStudent.created,
+    modified: updateAppStudent.modified,
+    hasBlockedAddress: updateAppStudent.hasBlockedAddress ?? false
+  }
+
+  await upsertStudentInCache(frontendStudent)
 
   try {
     await dbClient.auditLogs.createAuditEntry({
