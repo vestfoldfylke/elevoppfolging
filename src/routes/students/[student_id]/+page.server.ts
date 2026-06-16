@@ -80,6 +80,11 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
   const studentDataSharingConsent: StudentDataSharingConsent | null = await dbClient.studentDataSharingConsents.getStudentDataSharingConsent(studentId)
 
   const viewableStudentDocuments: FrontendStudentDocument[] = allStudentDocuments
+    .sort((a, b) => {
+      const aDate = a.messages.length > 0 ? Math.max(...a.messages.map((m) => m.created.at.getTime())) : a.created.at.getTime()
+      const bDate = b.messages.length > 0 ? Math.max(...b.messages.map((m) => m.created.at.getTime())) : b.created.at.getTime()
+      return bDate - aDate
+    })
     .map((document) => {
       const canViewResult = canViewStudentDocument(principal, principalAccessForStudent, document, studentDataSharingConsent)
       if (canViewResult.canView) {
@@ -88,11 +93,6 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
       return null
     })
     .filter((document) => document !== null)
-    .sort((a, b) => {
-      const aDate = a.messages.length > 0 ? Math.max(...a.messages.map((m) => m.created.at.getTime())) : a.created.at.getTime()
-      const bDate = b.messages.length > 0 ? Math.max(...b.messages.map((m) => m.created.at.getTime())) : b.created.at.getTime()
-      return bDate - aDate
-    })
 
   const unavailableDocumentsAtOtherSchools: StudentDocument[] = allStudentDocuments.filter((document) => {
     if (studentDataSharingConsent?.consent) {
