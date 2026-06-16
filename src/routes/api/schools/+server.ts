@@ -60,13 +60,7 @@ const addSchool: ApiNextFunction<AddSchoolResponse, AddSchoolBody> = async ({ pr
 
   try {
     await dbClient.auditLogs.createAuditEntry({
-      created: {
-        by: {
-          entraUserId: principal.id,
-          fallbackName: principal.displayName
-        },
-        at: new Date()
-      },
+      created: editorData,
       action: "CREATE",
       resource: "School",
       resourceId: schoolId,

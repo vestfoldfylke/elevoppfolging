@@ -11,7 +11,7 @@ import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canGrantAndRemoveAccessForSchool, isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { AccessEntry, PrincipalAccess, PrincipalAccessStudent } from "$lib/types/app-types"
-import type { Access, NewAccess, StudentClassGroup } from "$lib/types/db/shared-types"
+import type { Access, EditorData, NewAccess, StudentClassGroup } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 import { getClassesFromStudents } from "$lib/utils/classes-from-students"
 
@@ -140,15 +140,17 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
     }
   }
 
+  const editorData: EditorData = {
+    by: {
+      entraUserId: principal.id,
+      fallbackName: principal.displayName
+    },
+    at: new Date()
+  }
+
   const accessEntryToAdd: AccessEntry = {
     ...accessEntryInput,
-    granted: {
-      by: {
-        entraUserId: principal.id,
-        fallbackName: principal.displayName
-      },
-      at: new Date()
-    },
+    granted: editorData,
     source: "MANUAL"
   }
 
@@ -163,13 +165,7 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
 
   try {
     await dbClient.auditLogs.createAuditEntry({
-      created: {
-        by: {
-          entraUserId: principal.id,
-          fallbackName: principal.displayName
-        },
-        at: new Date()
-      },
+      created: editorData,
       action: "CREATE",
       resource: "Access",
       resourceId: updatedAccessId,

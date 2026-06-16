@@ -104,13 +104,7 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
 
   try {
     await dbClient.auditLogs.createAuditEntry({
-      created: {
-        by: {
-          entraUserId: principal.id,
-          fallbackName: principal.displayName
-        },
-        at: new Date()
-      },
+      created: editorData,
       action: "UPDATE",
       resource: "StudentDocumentMessage",
       resourceId: updatedMessageId,

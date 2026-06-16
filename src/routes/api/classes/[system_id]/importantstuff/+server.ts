@@ -54,7 +54,7 @@ const updateGroupImportantStuff: ApiNextFunction<PatchGroupImportantStuffRespons
 
   const currentImportantStuff = await dbClient.importantStuff.getGroupImportantStuff(systemId)
 
-  const editor: EditorData = {
+  const editorData: EditorData = {
     by: {
       entraUserId: principal.id,
       fallbackName: principal.displayName
@@ -67,8 +67,8 @@ const updateGroupImportantStuff: ApiNextFunction<PatchGroupImportantStuffRespons
     school: groupImportantStuffData.school,
     importantInfo: groupImportantStuffData.importantInfo,
     lastActivityTimestamp: new Date(),
-    modified: editor,
-    created: currentImportantStuff && currentImportantStuff.length > 0 ? currentImportantStuff[0].created : editor
+    modified: editorData,
+    created: currentImportantStuff && currentImportantStuff.length > 0 ? currentImportantStuff[0].created : editorData
   }
 
   let importantStuffId: string
@@ -86,13 +86,7 @@ const updateGroupImportantStuff: ApiNextFunction<PatchGroupImportantStuffRespons
   if (currentImportantStuff && currentImportantStuff.length > 0) {
     try {
       await dbClient.auditLogs.createAuditEntry({
-        created: {
-          by: {
-            entraUserId: principal.id,
-            fallbackName: principal.displayName
-          },
-          at: new Date()
-        },
+        created: editorData,
         action: "UPDATE",
         resource: "ImportantStuff",
         resourceId: importantStuffId,
@@ -117,13 +111,7 @@ const updateGroupImportantStuff: ApiNextFunction<PatchGroupImportantStuffRespons
 
   try {
     await dbClient.auditLogs.createAuditEntry({
-      created: {
-        by: {
-          entraUserId: principal.id,
-          fallbackName: principal.displayName
-        },
-        at: new Date()
-      },
+      created: editorData,
       action: "CREATE",
       resource: "ImportantStuff",
       resourceId: importantStuffId,

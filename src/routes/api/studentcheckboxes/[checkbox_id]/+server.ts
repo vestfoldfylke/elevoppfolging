@@ -7,7 +7,7 @@ import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { NewStudentCheckBox } from "$lib/types/db/shared-types"
+import type { EditorData, NewStudentCheckBox } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 import { STUDENT_CHECKBOX_DISPLAY_NAMES } from "$lib/utils/student-checkbox-constants"
 
@@ -101,18 +101,20 @@ const updateStudentCheckBox: ApiNextFunction<UpdateStudentCheckBoxResponse, Upda
     throw new HTTPError(400, `Invalid student check box data: ${validationResult.message}`)
   }
 
+  const editorData: EditorData = {
+    by: {
+      entraUserId: principal.id,
+      fallbackName: principal.displayName
+    },
+    at: new Date()
+  }
+
   const updatedStudentCheckBox: NewStudentCheckBox = {
     type: updatedStudentCheckBoxData.type,
     value: updatedStudentCheckBoxData.value,
     enabled: updatedStudentCheckBoxData.enabled,
     sort: updatedStudentCheckBoxData.sort,
-    modified: {
-      by: {
-        entraUserId: principal.id,
-        fallbackName: principal.displayName
-      },
-      at: new Date()
-    },
+    modified: editorData,
     created: studentCheckBoxToUpdate.created
   }
 
@@ -130,13 +132,7 @@ const updateStudentCheckBox: ApiNextFunction<UpdateStudentCheckBoxResponse, Upda
 
   try {
     await dbClient.auditLogs.createAuditEntry({
-      created: {
-        by: {
-          entraUserId: principal.id,
-          fallbackName: principal.displayName
-        },
-        at: new Date()
-      },
+      created: editorData,
       action: "UPDATE",
       resource: "StudentCheckBox",
       resourceId: updatedCheckBoxId,
