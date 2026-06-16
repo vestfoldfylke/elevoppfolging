@@ -23,10 +23,11 @@ export const canAddMessageToStudentDocument = (
   studentDataSharingConsent: StudentDataSharingConsent | null
 ): boolean => {
   // Hvis du kan åpne det kan du legge til melding på det
-  return (
-    canViewStudentDocument(authenticatedPrincipal, accessToStudent, document, studentDataSharingConsent) &&
-    accessToStudent.some((access: PrincipalAccessForStudent) => access.schoolNumber === document.school.schoolNumber)
-  )
+  const canViewResult = canViewStudentDocument(authenticatedPrincipal, accessToStudent, document, studentDataSharingConsent)
+  if (!canViewResult.canView || canViewResult.mustHideDocumentContent) {
+    return false
+  }
+  return accessToStudent.some((access: PrincipalAccessForStudent) => access.schoolNumber === document.school.schoolNumber)
 }
 
 export const canUpdateMessageInStudentDocument = (
