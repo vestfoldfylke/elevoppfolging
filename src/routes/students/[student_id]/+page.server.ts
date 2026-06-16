@@ -33,7 +33,7 @@ const hideStudentDocumentContent = (document: StudentDocument): FrontendStudentD
     content: [], // hide content
     template: document.template,
     documentAccess: document.documentAccess,
-    emailAlertReceivers: document.emailAlertReceivers,
+    emailAlertReceivers: [], // hide email alert receivers
     messages: [], // hide messages
     student: document.student,
     isDocumentLocked: document.isDocumentLocked,
