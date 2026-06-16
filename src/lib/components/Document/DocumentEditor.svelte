@@ -192,15 +192,15 @@
           Du vil ha tilgang til notatet uavhengig av disse innstillingene, siden du oppretter notatet.
         </p>
         <ds-field class="ds-field">
-          <input id="document-access-{documentId}-exclude-subject-teachers" class="ds-input" type="radio" checked={currentDocument.documentAccess === "EXCLUDE_SUBJECT_TEACHERS"} onchange={() => toggleDocumentAccess("EXCLUDE_SUBJECT_TEACHERS")}/>
+          <input id="document-access-{documentId}-exclude-subject-teachers" name="document-access-{documentId}" class="ds-input" type="radio" checked={currentDocument.documentAccess === "EXCLUDE_SUBJECT_TEACHERS"} onchange={() => toggleDocumentAccess("EXCLUDE_SUBJECT_TEACHERS")}/>
           <label for="document-access-{documentId}-exclude-subject-teachers" class="ds-label" data-weight="regular">Synlig for alle med tilgang til eleven unntatt faglærere</label>
         </ds-field>
         <ds-field class="ds-field">
-          <input id="document-access-{documentId}-all" class="ds-input" type="radio" checked={currentDocument.documentAccess === "ALL_WITH_STUDENT_ACCESS"} onchange={() => toggleDocumentAccess("ALL_WITH_STUDENT_ACCESS")}/>
+          <input id="document-access-{documentId}-all" name="document-access-{documentId}" class="ds-input" type="radio" checked={currentDocument.documentAccess === "ALL_WITH_STUDENT_ACCESS"} onchange={() => toggleDocumentAccess("ALL_WITH_STUDENT_ACCESS")}/>
           <label for="document-access-{documentId}-all" class="ds-label" data-weight="regular">Synlig for alle med tilgang til eleven</label>
         </ds-field>
         <ds-field class="ds-field">
-          <input id="document-access-{documentId}-only-creator" class="ds-input" type="radio" checked={currentDocument.documentAccess === "ONLY_CREATOR"} onchange={() => toggleDocumentAccess("ONLY_CREATOR")}/>
+          <input id="document-access-{documentId}-only-creator" name="document-access-{documentId}" class="ds-input" type="radio" checked={currentDocument.documentAccess === "ONLY_CREATOR"} onchange={() => toggleDocumentAccess("ONLY_CREATOR")}/>
           <label for="document-access-{documentId}-only-creator" class="ds-label" data-weight="regular">Synlig kun for deg</label>
         </ds-field>
       </fieldset>
