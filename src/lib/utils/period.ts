@@ -1,7 +1,7 @@
 import type { ApplicationInfo, PeriodDetails } from "$lib/types/app-types"
 import type { Period } from "$lib/types/db/shared-types"
 
-const isActive = (period: Period): boolean => {
+export const isActive = (period: Period): boolean => {
   if (!period.start) {
     return false
   }

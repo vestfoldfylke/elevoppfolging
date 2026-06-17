@@ -63,13 +63,7 @@ const addProgramArea: ApiNextFunction<AddProgramAreaResponse, AddProgramAreaBody
 
   try {
     await dbClient.auditLogs.createAuditEntry({
-      created: {
-        by: {
-          entraUserId: principal.id,
-          fallbackName: principal.displayName
-        },
-        at: new Date()
-      },
+      created: editorData,
       action: "CREATE",
       resource: "ProgramArea",
       resourceId: programAreaId,

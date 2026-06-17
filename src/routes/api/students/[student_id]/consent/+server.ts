@@ -9,7 +9,7 @@ import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canEditStudentDataSharingConsent, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { NewStudentDataSharingConsent, StudentDataSharingConsent } from "$lib/types/db/shared-types"
+import type { EditorData, NewStudentDataSharingConsent, StudentDataSharingConsent } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
 type PatchConsentResponse = ApiRouteMap[`/api/students/${NoSlashString}/consent`]["PATCH"]["res"]
@@ -48,16 +48,18 @@ const updateStudentDataSharingConsent: ApiNextFunction<PatchConsentResponse, Pat
     throw new HTTPError(400, `Invalid request body: ${validationResult.message}`)
   }
 
+  const editorData: EditorData = {
+    by: {
+      entraUserId: principal.id,
+      fallbackName: principal.displayName
+    },
+    at: new Date()
+  }
+
   const upsertConsentData: NewStudentDataSharingConsent = {
     consent: body.consent,
     message: body.message,
-    modified: {
-      by: {
-        entraUserId: principal.id,
-        fallbackName: principal.displayName
-      },
-      at: new Date()
-    }
+    modified: editorData
   }
 
   const dbClient = getDbClient()
@@ -79,13 +81,7 @@ const updateStudentDataSharingConsent: ApiNextFunction<PatchConsentResponse, Pat
   if (currentStudentDataSharingConsent) {
     try {
       await dbClient.auditLogs.createAuditEntry({
-        created: {
-          by: {
-            entraUserId: principal.id,
-            fallbackName: principal.displayName
-          },
-          at: new Date()
-        },
+        created: editorData,
         action: "UPDATE",
         resource: "StudentDataSharingConsent",
         resourceId: upsertedConsentId,
@@ -109,13 +105,7 @@ const updateStudentDataSharingConsent: ApiNextFunction<PatchConsentResponse, Pat
 
   try {
     await dbClient.auditLogs.createAuditEntry({
-      created: {
-        by: {
-          entraUserId: principal.id,
-          fallbackName: principal.displayName
-        },
-        at: new Date()
-      },
+      created: editorData,
       action: "CREATE",
       resource: "StudentDataSharingConsent",
       resourceId: upsertedConsentId,

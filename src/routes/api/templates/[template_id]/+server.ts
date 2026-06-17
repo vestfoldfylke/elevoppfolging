@@ -65,13 +65,7 @@ const updateDocumentContentTemplate: ApiNextFunction<UpdateDocumentContentTempla
 
   try {
     await dbClient.auditLogs.createAuditEntry({
-      created: {
-        by: {
-          entraUserId: principal.id,
-          fallbackName: principal.displayName
-        },
-        at: new Date()
-      },
+      created: editorData,
       action: "UPDATE",
       resource: "Template",
       resourceId: templateId,

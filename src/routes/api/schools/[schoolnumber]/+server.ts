@@ -7,7 +7,7 @@ import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { NewSchool } from "$lib/types/db/shared-types"
+import type { EditorData, NewSchool } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
 type DeleteSchoolResponse = ApiRouteMap[`/api/schools/${NoSlashString}`]["DELETE"]["res"]
@@ -107,18 +107,20 @@ const updateSchool: ApiNextFunction<UpdateSchoolResponse, UpdateSchoolBody> = as
     throw new HTTPError(400, "You cannot change the school number of an existing school.")
   }
 
+  const editorData: EditorData = {
+    by: {
+      entraUserId: principal.id,
+      fallbackName: principal.displayName
+    },
+    at: new Date()
+  }
+
   const updatedSchool: NewSchool = {
     name: updatedSchoolData.name,
     schoolNumber: schoolToUpdate.schoolNumber, // keep the original school number to prevent changes to it
     source: schoolToUpdate.source, // keep the original source to prevent changes to it
     created: schoolToUpdate.created, // keep the original created info
-    modified: {
-      by: {
-        entraUserId: principal.id,
-        fallbackName: principal.displayName
-      },
-      at: new Date()
-    }
+    modified: editorData
   }
 
   let updatedSchoolId: string
@@ -131,13 +133,7 @@ const updateSchool: ApiNextFunction<UpdateSchoolResponse, UpdateSchoolBody> = as
 
   try {
     await dbClient.auditLogs.createAuditEntry({
-      created: {
-        by: {
-          entraUserId: principal.id,
-          fallbackName: principal.displayName
-        },
-        at: new Date()
-      },
+      created: editorData,
       action: "UPDATE",
       resource: "School",
       resourceId: updatedSchoolId,

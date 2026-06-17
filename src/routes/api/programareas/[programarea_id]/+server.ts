@@ -8,7 +8,7 @@ import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canAccessSchoolAdministration, canGrantAndRemoveAccessForSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { NewProgramArea } from "$lib/types/db/shared-types"
+import type { EditorData, NewProgramArea } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
 type DeleteProgramAreaResponse = ApiRouteMap[`/api/programareas/${NoSlashString}`]["DELETE"]["res"]
@@ -122,17 +122,19 @@ const updateProgramArea: ApiNextFunction<UpdateProgramAreaResponse, UpdateProgra
     throw new HTTPError(403, noAccessMessage("Not allowed to change school of program area"))
   }
 
+  const editorData: EditorData = {
+    by: {
+      entraUserId: principal.id,
+      fallbackName: principal.displayName
+    },
+    at: new Date()
+  }
+
   const updatedProgramArea: NewProgramArea = {
     name: updatedProgramAreaData.name,
     classes: updatedProgramAreaData.classes,
     schoolNumber: programAreaToUpdate.schoolNumber,
-    modified: {
-      by: {
-        entraUserId: principal.id,
-        fallbackName: principal.displayName
-      },
-      at: new Date()
-    },
+    modified: editorData,
     created: programAreaToUpdate.created,
     source: programAreaToUpdate.source
   }
@@ -150,13 +152,7 @@ const updateProgramArea: ApiNextFunction<UpdateProgramAreaResponse, UpdateProgra
 
   try {
     await dbClient.auditLogs.createAuditEntry({
-      created: {
-        by: {
-          entraUserId: principal.id,
-          fallbackName: principal.displayName
-        },
-        at: new Date()
-      },
+      created: editorData,
       action: "UPDATE",
       resource: "ProgramArea",
       resourceId: updatedProgramAreaId,

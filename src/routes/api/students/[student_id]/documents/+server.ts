@@ -103,13 +103,7 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
 
   try {
     await dbClient.auditLogs.createAuditEntry({
-      created: {
-        by: {
-          entraUserId: principal.id,
-          fallbackName: principal.displayName
-        },
-        at: new Date()
-      },
+      created: editorData,
       action: "CREATE",
       resource: "StudentDocument",
       resourceId: documentId,
@@ -159,13 +153,7 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
 
     try {
       await dbClient.auditLogs.createAuditEntry({
-        created: {
-          by: {
-            entraUserId: principal.id,
-            fallbackName: principal.displayName
-          },
-          at: new Date()
-        },
+        created: editorData,
         action: "CREATE",
         resource: "EmailAlert",
         resourceId: emailAlertId,

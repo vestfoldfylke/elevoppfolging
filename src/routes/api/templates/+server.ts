@@ -54,13 +54,7 @@ const addDocumentContentTemplate: ApiNextFunction<AddDocumentContentTemplateResp
 
   try {
     await dbClient.auditLogs.createAuditEntry({
-      created: {
-        by: {
-          entraUserId: principal.id,
-          fallbackName: principal.displayName
-        },
-        at: new Date()
-      },
+      created: editorData,
       action: "CREATE",
       resource: "Template",
       resourceId: templateId,
