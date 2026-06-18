@@ -11,6 +11,7 @@ import type { FrontendStudent, PrincipalAccess } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { AppStudent, ClassMembership, ContactTeacherGroupMembership, EditorData, StudentEnrollment, TeachingGroupMembership, UpdateAppStudent } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
+import { isActive } from "$lib/utils/period"
 
 type RemoveEnrollmentResponse = ApiRouteMap[`/api/students/${NoSlashString}/enrollments/${NoSlashString}`]["DELETE"]["res"]
 
@@ -54,16 +55,27 @@ const removeEnrollment: ApiNextFunction<RemoveEnrollmentResponse> = async ({ pri
     at: new Date()
   }
 
+  let mainSchoolChanged: boolean = false
+
   const updateAppStudent: UpdateAppStudent = {
     ...student,
     modified: editorData,
     studentEnrollments: student.studentEnrollments.map((enrollment: StudentEnrollment) => {
       if (enrollment.systemId !== studentEnrollment.systemId) {
-        return enrollment
+        if (mainSchoolChanged || !isActive(enrollment.period)) {
+          return enrollment
+        }
+
+        mainSchoolChanged = true
+        return {
+          ...enrollment,
+          mainSchool: true
+        }
       }
 
       return {
         ...enrollment,
+        mainSchool: student.studentEnrollments.length === 1,
         period: {
           ...enrollment.period,
           end: new Date() // Set end date to now which indicates the enrollment is removed, but keep the enrollment record for historical/audit purposes
