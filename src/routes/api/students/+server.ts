@@ -17,6 +17,7 @@ import type { ValidationResult } from "$lib/types/data-validation"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { Access, EditorData, NewAppStudent, Period, School, StudentEnrollment, UpdateAppStudent } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
+import { isActive } from "$lib/utils/period"
 import { generateUUID } from "$lib/utils/uuid"
 
 type GetStudentsResponse = ApiRouteMap[`/api/students${NoSlashString}`]["GET"]["res"]
@@ -131,7 +132,7 @@ export const POST: RequestHandler = async (requestEvent) => {
   return apiRequestMiddleware<AddManualStudentResponse, AddManualStudentBody>(requestEvent, addManualStudent)
 }
 
-const generateManualStudentEnrollment = (manualStudentData: AddManualStudentBody): StudentEnrollment => {
+const generateManualStudentEnrollment = (manualStudentData: AddManualStudentBody, mainSchool: boolean): StudentEnrollment => {
   const period: Period = {
     start: new Date(),
     end: null
@@ -145,7 +146,7 @@ const generateManualStudentEnrollment = (manualStudentData: AddManualStudentBody
       schoolNumber: manualStudentData.school.schoolNumber,
       name: manualStudentData.school.name
     },
-    mainSchool: true,
+    mainSchool,
     classMemberships: [
       {
         classGroup: {
@@ -173,6 +174,7 @@ const handleNewManualStudent = async (principal: AuthenticatedPrincipal, manualS
   }
 
   const manualStudentId: string = generateUUID("MANUAL")
+  const isMainSchool: boolean = true
 
   const newAppStudent: NewAppStudent = {
     ssn: manualStudentData.ssn,
@@ -183,7 +185,7 @@ const handleNewManualStudent = async (principal: AuthenticatedPrincipal, manualS
     source: "MANUAL",
     created: editorData,
     modified: editorData,
-    studentEnrollments: [generateManualStudentEnrollment(manualStudentData)],
+    studentEnrollments: [generateManualStudentEnrollment(manualStudentData, isMainSchool)],
     hasBlockedAddress: manualStudentData.hasBlockedAddress ?? false
   }
 
@@ -197,7 +199,14 @@ const handleNewManualStudent = async (principal: AuthenticatedPrincipal, manualS
     throw new HTTPError(500, "Feilet ved opprettelse av manuell bruker", error)
   }
 
-  logger.info("Created manual student with Id {Id} by user {DisplayName} ({PrincipalId})", studentId, principal.displayName, principal.id)
+  logger.info(
+    "Created manual student with Id {Id} by user {DisplayName} ({PrincipalId}). Added a manual enrollment to SchoolNumber {SchoolNumber}. MainSchool set to {IsMainSchool}",
+    studentId,
+    principal.displayName,
+    principal.id,
+    manualStudentData.school.schoolNumber,
+    isMainSchool
+  )
 
   const frontendStudent: FrontendStudent = {
     _id: studentId,
@@ -242,17 +251,14 @@ const handleExistingManualStudent = async (principal: AuthenticatedPrincipal, ma
     at: new Date()
   }
 
-  const newStudentEnrollments: StudentEnrollment[] = student.studentEnrollments.map((enrollment: StudentEnrollment) => {
-    enrollment.mainSchool = false
-    return enrollment
-  })
+  const hasActiveMainSchool: boolean = student.studentEnrollments.some((enrollment: StudentEnrollment) => enrollment.mainSchool && isActive(enrollment.period))
 
-  newStudentEnrollments.push(generateManualStudentEnrollment(manualStudentData))
+  const updatedStudentEnrollments: StudentEnrollment[] = [...student.studentEnrollments, generateManualStudentEnrollment(manualStudentData, !hasActiveMainSchool)]
 
   const updateAppStudent: UpdateAppStudent = {
     ...student,
     ssn: manualStudentData.ssn,
-    studentEnrollments: newStudentEnrollments,
+    studentEnrollments: updatedStudentEnrollments,
     modified: editorData
   }
 
@@ -267,11 +273,12 @@ const handleExistingManualStudent = async (principal: AuthenticatedPrincipal, ma
   }
 
   logger.info(
-    "Updated manual student with Id {Id} by user {DisplayName} ({PrincipalId}), added a manual enrollment to SchoolNumber {SchoolNumber}",
+    "Updated manual student with Id {Id} by user {DisplayName} ({PrincipalId}), added a manual enrollment to SchoolNumber {SchoolNumber}. MainSchool set to {IsMainSchool}",
     studentId,
     principal.displayName,
     principal.id,
-    manualStudentData.school.schoolNumber
+    manualStudentData.school.schoolNumber,
+    !hasActiveMainSchool
   )
 
   const frontendStudent: FrontendStudent = {
