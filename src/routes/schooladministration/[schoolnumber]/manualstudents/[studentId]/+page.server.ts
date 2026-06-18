@@ -34,7 +34,7 @@ const getSchoolAdministrationManualStudentManagementData: ServerLoadNextFunction
   }
 
   // NOTE: Needs to be an AppStudent and not just a FrontendStudent since we need SSN
-  const manualStudent: AppStudent | null = await dbClient.students.getManualStudentById(studentId)
+  const manualStudent: AppStudent | null = await dbClient.students.getStudentById(studentId)
   if (!manualStudent) {
     throw new HTTPError(404, "Manual student not found")
   }

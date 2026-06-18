@@ -37,6 +37,7 @@ export type EnrollmentWithinViewAccessWindow = {
   classMemberships: (Omit<ClassMembership, "period"> & { period: PeriodDetails })[]
   contactTeacherGroupMemberships: (Omit<ContactTeacherGroupMembership, "period"> & { period: PeriodDetails })[]
   teachingGroupMemberships: (Omit<TeachingGroupMembership, "period"> & { period: PeriodDetails })[]
+  source: Source
 }
 
 export type EnrollmentDetails = {
@@ -218,6 +219,8 @@ export type SchoolAdministrationManualStudent = {
   name: string
   feideName: string
   hasBlockedAddress?: boolean
+  source: Source
+  manualEnrollments: EnrollmentWithinViewAccessWindow[]
 }
 
 export type SuggestionSelectItem = {

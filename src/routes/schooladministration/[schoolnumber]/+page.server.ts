@@ -4,7 +4,7 @@ import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canAccessSchoolAdministration, noAccessMessage } from "$lib/shared-authorization/authorization"
-import type { AccessControlClass, AccessControlStudent, PrincipalAccess, PrincipalAccessStudent, SchoolAdministrationManualStudent } from "$lib/types/app-types"
+import type { AccessControlClass, AccessControlStudent, EnrollmentWithinViewAccessWindow, PrincipalAccess, PrincipalAccessStudent, SchoolAdministrationManualStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { Access, ProgramArea } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
@@ -65,7 +65,7 @@ const getSchoolAccessAdministrationData: ServerLoadNextFunction<SchoolAccessAdmi
   const schoolManualStudents: SchoolAdministrationManualStudent[] = students
     .filter(
       (student) =>
-        student.source === "MANUAL" &&
+        student.enrollmentsWithinViewAccessWindow.some((enrollment: EnrollmentWithinViewAccessWindow) => enrollment.source === "MANUAL") &&
         (student.principalAccessForStudent.some((access) => access.type === "MANUELL-SKOLELEDER-TILGANG" && access.schoolNumber === schoolNumber) ||
           student.principalAccessForStudent.some((access) => access.type === "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG" && access.schoolNumber === schoolNumber))
     )
@@ -73,7 +73,9 @@ const getSchoolAccessAdministrationData: ServerLoadNextFunction<SchoolAccessAdmi
       _id: student._id,
       name: student.name,
       feideName: student.feideName,
-      hasBlockedAddress: student.hasBlockedAddress
+      hasBlockedAddress: student.hasBlockedAddress,
+      source: student.source,
+      manualEnrollments: student.enrollmentsWithinViewAccessWindow.filter((enrollment: EnrollmentWithinViewAccessWindow) => enrollment.source === "MANUAL")
     }))
     .sort((a, b) => a.name.localeCompare(b.name))
 

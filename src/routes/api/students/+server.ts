@@ -17,7 +17,6 @@ import type { ValidationResult } from "$lib/types/data-validation"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { Access, EditorData, NewAppStudent, Period, School, StudentEnrollment, UpdateAppStudent } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
-import { isActive } from "$lib/utils/period"
 import { generateUUID } from "$lib/utils/uuid"
 
 type GetStudentsResponse = ApiRouteMap[`/api/students${NoSlashString}`]["GET"]["res"]
@@ -113,25 +112,11 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
   if (student) {
     if (schoolRecord.source === "AUTO") {
       if (student.studentEnrollments.length === 0) {
-        throw new HTTPError(500, "Fødselsnummer er allerede i bruk. Eleven har ingen elevforhold. Hvordan skal vi forholde oss til dette da? Ta kontakt med en voksen")
+        throw new HTTPError(500, "Fødselsnummer er allerede i bruk. Eleven har ingen elevforhold. Ta kontakt med en voksen")
       }
 
       const schoolName: string = student.studentEnrollments.find((enrollment: StudentEnrollment) => enrollment.mainSchool)?.school.name || student.studentEnrollments[0].school.name
-      throw new HTTPError(400, `Fødselsnummer er allerede i bruk på ${schoolName}. Ta kontakt med en voksen på denne skolen, eller no?`)
-    }
-
-    if (student.studentEnrollments.every((enrollment: StudentEnrollment) => !isActive(enrollment.period))) {
-      logger.warn(
-        "SSN is already in use by StudentId {StudentId}. Student has {EnrollmentCount} enrollments and all is inactive. Will change this student to MANUAL and add a manual enrollment",
-        student._id,
-        student.studentEnrollments.length
-      )
-    } else {
-      const schoolName: string = student.studentEnrollments.find((enrollment: StudentEnrollment) => enrollment.mainSchool)?.school.name || student.studentEnrollments[0].school.name
-      throw new HTTPError(
-        400,
-        `Fødselsnummer er allerede i bruk på ${schoolName}. Eleven har ${student.studentEnrollments.length} elevforhold, hvor minst ett er aktivt. Elev kan ikke legges til på denne skolen`
-      )
+      throw new HTTPError(400, `Fødselsnummer er allerede i bruk på ${schoolName}. Ta kontakt med en voksen`)
     }
   }
 
@@ -268,8 +253,7 @@ const handleExistingManualStudent = async (principal: AuthenticatedPrincipal, ma
     ...student,
     ssn: manualStudentData.ssn,
     studentEnrollments: newStudentEnrollments,
-    modified: editorData,
-    source: "MANUAL"
+    modified: editorData
   }
 
   const dbClient: IDbClient = getDbClient()
@@ -277,7 +261,7 @@ const handleExistingManualStudent = async (principal: AuthenticatedPrincipal, ma
   let studentId: string
 
   try {
-    studentId = await dbClient.students.updateManualStudent(updateAppStudent)
+    studentId = await dbClient.students.updateStudent(updateAppStudent)
   } catch (error) {
     throw new HTTPError(500, "Feilet ved oppdatering av manuell bruker", error)
   }

@@ -806,6 +806,7 @@ export type AuditEntryInput = {
     | "Student"
     | "StudentDocument"
     | "StudentDocumentMessage"
+    | "StudentEnrollment"
     | "ImportantStuff"
     | "StudentDataSharingConsent"
     | "GroupDocument"

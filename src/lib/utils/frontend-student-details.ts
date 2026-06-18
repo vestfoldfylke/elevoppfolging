@@ -10,6 +10,7 @@ export const getEnrollmentsWithinViewAccessWindow = (studentEnrollments: Student
     if (periodDetails.active || periodDetails.withinViewAccessWindow) {
       enrollmentsWithinViewAccessWindow.push({
         systemId: enrollment.systemId,
+        source: enrollment.source,
         mainSchool: enrollment.mainSchool,
         school: enrollment.school,
         period: periodDetails,

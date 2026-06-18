@@ -98,6 +98,10 @@ export interface ApiRouteMap {
     PATCH: { req: DocumentMessageInput; res: { updatedMessageId: string } }
   }
 
+  [key: `/api/students/${NoSlashString}/enrollments/${NoSlashString}`]: {
+    DELETE: { res: { enrollmentId: string } }
+  }
+
   "/api/students": ApiStudentAddManualStudent
 
   "/api/studentcheckboxes": {
