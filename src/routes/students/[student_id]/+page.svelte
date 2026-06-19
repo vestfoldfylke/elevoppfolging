@@ -10,7 +10,7 @@
   import ImportantStuff from "$lib/components/StudentBoxes/ImportantStuff.svelte"
   import { canEditStudentDataSharingConsent, canEditStudentDocument, canEditStudentImportantStuff, isSchoolLeaderForSchool } from "$lib/shared-authorization/authorization"
   import type { EnrollmentDetails, FrontendStudentDocument, PeriodDetails, TemplateInfo } from "$lib/types/app-types"
-  import type { AuditEntryInput, Period, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
+  import type { AuditEntryInput, Period, SchoolInfo } from "$lib/types/db/shared-types"
   import { prettifyDate } from "$lib/utils/dates"
   import { getEnrollmentDetails, getFrontendStudentMainDetails } from "$lib/utils/frontend-student-details"
   import { STUDENT_CHECKBOX_DISPLAY_NAMES } from "$lib/utils/student-checkbox-constants"
@@ -348,7 +348,6 @@
       {/each}
     </div>
   {/if}
-  
 
   <hr aria-hidden="true" class="ds-divider"/>
 
