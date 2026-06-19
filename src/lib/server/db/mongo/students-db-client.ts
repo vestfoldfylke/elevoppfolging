@@ -86,10 +86,10 @@ export class StudentsDbClient implements IStudentsDbClient {
     }
   }
 
-  async getManualStudentById(studentId: string): Promise<AppStudent | null> {
+  async getStudentById(studentId: string): Promise<AppStudent | null> {
     const studentsCollection = this.encryptionDb.collection<DbAppStudent>(this.studentsCollectionName)
 
-    logger.info("Getting manual student by id")
+    logger.info("Getting student by id")
 
     const projection: KeysToNumber<WithId<AppStudent>> = {
       _id: 1,
@@ -105,25 +105,16 @@ export class StudentsDbClient implements IStudentsDbClient {
       hasBlockedAddress: 1
     }
 
-    const student: DbAppStudent | null = await studentsCollection.findOne({ _id: new ObjectId(studentId), source: "MANUAL" }, { projection })
+    const student: DbAppStudent | null = await studentsCollection.findOne({ _id: new ObjectId(studentId) }, { projection })
     if (!student) {
       return null
     }
 
-    logger.info("Manual student by id found. StudentId: {StudentId}", student._id.toString())
+    logger.info("Student by id found. StudentId: {StudentId}", student._id.toString())
 
     return {
-      _id: student._id.toString(),
-      feideName: student.feideName,
-      name: student.name,
-      ssn: student.ssn,
-      studentEnrollments: student.studentEnrollments,
-      studentNumber: student.studentNumber,
-      systemId: student.systemId,
-      created: student.created,
-      modified: student.modified,
-      source: student.source,
-      hasBlockedAddress: student.hasBlockedAddress ?? false
+      ...student,
+      _id: student._id.toString()
     }
   }
 
@@ -170,25 +161,25 @@ export class StudentsDbClient implements IStudentsDbClient {
     return result.insertedId.toString()
   }
 
-  async updateManualStudent(manualStudent: UpdateAppStudent): Promise<string> {
+  async updateStudent(student: UpdateAppStudent): Promise<string> {
     const studentsCollection = this.encryptionDb.collection<DbEncryptedAppStudent>(this.studentsCollectionName)
 
-    logger.info("Updating manual student with Id: {Id}", manualStudent._id)
+    logger.info("Updating student with Id: {Id}", student._id)
 
-    const encryptedHasBlockedAddress: Binary = await this.encryptValue(manualStudent.hasBlockedAddress ?? false)
+    const encryptedHasBlockedAddress: Binary = await this.encryptValue(student.hasBlockedAddress ?? false)
 
     const manualStudentWithId: DbEncryptedAppStudent = {
-      ...manualStudent,
-      _id: new ObjectId(manualStudent._id),
+      ...student,
+      _id: new ObjectId(student._id),
       hasBlockedAddress: encryptedHasBlockedAddress
     }
 
     const result: UpdateResult<DbEncryptedAppStudent> = await studentsCollection.updateOne({ _id: manualStudentWithId._id }, { $set: manualStudentWithId })
 
-    const mainSchoolNumber: string | undefined = manualStudent.studentEnrollments.find((enrollment: StudentEnrollment) => enrollment.mainSchool)?.school.schoolNumber
+    const mainSchoolNumber: string | undefined = student.studentEnrollments.find((enrollment: StudentEnrollment) => enrollment.mainSchool)?.school.schoolNumber
     const metricBody: MetricCount = {
-      name: "ManualStudent_Update",
-      description: "Number of manual students updated"
+      name: "Student_Update",
+      description: "Number of students updated"
     }
     const labels: MetricLabel[] = []
 
@@ -202,7 +193,7 @@ export class StudentsDbClient implements IStudentsDbClient {
         labels: [...labels, [metricResultName, metricResultFailure]]
       })
 
-      throw new Error("Failed to update manual student")
+      throw new Error("Failed to update student")
     }
 
     if (result.modifiedCount !== 1) {
@@ -211,7 +202,7 @@ export class StudentsDbClient implements IStudentsDbClient {
         labels: [...labels, [metricResultName, metricResultFailure]]
       })
 
-      throw new Error("Failed to update manual student")
+      throw new Error("Failed to update student")
     }
 
     incrementCount({
@@ -219,7 +210,7 @@ export class StudentsDbClient implements IStudentsDbClient {
       labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
 
-    logger.info("Manual student with Id {Id} updated", manualStudent._id)
-    return manualStudent._id
+    logger.info("Student with Id {Id} updated", student._id)
+    return student._id
   }
 }

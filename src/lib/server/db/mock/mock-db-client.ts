@@ -35,9 +35,9 @@ export const mockDbClient: IDbClient = {
   students: {
     getAllStudents: notImplemented,
     getStudentBySsn: notImplemented,
-    getManualStudentById: notImplemented,
+    getStudentById: notImplemented,
     createManualStudent: notImplemented,
-    updateManualStudent: notImplemented
+    updateStudent: notImplemented
   },
   documents: {
     getStudentDocuments: notImplemented,

@@ -113,25 +113,11 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
   if (student) {
     if (schoolRecord.source === "AUTO") {
       if (student.studentEnrollments.length === 0) {
-        throw new HTTPError(500, "Fødselsnummer er allerede i bruk. Eleven har ingen elevforhold. Hvordan skal vi forholde oss til dette da? Ta kontakt med en voksen")
+        throw new HTTPError(500, "Fødselsnummer er allerede i bruk. Eleven har ingen elevforhold. Ta kontakt med en voksen")
       }
 
       const schoolName: string = student.studentEnrollments.find((enrollment: StudentEnrollment) => enrollment.mainSchool)?.school.name || student.studentEnrollments[0].school.name
-      throw new HTTPError(400, `Fødselsnummer er allerede i bruk på ${schoolName}. Ta kontakt med en voksen på denne skolen, eller no?`)
-    }
-
-    if (student.studentEnrollments.every((enrollment: StudentEnrollment) => !isActive(enrollment.period))) {
-      logger.warn(
-        "SSN is already in use by StudentId {StudentId}. Student has {EnrollmentCount} enrollments and all is inactive. Will change this student to MANUAL and add a manual enrollment",
-        student._id,
-        student.studentEnrollments.length
-      )
-    } else {
-      const schoolName: string = student.studentEnrollments.find((enrollment: StudentEnrollment) => enrollment.mainSchool)?.school.name || student.studentEnrollments[0].school.name
-      throw new HTTPError(
-        400,
-        `Fødselsnummer er allerede i bruk på ${schoolName}. Eleven har ${student.studentEnrollments.length} elevforhold, hvor minst ett er aktivt. Elev kan ikke legges til på denne skolen`
-      )
+      throw new HTTPError(400, `Fødselsnummer er allerede i bruk på ${schoolName}. Ta kontakt med en voksen`)
     }
   }
 
@@ -146,7 +132,7 @@ export const POST: RequestHandler = async (requestEvent) => {
   return apiRequestMiddleware<AddManualStudentResponse, AddManualStudentBody>(requestEvent, addManualStudent)
 }
 
-const generateManualStudentEnrollment = (manualStudentData: AddManualStudentBody): StudentEnrollment => {
+const generateManualStudentEnrollment = (manualStudentData: AddManualStudentBody, mainSchool: boolean): StudentEnrollment => {
   const period: Period = {
     start: new Date(),
     end: null
@@ -160,7 +146,7 @@ const generateManualStudentEnrollment = (manualStudentData: AddManualStudentBody
       schoolNumber: manualStudentData.school.schoolNumber,
       name: manualStudentData.school.name
     },
-    mainSchool: true,
+    mainSchool,
     classMemberships: [
       {
         classGroup: {
@@ -188,6 +174,7 @@ const handleNewManualStudent = async (principal: AuthenticatedPrincipal, manualS
   }
 
   const manualStudentId: string = generateUUID("MANUAL")
+  const isMainSchool: boolean = true
 
   const newAppStudent: NewAppStudent = {
     ssn: manualStudentData.ssn,
@@ -198,7 +185,7 @@ const handleNewManualStudent = async (principal: AuthenticatedPrincipal, manualS
     source: "MANUAL",
     created: editorData,
     modified: editorData,
-    studentEnrollments: [generateManualStudentEnrollment(manualStudentData)],
+    studentEnrollments: [generateManualStudentEnrollment(manualStudentData, isMainSchool)],
     hasBlockedAddress: manualStudentData.hasBlockedAddress ?? false
   }
 
@@ -212,7 +199,14 @@ const handleNewManualStudent = async (principal: AuthenticatedPrincipal, manualS
     throw new HTTPError(500, "Feilet ved opprettelse av manuell bruker", error)
   }
 
-  logger.info("Created manual student with Id {Id} by user {DisplayName} ({PrincipalId})", studentId, principal.displayName, principal.id)
+  logger.info(
+    "Created manual student with Id {Id} by user {DisplayName} ({PrincipalId}). Added a manual enrollment to SchoolNumber {SchoolNumber}. MainSchool set to {IsMainSchool}",
+    studentId,
+    principal.displayName,
+    principal.id,
+    manualStudentData.school.schoolNumber,
+    isMainSchool
+  )
 
   const frontendStudent: FrontendStudent = {
     _id: studentId,
@@ -257,19 +251,15 @@ const handleExistingManualStudent = async (principal: AuthenticatedPrincipal, ma
     at: new Date()
   }
 
-  const newStudentEnrollments: StudentEnrollment[] = student.studentEnrollments.map((enrollment: StudentEnrollment) => {
-    enrollment.mainSchool = false
-    return enrollment
-  })
+  const hasActiveMainSchool: boolean = student.studentEnrollments.some((enrollment: StudentEnrollment) => enrollment.mainSchool && isActive(enrollment.period))
 
-  newStudentEnrollments.push(generateManualStudentEnrollment(manualStudentData))
+  const updatedStudentEnrollments: StudentEnrollment[] = [...student.studentEnrollments, generateManualStudentEnrollment(manualStudentData, !hasActiveMainSchool)]
 
   const updateAppStudent: UpdateAppStudent = {
     ...student,
     ssn: manualStudentData.ssn,
-    studentEnrollments: newStudentEnrollments,
-    modified: editorData,
-    source: "MANUAL"
+    studentEnrollments: updatedStudentEnrollments,
+    modified: editorData
   }
 
   const dbClient: IDbClient = getDbClient()
@@ -277,17 +267,18 @@ const handleExistingManualStudent = async (principal: AuthenticatedPrincipal, ma
   let studentId: string
 
   try {
-    studentId = await dbClient.students.updateManualStudent(updateAppStudent)
+    studentId = await dbClient.students.updateStudent(updateAppStudent)
   } catch (error) {
     throw new HTTPError(500, "Feilet ved oppdatering av manuell bruker", error)
   }
 
   logger.info(
-    "Updated manual student with Id {Id} by user {DisplayName} ({PrincipalId}), added a manual enrollment to SchoolNumber {SchoolNumber}",
+    "Updated manual student with Id {Id} by user {DisplayName} ({PrincipalId}), added a manual enrollment to SchoolNumber {SchoolNumber}. MainSchool set to {IsMainSchool}",
     studentId,
     principal.displayName,
     principal.id,
-    manualStudentData.school.schoolNumber
+    manualStudentData.school.schoolNumber,
+    !hasActiveMainSchool
   )
 
   const frontendStudent: FrontendStudent = {

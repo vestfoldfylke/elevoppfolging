@@ -39,7 +39,7 @@ const updateManualStudent: ApiNextFunction<UpdateManualStudentResponse, UpdateMa
   }
 
   // fetch student
-  const student: AppStudent | null = await dbClient.students.getManualStudentById(updateManualStudentData.studentId)
+  const student: AppStudent | null = await dbClient.students.getStudentById(updateManualStudentData.studentId)
   if (!student) {
     throw new HTTPError(404, "Student not found")
   }
@@ -78,23 +78,17 @@ const updateManualStudent: ApiNextFunction<UpdateManualStudentResponse, UpdateMa
   }
 
   const updateAppStudent: UpdateAppStudent = {
-    _id: student._id,
+    ...student,
     ssn: updateManualStudentData.ssn,
-    systemId: student.systemId,
-    studentNumber: student.studentNumber,
-    source: student.source,
-    feideName: student.feideName,
     name: updateManualStudentData.name,
-    created: student.created,
     modified: editorData,
-    studentEnrollments: student.studentEnrollments,
     hasBlockedAddress: updateManualStudentData.hasBlockedAddress ?? false
   }
 
   let studentId: string
 
   try {
-    studentId = await dbClient.students.updateManualStudent(updateAppStudent)
+    studentId = await dbClient.students.updateStudent(updateAppStudent)
   } catch (error) {
     throw new HTTPError(500, "Feilet ved oppdatering av manuell bruker", error)
   }

@@ -9,7 +9,7 @@
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import { canGrantAndRemoveAccessForSchool, canManageManualStudentsOnSchool } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
-  import type { NewManualAccessControl } from "$lib/types/app-types"
+  import type { EnrollmentWithinViewAccessWindow, NewManualAccessControl, SchoolAdministrationManualStudent } from "$lib/types/app-types"
   import type {
     AllStudentsAtSchoolsManualAccessEntry,
     ClassManualAccessEntry,
@@ -503,6 +503,26 @@
     newManualStudentName = ""
     newManualStudentHasBlockedAddress = false
   }
+
+  const removeManualStudentEnrollment = async (manualStudent: SchoolAdministrationManualStudent): Promise<AsyncButtonResult> => {
+    const dialog: boolean = window.confirm("Dette vil fjerne elevforholdet til denne skolen fra eleven. Er du helt sikker?")
+    if (!dialog) {
+      return { status: "cancelled" }
+    }
+
+    const enrollmentForCurrentSchool: EnrollmentWithinViewAccessWindow | undefined = manualStudent.manualEnrollments.find(
+      (enrollment: EnrollmentWithinViewAccessWindow) => enrollment.source === "MANUAL" && enrollment.school.schoolNumber === currentSchool.schoolNumber
+    )
+    if (!enrollmentForCurrentSchool) {
+      return { status: "error", message: "Elevforhold for denne skolen ikke funnet" }
+    }
+
+    await apiFetch(`/api/students/${manualStudent._id as NoSlashString}/enrollments/${enrollmentForCurrentSchool.systemId as NoSlashString}`, {
+      method: "DELETE"
+    })
+
+    return { status: "success", reloadPageData: true }
+  }
 </script>
 
 {#snippet newAccess(newManualAccessControl: NewManualAccessControl)}
@@ -831,7 +851,7 @@
                   </th>
                   <th>Adressesperre</th>
                   <th>
-                    Rediger
+                    Handling
                   </th>
                 </tr>
               </thead>
@@ -849,7 +869,10 @@
                     {/if}
                   </td>
                   <td>
-                    <a href={`${page.url.pathname}/manualstudents/${manualStudent._id}`} class="ds-link" rel="noopener noreferrer">Rediger</a>
+                    <div class="manual-student-cell-actions">
+                      <a href={`${page.url.pathname}/manualstudents/${manualStudent._id}`} class="ds-button" data-variant="secondary" data-size="sm" rel="noopener noreferrer"><span class="material-symbols-outlined">edit</span>Rediger</a>
+                      <AsyncButton onClick={() => removeManualStudentEnrollment(manualStudent)} buttonText="Fjern manuelt elevforhold" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
+                    </div>
                   </td>
                 </tr>
               {/each}
@@ -894,6 +917,12 @@
   
   .manual-students {
     margin-top: var(--ds-size-4);
+  }
+  
+  .manual-student-cell-actions {
+      display: flex;
+      gap: 0.5rem;
+      justify-items: center;
   }
 
   .new-access {

@@ -59,6 +59,9 @@ export const AUDIT_ENTRY_RESOURCE_DISPLAY_NAMES: Record<AuditEntry["resource"], 
     plural: "Oppdatering elevnotater",
     single: "Oppdatering elevnotat"
   },
+  StudentEnrollment: {
+    plural: "Elevforhold"
+  },
   Template: {
     plural: "Maler",
     single: "Mal"

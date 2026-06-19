@@ -70,9 +70,9 @@ export interface IProgramAreasDbClient {
 export interface IStudentsDbClient {
   getAllStudents(): Promise<FrontendStudent[]>
   getStudentBySsn(ssn: string): Promise<FrontendStudent | null>
-  getManualStudentById(studentId: string): Promise<AppStudent | null>
+  getStudentById(studentId: string): Promise<AppStudent | null>
   createManualStudent(manualStudent: NewAppStudent): Promise<string>
-  updateManualStudent(manualStudent: UpdateAppStudent): Promise<string>
+  updateStudent(manualStudent: UpdateAppStudent): Promise<string>
 }
 
 export type StudentDocumentAccess = {

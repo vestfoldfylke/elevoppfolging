@@ -101,10 +101,16 @@
         <p class="ds-paragraph">{(data.manualStudent.hasBlockedAddress ?? false) ? "Ja" : "Nei"}</p>
       </div>
       <div>
-        <button onclick={() => updateManualStudentEdit = true} class="ds-button">
-          <span class="material-symbols-outlined">edit</span>
-          Rediger
-        </button>
+        {#if data.manualStudent.source === "MANUAL"}
+          <button onclick={() => updateManualStudentEdit = true} class="ds-button">
+            <span class="material-symbols-outlined">edit</span>
+            Rediger
+          </button>
+        {:else}
+          <div class="ds-alert" data-color="info">
+            Elevinformasjonen kommer fra InSchool og kan ikke redigeres her. Endringer må utføres i InSchool
+          </div>
+        {/if}
       </div>
     </div>
   {:else}
