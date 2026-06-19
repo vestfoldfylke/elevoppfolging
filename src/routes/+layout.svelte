@@ -22,7 +22,7 @@
   let showStudentOverview = $derived(page.route.id === "/")
 
   let studentsQuickViewAvailable = $derived(page.route.id === "/students/[student_id]")
-  let showStudentsQuickView = $state(true)
+  let showStudentsQuickView = $state(false)
 
   // svelte-ignore state_referenced_locally - det går bra så lenge ikke system admin kødder med checkboxene, da kan de bare refresh sida
   const enabledStudentCheckBoxes: StudentCheckBox[] = data.studentCheckBoxes.filter((checkbox: StudentCheckBox) => checkbox.enabled)
@@ -409,32 +409,52 @@
     {/if}
 
     <!-- Special case for students/id page - we need layout data from parent, so we do some nasty stuff here for side menu (quick view student) -->
-    {#if studentsQuickViewAvailable && showStudentsQuickView}
-      <div class="students-side-menu desktop-only">
-        <a class="ds-button" data-size="sm" data-variant="secondary" href="/">
-          <span class="material-symbols-outlined" aria-label="small" data-size="sm">arrow_back</span>
-          <span>Rediger elevsøk</span>
-        </a>
-        <div class="ds-paragraph students-side-menu-heading">Elever</div>
-        <ul class="students-side-menu-list">
-          {#if overviewStudents.isLoading}
-            <li><span aria-hidden="true" class="ds-skeleton" data-variant="rectangle" style="width:200px;height:20px"></span></li>
-            <li><span aria-hidden="true" class="ds-skeleton" data-variant="rectangle" style="width:200px;height:20px"></span></li>
-            <li><span aria-hidden="true" class="ds-skeleton" data-variant="rectangle" style="width:200px;height:20px"></span></li>
-          {:else if overviewStudents.errorMessage}
-            <li class="ds-text--error">{overviewStudents.errorMessage}</li>
-          {:else if overviewStudents.students.length === 0}
-            <li>Ingen elever funnet</li>
-          {:else}
-            {#each overviewStudents.students as student}
-              <li>
-                <a data-variant="default" data-size="sm" class="ds-link ds-paragraph students-side-menu-list-item-link" href={`/students/${student._id}`} class:active={page.url.pathname === `/students/${student._id}`}>{student.name}</a>
-              </li>
-            {/each}
-          {/if}
-        </ul>
-      </div>
+    {#if studentsQuickViewAvailable}
+      {#if showStudentsQuickView}
+        <div class="students-side-menu">
+          <button class="ds-button" data-size="sm" data-variant="secondary" type="button" style="margin-bottom: var(--ds-size-2);" onclick={() => showStudentsQuickView = false}>
+            <span class="material-symbols-outlined">left_panel_close</span>
+            <span>Skjul elevliste</span>
+          </button>
+          <a class="ds-button" data-size="sm" data-variant="secondary" href="/">
+            <span class="material-symbols-outlined">search</span>
+            <span>Rediger elevsøket</span>
+          </a>
+          <div class="ds-paragraph students-side-menu-heading">Elever</div>
+          <ul class="students-side-menu-list">
+            {#if overviewStudents.isLoading}
+              <li><span aria-hidden="true" class="ds-skeleton" data-variant="rectangle" style="width:200px;height:20px"></span></li>
+              <li><span aria-hidden="true" class="ds-skeleton" data-variant="rectangle" style="width:200px;height:20px"></span></li>
+              <li><span aria-hidden="true" class="ds-skeleton" data-variant="rectangle" style="width:200px;height:20px"></span></li>
+            {:else if overviewStudents.errorMessage}
+              <li class="ds-text--error">{overviewStudents.errorMessage}</li>
+            {:else if overviewStudents.students.length === 0}
+              <li>Ingen elever funnet</li>
+            {:else}
+              {#each overviewStudents.students as student}
+                <li>
+                  <a data-variant="default" data-size="sm" class="ds-link ds-paragraph students-side-menu-list-item-link" href={`/students/${student._id}`} class:active={page.url.pathname === `/students/${student._id}`}>{student.name}</a>
+                </li>
+              {/each}
+            {/if}
+          </ul>
+        </div>
+      {/if}
       <div class="page-content">
+        {#if showStudentsQuickView}
+          <button
+            class="quick-view-student-open-overlay"
+            aria-label="Lukk elevliste"
+            onclick={() => showStudentsQuickView = false}
+          ></button>
+        {/if}
+        {#if !showStudentsQuickView}
+          <button class="ds-button" data-variant="secondary" data-size="sm" type="button" onclick={() => showStudentsQuickView = true} style="margin-bottom: var(--ds-size-4)">
+            <span class="material-symbols-outlined">left_panel_open</span>
+            Vis elevliste
+          </button>
+        {/if}
+
         {@render children()}
       </div>
     {:else}
@@ -449,13 +469,13 @@
 
 <style>
     #svelte-body {
-        display: grid;
-        grid-template-rows: auto 1fr auto;
-        grid-template-areas:
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      grid-template-areas:
 			"header"
 			"main"
 			"footer";
-        min-height: 100vh;
+      min-height: 100vh;
     }
 
     #svelte-body > header {
@@ -569,15 +589,28 @@
         padding-left: var(--ds-size-2);
     }
 
+    .quick-view-student-open-overlay {
+        position: fixed;
+        top: var(--header-height);
+        left: 0;
+        width: 100%;
+        height: calc(100vh - var(--header-height));
+        z-index: 3;
+        background-color: rgba(0, 0, 0, 0.3);
+    }
+
     .students-side-menu {
         box-sizing: border-box;
-        display: none;
+        display: flex;
         flex-direction: column;
-        position: sticky;
+        position: fixed;
+        z-index: 4;
+        background-color: var(--ds-color-neutral-background-default);
+        border-top: 1px solid var(--ds-color-neutral-border-subtle);
         border-right: 1px solid var(--ds-color-neutral-border-subtle);
         top: var(--header-height);
         overflow-y: auto;
-        max-height: calc(100vh - var(--header-height));
+        height: calc(100vh - var(--header-height));
         padding-top: var(--ds-size-7);
         padding-left: var(--ds-size-4);
         padding-right: var(--ds-size-4);
@@ -642,9 +675,14 @@
             display: table-cell;
         }
     }
-    @media (min-width: 80rem) {
-        .students-side-menu.desktop-only {
-            display: flex;
+    @media (min-width: 64rem) {
+        .students-side-menu {
+          position: sticky;
+          z-index: 0;
+          border-top: none;
+        }
+        .quick-view-student-open-overlay {
+          display: none;
         }
     }
 </style>
