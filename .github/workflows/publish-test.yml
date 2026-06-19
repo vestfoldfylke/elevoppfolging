@@ -1,6 +1,11 @@
-name: Build and deploy Node.js project to Azure Web App - TEST
+# Docs for the Azure Web Apps Deploy action: https://github.com/azure/functions-action
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy Node.js TypeScript project to Azure Web App - TEST
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
