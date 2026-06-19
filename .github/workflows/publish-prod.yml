@@ -1,0 +1,18 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/azure/functions-action
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+name: Build and deploy Node.js TypeScript project to Azure Web App - PROD
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    if: github.event.release.target_commitish == 'main' # Only run this workflow if the release is created from the main branch
+    uses: vestfoldfylke/shared/.github/workflows/deploy-az-app-service-node.yml@main
+    with:
+      azure_appname: 'vfkplzmineleveloprod'
+      azure_functionapp_package_path: '.'
+    secrets:
+      azure_publishprofile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_PROD }}
