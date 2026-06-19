@@ -71,7 +71,7 @@
     <p class="ds-paragraph">Du har vært inaktiv for lenge, og innholdet er skjult av sikkerhetsmessige årsaker.</p>
   </div>
   <div class="ds-dialog__block">
-    <button class="ds-button" data-variant="primary" onclick={closeScreenSaverDialog}>Jeg er her fortsatt jeg 🫡 </button>
+    <button class="ds-button" data-variant="primary" onclick={closeScreenSaverDialog}>Jeg er her fortsatt, jeg 🫡 </button>
   </div>
 </dialog>
 
