@@ -679,6 +679,7 @@
         .students-side-menu {
           position: sticky;
           z-index: 0;
+          border-top: none;
         }
         .quick-view-student-open-overlay {
           display: none;
