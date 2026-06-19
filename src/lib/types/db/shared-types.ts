@@ -1,4 +1,4 @@
-// noinspection JSUnusedGlobalSymbols - Noe er brukt her, mesteparten er brukt i elevoppfolging
+// noinspection JSUnusedGlobalSymbols - Mesteparten er brukt her, noe er brukt i elevoppfolging-server-jobs
 
 import type { Binary, ObjectId } from "mongodb"
 
