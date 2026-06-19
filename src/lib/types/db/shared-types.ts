@@ -1,3 +1,5 @@
+// noinspection JSUnusedGlobalSymbols - Noe er brukt her, mesteparten er brukt i elevoppfolging
+
 import type { Binary, ObjectId } from "mongodb"
 
 /** Undervisningsforhold & Skoleressurs */
