@@ -38,6 +38,10 @@ const removeEnrollment: ApiNextFunction<RemoveEnrollmentResponse> = async ({ pri
     throw new HTTPError(404, "Enrollment not found. Cannot delete non-existing student enrollment.")
   }
 
+  if (studentEnrollment.source !== "MANUAL") {
+    throw new HTTPError(403, "Cannot delete student enrollment registered in source system")
+  }
+
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
     throw new HTTPError(403, noAccessMessage("No access found for principal"))
