@@ -442,7 +442,11 @@
       {/if}
       <div class="page-content">
         {#if showStudentsQuickView}
-          <div class="quick-view-student-open-overlay"></div>
+          <button
+            class="quick-view-student-open-overlay"
+            aria-label="Lukk elevliste"
+            onclick={() => showStudentsQuickView = false}
+          ></button>
         {/if}
         {#if !showStudentsQuickView}
           <button class="ds-button" data-variant="secondary" data-size="sm" type="button" onclick={() => showStudentsQuickView = true} style="margin-bottom: var(--ds-size-4)">
@@ -591,7 +595,7 @@
         left: 0;
         width: 100%;
         height: calc(100vh - var(--header-height));
-        z-index: 5;
+        z-index: 3;
         background-color: rgba(0, 0, 0, 0.3);
     }
 
@@ -599,15 +603,14 @@
         box-sizing: border-box;
         display: flex;
         flex-direction: column;
-        height: 100%;
         position: fixed;
-        z-index: 10;
+        z-index: 4;
         background-color: var(--ds-color-neutral-background-default);
         border-top: 1px solid var(--ds-color-neutral-border-subtle);
         border-right: 1px solid var(--ds-color-neutral-border-subtle);
         top: var(--header-height);
         overflow-y: auto;
-        max-height: calc(100vh - var(--header-height));
+        height: calc(100vh - var(--header-height));
         padding-top: var(--ds-size-7);
         padding-left: var(--ds-size-4);
         padding-right: var(--ds-size-4);
