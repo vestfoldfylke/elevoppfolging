@@ -287,7 +287,7 @@
                       <button data-popover="inline" popoverTarget="email-receivers-{document._id}">{document.emailAlertReceivers.length} person{document.emailAlertReceivers.length > 1 ? "er" : ""}</button>&nbsp;varslet på e-post
                     </span>
 
-                    <div id="email-receivers-{document._id}" class="ds-popover" popover="manual" data-placement="top">
+                    <div id="email-receivers-{document._id}" class="ds-popover" popover="auto" data-placement="top">
                       {#each document.emailAlertReceivers as emailReceiver}
                         <p class="ds-paragraph" data-size="xs">{emailReceiver}</p>
                       {/each}
