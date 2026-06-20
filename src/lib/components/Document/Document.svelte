@@ -269,7 +269,7 @@
               {#if studentName || (document.emailAlertReceivers && document.emailAlertReceivers.length > 0)}
                 <div class="document-info">
                   {#if studentName}
-                    <span class="ds-tag" data-color="neutral" data-size="sm">
+                    <span class="ds-tag" data-color="neutral" data-variant="outline" data-size="sm">
                       <span class="material-symbols-outlined" style="margin-right: var(--ds-size-2);">{document.documentAccess === "EXCLUDE_SUBJECT_TEACHERS" || document.documentAccess === "ONLY_CREATOR" ? "visibility_off" : "visibility"}</span>
                       {#if document.documentAccess === "ALL_WITH_STUDENT_ACCESS"}
                         Synlig for alle med tilgang til eleven
@@ -282,7 +282,7 @@
                   {/if}
 
                   {#if document.emailAlertReceivers && document.emailAlertReceivers.length > 0}
-                    <span class="ds-tag" data-color="neutral" data-size="sm">
+                    <span class="ds-tag" data-color="neutral" data-variant="outline" data-size="sm">
                       <span class="material-symbols-outlined" style="margin-right: var(--ds-size-2);">mail</span>
                       <button data-popover="inline" popoverTarget="email-receivers-{document._id}">{document.emailAlertReceivers.length} person{document.emailAlertReceivers.length > 1 ? "er" : ""}</button>&nbsp;varslet på e-post
                     </span>
