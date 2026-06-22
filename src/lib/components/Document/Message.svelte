@@ -198,12 +198,12 @@
   <div class="message-footer">
     <div class="message-info">
       {#if message.emailAlertReceivers && message.emailAlertReceivers.length > 0}
-        <span class="ds-tag" data-color="neutral" data-size="sm">
+        <span class="ds-tag" data-color="neutral" data-variant="outline" data-size="sm">
           <span class="material-symbols-outlined" style="margin-right: var(--ds-size-2);">mail</span>
           <button data-popover="inline" popoverTarget="email-receivers-{document._id}-{message.messageId}">{message.emailAlertReceivers.length} person{message.emailAlertReceivers.length > 1 ? "er" : ""}</button>&nbsp;varslet på e-post
         </span>
 
-        <div id="email-receivers-{document._id}-{message.messageId}" class="ds-popover" popover="manual" data-placement="top">
+        <div id="email-receivers-{document._id}-{message.messageId}" class="ds-popover" popover="auto" data-placement="top">
           {#each message.emailAlertReceivers as emailReceiver}
             <p class="ds-paragraph" data-size="xs">{emailReceiver}</p>
           {/each}
