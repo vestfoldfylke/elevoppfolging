@@ -125,6 +125,7 @@ export type ApplicationInfo = {
   STUDENT_OVERVIEW_TOP: number
   APP_USER_CACHE_MAX_AGE_MINUTES: number
   SCREEN_SAVER_INACTIVITY_TIMEOUT_SECONDS: number
+  BANNER_INFO_MESSAGE?: string
 }
 
 export type DocumentTemplateFilterOption = {
