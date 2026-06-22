@@ -291,7 +291,10 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       name: "StudentDocument_Update",
       description: "Number of student documents updated"
     }
-    const labels: MetricLabel[] = [["schoolNumber", documentUpdate.school.schoolNumber]]
+    const labels: MetricLabel[] = [
+      ["schoolNumber", documentUpdate.school.schoolNumber],
+      ["schoolName", documentUpdate.school.name]
+    ]
 
     if (!updatedDocument?._id) {
       incrementCount({
@@ -317,7 +320,10 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       name: "StudentDocument_Remove",
       description: "Number of student documents removed"
     }
-    const labels: MetricLabel[] = [["schoolNumber", document.school.schoolNumber]]
+    const labels: MetricLabel[] = [
+      ["schoolNumber", document.school.schoolNumber],
+      ["schoolName", document.school.name]
+    ]
 
     if (deleteResult.deletedCount === 0) {
       incrementCount({
@@ -526,7 +532,10 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       name: "GroupDocument_Create",
       description: "Number of group documents created"
     }
-    const labels: MetricLabel[] = [["schoolNumber", document.school.schoolNumber]]
+    const labels: MetricLabel[] = [
+      ["schoolNumber", document.school.schoolNumber],
+      ["schoolName", document.school.name]
+    ]
 
     if (!result.insertedId) {
       incrementCount({
@@ -565,7 +574,10 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       name: "GroupDocument_Update",
       description: "Number of group documents updated"
     }
-    const labels: MetricLabel[] = [["schoolNumber", documentUpdate.school.schoolNumber]]
+    const labels: MetricLabel[] = [
+      ["schoolNumber", documentUpdate.school.schoolNumber],
+      ["schoolName", documentUpdate.school.name]
+    ]
 
     if (!updatedDocument?._id) {
       incrementCount({
@@ -591,7 +603,10 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       name: "GroupDocument_Remove",
       description: "Number of group documents removed"
     }
-    const labels: MetricLabel[] = [["schoolNumber", document.school.schoolNumber]]
+    const labels: MetricLabel[] = [
+      ["schoolNumber", document.school.schoolNumber],
+      ["schoolName", document.school.name]
+    ]
 
     if (deleteResult.deletedCount === 0) {
       incrementCount({

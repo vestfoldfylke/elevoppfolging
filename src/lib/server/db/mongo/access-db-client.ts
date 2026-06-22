@@ -103,7 +103,7 @@ export class AccessDbClient implements IAccessDbClient {
     return result.insertedId.toString()
   }
 
-  async addAccessEntry(entraUserId: string, accessEntry: AccessEntry): Promise<string> {
+  async addAccessEntry(entraUserId: string, schoolName: string, accessEntry: AccessEntry): Promise<string> {
     let updateResult: DbAccess | null
     switch (accessEntry.type) {
       case "MANUELL-SKOLELEDER-TILGANG":
@@ -135,6 +135,7 @@ export class AccessDbClient implements IAccessDbClient {
     }
     const labels: MetricLabel[] = [
       ["schoolNumber", accessEntry.schoolNumber],
+      ["schoolName", schoolName],
       ["type", accessEntry.type]
     ]
 
@@ -155,7 +156,7 @@ export class AccessDbClient implements IAccessDbClient {
     return updateResult._id.toString()
   }
 
-  async removeAccessEntry(entraUserId: string, accessEntry: ManualAccessEntryInput): Promise<string> {
+  async removeAccessEntry(entraUserId: string, schoolName: string, accessEntry: ManualAccessEntryInput): Promise<string> {
     let updatedAccess: DbAccess | null
     switch (accessEntry.type) {
       case "MANUELL-SKOLELEDER-TILGANG":
@@ -185,6 +186,7 @@ export class AccessDbClient implements IAccessDbClient {
     }
     const labels: MetricLabel[] = [
       ["schoolNumber", accessEntry.schoolNumber],
+      ["schoolName", schoolName],
       ["type", accessEntry.type]
     ]
 

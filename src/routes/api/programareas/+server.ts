@@ -7,7 +7,7 @@ import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canAccessSchoolAdministration, canGrantAndRemoveAccessForSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap } from "$lib/types/api/api-route-map"
-import type { EditorData, NewProgramArea } from "$lib/types/db/shared-types"
+import type { EditorData, NewProgramArea, School } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
 type AddProgramAreaResponse = ApiRouteMap["/api/programareas"]["POST"]["res"]
@@ -36,6 +36,11 @@ const addProgramArea: ApiNextFunction<AddProgramAreaResponse, AddProgramAreaBody
 
   const dbClient = getDbClient()
 
+  const school: School | null = await dbClient.schools.getSchool(newProgramAreaData.schoolNumber)
+  if (!school) {
+    throw new HTTPError(404, noAccessMessage("School not found"))
+  }
+
   const editorData: EditorData = {
     by: {
       entraUserId: principal.id,
@@ -56,7 +61,7 @@ const addProgramArea: ApiNextFunction<AddProgramAreaResponse, AddProgramAreaBody
   let programAreaId: string
 
   try {
-    programAreaId = await dbClient.programAreas.createProgramArea(newProgramArea)
+    programAreaId = await dbClient.programAreas.createProgramArea(school.name, newProgramArea)
   } catch (error) {
     throw new HTTPError(500, "Feilet ved opprettelse av gruppering av klasser", error)
   }

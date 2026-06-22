@@ -90,7 +90,10 @@
     const metricBody: MetricCount = {
       name: studentName ? "StudentDocument_Open" : "GroupDocument_Open",
       description: `Number of times ${studentName ? "student" : "group"} documents has been opened`,
-      labels: [["schoolNumber", document.school.schoolNumber]]
+      labels: [
+        ["schoolNumber", document.school.schoolNumber],
+        ["schoolName", document.school.name]
+      ]
     }
 
     // we don't need to await this since we actually don't care if it goes through or not

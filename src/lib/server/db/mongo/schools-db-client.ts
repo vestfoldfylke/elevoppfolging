@@ -1,4 +1,4 @@
-import type { Collection, Db } from "mongodb"
+import type { Collection, Db, WithId } from "mongodb"
 import type { ISchoolsDbClient } from "$lib/types/db/db-client"
 import type { MetricCount, NewSchool, School } from "$lib/types/db/shared-types"
 import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
@@ -8,6 +8,18 @@ export class SchoolsDbClient implements ISchoolsDbClient {
 
   constructor(db: Db) {
     this.schoolsCollection = db.collection<NewSchool>("schools")
+  }
+
+  async getSchool(schoolNumber: string): Promise<School | null> {
+    const school: WithId<NewSchool> | null = await this.schoolsCollection.findOne({ schoolNumber })
+    if (!school) {
+      return null
+    }
+
+    return {
+      ...school,
+      _id: school._id.toString()
+    }
   }
 
   async getSchools(): Promise<School[]> {

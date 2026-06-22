@@ -3,7 +3,7 @@ import { type Binary, type Db, type InsertOneResult, ObjectId, type UpdateResult
 import type { FrontendStudent } from "$lib/types/app-types"
 import type { IStudentsDbClient } from "$lib/types/db/db-client"
 import type { KeysToNumber } from "$lib/types/db/db-helpers"
-import type { AppStudent, DbAppStudent, DbEncryptedAppStudent, MetricCount, MetricLabel, NewAppStudent, StudentEnrollment, UpdateAppStudent } from "$lib/types/db/shared-types"
+import type { AppStudent, DbAppStudent, DbEncryptedAppStudent, MetricCount, MetricLabel, NewAppStudent, SchoolInfo, StudentEnrollment, UpdateAppStudent } from "$lib/types/db/shared-types"
 import { APP_INFO } from "../../app-info"
 import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
 
@@ -133,15 +133,16 @@ export class StudentsDbClient implements IStudentsDbClient {
 
     const result: InsertOneResult<DbEncryptedAppStudent> = await studentsCollection.insertOne(encryptedManualStudent)
 
-    const mainSchoolNumber: string | undefined = manualStudent.studentEnrollments.find((enrollment: StudentEnrollment) => enrollment.mainSchool)?.school.schoolNumber
+    const mainSchool: SchoolInfo | undefined = manualStudent.studentEnrollments.find((enrollment: StudentEnrollment) => enrollment.mainSchool)?.school
     const metricBody: MetricCount = {
       name: "Student_Create",
       description: "Number of manual students created"
     }
     const labels: MetricLabel[] = []
 
-    if (mainSchoolNumber) {
-      labels.push(["schoolNumber", mainSchoolNumber])
+    if (mainSchool) {
+      labels.push(["schoolNumber", mainSchool.schoolNumber])
+      labels.push(["schoolName", mainSchool.name])
     }
 
     if (!result.acknowledged) {
@@ -176,15 +177,16 @@ export class StudentsDbClient implements IStudentsDbClient {
 
     const result: UpdateResult<DbEncryptedAppStudent> = await studentsCollection.updateOne({ _id: manualStudentWithId._id }, { $set: manualStudentWithId })
 
-    const mainSchoolNumber: string | undefined = student.studentEnrollments.find((enrollment: StudentEnrollment) => enrollment.mainSchool)?.school.schoolNumber
+    const mainSchool: SchoolInfo | undefined = student.studentEnrollments.find((enrollment: StudentEnrollment) => enrollment.mainSchool)?.school
     const metricBody: MetricCount = {
       name: "Student_Update",
-      description: "Number of students updated or given manual enrollment"
+      description: "Number of manual students updated or manual enrollments added/removed"
     }
     const labels: MetricLabel[] = []
 
-    if (mainSchoolNumber) {
-      labels.push(["schoolNumber", mainSchoolNumber])
+    if (mainSchool) {
+      labels.push(["schoolNumber", mainSchool.schoolNumber])
+      labels.push(["schoolName", mainSchool.name])
     }
 
     if (!result.acknowledged) {
