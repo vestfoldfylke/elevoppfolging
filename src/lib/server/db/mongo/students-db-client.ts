@@ -135,8 +135,8 @@ export class StudentsDbClient implements IStudentsDbClient {
 
     const mainSchoolNumber: string | undefined = manualStudent.studentEnrollments.find((enrollment: StudentEnrollment) => enrollment.mainSchool)?.school.schoolNumber
     const metricBody: MetricCount = {
-      name: "ManualStudent_Create",
-      description: "Number of manual students created"
+      name: "Student_Create",
+      description: "Number of students created or given manual enrollment"
     }
     const labels: MetricLabel[] = []
 
@@ -179,7 +179,7 @@ export class StudentsDbClient implements IStudentsDbClient {
     const mainSchoolNumber: string | undefined = student.studentEnrollments.find((enrollment: StudentEnrollment) => enrollment.mainSchool)?.school.schoolNumber
     const metricBody: MetricCount = {
       name: "Student_Update",
-      description: "Number of students updated"
+      description: "Number of students updated or given manual enrollment"
     }
     const labels: MetricLabel[] = []
 
