@@ -72,7 +72,7 @@
         {#if editMode}
           <ds-field class="ds-field">
             <div data-field="description">
-              Skriv inn informasjon om klassen
+              Skriv inn informasjon om klassen. NB! Ikke personlig informasjon om enkeltelever.
             </div>
             <textarea rows="5" bind:value={editableGroupImportantStuff.draft.importantInfo} class="ds-input"></textarea>
           </ds-field>
