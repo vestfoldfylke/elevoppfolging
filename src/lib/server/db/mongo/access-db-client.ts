@@ -130,8 +130,7 @@ export class AccessDbClient implements IAccessDbClient {
 
     const metricBody: MetricCount = {
       name: "AccessEntry_Create",
-      description: "Number of access entries created",
-      splitMetricByLabels: true
+      description: "Number of access entries created"
     }
     const labels: MetricLabel[] = [
       ["schoolNumber", accessEntry.schoolNumber],
@@ -181,8 +180,7 @@ export class AccessDbClient implements IAccessDbClient {
 
     const metricBody: MetricCount = {
       name: "AccessEntry_Remove",
-      description: "Number of access entries removed",
-      splitMetricByLabels: true
+      description: "Number of access entries removed"
     }
     const labels: MetricLabel[] = [
       ["schoolNumber", accessEntry.schoolNumber],
