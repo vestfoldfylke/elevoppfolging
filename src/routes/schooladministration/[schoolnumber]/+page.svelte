@@ -690,7 +690,7 @@
               <tbody>
                 {#each studentAccessEntries as studentAccess}
                     <tr>
-                    <td>{studentAccess.student.name} ({studentAccess.student.feideName})</td>
+                    <td>{`${studentAccess.student.name}${studentAccess.student.feideName ? ` (${studentAccess.student.feideName})` : ""}`}</td>
                     <td>{studentAccess.entraUser.name} ({studentAccess.entraUser.companyName})</td>
                     <td>
                       <AsyncButton onClick={() => removeManualAccessEntry(studentAccess.entraUser.id, studentAccess.accessEntry)} buttonText="Fjern tilgang" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
