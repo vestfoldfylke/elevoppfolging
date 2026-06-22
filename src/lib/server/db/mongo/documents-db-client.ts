@@ -249,7 +249,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       name: "StudentDocument_Create",
       description: "Number of student documents created"
     }
-    const labels: MetricLabel[] = [["schoolNumber", document.school.schoolNumber]]
+    const labels: MetricLabel[] = [["schoolNumber", document.school.schoolNumber], ["schoolName", document.school.name]]
 
     if (!result.insertedId) {
       incrementCount({
