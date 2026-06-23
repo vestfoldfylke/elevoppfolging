@@ -47,9 +47,7 @@ export class DocumentContentTemplatesDbClient implements IDocumentContentTemplat
 
     const metricBody: MetricCount = {
       name: "DocumentTemplate_Create",
-      description: "Number of document templates created",
-      splitMetricByLabels: true,
-      includeLabelsInSplit: false
+      description: "Number of document templates created"
     }
     const labels: MetricLabel[] = []
 
@@ -83,9 +81,7 @@ export class DocumentContentTemplatesDbClient implements IDocumentContentTemplat
 
     const metricBody: MetricCount = {
       name: "DocumentTemplate_Update",
-      description: "Number of document templates updated",
-      splitMetricByLabels: true,
-      includeLabelsInSplit: false
+      description: "Number of document templates updated"
     }
     const labels: MetricLabel[] = []
 

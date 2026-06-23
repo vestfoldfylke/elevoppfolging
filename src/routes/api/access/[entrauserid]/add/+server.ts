@@ -11,7 +11,7 @@ import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canGrantAndRemoveAccessForSchool, isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { AccessEntry, PrincipalAccess, PrincipalAccessStudent } from "$lib/types/app-types"
-import type { Access, EditorData, NewAccess, StudentClassGroup } from "$lib/types/db/shared-types"
+import type { Access, EditorData, NewAccess, School, StudentClassGroup } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 import { getClassesFromStudents } from "$lib/utils/classes-from-students"
 
@@ -75,6 +75,11 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
       case "MANUELL-PROGRAMOMRÅDE-TILGANG":
         break
     }
+  }
+
+  const school: School | null = await dbClient.schools.getSchool(accessEntryInput.schoolNumber)
+  if (!school) {
+    throw new HTTPError(404, noAccessMessage("School not found"))
   }
 
   const existingAccess: Access | null = await dbClient.access.getPrincipalAccess(entraUserId)
@@ -158,7 +163,7 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
   let updatedAccessId: string
 
   try {
-    updatedAccessId = await dbClient.access.addAccessEntry(entraUserId, accessEntryToAdd)
+    updatedAccessId = await dbClient.access.addAccessEntry(entraUserId, school.name, accessEntryToAdd)
   } catch (error) {
     throw new HTTPError(500, "Feilet ved opprettelse av tilgang", error)
   }

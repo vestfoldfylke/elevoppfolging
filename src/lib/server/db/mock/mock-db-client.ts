@@ -10,6 +10,7 @@ export const mockDbClient: IDbClient = {
     getAppUser: notImplemented
   },
   schools: {
+    getSchool: notImplemented,
     getSchools: notImplemented,
     createSchool: notImplemented,
     updateSchool: notImplemented,

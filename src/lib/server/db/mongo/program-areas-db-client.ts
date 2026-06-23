@@ -41,14 +41,17 @@ export class ProgramAreasDbClient implements IProgramAreasDbClient {
     }))
   }
 
-  async createProgramArea(programArea: NewProgramArea): Promise<string> {
+  async createProgramArea(schoolName: string, programArea: NewProgramArea): Promise<string> {
     const result = await this.programAreasCollection.insertOne(programArea)
 
     const metricBody: MetricCount = {
       name: "ProgramArea_Create",
       description: "Number of program areas created"
     }
-    const labels: MetricLabel[] = [["schoolNumber", programArea.schoolNumber]]
+    const labels: MetricLabel[] = [
+      ["schoolNumber", programArea.schoolNumber],
+      ["schoolName", schoolName]
+    ]
 
     if (!result.insertedId) {
       incrementCount({
@@ -67,14 +70,17 @@ export class ProgramAreasDbClient implements IProgramAreasDbClient {
     return result.insertedId.toString()
   }
 
-  async updateProgramArea(programAreaId: string, programArea: NewProgramArea): Promise<string> {
+  async updateProgramArea(programAreaId: string, schoolName: string, programArea: NewProgramArea): Promise<string> {
     const updateResult = await this.programAreasCollection.updateOne({ _id: new ObjectId(programAreaId) }, { $set: programArea })
 
     const metricBody: MetricCount = {
       name: "ProgramArea_Update",
       description: "Number of program areas updated"
     }
-    const labels: MetricLabel[] = [["schoolNumber", programArea.schoolNumber]]
+    const labels: MetricLabel[] = [
+      ["schoolNumber", programArea.schoolNumber],
+      ["schoolName", schoolName]
+    ]
 
     if (updateResult.matchedCount === 0) {
       incrementCount({
@@ -93,14 +99,17 @@ export class ProgramAreasDbClient implements IProgramAreasDbClient {
     return programAreaId
   }
 
-  async deleteProgramArea(programArea: ProgramArea): Promise<void> {
+  async deleteProgramArea(schoolName: string, programArea: ProgramArea): Promise<void> {
     const deleteResult = await this.programAreasCollection.deleteOne({ _id: new ObjectId(programArea._id) })
 
     const metricBody: MetricCount = {
       name: "ProgramArea_Remove",
       description: "Number of program areas removed"
     }
-    const labels: MetricLabel[] = [["schoolNumber", programArea.schoolNumber]]
+    const labels: MetricLabel[] = [
+      ["schoolNumber", programArea.schoolNumber],
+      ["schoolName", schoolName]
+    ]
 
     if (deleteResult.deletedCount === 0) {
       incrementCount({

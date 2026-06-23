@@ -90,7 +90,10 @@ export class ImportantStuffDbClient implements IImportantStuffDbClient {
       name: "StudentImportantStuff_Upsert",
       description: "Number of student important stuff upserted"
     }
-    const labels: MetricLabel[] = [["schoolNumber", importantStuff.school.schoolNumber]]
+    const labels: MetricLabel[] = [
+      ["schoolNumber", importantStuff.school.schoolNumber],
+      ["schoolName", importantStuff.school.name]
+    ]
 
     if (!result?._id) {
       incrementCount({
@@ -201,7 +204,10 @@ export class ImportantStuffDbClient implements IImportantStuffDbClient {
       name: "GroupImportantStuff_Upsert",
       description: "Number of group important stuff upserted"
     }
-    const labels: MetricLabel[] = [["schoolNumber", importantStuff.school.schoolNumber]]
+    const labels: MetricLabel[] = [
+      ["schoolNumber", importantStuff.school.schoolNumber],
+      ["schoolName", importantStuff.school.name]
+    ]
 
     if (!result?._id) {
       incrementCount({

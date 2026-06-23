@@ -8,7 +8,7 @@ import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canAccessSchoolAdministration, canGrantAndRemoveAccessForSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { EditorData, NewProgramArea } from "$lib/types/db/shared-types"
+import type { EditorData, NewProgramArea, School } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
 type DeleteProgramAreaResponse = ApiRouteMap[`/api/programareas/${NoSlashString}`]["DELETE"]["res"]
@@ -40,8 +40,13 @@ const deleteProgramArea: ApiNextFunction<DeleteProgramAreaResponse> = async ({ p
     throw new HTTPError(403, noAccessMessage("No access to school administration for this school"))
   }
 
+  const school: School | null = await dbClient.schools.getSchool(programAreaToDelete.schoolNumber)
+  if (!school) {
+    throw new HTTPError(404, noAccessMessage("School not found"))
+  }
+
   try {
-    await dbClient.programAreas.deleteProgramArea(programAreaToDelete)
+    await dbClient.programAreas.deleteProgramArea(school.name, programAreaToDelete)
   } catch (error) {
     throw new HTTPError(500, "Feilet ved sletting av gruppering av klasser", error)
   }
@@ -122,6 +127,11 @@ const updateProgramArea: ApiNextFunction<UpdateProgramAreaResponse, UpdateProgra
     throw new HTTPError(403, noAccessMessage("Not allowed to change school of program area"))
   }
 
+  const school: School | null = await dbClient.schools.getSchool(updatedProgramAreaData.schoolNumber)
+  if (!school) {
+    throw new HTTPError(404, noAccessMessage("School not found"))
+  }
+
   const editorData: EditorData = {
     by: {
       entraUserId: principal.id,
@@ -142,7 +152,7 @@ const updateProgramArea: ApiNextFunction<UpdateProgramAreaResponse, UpdateProgra
   let updatedProgramAreaId: string
 
   try {
-    updatedProgramAreaId = await dbClient.programAreas.updateProgramArea(programAreaId, updatedProgramArea)
+    updatedProgramAreaId = await dbClient.programAreas.updateProgramArea(programAreaId, school.name, updatedProgramArea)
   } catch (error) {
     throw new HTTPError(500, "Feilet ved oppdatering av gruppering av klasser", error)
   }

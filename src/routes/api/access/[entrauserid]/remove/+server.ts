@@ -8,6 +8,7 @@ import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { canGrantAndRemoveAccessForSchool, isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
+import type { School } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
 type RemoveAccessResponse = ApiRouteMap[`/api/access/${NoSlashString}/remove`]["POST"]["res"]
@@ -42,6 +43,11 @@ const removeAccess: ApiNextFunction<RemoveAccessResponse, RemoveAccessBody> = as
     if (!canGrantAccess) {
       throw new HTTPError(403, noAccessMessage("No permission to remove access"))
     }
+  }
+
+  const school: School | null = await dbClient.schools.getSchool(accessEntryToRemove.schoolNumber)
+  if (!school) {
+    throw new HTTPError(404, noAccessMessage("School not found"))
   }
 
   const existingAccess = await dbClient.access.getPrincipalAccess(entraUserId)
@@ -83,7 +89,7 @@ const removeAccess: ApiNextFunction<RemoveAccessResponse, RemoveAccessBody> = as
   let updatedAccessId: string
 
   try {
-    updatedAccessId = await dbClient.access.removeAccessEntry(entraUserId, accessEntryToRemove)
+    updatedAccessId = await dbClient.access.removeAccessEntry(entraUserId, school.name, accessEntryToRemove)
   } catch (error) {
     throw new HTTPError(500, "Feilet ved fjerning av tilgang", error)
   }

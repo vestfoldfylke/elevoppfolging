@@ -42,6 +42,7 @@ export interface IAppUsersDbClient {
 }
 
 export interface ISchoolsDbClient {
+  getSchool(schoolNumber: string): Promise<School | null>
   getSchools(): Promise<School[]>
   createSchool(school: NewSchool): Promise<string>
   updateSchool(schoolNumber: string, schoolData: NewSchool): Promise<string>
@@ -52,8 +53,8 @@ export interface IAccessDbClient {
   getPrincipalAccess(entraUserId: string): Promise<Access | null>
   getManualAccess(schoolNumber: string): Promise<Access[]>
   createAccess(access: NewAccess): Promise<string>
-  addAccessEntry(entraUserId: string, accessEntry: AccessEntry): Promise<string>
-  removeAccessEntry(entraUserId: string, accessEntry: ManualAccessEntryInput): Promise<string>
+  addAccessEntry(entraUserId: string, schoolName: string, accessEntry: AccessEntry): Promise<string>
+  removeAccessEntry(entraUserId: string, schoolName: string, accessEntry: ManualAccessEntryInput): Promise<string>
   getSchoolLeaderAccess(): Promise<Access[]>
   getStudentAccess(studentId: string, studentMemberships: StudentMemberships, studentProgramAreaIds: string[]): Promise<Access[]>
 }
@@ -62,9 +63,9 @@ export interface IProgramAreasDbClient {
   getProgramArea(_id: string): Promise<ProgramArea | null>
   getProgramAreasFromClassIds(classSystemIds: string[]): Promise<ProgramArea[]>
   getProgramAreasForSchool(schoolNumber: string): Promise<ProgramArea[]>
-  createProgramArea(programArea: NewProgramArea): Promise<string>
-  updateProgramArea(programAreaId: string, programArea: NewProgramArea): Promise<string>
-  deleteProgramArea(programArea: ProgramArea): Promise<void>
+  createProgramArea(schoolName: string, programArea: NewProgramArea): Promise<string>
+  updateProgramArea(programAreaId: string, schoolName: string, programArea: NewProgramArea): Promise<string>
+  deleteProgramArea(schoolName: string, programArea: ProgramArea): Promise<void>
 }
 
 export interface IStudentsDbClient {
