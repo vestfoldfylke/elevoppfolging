@@ -211,7 +211,7 @@
     {#if document.messages.length > 0 && !isDocumentContentHidden}
       <div class="ds-card__block">
         <div class="ds-label" data-weight="medium" data-size="xs">
-          <EditorInfo editorInfo={document.messages[0].created} isEdited={document.messages[0].modified.at.getTime() > document.messages[0].created.at.getTime()} timestamp={false} modifiedIndicator={false} style="margin: 0;" prefix="{document.messages.length} oppdatering{document.messages.length > 1 ? 'er' : ''}. Siste oppdatering fra " />
+          <EditorInfo editorInfo={document.messages[document.messages.length - 1].created} isEdited={document.messages[document.messages.length - 1].modified.at.getTime() > document.messages[document.messages.length - 1].created.at.getTime()} timestamp={false} modifiedIndicator={false} style="margin: 0;" prefix="{document.messages.length} oppdatering{document.messages.length > 1 ? 'er' : ''}. Siste oppdatering fra " />
         </div>
       </div>
     {/if}
