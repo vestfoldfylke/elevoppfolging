@@ -11,14 +11,18 @@ export class EmailAlertsDbClient implements IEmailAlertsDbClient {
     this.emailAlertsCollection = db.collection<NewDbEmailAlert>("email-alerts")
   }
 
-  async createEmailAlert(emailAlert: NewDbEmailAlert): Promise<string> {
+  async createEmailAlert(schoolName: string, schoolNumber: string, emailAlert: NewDbEmailAlert): Promise<string> {
     const result = await this.emailAlertsCollection.insertOne(emailAlert)
 
     const metricBody: MetricCount = {
       name: "EmailAlert_Create",
       description: "Number of email alerts created"
     }
-    const labels: MetricLabel[] = [["type", emailAlert.type]]
+    const labels: MetricLabel[] = [
+      ["schoolNumber", schoolNumber],
+      ["schoolName", schoolName],
+      ["type", emailAlert.type]
+    ]
 
     if (!result.insertedId) {
       incrementCount({

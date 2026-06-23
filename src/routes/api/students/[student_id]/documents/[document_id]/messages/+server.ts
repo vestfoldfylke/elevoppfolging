@@ -13,7 +13,7 @@ import { canAddMessageToStudentDocument, noAccessMessage } from "$lib/shared-aut
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { DocumentMessageInput, EditorData, NewDbEmailAlert, NewDocumentMessage } from "$lib/types/db/shared-types"
+import type { DocumentMessageInput, EditorData, NewDbEmailAlert, NewDocumentMessage, School } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 import { generateEmailAlertBody, generateEmailAlertReceivers } from "$lib/utils/email-alerts"
 
@@ -97,10 +97,15 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
     throw new HTTPError(403, noAccessMessage("No permission to add message to document"))
   }
 
+  const school: School | null = await dbClient.schools.getSchool(currentDocument.school.schoolNumber)
+  if (!school) {
+    throw new HTTPError(404, noAccessMessage("School not found"))
+  }
+
   let messageId: string
 
   try {
-    messageId = await dbClient.documents.addStudentDocumentMessage(documentId, newMessage)
+    messageId = await dbClient.documents.addStudentDocumentMessage(documentId, school.name, school.schoolNumber, newMessage)
   } catch (error) {
     throw new HTTPError(500, "Feilet ved opprettelse av oppdatering på elevnotat", error)
   }
@@ -153,7 +158,7 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
   }
 
   try {
-    const emailAlertId: string = await dbClient.emailAlerts.createEmailAlert(emailAlert)
+    const emailAlertId: string = await dbClient.emailAlerts.createEmailAlert(school.name, school.schoolNumber, emailAlert)
 
     try {
       await dbClient.auditLogs.createAuditEntry({
