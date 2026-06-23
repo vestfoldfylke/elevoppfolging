@@ -120,6 +120,10 @@
       return { status: "error", message: INVALID_FORM_MESSAGE }
     }
 
+    if (editableTemplate.draft.content.length === 0) {
+      return { status: "error", message: "Malen må ha minst ett element" }
+    }
+
     const { templateId } = await apiFetch(`/api/templates`, {
       method: "POST",
       body: editableTemplate.draft,
@@ -141,6 +145,10 @@
 
     if (!formIsValid) {
       return { status: "error", message: INVALID_FORM_MESSAGE }
+    }
+
+    if (editableTemplate.draft.content.length === 0) {
+      return { status: "error", message: "Malen må ha minst ett element" }
     }
 
     await apiFetch(`/api/templates/${editableTemplate.draft._id as NoSlashString}`, {
