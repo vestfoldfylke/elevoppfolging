@@ -13,7 +13,7 @@ import { canCreateStudentDocument, noAccessMessage } from "$lib/shared-authoriza
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { EditorData, NewDbEmailAlert, NewStudentDocument } from "$lib/types/db/shared-types"
+import type { EditorData, NewDbEmailAlert, NewStudentDocument, School } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 import { generateEmailAlertBody, generateEmailAlertReceivers } from "$lib/utils/email-alerts"
 
@@ -139,6 +139,11 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
     }
   }
 
+  const school: School | null = await dbClient.schools.getSchool(newDocumentData.school.schoolNumber)
+  if (!school) {
+    throw new HTTPError(404, noAccessMessage("School not found"))
+  }
+
   const emailAlert: NewDbEmailAlert = {
     type: "DOCUMENT_CREATED",
     documentId: new ObjectId(documentId),
@@ -149,7 +154,7 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
   }
 
   try {
-    const emailAlertId: string = await dbClient.emailAlerts.createEmailAlert(emailAlert)
+    const emailAlertId: string = await dbClient.emailAlerts.createEmailAlert(school.name, school.schoolNumber, emailAlert)
 
     try {
       await dbClient.auditLogs.createAuditEntry({

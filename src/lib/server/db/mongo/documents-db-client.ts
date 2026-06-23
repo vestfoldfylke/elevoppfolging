@@ -340,7 +340,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     })
   }
 
-  async addStudentDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<string> {
+  async addStudentDocumentMessage(documentId: string, schoolName: string, schoolNumber: string, message: NewDocumentMessage): Promise<string> {
     const documentsCollection = this.encryptionDb.collection<DbEncryptedStudentDocument>(this.documentsCollectionName)
 
     const encryptedMessageWithId: DbEncryptedDocumentMessage = {
@@ -355,11 +355,15 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       name: "StudentDocumentMessage_Create",
       description: "Number of student document messages created"
     }
+    const labels: MetricLabel[] = [
+      ["schoolNumber", schoolNumber],
+      ["schoolName", schoolName]
+    ]
 
     if (!document?._id) {
       incrementCount({
         ...metricBody,
-        labels: [[metricResultName, metricResultFailure]]
+        labels: [...labels, [metricResultName, metricResultFailure]]
       })
 
       throw new Error("Failed to add message to student document")
@@ -367,13 +371,13 @@ export class DocumentsDbClient implements IDocumentsDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [[metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
 
     return encryptedMessageWithId.messageId
   }
 
-  async updateStudentDocumentMessage(documentId: string, messageId: string, messageUpdate: NewDocumentMessage): Promise<string> {
+  async updateStudentDocumentMessage(documentId: string, messageId: string, schoolName: string, schoolNumber: string, messageUpdate: NewDocumentMessage): Promise<string> {
     const documentsCollection = this.encryptionDb.collection<DbEncryptedStudentDocument>(this.documentsCollectionName)
 
     const encryptedMessageWithId: DbEncryptedDocumentMessage = {
@@ -391,11 +395,15 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       name: "StudentDocumentMessage_Update",
       description: "Number of student document messages updated"
     }
+    const labels: MetricLabel[] = [
+      ["schoolNumber", schoolNumber],
+      ["schoolName", schoolName]
+    ]
 
     if (!document?._id) {
       incrementCount({
         ...metricBody,
-        labels: [[metricResultName, metricResultFailure]]
+        labels: [...labels, [metricResultName, metricResultFailure]]
       })
 
       throw new Error("Failed to update message in student document")
@@ -403,7 +411,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [[metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
 
     return messageId
@@ -623,7 +631,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     })
   }
 
-  async addGroupDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<string> {
+  async addGroupDocumentMessage(documentId: string, schoolName: string, schoolNumber: string, message: NewDocumentMessage): Promise<string> {
     const documentsCollection = this.encryptionDb.collection<DbEncryptedGroupDocument>(this.documentsCollectionName)
 
     const encryptedMessageWithId: DbEncryptedDocumentMessage = {
@@ -638,11 +646,15 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       name: "GroupDocumentMessage_Create",
       description: "Number of group document messages created"
     }
+    const labels: MetricLabel[] = [
+      ["schoolNumber", schoolNumber],
+      ["schoolName", schoolName]
+    ]
 
     if (!document?._id) {
       incrementCount({
         ...metricBody,
-        labels: [[metricResultName, metricResultFailure]]
+        labels: [...labels, [metricResultName, metricResultFailure]]
       })
 
       throw new Error("Failed to add message to group document")
@@ -650,13 +662,13 @@ export class DocumentsDbClient implements IDocumentsDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [[metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
 
     return encryptedMessageWithId.messageId
   }
 
-  async updateGroupDocumentMessage(documentId: string, messageId: string, messageUpdate: NewDocumentMessage): Promise<string> {
+  async updateGroupDocumentMessage(documentId: string, messageId: string, schoolName: string, schoolNumber: string, messageUpdate: NewDocumentMessage): Promise<string> {
     const documentsCollection = this.encryptionDb.collection<DbEncryptedGroupDocument>(this.documentsCollectionName)
 
     const encryptedMessageWithId: DbEncryptedDocumentMessage = {
@@ -674,11 +686,15 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       name: "GroupDocumentMessage_Update",
       description: "Number of group document messages updated"
     }
+    const labels: MetricLabel[] = [
+      ["schoolNumber", schoolNumber],
+      ["schoolName", schoolName]
+    ]
 
     if (!document?._id) {
       incrementCount({
         ...metricBody,
-        labels: [[metricResultName, metricResultFailure]]
+        labels: [...labels, [metricResultName, metricResultFailure]]
       })
 
       throw new Error("Failed to update message in group document")
@@ -686,7 +702,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [[metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricResultName, metricResultSuccessful]]
     })
 
     return messageId

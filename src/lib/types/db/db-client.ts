@@ -99,8 +99,8 @@ export interface IDocumentsDbClient {
   updateStudentDocument(documentId: string, documentUpdate: StudentDocumentUpdate): Promise<string>
   deleteStudentDocument(document: StudentDocument): Promise<void>
 
-  addStudentDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<string>
-  updateStudentDocumentMessage(documentId: string, messageId: string, messageUpdate: NewDocumentMessage): Promise<string>
+  addStudentDocumentMessage(documentId: string, schoolName: string, schoolNumber: string, message: NewDocumentMessage): Promise<string>
+  updateStudentDocumentMessage(documentId: string, messageId: string, schoolName: string, schoolNumber: string, messageUpdate: NewDocumentMessage): Promise<string>
 
   getGroupDocuments(systemId: string): Promise<GroupDocument[]>
   getGroupDocumentById(documentId: string): Promise<GroupDocument | null>
@@ -108,8 +108,8 @@ export interface IDocumentsDbClient {
   updateGroupDocument(documentId: string, documentUpdate: GroupDocumentUpdate): Promise<string>
   deleteGroupDocument(document: GroupDocument): Promise<void>
 
-  addGroupDocumentMessage(documentId: string, message: NewDocumentMessage): Promise<string>
-  updateGroupDocumentMessage(documentId: string, messageId: string, messageUpdate: NewDocumentMessage): Promise<string>
+  addGroupDocumentMessage(documentId: string, schoolName: string, schoolNumber: string, message: NewDocumentMessage): Promise<string>
+  updateGroupDocumentMessage(documentId: string, messageId: string, schoolName: string, schoolNumber: string, messageUpdate: NewDocumentMessage): Promise<string>
 }
 
 export interface IImportantStuffDbClient {
@@ -146,7 +146,7 @@ export interface IStudentCheckBoxDbClient {
 }
 
 export interface IEmailAlertsDbClient {
-  createEmailAlert(emailAlert: NewDbEmailAlert): Promise<string>
+  createEmailAlert(schoolName: string, schoolNumber: string, emailAlert: NewDbEmailAlert): Promise<string>
   deleteEmailAlertsByDocumentId(documentId: string): Promise<void>
 }
 

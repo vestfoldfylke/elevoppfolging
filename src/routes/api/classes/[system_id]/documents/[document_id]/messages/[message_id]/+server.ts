@@ -10,7 +10,7 @@ import { canUpdateMessageInGroupDocument, noAccessMessage } from "$lib/shared-au
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { PrincipalAccess, PrincipalAccessStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { DocumentMessageInput, EditorData, GroupDocument, NewDocumentMessage, StudentClassGroup } from "$lib/types/db/shared-types"
+import type { DocumentMessageInput, EditorData, GroupDocument, NewDocumentMessage, School, StudentClassGroup } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 import { getAccessibleClassesFromStudents } from "$lib/utils/classes-from-students"
 
@@ -98,10 +98,15 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
     emailAlertReceivers: messageToUpdate.emailAlertReceivers || []
   }
 
+  const school: School | null = await dbClient.schools.getSchool(currentDocument.school.schoolNumber)
+  if (!school) {
+    throw new HTTPError(404, noAccessMessage("School not found"))
+  }
+
   let updatedMessageId: string
 
   try {
-    updatedMessageId = await dbClient.documents.updateGroupDocumentMessage(documentId, messageId, updatedMessageData)
+    updatedMessageId = await dbClient.documents.updateGroupDocumentMessage(documentId, messageId, school.name, school.schoolNumber, updatedMessageData)
   } catch (error) {
     throw new HTTPError(500, "Feilet ved oppdatering av oppdatering på klassenotat", error)
   }

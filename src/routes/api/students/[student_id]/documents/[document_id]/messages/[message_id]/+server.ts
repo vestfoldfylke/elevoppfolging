@@ -11,7 +11,7 @@ import { canUpdateMessageInStudentDocument, noAccessMessage } from "$lib/shared-
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { DocumentMessageInput, EditorData, NewDocumentMessage } from "$lib/types/db/shared-types"
+import type { DocumentMessageInput, EditorData, NewDocumentMessage, School } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
 type UpdateDocumentMessageResponse = ApiRouteMap[`/api/students/${NoSlashString}/documents/${NoSlashString}/messages/${NoSlashString}`]["PATCH"]["res"]
@@ -94,10 +94,15 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
     emailAlertReceivers: messageToUpdate.emailAlertReceivers || [] // in case the existing message doesn't have emailAlertReceivers
   }
 
+  const school: School | null = await dbClient.schools.getSchool(currentDocument.school.schoolNumber)
+  if (!school) {
+    throw new HTTPError(404, noAccessMessage("School not found"))
+  }
+
   let updatedMessageId: string
 
   try {
-    updatedMessageId = await dbClient.documents.updateStudentDocumentMessage(documentId, messageId, updatedMessageData)
+    updatedMessageId = await dbClient.documents.updateStudentDocumentMessage(documentId, messageId, school.name, school.schoolNumber, updatedMessageData)
   } catch (error) {
     throw new HTTPError(500, "Feilet ved oppdatering av oppdatering på elevnotat", error)
   }
