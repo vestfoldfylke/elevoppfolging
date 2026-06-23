@@ -362,6 +362,7 @@
     padding: 0;
     margin: 0;
     min-height: min-content;
+    min-width: min-content;
   }
 
   .card-button:hover {
