@@ -5,7 +5,7 @@ import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canAccessSchoolAdministration, canGrantAndRemoveAccessForSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeGrantAndRemoveAccessForSchool } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap } from "$lib/types/api/api-route-map"
 import type { EditorData, NewProgramArea, School } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -17,11 +17,12 @@ const addProgramArea: ApiNextFunction<AddProgramAreaResponse, AddProgramAreaBody
   const principalAccess = await getPrincipalAccess(principal.id)
 
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("Ingen tillatelse til å fjerne tilgang"))
+    throw new HTTPError(403, "Ingen tillatelse til å fjerne tilgang")
   }
 
-  if (!canAccessSchoolAdministration(principalAccess)) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til skoleadministrasjon"))
+  const authorizationResult = authorizeGrantAndRemoveAccessForSchool({ principalAccess, schoolNumber: body.schoolNumber })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const newProgramAreaData: AddProgramAreaBody = body
@@ -30,15 +31,11 @@ const addProgramArea: ApiNextFunction<AddProgramAreaResponse, AddProgramAreaBody
     throw new HTTPError(400, `Invalid program area data: ${validationResult.message}`)
   }
 
-  if (!canGrantAndRemoveAccessForSchool(newProgramAreaData.schoolNumber, principalAccess)) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til skoleadministrasjon"))
-  }
-
   const dbClient = getDbClient()
 
   const school: School | null = await dbClient.schools.getSchool(newProgramAreaData.schoolNumber)
   if (!school) {
-    throw new HTTPError(404, noAccessMessage("Skole ikke funnet"))
+    throw new HTTPError(404, "Skole ikke funnet")
   }
 
   const editorData: EditorData = {

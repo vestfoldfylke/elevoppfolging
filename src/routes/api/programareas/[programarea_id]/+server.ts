@@ -6,7 +6,7 @@ import { invalidateProgramAreaCache } from "$lib/server/cache/program-area-cache
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canAccessSchoolAdministration, canGrantAndRemoveAccessForSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeGrantAndRemoveAccessForSchool } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { EditorData, NewProgramArea, School } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -17,11 +17,7 @@ const deleteProgramArea: ApiNextFunction<DeleteProgramAreaResponse> = async ({ p
   const principalAccess = await getPrincipalAccess(principal.id)
 
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
-  }
-
-  if (!canAccessSchoolAdministration(principalAccess)) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til skoleadministrasjon"))
+    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
   }
 
   const programAreaId = requestEvent.params.programarea_id
@@ -36,13 +32,14 @@ const deleteProgramArea: ApiNextFunction<DeleteProgramAreaResponse> = async ({ p
     throw new HTTPError(404, "Gruppering av klasser ikke funnet")
   }
 
-  if (!canGrantAndRemoveAccessForSchool(programAreaToDelete.schoolNumber, principalAccess)) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til skoleadministrasjon"))
+  const authorizationResult = authorizeGrantAndRemoveAccessForSchool({ principalAccess, schoolNumber: programAreaToDelete.schoolNumber })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const school: School | null = await dbClient.schools.getSchool(programAreaToDelete.schoolNumber)
   if (!school) {
-    throw new HTTPError(404, noAccessMessage("Skole ikke funnet"))
+    throw new HTTPError(404, "Skole ikke funnet")
   }
 
   try {
@@ -93,11 +90,7 @@ const updateProgramArea: ApiNextFunction<UpdateProgramAreaResponse, UpdateProgra
   const principalAccess = await getPrincipalAccess(principal.id)
 
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
-  }
-
-  if (!canAccessSchoolAdministration(principalAccess)) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til skoleadministrasjon"))
+    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
   }
 
   const programAreaId = requestEvent.params.programarea_id
@@ -119,17 +112,18 @@ const updateProgramArea: ApiNextFunction<UpdateProgramAreaResponse, UpdateProgra
     throw new HTTPError(404, "Gruppering av klasser ikke funnet")
   }
 
-  if (!canGrantAndRemoveAccessForSchool(programAreaToUpdate.schoolNumber, principalAccess)) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til skoleadministrasjon"))
+  const authorizationResult = authorizeGrantAndRemoveAccessForSchool({ principalAccess, schoolNumber: programAreaToUpdate.schoolNumber })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   if (programAreaToUpdate.schoolNumber !== updatedProgramAreaData.schoolNumber) {
-    throw new HTTPError(403, noAccessMessage("Ikke tillatt å endre skole for grupperingen av klasser"))
+    throw new HTTPError(403, "Ikke tillatt å endre skole for grupperingen av klasser")
   }
 
   const school: School | null = await dbClient.schools.getSchool(updatedProgramAreaData.schoolNumber)
   if (!school) {
-    throw new HTTPError(404, noAccessMessage("Skole ikke funnet"))
+    throw new HTTPError(404, "Skole ikke funnet")
   }
 
   const editorData: EditorData = {

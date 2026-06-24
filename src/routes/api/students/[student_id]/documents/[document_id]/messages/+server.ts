@@ -9,7 +9,7 @@ import { getStudentFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canAddMessageToStudentDocument, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeAddMessageToStudentDocument } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
@@ -41,7 +41,7 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
   // authorization check if principal has access to the student
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
+    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
   }
 
   const student: CachedFrontendStudent | null = await getStudentFromCache(studentId)
@@ -51,11 +51,7 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
 
   const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, principalAccess)
   if (principalAccessForStudent.length === 0) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å opprette oppdatering på elevnotatet"))
-  }
-
-  if (currentDocument.isDocumentLocked) {
-    throw new HTTPError(403, "Elevnotatet er låst og kan ikke redigeres")
+    throw new HTTPError(403, "Ingen tilgang til å opprette oppdatering på elevnotatet")
   }
 
   const newMessageData: DocumentMessageInput = body
@@ -93,13 +89,19 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
 
   const studentDataSharingConsent = await dbClient.studentDataSharingConsents.getStudentDataSharingConsent(studentId)
 
-  if (!canAddMessageToStudentDocument(principal, principalAccessForStudent, currentDocument, studentDataSharingConsent)) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å opprette oppdatering på elevnotatet"))
+  const authorizationResult = authorizeAddMessageToStudentDocument({
+    authenticatedPrincipal: principal,
+    accessToStudent: principalAccessForStudent,
+    document: currentDocument,
+    studentDataSharingConsent
+  })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const school: School | null = await dbClient.schools.getSchool(currentDocument.school.schoolNumber)
   if (!school) {
-    throw new HTTPError(404, noAccessMessage("Skole ikke funnet"))
+    throw new HTTPError(404, "Skole ikke funnet")
   }
 
   let messageId: string

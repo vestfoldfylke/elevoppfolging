@@ -6,7 +6,7 @@ import { getStudentsFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canEditGroupDocument, isSchoolLeaderForSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeDeleteGroupDocument, authorizeEditGroupDocument } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { PrincipalAccess, PrincipalAccessStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
@@ -37,32 +37,29 @@ const removeDocument: ApiNextFunction<RemoveDocumentResponse> = async ({ princip
     throw new HTTPError(404, "Klassenotat ikke funnet")
   }
 
-  if (document.isDocumentLocked) {
-    throw new HTTPError(403, "Klassenotatet er låst og kan ikke slettes")
-  }
-
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
+    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
   }
 
-  if (!isSchoolLeaderForSchool(principalAccess, document.school.schoolNumber)) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å slette dette klassenotatet"))
+  const authorizationResult = authorizeDeleteGroupDocument({ principalAccess, document })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const students: PrincipalAccessStudent[] = await getStudentsFromCache(principalAccess)
   if (students.length === 0) {
-    throw new HTTPError(404, noAccessMessage("Ingen tilgang til noen elever"))
+    throw new HTTPError(404, "Ingen tilgang til noen elever")
   }
 
   const classes: StudentClassGroup[] = getAccessibleClassesFromStudents(principalAccess, students)
   if (classes.length === 0) {
-    throw new HTTPError(404, noAccessMessage("Ingen tilgang til noen klasser"))
+    throw new HTTPError(404, "Ingen tilgang til noen klasser")
   }
 
   const classEntry: StudentClassGroup | undefined = classes.find((classEntry: StudentClassGroup) => classEntry.systemId === systemId)
   if (!classEntry) {
-    throw new HTTPError(404, noAccessMessage("Ingen tilgang til klassen"))
+    throw new HTTPError(404, "Ingen tilgang til klassen")
   }
 
   try {
@@ -123,22 +120,22 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
 
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
+    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
   }
 
   const students: PrincipalAccessStudent[] = await getStudentsFromCache(principalAccess)
   if (students.length === 0) {
-    throw new HTTPError(404, noAccessMessage("Ingen tilgang til noen elever"))
+    throw new HTTPError(404, "Ingen tilgang til noen elever")
   }
 
   const classes: StudentClassGroup[] = getAccessibleClassesFromStudents(principalAccess, students)
   if (classes.length === 0) {
-    throw new HTTPError(404, noAccessMessage("Ingen tilgang til noen klasser"))
+    throw new HTTPError(404, "Ingen tilgang til noen klasser")
   }
 
   const classEntry: StudentClassGroup | undefined = classes.find((classEntry: StudentClassGroup) => classEntry.systemId === systemId)
   if (!classEntry) {
-    throw new HTTPError(404, noAccessMessage("Ingen tilgang til klassen"))
+    throw new HTTPError(404, "Ingen tilgang til klassen")
   }
 
   const dbClient: IDbClient = getDbClient()
@@ -148,16 +145,13 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
     throw new HTTPError(404, "Klassenotat ikke funnet")
   }
 
-  if (!canEditGroupDocument(principal, currentDocument)) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å redigere klassenotatet"))
+  const authorizationResult = authorizeEditGroupDocument({ authenticatedPrincipal: principal, document: currentDocument })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   if (currentDocument.group.systemId !== systemId) {
     throw new HTTPError(400, "System ID in the document data does not match the System ID in the request parameters - what are you doing!!")
-  }
-
-  if (currentDocument.isDocumentLocked) {
-    throw new HTTPError(403, "Klassenotatet er låst og kan ikke redigeres")
   }
 
   const updateDocumentData: UpdateDocumentBody = body

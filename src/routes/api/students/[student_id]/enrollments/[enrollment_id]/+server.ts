@@ -5,7 +5,7 @@ import { upsertStudentInCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canManageManualStudentsOnSchool, isSchoolLeaderForSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeManageManualStudentsOnSchool } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { FrontendStudent, PrincipalAccess } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
@@ -44,11 +44,12 @@ const removeEnrollment: ApiNextFunction<RemoveEnrollmentResponse> = async ({ pri
 
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
+    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
   }
 
-  if (!isSchoolLeaderForSchool(principalAccess, studentEnrollment.school.schoolNumber) || !canManageManualStudentsOnSchool(principalAccess, studentEnrollment.school.schoolNumber)) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å slette dette elevforholdet"))
+  const authorizationResult = authorizeManageManualStudentsOnSchool({ principalAccess, schoolNumber: studentEnrollment.school.schoolNumber })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const editorData: EditorData = {

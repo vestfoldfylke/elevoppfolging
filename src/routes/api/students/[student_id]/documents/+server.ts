@@ -9,7 +9,7 @@ import { getStudentFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canCreateStudentDocument, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeCreateStudentDocument } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
@@ -29,7 +29,7 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
   // authorization check if principal has access to the student
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
+    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
   }
 
   const student: CachedFrontendStudent | null = await getStudentFromCache(studentId)
@@ -39,7 +39,7 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
 
   const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, principalAccess)
   if (principalAccessForStudent.length === 0) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å opprette elevnotat"))
+    throw new HTTPError(403, "Ingen tilgang til å opprette elevnotat")
   }
 
   const newDocumentData: AddDocumentBody = body
@@ -49,8 +49,9 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
     throw new HTTPError(400, `Invalid document data: ${validationResult.message}`)
   }
 
-  if (!canCreateStudentDocument(principalAccessForStudent, newDocumentData)) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å opprette elevnotat på denne skolen"))
+  const authorizationResult = authorizeCreateStudentDocument({ accessToStudent: principalAccessForStudent, newDocument: newDocumentData })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   // create document
@@ -141,7 +142,7 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
 
   const school: School | null = await dbClient.schools.getSchool(newDocumentData.school.schoolNumber)
   if (!school) {
-    throw new HTTPError(404, noAccessMessage("Skole ikke funnet"))
+    throw new HTTPError(404, "Skole ikke funnet")
   }
 
   const emailAlert: NewDbEmailAlert = {

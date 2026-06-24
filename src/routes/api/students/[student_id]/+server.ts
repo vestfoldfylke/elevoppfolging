@@ -7,7 +7,7 @@ import { upsertStudentInCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canManageManualStudentsOnSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeManageManualStudentsOnSchool } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { FrontendStudent } from "$lib/types/app-types"
 import type { ValidationResult } from "$lib/types/data-validation"
@@ -31,11 +31,12 @@ const updateManualStudent: ApiNextFunction<UpdateManualStudentResponse, UpdateMa
 
   const access: Access | null = await dbClient.access.getPrincipalAccess(principal.id)
   if (!access) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
+    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
   }
 
-  if (!canManageManualStudentsOnSchool(access, updateManualStudentData.school.schoolNumber)) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å oppdatere manuell elev på denne skolen"))
+  const authorizationResult = authorizeManageManualStudentsOnSchool({ principalAccess: access, schoolNumber: updateManualStudentData.school.schoolNumber })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   // fetch student
@@ -45,7 +46,7 @@ const updateManualStudent: ApiNextFunction<UpdateManualStudentResponse, UpdateMa
   }
 
   if (student.source !== "MANUAL") {
-    throw new HTTPError(403, noAccessMessage("Kan ikke oppdatere elev registrert i kildesystemet"))
+    throw new HTTPError(403, "Kan ikke oppdatere elev registrert i kildesystemet")
   }
 
   if (updateManualStudentData.ssn !== student.ssn) {

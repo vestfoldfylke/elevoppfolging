@@ -9,7 +9,7 @@ import { getDbClient } from "$lib/server/db/get-db-client"
 import { getFrontendOverviewStudents } from "$lib/server/get-frontend-overview-students"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canManageManualStudentsOnSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeManageManualStudentsOnSchool } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { FrontendOverviewStudentFilter, FrontendStudent, PrincipalAccess } from "$lib/types/app-types"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
@@ -88,11 +88,12 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
 
   const access: Access | null = await dbClient.access.getPrincipalAccess(principal.id)
   if (!access) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
+    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
   }
 
-  if (!canManageManualStudentsOnSchool(access, newManualStudentData.school.schoolNumber)) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å legge til manuell elev på den angitte skolen"))
+  const authorizationResult = authorizeManageManualStudentsOnSchool({ principalAccess: access, schoolNumber: newManualStudentData.school.schoolNumber })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   if (!(env.MOCK_SSN_CHECK?.trim().toLowerCase() === "true")) {

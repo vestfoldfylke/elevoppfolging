@@ -5,7 +5,7 @@ import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeSystemAdmin } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { EditorData, NewDocumentContentTemplate } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -20,8 +20,9 @@ const updateDocumentContentTemplate: ApiNextFunction<UpdateDocumentContentTempla
     throw new HTTPError(400, "Template id from url params is missing?")
   }
 
-  if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å redigere mal"))
+  const authorizationResult = authorizeSystemAdmin({ authenticatedPrincipal: principal, APP_INFO })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const updateTemplateData: UpdateDocumentContentTemplateBody = body
@@ -96,8 +97,9 @@ const deleteDocumentContentTemplate: ApiNextFunction<DeleteDocumentContentTempla
     throw new HTTPError(400, "template id from url params is missing?")
   }
 
-  if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å slette mal"))
+  const authorizationResult = authorizeSystemAdmin({ authenticatedPrincipal: principal, APP_INFO })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const dbClient = getDbClient()

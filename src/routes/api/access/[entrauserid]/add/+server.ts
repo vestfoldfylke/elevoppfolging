@@ -8,7 +8,7 @@ import { getStudentsFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canGrantAndRemoveAccessForSchool, isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeGrantAndRemoveAccessForSchool, authorizeSystemAdmin } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { AccessEntry, PrincipalAccess, PrincipalAccessStudent } from "$lib/types/app-types"
 import type { Access, EditorData, NewAccess, School, StudentClassGroup } from "$lib/types/db/shared-types"
@@ -34,18 +34,20 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
   const dbClient = getDbClient()
 
   if (accessEntryInput.type === "MANUELL-SKOLELEDER-TILGANG") {
-    if (!isSystemAdmin(principal, APP_INFO)) {
-      throw new HTTPError(403, noAccessMessage("Ikke tillatelse til å gi skoleleder tilgang"))
+    const authorizationResult = authorizeSystemAdmin({ authenticatedPrincipal: principal, APP_INFO })
+    if (!authorizationResult.authorized) {
+      throw new HTTPError(403, authorizationResult.message)
     }
   } else {
     // Get access for principal to check if they have access to grant access on their school
     const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
     if (!principalAccess) {
-      throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
+      throw new HTTPError(403, "Ingen tilgang funnet for bruker")
     }
-    const canGrantAccess = canGrantAndRemoveAccessForSchool(accessEntryInput.schoolNumber, principalAccess)
-    if (!canGrantAccess) {
-      throw new HTTPError(403, noAccessMessage("Ikke tillatelse til å håndtere tilganger på denne skolen"))
+
+    const authorizationResult = authorizeGrantAndRemoveAccessForSchool({ schoolNumber: accessEntryInput.schoolNumber, principalAccess })
+    if (!authorizationResult.authorized) {
+      throw new HTTPError(403, authorizationResult.message)
     }
 
     const principalAccessStudents: PrincipalAccessStudent[] = await getStudentsFromCache(principalAccess)
@@ -60,13 +62,13 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
               student._id === accessEntryInput._id && student.principalAccessForStudent.some((a) => a.type === "MANUELL-SKOLELEDER-TILGANG" && a.schoolNumber === accessEntryInput.schoolNumber)
           )
         ) {
-          throw new HTTPError(403, noAccessMessage("Ikke tillatelse til å gi tilgang til denne eleven"))
+          throw new HTTPError(403, "Ikke tillatelse til å gi tilgang til denne eleven")
         }
         break
       }
       case "MANUELL-KLASSE-TILGANG": {
         if (!principalClasses.some((c) => c.systemId === accessEntryInput.systemId && c.school.schoolNumber === accessEntryInput.schoolNumber)) {
-          throw new HTTPError(403, noAccessMessage("Ikke tillatelse til å gi tilgang til denne klassen"))
+          throw new HTTPError(403, "Ikke tillatelse til å gi tilgang til denne klassen")
         }
         break
       }
@@ -79,7 +81,7 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
 
   const school: School | null = await dbClient.schools.getSchool(accessEntryInput.schoolNumber)
   if (!school) {
-    throw new HTTPError(404, noAccessMessage("Skole ikke funnet"))
+    throw new HTTPError(404, "Skole ikke funnet")
   }
 
   const existingAccess: Access | null = await dbClient.access.getPrincipalAccess(entraUserId)

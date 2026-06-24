@@ -6,7 +6,7 @@ import { invalidateStudentAccessCache } from "$lib/server/cache/student-access-c
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canGrantAndRemoveAccessForSchool, isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeGrantAndRemoveAccessForSchool, authorizeSystemAdmin } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { School } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -30,30 +30,32 @@ const removeAccess: ApiNextFunction<RemoveAccessResponse, RemoveAccessBody> = as
   const dbClient = getDbClient()
 
   if (accessEntryToRemove.type === "MANUELL-SKOLELEDER-TILGANG") {
-    if (!isSystemAdmin(principal, APP_INFO)) {
-      throw new HTTPError(403, noAccessMessage("Ikke tillatelse til fjerne skoleleder tilgang"))
+    const authorizationResult = authorizeSystemAdmin({ authenticatedPrincipal: principal, APP_INFO })
+    if (!authorizationResult.authorized) {
+      throw new HTTPError(403, authorizationResult.message)
     }
   } else {
     // Get access for principal to check if they have access to grant access on their school
     const principalAccess = await dbClient.access.getPrincipalAccess(principal.id)
     if (!principalAccess) {
-      throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
+      throw new HTTPError(403, "Ingen tilgang funnet for bruker")
     }
-    const canGrantAccess = canGrantAndRemoveAccessForSchool(accessEntryToRemove.schoolNumber, principalAccess)
-    if (!canGrantAccess) {
-      throw new HTTPError(403, noAccessMessage("Ikke tillatelse til fjerne tilgang"))
+
+    const authorizationResult = authorizeGrantAndRemoveAccessForSchool({ schoolNumber: accessEntryToRemove.schoolNumber, principalAccess })
+    if (!authorizationResult.authorized) {
+      throw new HTTPError(403, authorizationResult.message)
     }
   }
 
   const school: School | null = await dbClient.schools.getSchool(accessEntryToRemove.schoolNumber)
   if (!school) {
-    throw new HTTPError(404, noAccessMessage("Skole ikke funnet"))
+    throw new HTTPError(404, "Skole ikke funnet")
   }
 
   const existingAccess = await dbClient.access.getPrincipalAccess(entraUserId)
 
   if (!existingAccess) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
+    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
   }
 
   // If the same access entry does not exist, we should not remove it

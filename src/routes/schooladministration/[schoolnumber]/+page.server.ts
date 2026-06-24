@@ -3,7 +3,7 @@ import { getStudentsFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canAccessSchoolAdministration, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeSchoolAdministrationAccess } from "$lib/shared-authorization/authorization"
 import type { AccessControlClass, AccessControlStudent, EnrollmentWithinViewAccessWindow, PrincipalAccess, PrincipalAccessStudent, SchoolAdministrationManualStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { Access, ProgramArea } from "$lib/types/db/shared-types"
@@ -29,11 +29,12 @@ const getSchoolAccessAdministrationData: ServerLoadNextFunction<SchoolAccessAdmi
 
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(404, noAccessMessage("Ingen tilgang funnet for bruker"))
+    throw new HTTPError(404, "Ingen tilgang funnet for bruker")
   }
 
-  if (!canAccessSchoolAdministration(principalAccess)) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til skoleadministrasjon"))
+  const authorizationResult = authorizeSchoolAdministrationAccess(principalAccess)
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const manualAccessForSchool: Access[] = await dbClient.access.getManualAccess(schoolNumber)

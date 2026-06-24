@@ -3,7 +3,7 @@
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import { createEditableDraft, type EditableDraft } from "$lib/runes/create-editable-draft.svelte"
-  import { canEditDocumentMessage } from "$lib/shared-authorization/authorization"
+  import { authorizeEditMessageInGroupDocument, authorizeEditMessageInStudentDocument } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { StudentAccessPerson } from "$lib/types/app-types"
   import type { DocumentMessage, DocumentMessageInput, GroupDocument, StudentDocument } from "$lib/types/db/shared-types"
@@ -36,7 +36,17 @@
 
   let editableMessage: EditableDraft<DocumentMessageInput> = createEditableDraft(() => messageSource)
 
-  let canEditMessage: boolean = $derived.by(() => canEditDocumentMessage(page.data.authenticatedPrincipal, message))
+  let canEditMessage: boolean = $derived.by(() => {
+    if ("group" in document) {
+      return authorizeEditMessageInGroupDocument({ authenticatedPrincipal: page.data.authenticatedPrincipal, document, message }).authorized
+    }
+
+    if ("student" in document) {
+      return authorizeEditMessageInStudentDocument({ authenticatedPrincipal: page.data.authenticatedPrincipal, document, message }).authorized
+    }
+
+    return false
+  })
 
   let messageForm: HTMLFormElement | undefined = $state()
 

@@ -5,7 +5,7 @@ import { getStudentFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canViewStudentDocument, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeStudentDocumentAccess } from "$lib/shared-authorization/authorization"
 import type { CachedFrontendStudent, FrontendStudentDocument, PrincipalAccess, PrincipalAccessForStudent, StudentAccessPerson, StudentUnavailableSchoolDocuments } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { DocumentContentTemplate, SchoolInfo, StudentDataSharingConsent, StudentDocument, StudentImportantStuff } from "$lib/types/db/shared-types"
@@ -57,7 +57,7 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id) // Vi må hente ut tilgangene til brukeren for å vite om de har tilgang til eleven, og hva slags tilgang de har
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
+    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
   }
 
   const student: CachedFrontendStudent | null = await getStudentFromCache(studentId)
@@ -68,7 +68,7 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
   const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, principalAccess)
 
   if (principalAccessForStudent.length === 0) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til eleven"))
+    throw new HTTPError(403, "Ingen tilgang til eleven")
   }
 
   const accessSchoolsForStudent: string[] = Array.from(new Set(principalAccessForStudent.map((accessEntry) => accessEntry.schoolNumber)))
@@ -86,9 +86,9 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
       return bDate - aDate
     })
     .map((document) => {
-      const canViewResult = canViewStudentDocument(principal, principalAccessForStudent, document, studentDataSharingConsent)
-      if (canViewResult.canView) {
-        return canViewResult.mustHideDocumentContent ? hideStudentDocumentContent(document) : { ...document, isDocumentContentHidden: false }
+      const authorizationResult = authorizeStudentDocumentAccess({ authenticatedPrincipal: principal, accessToStudent: principalAccessForStudent, document, studentDataSharingConsent })
+      if (authorizationResult.canView) {
+        return authorizationResult.mustHideDocumentContent ? hideStudentDocumentContent(document) : { ...document, isDocumentContentHidden: false }
       }
       return null
     })

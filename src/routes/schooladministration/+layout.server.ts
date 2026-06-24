@@ -3,7 +3,7 @@ import { getAppUsersFromCache } from "$lib/server/cache/users-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canAccessSchoolAdministration, canGrantAndRemoveAccessForSchool, canManageManualStudentsOnSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeGrantAndRemoveAccessForSchool, authorizeManageManualStudentsOnSchool, authorizeSchoolAdministrationAccess } from "$lib/shared-authorization/authorization"
 import type { AccessControlAppUser, PrincipalAccess } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { AppUser, School } from "$lib/types/db/shared-types"
@@ -20,20 +20,22 @@ const getAdministrationAccessData: ServerLoadNextFunction<AdministrationAccessLa
 
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
+    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
   }
 
-  if (!canAccessSchoolAdministration(principalAccess)) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til skoleadministrasjon"))
+  if (!authorizeSchoolAdministrationAccess(principalAccess)) {
+    throw new HTTPError(403, "Ingen tilgang til skoleadministrasjon")
   }
 
   const schools = await dbClient.schools.getSchools()
   const allowedToAdministrateSchools = schools.filter(
-    (school) => canGrantAndRemoveAccessForSchool(school.schoolNumber, principalAccess) || canManageManualStudentsOnSchool(principalAccess, school.schoolNumber)
+    (school) =>
+      authorizeGrantAndRemoveAccessForSchool({ schoolNumber: school.schoolNumber, principalAccess }).authorized ||
+      authorizeManageManualStudentsOnSchool({ principalAccess, schoolNumber: school.schoolNumber }).authorized
   )
 
   if (allowedToAdministrateSchools.length === 0) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å håndtere skoler"))
+    throw new HTTPError(403, "Ingen tilgang til å håndtere skoler")
   }
 
   const appUsers: AppUser[] = await getAppUsersFromCache()

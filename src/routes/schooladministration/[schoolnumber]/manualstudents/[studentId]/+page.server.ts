@@ -1,7 +1,7 @@
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canManageManualStudentsOnSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeManageManualStudentsOnSchool } from "$lib/shared-authorization/authorization"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { Access, AppStudent } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
@@ -26,11 +26,12 @@ const getSchoolAdministrationManualStudentManagementData: ServerLoadNextFunction
 
   const access: Access | null = await dbClient.access.getPrincipalAccess(principal.id)
   if (!access) {
-    throw new HTTPError(404, noAccessMessage("Ingen tilgang funnet for bruker"))
+    throw new HTTPError(404, "Ingen tilgang funnet for bruker")
   }
 
-  if (!canManageManualStudentsOnSchool(access, schoolNumber)) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å administrere manuelle elever på denne skolen"))
+  const authorizationResult = authorizeManageManualStudentsOnSchool({ principalAccess: access, schoolNumber })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   // NOTE: Needs to be an AppStudent and not just a FrontendStudent since we need SSN

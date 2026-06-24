@@ -7,7 +7,7 @@ import { getStudentFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canEditStudentImportantStuff, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeEditStudentImportantStuff } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent } from "$lib/types/app-types"
 import type { EditorData, NewStudentImportantStuff, StudentImportantStuffInput } from "$lib/types/db/shared-types"
@@ -25,7 +25,7 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
   // Authorization
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
+    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
   }
 
   const currentStudent: CachedFrontendStudent | null = await getStudentFromCache(studentId)
@@ -35,7 +35,7 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
 
   const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(currentStudent, principalAccess)
   if (principalAccessForStudent.length === 0) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til eleven"))
+    throw new HTTPError(403, "Ingen tilgang til eleven")
   }
 
   const studentImportantStuffData: StudentImportantStuffInput = body
@@ -46,9 +46,9 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
     throw new HTTPError(400, `Invalid request body: ${validationResult.message}`)
   }
 
-  const canEditImportantStuff = canEditStudentImportantStuff(studentImportantStuffData.school.schoolNumber, principalAccessForStudent)
-  if (!canEditImportantStuff) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å redigere viktig informasjon på eleven"))
+  const authorizationResult = authorizeEditStudentImportantStuff({ importantStuffSchoolNumber: studentImportantStuffData.school.schoolNumber, accessToStudent: principalAccessForStudent })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const dbClient = getDbClient()

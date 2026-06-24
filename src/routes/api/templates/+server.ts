@@ -5,7 +5,7 @@ import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeSystemAdmin } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap } from "$lib/types/api/api-route-map"
 import type { EditorData, NewDocumentContentTemplate } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -14,8 +14,9 @@ type AddDocumentContentTemplateResponse = ApiRouteMap["/api/templates"]["POST"][
 type AddDocumentContentTemplateBody = ApiRouteMap["/api/templates"]["POST"]["req"]
 
 const addDocumentContentTemplate: ApiNextFunction<AddDocumentContentTemplateResponse, AddDocumentContentTemplateBody> = async ({ principal, body }) => {
-  if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å opprette mal"))
+  const authorizationResult = authorizeSystemAdmin({ authenticatedPrincipal: principal, APP_INFO })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const newTemplateData: AddDocumentContentTemplateBody = body

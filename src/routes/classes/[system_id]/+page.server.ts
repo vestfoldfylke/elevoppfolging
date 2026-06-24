@@ -3,7 +3,6 @@ import { getStudentsFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
-import { noAccessMessage } from "$lib/shared-authorization/authorization"
 import type { PrincipalAccess, PrincipalAccessStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { DocumentContentTemplate, GroupDocument, GroupImportantStuff, StudentClassGroup } from "$lib/types/db/shared-types"
@@ -27,13 +26,13 @@ const getClassGroup: ServerLoadNextFunction<ClassPageData> = async ({ principal,
 
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
+    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
   }
 
   const classStudents = await getStudentsFromCache(principalAccess, { classSystemIds: [systemId] })
 
   if (classStudents.length === 0) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til noen elever i denne klassen"))
+    throw new HTTPError(403, "Ingen tilgang til noen elever i denne klassen")
   }
 
   const principalClasses: StudentClassGroup[] = getAccessibleClassesFromStudents(principalAccess, classStudents)
@@ -41,7 +40,7 @@ const getClassGroup: ServerLoadNextFunction<ClassPageData> = async ({ principal,
   const classGroup = principalClasses.find((classEntry) => classEntry.systemId === systemId)
 
   if (!classGroup) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til denne klassen"))
+    throw new HTTPError(403, "Ingen tilgang til denne klassen")
   }
 
   const dbClient: IDbClient = getDbClient()

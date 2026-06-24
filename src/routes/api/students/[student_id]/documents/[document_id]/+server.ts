@@ -7,7 +7,7 @@ import { getStudentFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canEditStudentDocument, isSchoolLeaderForSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeDeleteStudentDocument, authorizeEditStudentDocument } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
@@ -39,15 +39,12 @@ const removeDocument: ApiNextFunction<RemoveDocumentResponse> = async ({ princip
 
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
+    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
   }
 
-  if (!isSchoolLeaderForSchool(principalAccess, document.school.schoolNumber)) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å slette dette elevnotatet"))
-  }
-
-  if (document.isDocumentLocked) {
-    throw new HTTPError(403, "Elevnotatet er låst og kan ikke slettes")
+  const authorizationResult = authorizeDeleteStudentDocument({ principalAccess, document })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   try {
@@ -111,7 +108,7 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
 
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
+    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
   }
 
   const student: CachedFrontendStudent | null = await getStudentFromCache(studentId)
@@ -121,7 +118,7 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
 
   const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, principalAccess)
   if (principalAccessForStudent.length === 0) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å redigere elevnotatet"))
+    throw new HTTPError(403, "Ingen tilgang til å redigere elevnotatet")
   }
 
   const dbClient: IDbClient = getDbClient()
@@ -131,8 +128,9 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
     throw new HTTPError(404, "Elevnotat ikke funnet")
   }
 
-  if (!canEditStudentDocument(principal, principalAccessForStudent, currentDocument)) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å redigere elevnotatet"))
+  const authorizationResult = authorizeEditStudentDocument({ authenticatedPrincipal: principal, accessToStudent: principalAccessForStudent, document: currentDocument })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   if (currentDocument.student._id !== studentId) {

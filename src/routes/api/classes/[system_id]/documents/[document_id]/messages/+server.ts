@@ -6,7 +6,7 @@ import { getStudentsFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeAddMessageToGroupDocument } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { PrincipalAccess, PrincipalAccessStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
@@ -37,26 +37,27 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
 
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
+    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
   }
 
   const students: PrincipalAccessStudent[] = await getStudentsFromCache(principalAccess)
   if (students.length === 0) {
-    throw new HTTPError(404, noAccessMessage("Ingen tilgang til noen elever"))
+    throw new HTTPError(404, "Ingen tilgang til noen elever")
   }
 
   const classes: StudentClassGroup[] = getAccessibleClassesFromStudents(principalAccess, students)
   if (classes.length === 0) {
-    throw new HTTPError(404, noAccessMessage("Ingen tilgang til noen klasser"))
+    throw new HTTPError(404, "Ingen tilgang til noen klasser")
   }
 
   const classEntry: StudentClassGroup | undefined = classes.find((classEntry: StudentClassGroup) => classEntry.systemId === systemId)
   if (!classEntry) {
-    throw new HTTPError(404, noAccessMessage("Ingen tilgang til klassen"))
+    throw new HTTPError(404, "Ingen tilgang til klassen")
   }
 
-  if (currentDocument.isDocumentLocked) {
-    throw new HTTPError(403, "Klassenotatet er låst og kan ikke redigeres")
+  const authorizationResult = authorizeAddMessageToGroupDocument({ document: currentDocument, principalClasses: classes })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const newMessageData: DocumentMessageInput = body
@@ -86,7 +87,7 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
 
   const school: School | null = await dbClient.schools.getSchool(currentDocument.school.schoolNumber)
   if (!school) {
-    throw new HTTPError(404, noAccessMessage("Skole ikke funnet"))
+    throw new HTTPError(404, "Skole ikke funnet")
   }
 
   let messageId: string

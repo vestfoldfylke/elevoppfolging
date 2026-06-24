@@ -7,7 +7,7 @@ import { getStudentFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canEditStudentDataSharingConsent, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeEditStudentDataSharingConsent } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { EditorData, NewStudentDataSharingConsent, StudentDataSharingConsent } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -24,7 +24,7 @@ const updateStudentDataSharingConsent: ApiNextFunction<PatchConsentResponse, Pat
   // Authorization
   const principalAccess = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
+    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
   }
 
   const currentStudent = await getStudentFromCache(studentId)
@@ -34,12 +34,12 @@ const updateStudentDataSharingConsent: ApiNextFunction<PatchConsentResponse, Pat
 
   const principalAccessForStudent = getPrincipalAccessForStudent(currentStudent, principalAccess)
   if (principalAccessForStudent.length === 0) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å redigere elevsamtykke"))
+    throw new HTTPError(403, "Ingen tilgang til å redigere elevsamtykke")
   }
 
-  const canConsentForStudent = canEditStudentDataSharingConsent(principalAccessForStudent)
-  if (!canConsentForStudent) {
-    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å redigere elevsamtykke"))
+  const authorizationResult = authorizeEditStudentDataSharingConsent(principalAccessForStudent)
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const validationResult = validateStudentDataSharingConsentData(body)
