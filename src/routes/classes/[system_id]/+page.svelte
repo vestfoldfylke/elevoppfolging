@@ -3,7 +3,7 @@
   import NewDocument from "$lib/components/Document/NewDocument.svelte"
   import ImportantGroupStuff from "$lib/components/ImportantGroupStuff.svelte"
   import PrincipalAccessTag from "$lib/components/PrincipalAccessTag.svelte"
-  import { authorizeEditGroupDocument, authorizeSchoolLeaderForSchool } from "$lib/shared-authorization/authorization"
+  import { authorizeDeleteGroupDocument, authorizeEditGroupDocument } from "$lib/shared-authorization/authorization"
   import type { PrincipalAccess, PrincipalAccessStudent, ProgramAreaPrincipalAccess, TemplateInfo } from "$lib/types/app-types"
   import type { ClassAutoAccessEntry, ClassManualAccessEntry, GroupDocument, GroupImportantStuff, SchoolLeaderManualAccessEntry } from "$lib/types/db/shared-types"
   import { ACCESS_TYPE_DISPLAY_NAMES } from "$lib/utils/access-constants"
@@ -213,7 +213,7 @@
         {/each}
       </div>
       {#each filteredDocuments as document (document._id)}
-        <DocumentComponent {document} accessSchools={[data.classGroup.school]} canEditDocument={authorizeEditGroupDocument({ authenticatedPrincipal: data.authenticatedPrincipal, document }).authorized} canRemoveDocument={authorizeSchoolLeaderForSchool({ principalAccess: data.principalAccess, schoolNumber: document.school.schoolNumber }).authorized} groupName={data.classGroup.name} />
+        <DocumentComponent {document} accessSchools={[data.classGroup.school]} canEditDocument={authorizeEditGroupDocument({ authenticatedPrincipal: data.authenticatedPrincipal, document }).authorized} canRemoveDocument={authorizeDeleteGroupDocument({ principalAccess: data.principalAccess, document }).authorized} groupName={data.classGroup.name} />
       {/each}
     {/if}
   </div>

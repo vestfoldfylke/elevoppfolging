@@ -23,8 +23,9 @@ const getAdministrationAccessData: ServerLoadNextFunction<AdministrationAccessLa
     throw new HTTPError(403, "Ingen tilgang funnet for bruker")
   }
 
-  if (!authorizeSchoolAdministrationAccess(principalAccess)) {
-    throw new HTTPError(403, "Ingen tilgang til skoleadministrasjon")
+  const authorizationResult = authorizeSchoolAdministrationAccess(principalAccess)
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const schools = await dbClient.schools.getSchools()

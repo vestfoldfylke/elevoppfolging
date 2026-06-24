@@ -137,10 +137,6 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
     throw new HTTPError(400, "Student ID in the document data does not match the student ID in the request parameters - what are you doing!!")
   }
 
-  if (currentDocument.isDocumentLocked) {
-    throw new HTTPError(403, "Elevnotat er låst og kan ikke redigeres")
-  }
-
   const updateDocumentData: UpdateDocumentBody = body
 
   const validationResult = validateDocument(updateDocumentData)

@@ -16,11 +16,11 @@
     { name: "Klasser", href: "/classes", hrefStartsWith: "/classes" }
   ]
 
-  if (authorizeSchoolAdministrationAccess(page.data.principalAccess)) {
+  if (authorizeSchoolAdministrationAccess(page.data.principalAccess).authorized) {
     menuItems.push({ name: "Skoleadministrasjon", href: "/schooladministration", hrefStartsWith: "/schooladministration" })
   }
 
-  if (authorizeSystemAdmin({ authenticatedPrincipal: page.data.authenticatedPrincipal, APP_INFO: page.data.APP_INFO })) {
+  if (authorizeSystemAdmin({ authenticatedPrincipal: page.data.authenticatedPrincipal, APP_INFO: page.data.APP_INFO }).authorized) {
     menuItems.push({ name: "Systemadministrasjon", href: "/system", hrefStartsWith: "/system" })
   }
 </script>

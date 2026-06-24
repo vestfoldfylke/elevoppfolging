@@ -419,11 +419,18 @@ export function authorizeEditStudentImportantStuff({ importantStuffSchoolNumber,
 }
 
 export type AuthorizeDeleteStudentDocumentInput = {
-  principalAccess: PrincipalAccess
+  principalAccess: PrincipalAccess | null
   document: StudentDocument
 }
 
 export function authorizeDeleteStudentDocument({ principalAccess, document }: AuthorizeDeleteStudentDocumentInput): AuthorizationResult {
+  if (!principalAccess) {
+    return {
+      authorized: false,
+      message: "Ingen tilgang"
+    }
+  }
+
   if (document.isDocumentLocked) {
     return {
       authorized: false,
@@ -435,11 +442,18 @@ export function authorizeDeleteStudentDocument({ principalAccess, document }: Au
 }
 
 export type AuthorizeDeleteGroupDocumentInput = {
-  principalAccess: PrincipalAccess
+  principalAccess: PrincipalAccess | null
   document: GroupDocument
 }
 
 export function authorizeDeleteGroupDocument({ principalAccess, document }: AuthorizeDeleteGroupDocumentInput): AuthorizationResult {
+  if (!principalAccess) {
+    return {
+      authorized: false,
+      message: "Ingen tilgang"
+    }
+  }
+  
   if (document.isDocumentLocked) {
     return {
       authorized: false,

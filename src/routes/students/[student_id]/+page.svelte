@@ -8,7 +8,7 @@
   import PrincipalAccessTags from "$lib/components/PrincipalAccessTags.svelte"
   import DataSharingConsent from "$lib/components/StudentBoxes/DataSharingConsent.svelte"
   import ImportantStuff from "$lib/components/StudentBoxes/ImportantStuff.svelte"
-  import { authorizeEditStudentDataSharingConsent, authorizeEditStudentDocument, authorizeEditStudentImportantStuff, authorizeSchoolLeaderForSchool } from "$lib/shared-authorization/authorization"
+  import { authorizeDeleteStudentDocument, authorizeEditStudentDataSharingConsent, authorizeEditStudentDocument, authorizeEditStudentImportantStuff } from "$lib/shared-authorization/authorization"
   import type { EnrollmentDetails, FrontendStudentDocument, PeriodDetails, TemplateInfo } from "$lib/types/app-types"
   import type { AuditEntryInput, Period, SchoolInfo } from "$lib/types/db/shared-types"
   import { prettifyDate } from "$lib/utils/dates"
@@ -399,7 +399,7 @@
         {/each}
       </div>
       {#each filteredDocuments as document (document._id)}
-        <DocumentComponent referencedOpen={referencedDocumentId === document._id} {document} {accessSchools} canEditDocument={authorizeEditStudentDocument({ authenticatedPrincipal: data.authenticatedPrincipal, accessToStudent: data.principalAccessForStudent, document }).authorized} canRemoveDocument={authorizeSchoolLeaderForSchool({ principalAccess: data.principalAccess, schoolNumber: document.school.schoolNumber }).authorized} studentName={data.student.name} studentDataSharingConsent={data.studentDataSharingConsent?.consent} studentAccessPersons={data.studentAccessPersons} />
+        <DocumentComponent referencedOpen={referencedDocumentId === document._id} {document} {accessSchools} canEditDocument={authorizeEditStudentDocument({ authenticatedPrincipal: data.authenticatedPrincipal, accessToStudent: data.principalAccessForStudent, document }).authorized} canRemoveDocument={authorizeDeleteStudentDocument({ principalAccess: data.principalAccess, document }).authorized} studentName={data.student.name} studentDataSharingConsent={data.studentDataSharingConsent?.consent} studentAccessPersons={data.studentAccessPersons} />
       {/each}
     {/if}
   </div>
