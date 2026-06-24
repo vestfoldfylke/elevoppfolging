@@ -142,10 +142,7 @@ export type AuthorizeManageManualStudentsOnSchoolInput = {
 }
 
 export function authorizeManageManualStudentsOnSchool({ principalAccess, schoolNumber }: AuthorizeManageManualStudentsOnSchoolInput): AuthorizationResult {
-  if (
-    authorizeSchoolLeaderForSchool({ principalAccess, schoolNumber }).authorized ||
-    principalAccess.manageManualStudentsForSchools.some((accessEntry) => accessEntry.schoolNumber === schoolNumber)
-  ) {
+  if (authorizeSchoolLeaderForSchool({ principalAccess, schoolNumber }).authorized || principalAccess.manageManualStudentsForSchools.some((accessEntry) => accessEntry.schoolNumber === schoolNumber)) {
     return {
       authorized: true
     }
