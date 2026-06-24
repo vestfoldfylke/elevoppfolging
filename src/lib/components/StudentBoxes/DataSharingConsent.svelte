@@ -74,7 +74,11 @@
         <ds-field class="ds-field">
           <input id="sharing-consent-checkbox" class="ds-input" type="checkbox" bind:checked={editableSharingConsent.draft.consent} />
           <label class="ds-label" data-weight="regular" for="sharing-consent-checkbox">Eleven har samtykket til deling av notater på tvers av skoler</label>
-          <!--<div data-field="description">Description</div>-->
+        </ds-field>
+        <br />
+
+        <ds-field class="ds-field">
+          <a class="ds-link" href="https://dialog.vestfoldfylke.no/dialogue/VFK-221" target="_blank" rel="noopener noreferrer">Skjema for samtykke til deling av elevinformasjon</a>
         </ds-field>
         <br />
 
