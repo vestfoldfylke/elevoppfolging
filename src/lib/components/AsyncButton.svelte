@@ -98,7 +98,7 @@
 <style>
   .error-message {
     position: fixed;
-    z-index: 10;
+    z-index: 100;
     top: calc(10vh - 70px);
     left: calc(100vw - 375px);
     margin: 0;
