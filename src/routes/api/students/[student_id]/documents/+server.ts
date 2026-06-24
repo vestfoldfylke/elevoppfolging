@@ -29,17 +29,17 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
   // authorization check if principal has access to the student
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
   }
 
   const student: CachedFrontendStudent | null = await getStudentFromCache(studentId)
   if (!student) {
-    throw new HTTPError(400, "Student not found. Cannot add document for non-existing student.")
+    throw new HTTPError(400, "Elev ikke funnet")
   }
 
   const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, principalAccess)
   if (principalAccessForStudent.length === 0) {
-    throw new HTTPError(403, noAccessMessage("No permission to add document"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å opprette elevnotat"))
   }
 
   const newDocumentData: AddDocumentBody = body
@@ -50,7 +50,7 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
   }
 
   if (!canCreateStudentDocument(principalAccessForStudent, newDocumentData)) {
-    throw new HTTPError(403, noAccessMessage("No permission to add document for the specified school"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å opprette elevnotat på denne skolen"))
   }
 
   // create document
@@ -141,7 +141,7 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
 
   const school: School | null = await dbClient.schools.getSchool(newDocumentData.school.schoolNumber)
   if (!school) {
-    throw new HTTPError(404, noAccessMessage("School not found"))
+    throw new HTTPError(404, noAccessMessage("Skole ikke funnet"))
   }
 
   const emailAlert: NewDbEmailAlert = {

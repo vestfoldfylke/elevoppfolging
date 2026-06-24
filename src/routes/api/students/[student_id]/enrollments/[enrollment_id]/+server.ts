@@ -30,25 +30,25 @@ const removeEnrollment: ApiNextFunction<RemoveEnrollmentResponse> = async ({ pri
 
   const student: AppStudent | null = await dbClient.students.getStudentById(studentId)
   if (!student) {
-    throw new HTTPError(404, "Student not found. Cannot delete studentEnrollment for non-existing student.")
+    throw new HTTPError(404, "Elev ikke funnet")
   }
 
   const studentEnrollment: StudentEnrollment | undefined = student.studentEnrollments.find((enrollment: StudentEnrollment) => enrollment.systemId === enrollmentId)
   if (!studentEnrollment) {
-    throw new HTTPError(404, "Enrollment not found. Cannot delete non-existing student enrollment.")
+    throw new HTTPError(404, "Elevforhold ikke funnet")
   }
 
   if (studentEnrollment.source !== "MANUAL") {
-    throw new HTTPError(403, "Cannot delete student enrollment registered in source system")
+    throw new HTTPError(403, "Kan ikke slette elevforhold registrert i kildesystemet")
   }
 
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
   }
 
   if (!isSchoolLeaderForSchool(principalAccess, studentEnrollment.school.schoolNumber) || !canManageManualStudentsOnSchool(principalAccess, studentEnrollment.school.schoolNumber)) {
-    throw new HTTPError(403, noAccessMessage("No permission to delete this student enrollment"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å slette dette elevforholdet"))
   }
 
   const editorData: EditorData = {

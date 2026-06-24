@@ -24,22 +24,22 @@ const updateGroupImportantStuff: ApiNextFunction<PatchGroupImportantStuffRespons
 
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
   }
 
   const students: PrincipalAccessStudent[] = await getStudentsFromCache(principalAccess)
   if (students.length === 0) {
-    throw new HTTPError(404, noAccessMessage("No access to any students"))
+    throw new HTTPError(404, noAccessMessage("Ingen tilgang til noen elever"))
   }
 
   const classes: StudentClassGroup[] = getAccessibleClassesFromStudents(principalAccess, students)
   if (classes.length === 0) {
-    throw new HTTPError(404, noAccessMessage("No access to any class"))
+    throw new HTTPError(404, noAccessMessage("Ingen tilgang til noen klasser"))
   }
 
   const classEntry: StudentClassGroup | undefined = classes.find((classEntry: StudentClassGroup) => classEntry.systemId === systemId)
   if (!classEntry) {
-    throw new HTTPError(404, noAccessMessage("No access to class"))
+    throw new HTTPError(404, noAccessMessage("Ingen tilgang til klassen"))
   }
 
   const groupImportantStuffData: GroupImportantStuffInput = body

@@ -31,21 +31,21 @@ const updateManualStudent: ApiNextFunction<UpdateManualStudentResponse, UpdateMa
 
   const access: Access | null = await dbClient.access.getPrincipalAccess(principal.id)
   if (!access) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
   }
 
   if (!canManageManualStudentsOnSchool(access, updateManualStudentData.school.schoolNumber)) {
-    throw new HTTPError(403, noAccessMessage("No permission to update manual student on the specified school"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å oppdatere manuell elev på denne skolen"))
   }
 
   // fetch student
   const student: AppStudent | null = await dbClient.students.getStudentById(updateManualStudentData.studentId)
   if (!student) {
-    throw new HTTPError(404, "Student not found")
+    throw new HTTPError(404, "Elev ikke funnet")
   }
 
   if (student.source !== "MANUAL") {
-    throw new HTTPError(403, noAccessMessage("Cannot update student that is registered in source system"))
+    throw new HTTPError(403, noAccessMessage("Kan ikke oppdatere elev registrert i kildesystemet"))
   }
 
   if (updateManualStudentData.ssn !== student.ssn) {

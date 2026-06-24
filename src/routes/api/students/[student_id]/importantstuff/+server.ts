@@ -25,17 +25,17 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
   // Authorization
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
   }
 
   const currentStudent: CachedFrontendStudent | null = await getStudentFromCache(studentId)
   if (!currentStudent) {
-    throw new HTTPError(404, "Student not found, cannot consent to non-existing student")
+    throw new HTTPError(404, "Elev ikke funnet")
   }
 
   const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(currentStudent, principalAccess)
   if (principalAccessForStudent.length === 0) {
-    throw new HTTPError(403, noAccessMessage("No permission to student"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til eleven"))
   }
 
   const studentImportantStuffData: StudentImportantStuffInput = body
@@ -48,7 +48,7 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
 
   const canEditImportantStuff = canEditStudentImportantStuff(studentImportantStuffData.school.schoolNumber, principalAccessForStudent)
   if (!canEditImportantStuff) {
-    throw new HTTPError(403, noAccessMessage("Insufficient access level to edit student important stuff"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å redigere viktig informasjon på eleven"))
   }
 
   const dbClient = getDbClient()

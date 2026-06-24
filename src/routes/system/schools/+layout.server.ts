@@ -16,7 +16,7 @@ type AdminSchoolsLayoutData = {
 
 const getAdminSchoolsData: ServerLoadNextFunction<AdminSchoolsLayoutData> = async ({ principal }) => {
   if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, noAccessMessage("No permission to handle schools"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å håndtere skoler"))
   }
 
   const dbClient: IDbClient = getDbClient()

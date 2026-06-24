@@ -88,11 +88,11 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
 
   const access: Access | null = await dbClient.access.getPrincipalAccess(principal.id)
   if (!access) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
   }
 
   if (!canManageManualStudentsOnSchool(access, newManualStudentData.school.schoolNumber)) {
-    throw new HTTPError(403, noAccessMessage("No permission to add manual student to the specified school"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å legge til manuell elev på den angitte skolen"))
   }
 
   if (!(env.MOCK_SSN_CHECK?.trim().toLowerCase() === "true")) {

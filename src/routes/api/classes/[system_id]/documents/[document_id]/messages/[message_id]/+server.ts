@@ -35,22 +35,22 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
 
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
   }
 
   const students: PrincipalAccessStudent[] = await getStudentsFromCache(principalAccess)
   if (students.length === 0) {
-    throw new HTTPError(404, noAccessMessage("No access to any students"))
+    throw new HTTPError(404, noAccessMessage("Ingen tilgang til noen elever"))
   }
 
   const classes: StudentClassGroup[] = getAccessibleClassesFromStudents(principalAccess, students)
   if (classes.length === 0) {
-    throw new HTTPError(404, noAccessMessage("No access to any class"))
+    throw new HTTPError(404, noAccessMessage("Ingen tilgang til noen klasser"))
   }
 
   const classEntry: StudentClassGroup | undefined = classes.find((classEntry: StudentClassGroup) => classEntry.systemId === systemId)
   if (!classEntry) {
-    throw new HTTPError(404, noAccessMessage("No access to class"))
+    throw new HTTPError(404, noAccessMessage("Ingen tilgang til klassen"))
   }
 
   const updateMessageData: DocumentMessageInput = body
@@ -63,20 +63,20 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
 
   const currentDocument: GroupDocument | null = await dbClient.documents.getGroupDocumentById(documentId)
   if (!currentDocument) {
-    throw new HTTPError(404, "Document not found, cannot update message to non-existing document...")
+    throw new HTTPError(404, "Klassenotat ikke funnet")
   }
 
   const messageToUpdate = currentDocument.messages.find((message) => message.messageId === messageId)
   if (!messageToUpdate) {
-    throw new HTTPError(404, "Message not found, cannot update non-existing message...")
+    throw new HTTPError(404, "Oppdatering ikke funnet")
   }
 
   if (!canUpdateMessageInGroupDocument(principal, messageToUpdate)) {
-    throw new HTTPError(403, noAccessMessage("No permission to update message on document"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å oppdatere oppdateringen på notatet"))
   }
 
   if (currentDocument.isDocumentLocked) {
-    throw new HTTPError(403, "Document is locked and cannot be edited")
+    throw new HTTPError(403, "Klassenotatet er låst og kan ikke redigeres")
   }
 
   const editorData: EditorData = {
@@ -100,7 +100,7 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
 
   const school: School | null = await dbClient.schools.getSchool(currentDocument.school.schoolNumber)
   if (!school) {
-    throw new HTTPError(404, noAccessMessage("School not found"))
+    throw new HTTPError(404, noAccessMessage("Skole ikke funnet"))
   }
 
   let updatedMessageId: string

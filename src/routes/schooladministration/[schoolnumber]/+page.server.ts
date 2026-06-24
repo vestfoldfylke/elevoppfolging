@@ -29,11 +29,11 @@ const getSchoolAccessAdministrationData: ServerLoadNextFunction<SchoolAccessAdmi
 
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(404, noAccessMessage("No access found for principal"))
+    throw new HTTPError(404, noAccessMessage("Ingen tilgang funnet for bruker"))
   }
 
   if (!canAccessSchoolAdministration(principalAccess)) {
-    throw new HTTPError(403, noAccessMessage("No permission to access school administration"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til skoleadministrasjon"))
   }
 
   const manualAccessForSchool: Access[] = await dbClient.access.getManualAccess(schoolNumber)

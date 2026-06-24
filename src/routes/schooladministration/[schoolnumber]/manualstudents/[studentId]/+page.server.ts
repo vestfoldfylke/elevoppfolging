@@ -26,17 +26,17 @@ const getSchoolAdministrationManualStudentManagementData: ServerLoadNextFunction
 
   const access: Access | null = await dbClient.access.getPrincipalAccess(principal.id)
   if (!access) {
-    throw new HTTPError(404, noAccessMessage("No access found for principal"))
+    throw new HTTPError(404, noAccessMessage("Ingen tilgang funnet for bruker"))
   }
 
   if (!canManageManualStudentsOnSchool(access, schoolNumber)) {
-    throw new HTTPError(403, noAccessMessage("No permission to manage manual students on this school"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å administrere manuelle elever på denne skolen"))
   }
 
   // NOTE: Needs to be an AppStudent and not just a FrontendStudent since we need SSN
   const manualStudent: AppStudent | null = await dbClient.students.getStudentById(studentId)
   if (!manualStudent) {
-    throw new HTTPError(404, "Manual student not found")
+    throw new HTTPError(404, "Manuell elev ikke funnet")
   }
 
   return {

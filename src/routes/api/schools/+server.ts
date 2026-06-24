@@ -15,7 +15,7 @@ type AddSchoolBody = ApiRouteMap["/api/schools"]["POST"]["req"]
 
 const addSchool: ApiNextFunction<AddSchoolResponse, AddSchoolBody> = async ({ principal, body }) => {
   if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, noAccessMessage("No permission to add school"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å opprette skole"))
   }
 
   const newSchoolData: AddSchoolBody = body
@@ -28,10 +28,10 @@ const addSchool: ApiNextFunction<AddSchoolResponse, AddSchoolBody> = async ({ pr
   const allSchools = await dbClient.schools.getSchools()
 
   if (allSchools.some((school) => school.schoolNumber === newSchoolData.schoolNumber)) {
-    throw new HTTPError(400, "A school with the same school number already exists.")
+    throw new HTTPError(400, "Skole med samme skolenummer finnes allerede")
   }
   if (allSchools.some((school) => school.name.toLowerCase() === newSchoolData.name.toLowerCase())) {
-    throw new HTTPError(400, "A school with the same name already exists.")
+    throw new HTTPError(400, "Skole med samme navn finnes allerede")
   }
 
   const editorData: EditorData = {

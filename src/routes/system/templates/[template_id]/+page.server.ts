@@ -14,7 +14,7 @@ type TemplatePageData = {
 
 const getTemplate: ServerLoadNextFunction<TemplatePageData> = async ({ principal, requestEvent }) => {
   if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, noAccessMessage("No permission to handle this template"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å håndtere denne malen"))
   }
 
   const templateId = requestEvent.params.template_id
@@ -58,7 +58,7 @@ const getTemplate: ServerLoadNextFunction<TemplatePageData> = async ({ principal
   const template = await dbClient.documentContentTemplates.getDocumentContentTemplateById(templateId)
 
   if (!template) {
-    throw new HTTPError(404, "Template not found")
+    throw new HTTPError(404, "Mal ikke funnet")
   }
 
   return {

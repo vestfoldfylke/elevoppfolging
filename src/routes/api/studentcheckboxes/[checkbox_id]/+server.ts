@@ -15,12 +15,12 @@ type DeleteStudentCheckBoxResponse = ApiRouteMap[`/api/studentcheckboxes/${NoSla
 
 const deleteStudentCheckBox: ApiNextFunction<DeleteStudentCheckBoxResponse> = async ({ principal, requestEvent }) => {
   if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, noAccessMessage("No permission to delete student checkbox"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å slette checkbox"))
   }
 
   const checkBoxId = requestEvent.params.checkbox_id
   if (!checkBoxId) {
-    throw new HTTPError(400, "Check box ID is missing in request parameters")
+    throw new HTTPError(400, "Checkbox ID is missing in request parameters")
   }
 
   const dbClient = getDbClient()
@@ -28,7 +28,7 @@ const deleteStudentCheckBox: ApiNextFunction<DeleteStudentCheckBoxResponse> = as
   const existingStudentCheckBoxes = await dbClient.studentCheckBoxes.getStudentCheckBoxes()
   const studentCheckBoxToDelete = existingStudentCheckBoxes.find((checkBox) => checkBox._id === checkBoxId)
   if (!studentCheckBoxToDelete) {
-    throw new HTTPError(404, "Student check box not found. Cannot delete non-existing check box.")
+    throw new HTTPError(404, "Checkbox ikke funnet")
   }
 
   try {
@@ -36,7 +36,7 @@ const deleteStudentCheckBox: ApiNextFunction<DeleteStudentCheckBoxResponse> = as
   } catch (error) {
     throw new HTTPError(
       500,
-      `Feilet ved sletting av ${STUDENT_CHECKBOX_DISPLAY_NAMES[studentCheckBoxToDelete.type].single?.toLowerCase() || STUDENT_CHECKBOX_DISPLAY_NAMES[studentCheckBoxToDelete.type].plural.toLowerCase()} sjekkboks`,
+      `Feilet ved sletting av ${STUDENT_CHECKBOX_DISPLAY_NAMES[studentCheckBoxToDelete.type].single?.toLowerCase() || STUDENT_CHECKBOX_DISPLAY_NAMES[studentCheckBoxToDelete.type].plural.toLowerCase()} checkbox`,
       error
     )
   }
@@ -79,12 +79,12 @@ type UpdateStudentCheckBoxBody = ApiRouteMap[`/api/studentcheckboxes/${NoSlashSt
 
 const updateStudentCheckBox: ApiNextFunction<UpdateStudentCheckBoxResponse, UpdateStudentCheckBoxBody> = async ({ principal, requestEvent, body }) => {
   if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, noAccessMessage("No permission to update student checkbox"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å oppdatere checkbox"))
   }
 
   const checkBoxId = requestEvent.params.checkbox_id
   if (!checkBoxId) {
-    throw new HTTPError(400, "Check box ID is missing in request parameters")
+    throw new HTTPError(400, "Checkbox ID is missing in request parameters")
   }
 
   const dbClient = getDbClient()
@@ -92,13 +92,13 @@ const updateStudentCheckBox: ApiNextFunction<UpdateStudentCheckBoxResponse, Upda
   const existingStudentCheckBoxes = await dbClient.studentCheckBoxes.getStudentCheckBoxes()
   const studentCheckBoxToUpdate = existingStudentCheckBoxes.find((checkBox) => checkBox._id === checkBoxId)
   if (!studentCheckBoxToUpdate) {
-    throw new HTTPError(404, "Student check box not found. Cannot update non-existing check box.")
+    throw new HTTPError(404, "Checkbox ikke funnet")
   }
 
   const updatedStudentCheckBoxData: UpdateStudentCheckBoxBody = body
   const validationResult = validateStudentCheckBox(updatedStudentCheckBoxData)
   if (!validationResult.valid) {
-    throw new HTTPError(400, `Invalid student check box data: ${validationResult.message}`)
+    throw new HTTPError(400, `Invalid checkbox data: ${validationResult.message}`)
   }
 
   const editorData: EditorData = {
@@ -125,7 +125,7 @@ const updateStudentCheckBox: ApiNextFunction<UpdateStudentCheckBoxResponse, Upda
   } catch (error) {
     throw new HTTPError(
       500,
-      `Feilet ved oppdatering av ${STUDENT_CHECKBOX_DISPLAY_NAMES[updatedStudentCheckBox.type].single?.toLowerCase() || STUDENT_CHECKBOX_DISPLAY_NAMES[updatedStudentCheckBox.type].plural.toLowerCase()} sjekkboks`,
+      `Feilet ved oppdatering av ${STUDENT_CHECKBOX_DISPLAY_NAMES[updatedStudentCheckBox.type].single?.toLowerCase() || STUDENT_CHECKBOX_DISPLAY_NAMES[updatedStudentCheckBox.type].plural.toLowerCase()} checkbox`,
       error
     )
   }

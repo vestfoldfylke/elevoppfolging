@@ -34,20 +34,20 @@ const removeDocument: ApiNextFunction<RemoveDocumentResponse> = async ({ princip
 
   const document: StudentDocument | null = await dbClient.documents.getStudentDocumentById(documentId)
   if (!document) {
-    throw new HTTPError(404, "Document not found. Cannot delete non-existing document.")
+    throw new HTTPError(404, "Elevnotat ikke funnet")
   }
 
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
   }
 
   if (!isSchoolLeaderForSchool(principalAccess, document.school.schoolNumber)) {
-    throw new HTTPError(403, noAccessMessage("No permission to delete this document"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å slette dette elevnotatet"))
   }
 
   if (document.isDocumentLocked) {
-    throw new HTTPError(403, "Document is locked and cannot be removed")
+    throw new HTTPError(403, "Elevnotatet er låst og kan ikke slettes")
   }
 
   try {
@@ -111,28 +111,28 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
 
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
   }
 
   const student: CachedFrontendStudent | null = await getStudentFromCache(studentId)
   if (!student) {
-    throw new HTTPError(400, "Student not found. Cannot edit the document for non-existing student.")
+    throw new HTTPError(400, "Elev ikke funnet")
   }
 
   const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, principalAccess)
   if (principalAccessForStudent.length === 0) {
-    throw new HTTPError(403, noAccessMessage("No permission to edit the document"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å redigere elevnotatet"))
   }
 
   const dbClient: IDbClient = getDbClient()
 
   const currentDocument = await dbClient.documents.getStudentDocumentById(documentId)
   if (!currentDocument) {
-    throw new HTTPError(404, "Document not found, cannot update non-existing document")
+    throw new HTTPError(404, "Elevnotat ikke funnet")
   }
 
   if (!canEditStudentDocument(principal, principalAccessForStudent, currentDocument)) {
-    throw new HTTPError(403, noAccessMessage("No permission to edit the document"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å redigere elevnotatet"))
   }
 
   if (currentDocument.student._id !== studentId) {
@@ -140,7 +140,7 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
   }
 
   if (currentDocument.isDocumentLocked) {
-    throw new HTTPError(403, "Document is locked and cannot be edited")
+    throw new HTTPError(403, "Elevnotat er låst og kan ikke redigeres")
   }
 
   const updateDocumentData: UpdateDocumentBody = body

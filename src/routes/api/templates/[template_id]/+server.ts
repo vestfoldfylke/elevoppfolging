@@ -17,11 +17,11 @@ const updateDocumentContentTemplate: ApiNextFunction<UpdateDocumentContentTempla
   const templateId = requestEvent.params.template_id
 
   if (!templateId) {
-    throw new HTTPError(400, "template id from url params is missing?")
+    throw new HTTPError(400, "Template id from url params is missing?")
   }
 
   if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, noAccessMessage("No permission to update template"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å redigere mal"))
   }
 
   const updateTemplateData: UpdateDocumentContentTemplateBody = body
@@ -34,7 +34,7 @@ const updateDocumentContentTemplate: ApiNextFunction<UpdateDocumentContentTempla
   const currentTemplate = await dbClient.documentContentTemplates.getDocumentContentTemplateById(templateId)
 
   if (!currentTemplate) {
-    throw new HTTPError(404, "Document content template not found, cannot update non-existing template...")
+    throw new HTTPError(404, "Mal ikke funnet")
   }
 
   const editorData: EditorData = {
@@ -97,14 +97,14 @@ const deleteDocumentContentTemplate: ApiNextFunction<DeleteDocumentContentTempla
   }
 
   if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, noAccessMessage("No permission to delete template"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å slette mal"))
   }
 
   const dbClient = getDbClient()
   const currentTemplate = await dbClient.documentContentTemplates.getDocumentContentTemplateById(templateId)
 
   if (!currentTemplate) {
-    throw new HTTPError(404, "Document content template not found, cannot delete non-existing template...")
+    throw new HTTPError(404, "Mal ikke funnet")
   }
 
   try {

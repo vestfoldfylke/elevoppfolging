@@ -13,7 +13,7 @@ type AuditPageData = {
 
 const getAudits: ServerLoadNextFunction<AuditPageData> = async ({ principal }) => {
   if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, noAccessMessage("No permission to view audit logs"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å se auditlogger"))
   }
 
   const audits: AuditEntry[] = await queryAuditEntries()

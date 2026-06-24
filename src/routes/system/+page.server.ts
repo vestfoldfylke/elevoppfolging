@@ -7,7 +7,7 @@ import type { PageServerLoad } from "./$types"
 
 const onSystemPageLoad: ServerLoadNextFunction<Record<string, never>> = async ({ principal }) => {
   if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, noAccessMessage("No permission to access system page"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til systemadministrasjon"))
   }
 
   return {}

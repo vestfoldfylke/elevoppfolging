@@ -15,7 +15,7 @@ type AddDocumentContentTemplateBody = ApiRouteMap["/api/templates"]["POST"]["req
 
 const addDocumentContentTemplate: ApiNextFunction<AddDocumentContentTemplateResponse, AddDocumentContentTemplateBody> = async ({ principal, body }) => {
   if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, noAccessMessage("No permission to add template"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å opprette mal"))
   }
 
   const newTemplateData: AddDocumentContentTemplateBody = body

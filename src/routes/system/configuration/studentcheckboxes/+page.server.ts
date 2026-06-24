@@ -14,7 +14,7 @@ type StudentCheckBoxesPageData = {
 
 const getStudentCheckBoxes: ServerLoadNextFunction<StudentCheckBoxesPageData> = async ({ principal }) => {
   if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, noAccessMessage("No permission to handle student checkboxes"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å håndtere checkboxes"))
   }
 
   const dbClient: IDbClient = getDbClient()

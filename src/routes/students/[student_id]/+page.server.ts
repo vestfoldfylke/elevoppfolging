@@ -57,18 +57,18 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id) // Vi må hente ut tilgangene til brukeren for å vite om de har tilgang til eleven, og hva slags tilgang de har
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
   }
 
   const student: CachedFrontendStudent | null = await getStudentFromCache(studentId)
   if (!student) {
-    throw new HTTPError(404, "Student not found")
+    throw new HTTPError(404, "Elev ikke funnet")
   }
 
   const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, principalAccess)
 
   if (principalAccessForStudent.length === 0) {
-    throw new HTTPError(403, noAccessMessage("No access to this student"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til eleven"))
   }
 
   const accessSchoolsForStudent: string[] = Array.from(new Set(principalAccessForStudent.map((accessEntry) => accessEntry.schoolNumber)))

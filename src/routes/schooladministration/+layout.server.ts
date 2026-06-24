@@ -20,11 +20,11 @@ const getAdministrationAccessData: ServerLoadNextFunction<AdministrationAccessLa
 
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
   }
 
   if (!canAccessSchoolAdministration(principalAccess)) {
-    throw new HTTPError(403, noAccessMessage("No permission to access school administration"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til skoleadministrasjon"))
   }
 
   const schools = await dbClient.schools.getSchools()
@@ -33,7 +33,7 @@ const getAdministrationAccessData: ServerLoadNextFunction<AdministrationAccessLa
   )
 
   if (allowedToAdministrateSchools.length === 0) {
-    throw new HTTPError(403, noAccessMessage("No permission to administrate any schools"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å håndtere skoler"))
   }
 
   const appUsers: AppUser[] = await getAppUsersFromCache()

@@ -16,20 +16,20 @@ type AddStudentCheckBoxBody = ApiRouteMap["/api/studentcheckboxes"]["POST"]["req
 
 const addStudentCheckBox: ApiNextFunction<AddStudentCheckBoxResponse, AddStudentCheckBoxBody> = async ({ principal, body }) => {
   if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, noAccessMessage("No permission to add student checkbox"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å opprette checkbox"))
   }
 
   const newStudentCheckBoxData: AddStudentCheckBoxBody = body
   const validationResult = validateStudentCheckBox(newStudentCheckBoxData)
   if (!validationResult.valid) {
-    throw new HTTPError(400, `Invalid student-check-box data: ${validationResult.message}`)
+    throw new HTTPError(400, `Invalid checkbox data: ${validationResult.message}`)
   }
 
   const dbClient = getDbClient()
   const currentStudentCheckBoxes = await dbClient.studentCheckBoxes.getStudentCheckBoxes()
 
   if (currentStudentCheckBoxes.some((checkBox) => checkBox.value === newStudentCheckBoxData.value)) {
-    throw new HTTPError(400, "A student check box with the same value already exists.")
+    throw new HTTPError(400, "Checkbox med samme navn finnes allerede.")
   }
 
   const editorData: EditorData = {
@@ -56,7 +56,7 @@ const addStudentCheckBox: ApiNextFunction<AddStudentCheckBoxResponse, AddStudent
   } catch (error) {
     throw new HTTPError(
       500,
-      `Feilet ved opprettelse av ${STUDENT_CHECKBOX_DISPLAY_NAMES[newStudentCheckBox.type].single?.toLowerCase() || STUDENT_CHECKBOX_DISPLAY_NAMES[newStudentCheckBox.type].plural.toLowerCase()} sjekkboks`,
+      `Feilet ved opprettelse av ${STUDENT_CHECKBOX_DISPLAY_NAMES[newStudentCheckBox.type].single?.toLowerCase() || STUDENT_CHECKBOX_DISPLAY_NAMES[newStudentCheckBox.type].plural.toLowerCase()} checkbox`,
       error
     )
   }

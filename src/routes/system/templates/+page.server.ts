@@ -14,7 +14,7 @@ type TemplatePageData = {
 
 const getTemplates: ServerLoadNextFunction<TemplatePageData> = async ({ principal }) => {
   if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, noAccessMessage("No permission to handle templates"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å håndtere maler"))
   }
 
   const dbClient: IDbClient = getDbClient()

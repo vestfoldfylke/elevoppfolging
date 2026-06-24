@@ -35,17 +35,17 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
 
   if (accessEntryInput.type === "MANUELL-SKOLELEDER-TILGANG") {
     if (!isSystemAdmin(principal, APP_INFO)) {
-      throw new HTTPError(403, noAccessMessage("No permission to grant access"))
+      throw new HTTPError(403, noAccessMessage("Ikke tillatelse til å gi skoleleder tilgang"))
     }
   } else {
     // Get access for principal to check if they have access to grant access on their school
     const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
     if (!principalAccess) {
-      throw new HTTPError(403, noAccessMessage("No access found for principal"))
+      throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
     }
     const canGrantAccess = canGrantAndRemoveAccessForSchool(accessEntryInput.schoolNumber, principalAccess)
     if (!canGrantAccess) {
-      throw new HTTPError(403, noAccessMessage("No permission to handle access for this school"))
+      throw new HTTPError(403, noAccessMessage("Ikke tillatelse til å håndtere tilganger på denne skolen"))
     }
 
     const principalAccessStudents: PrincipalAccessStudent[] = await getStudentsFromCache(principalAccess)
@@ -60,13 +60,13 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
               student._id === accessEntryInput._id && student.principalAccessForStudent.some((a) => a.type === "MANUELL-SKOLELEDER-TILGANG" && a.schoolNumber === accessEntryInput.schoolNumber)
           )
         ) {
-          throw new HTTPError(403, noAccessMessage("No permission to grant access to this student"))
+          throw new HTTPError(403, noAccessMessage("Ikke tillatelse til å gi tilgang til denne eleven"))
         }
         break
       }
       case "MANUELL-KLASSE-TILGANG": {
         if (!principalClasses.some((c) => c.systemId === accessEntryInput.systemId && c.school.schoolNumber === accessEntryInput.schoolNumber)) {
-          throw new HTTPError(403, noAccessMessage("No permission to grant access to this class"))
+          throw new HTTPError(403, noAccessMessage("Ikke tillatelse til å gi tilgang til denne klassen"))
         }
         break
       }
@@ -79,7 +79,7 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
 
   const school: School | null = await dbClient.schools.getSchool(accessEntryInput.schoolNumber)
   if (!school) {
-    throw new HTTPError(404, noAccessMessage("School not found"))
+    throw new HTTPError(404, noAccessMessage("Skole ikke funnet"))
   }
 
   const existingAccess: Access | null = await dbClient.access.getPrincipalAccess(entraUserId)
@@ -88,7 +88,7 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
     // Then we create empty
     const appUser = await dbClient.appUsers.getAppUser(entraUserId)
     if (!appUser) {
-      throw new HTTPError(404, "User not found")
+      throw new HTTPError(404, "Bruker ikke funnet")
     }
 
     const newAccess: NewAccess = {
@@ -114,32 +114,32 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
     switch (accessEntryInput.type) {
       case "MANUELL-SKOLELEDER-TILGANG":
         if (existingAccess.leaderForSchools.some((s) => s.schoolNumber === accessEntryInput.schoolNumber && s.type === "MANUELL-SKOLELEDER-TILGANG")) {
-          throw new HTTPError(400, "Access entry already exists")
+          throw new HTTPError(400, "Tilgangsoppføring finnes allerede")
         }
         break
       case "MANUELL-ALLE-ELEVER-VED-SKOLE-TILGANG":
         if (existingAccess.allStudentsAtSchools.some((s) => s.schoolNumber === accessEntryInput.schoolNumber && s.type === "MANUELL-ALLE-ELEVER-VED-SKOLE-TILGANG")) {
-          throw new HTTPError(400, "Access entry already exists")
+          throw new HTTPError(400, "Tilgangsoppføring finnes allerede")
         }
         break
       case "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG":
         if (existingAccess.manageManualStudentsForSchools.some((s) => s.schoolNumber === accessEntryInput.schoolNumber && s.type === "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG")) {
-          throw new HTTPError(400, "Access entry already exists")
+          throw new HTTPError(400, "Tilgangsoppføring finnes allerede")
         }
         break
       case "MANUELL-ELEV-TILGANG":
         if (existingAccess.students.some((s) => s._id === accessEntryInput._id && s.schoolNumber === accessEntryInput.schoolNumber && s.type === "MANUELL-ELEV-TILGANG")) {
-          throw new HTTPError(400, "Access entry already exists")
+          throw new HTTPError(400, "Tilgangsoppføring finnes allerede")
         }
         break
       case "MANUELL-KLASSE-TILGANG":
         if (existingAccess.classes.some((c) => c.systemId === accessEntryInput.systemId && c.schoolNumber === accessEntryInput.schoolNumber && c.type === "MANUELL-KLASSE-TILGANG")) {
-          throw new HTTPError(400, "Access entry already exists")
+          throw new HTTPError(400, "Tilgangsoppføring finnes allerede")
         }
         break
       case "MANUELL-PROGRAMOMRÅDE-TILGANG":
         if (existingAccess.programAreas.some((p) => p._id === accessEntryInput._id && p.schoolNumber === accessEntryInput.schoolNumber && p.type === "MANUELL-PROGRAMOMRÅDE-TILGANG")) {
-          throw new HTTPError(400, "Access entry already exists")
+          throw new HTTPError(400, "Tilgangsoppføring finnes allerede")
         }
         break
     }

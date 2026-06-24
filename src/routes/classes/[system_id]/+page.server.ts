@@ -27,13 +27,13 @@ const getClassGroup: ServerLoadNextFunction<ClassPageData> = async ({ principal,
 
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
   }
 
   const classStudents = await getStudentsFromCache(principalAccess, { classSystemIds: [systemId] })
 
   if (classStudents.length === 0) {
-    throw new HTTPError(403, noAccessMessage("Principal does not have access to any students in this class"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til noen elever i denne klassen"))
   }
 
   const principalClasses: StudentClassGroup[] = getAccessibleClassesFromStudents(principalAccess, classStudents)
@@ -41,7 +41,7 @@ const getClassGroup: ServerLoadNextFunction<ClassPageData> = async ({ principal,
   const classGroup = principalClasses.find((classEntry) => classEntry.systemId === systemId)
 
   if (!classGroup) {
-    throw new HTTPError(403, noAccessMessage("Principal does not have access to this class"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til denne klassen"))
   }
 
   const dbClient: IDbClient = getDbClient()

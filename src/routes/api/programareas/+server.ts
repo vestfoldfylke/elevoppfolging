@@ -17,11 +17,11 @@ const addProgramArea: ApiNextFunction<AddProgramAreaResponse, AddProgramAreaBody
   const principalAccess = await getPrincipalAccess(principal.id)
 
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
+    throw new HTTPError(403, noAccessMessage("Ingen tillatelse til å fjerne tilgang"))
   }
 
   if (!canAccessSchoolAdministration(principalAccess)) {
-    throw new HTTPError(403, noAccessMessage("No access to school administration"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til skoleadministrasjon"))
   }
 
   const newProgramAreaData: AddProgramAreaBody = body
@@ -31,14 +31,14 @@ const addProgramArea: ApiNextFunction<AddProgramAreaResponse, AddProgramAreaBody
   }
 
   if (!canGrantAndRemoveAccessForSchool(newProgramAreaData.schoolNumber, principalAccess)) {
-    throw new HTTPError(403, noAccessMessage("No access to school administration for this school"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til skoleadministrasjon"))
   }
 
   const dbClient = getDbClient()
 
   const school: School | null = await dbClient.schools.getSchool(newProgramAreaData.schoolNumber)
   if (!school) {
-    throw new HTTPError(404, noAccessMessage("School not found"))
+    throw new HTTPError(404, noAccessMessage("Skole ikke funnet"))
   }
 
   const editorData: EditorData = {

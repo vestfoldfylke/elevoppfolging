@@ -24,22 +24,22 @@ const updateStudentDataSharingConsent: ApiNextFunction<PatchConsentResponse, Pat
   // Authorization
   const principalAccess = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
   }
 
   const currentStudent = await getStudentFromCache(studentId)
   if (!currentStudent) {
-    throw new HTTPError(404, "Student not found, cannot consent to non-existing student")
+    throw new HTTPError(404, "Elev ikke funnet")
   }
 
   const principalAccessForStudent = getPrincipalAccessForStudent(currentStudent, principalAccess)
   if (principalAccessForStudent.length === 0) {
-    throw new HTTPError(403, noAccessMessage("No permission to edit student data sharing consent"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å redigere elevsamtykke"))
   }
 
   const canConsentForStudent = canEditStudentDataSharingConsent(principalAccessForStudent)
   if (!canConsentForStudent) {
-    throw new HTTPError(403, noAccessMessage("Insufficient access level to edit student data sharing consent"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å redigere elevsamtykke"))
   }
 
   const validationResult = validateStudentDataSharingConsentData(body)

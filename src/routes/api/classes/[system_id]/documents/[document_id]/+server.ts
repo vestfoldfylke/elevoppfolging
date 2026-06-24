@@ -34,35 +34,35 @@ const removeDocument: ApiNextFunction<RemoveDocumentResponse> = async ({ princip
 
   const document: GroupDocument | null = await dbClient.documents.getGroupDocumentById(documentId)
   if (!document) {
-    throw new HTTPError(404, "Document not found. Cannot delete non-existing document.")
+    throw new HTTPError(404, "Klassenotat ikke funnet")
   }
 
   if (document.isDocumentLocked) {
-    throw new HTTPError(403, "Document is locked and cannot be removed")
+    throw new HTTPError(403, "Klassenotatet er låst og kan ikke slettes")
   }
 
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
   }
 
   if (!isSchoolLeaderForSchool(principalAccess, document.school.schoolNumber)) {
-    throw new HTTPError(403, noAccessMessage("No permission to delete this document"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å slette dette klassenotatet"))
   }
 
   const students: PrincipalAccessStudent[] = await getStudentsFromCache(principalAccess)
   if (students.length === 0) {
-    throw new HTTPError(404, noAccessMessage("No access to any students"))
+    throw new HTTPError(404, noAccessMessage("Ingen tilgang til noen elever"))
   }
 
   const classes: StudentClassGroup[] = getAccessibleClassesFromStudents(principalAccess, students)
   if (classes.length === 0) {
-    throw new HTTPError(404, noAccessMessage("No access to any class"))
+    throw new HTTPError(404, noAccessMessage("Ingen tilgang til noen klasser"))
   }
 
   const classEntry: StudentClassGroup | undefined = classes.find((classEntry: StudentClassGroup) => classEntry.systemId === systemId)
   if (!classEntry) {
-    throw new HTTPError(404, noAccessMessage("No access to class"))
+    throw new HTTPError(404, noAccessMessage("Ingen tilgang til klassen"))
   }
 
   try {
@@ -123,33 +123,33 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
 
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang funnet for bruker"))
   }
 
   const students: PrincipalAccessStudent[] = await getStudentsFromCache(principalAccess)
   if (students.length === 0) {
-    throw new HTTPError(404, noAccessMessage("No access to any students"))
+    throw new HTTPError(404, noAccessMessage("Ingen tilgang til noen elever"))
   }
 
   const classes: StudentClassGroup[] = getAccessibleClassesFromStudents(principalAccess, students)
   if (classes.length === 0) {
-    throw new HTTPError(404, noAccessMessage("No access to any class"))
+    throw new HTTPError(404, noAccessMessage("Ingen tilgang til noen klasser"))
   }
 
   const classEntry: StudentClassGroup | undefined = classes.find((classEntry: StudentClassGroup) => classEntry.systemId === systemId)
   if (!classEntry) {
-    throw new HTTPError(404, noAccessMessage("No access to class"))
+    throw new HTTPError(404, noAccessMessage("Ingen tilgang til klassen"))
   }
 
   const dbClient: IDbClient = getDbClient()
 
   const currentDocument: GroupDocument | null = await dbClient.documents.getGroupDocumentById(documentId)
   if (!currentDocument) {
-    throw new HTTPError(404, "Document not found, cannot update non-existing document")
+    throw new HTTPError(404, "Klassenotat ikke funnet")
   }
 
   if (!canEditGroupDocument(principal, currentDocument)) {
-    throw new HTTPError(403, noAccessMessage("No permission to edit the document"))
+    throw new HTTPError(403, noAccessMessage("Ingen tilgang til å redigere klassenotatet"))
   }
 
   if (currentDocument.group.systemId !== systemId) {
@@ -157,7 +157,7 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
   }
 
   if (currentDocument.isDocumentLocked) {
-    throw new HTTPError(403, "Document is locked and cannot be edited")
+    throw new HTTPError(403, "Klassenotatet er låst og kan ikke redigeres")
   }
 
   const updateDocumentData: UpdateDocumentBody = body
