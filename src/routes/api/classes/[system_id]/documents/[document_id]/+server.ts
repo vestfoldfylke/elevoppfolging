@@ -62,6 +62,10 @@ const removeDocument: ApiNextFunction<RemoveDocumentResponse> = async ({ princip
     throw new HTTPError(404, "Ingen tilgang til klassen")
   }
 
+  if (document.group.systemId !== systemId) {
+    throw new HTTPError(400, "System ID in the document data does not match the System ID in the request parameters!")
+  }
+
   try {
     await dbClient.documents.deleteGroupDocument(document)
     logger.info("Group document with GroupDocumentId {GroupDocumentId} deleted successfully by PrincipalId {PrincipalId}", document._id, principal.id)
