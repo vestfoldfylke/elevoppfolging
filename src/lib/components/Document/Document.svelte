@@ -74,7 +74,7 @@
         .authorized
     }
 
-    return false
+    throw new Error("Document is neither student or group document, can't authorize add message")
   })
 
   // Only the "update" messages shown in the timeline (used for heading + count)
