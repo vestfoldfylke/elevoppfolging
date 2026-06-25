@@ -22,7 +22,7 @@ type ClassPageData = {
 const getClassGroup: ServerLoadNextFunction<ClassPageData> = async ({ principal, requestEvent }) => {
   const systemId: string | undefined = requestEvent.params.system_id
   if (!systemId) {
-    throw new Error("System ID is missing in request parameters")
+    throw new HTTPError(400, "System ID is missing in request parameters")
   }
 
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
