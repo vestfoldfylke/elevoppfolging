@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from "$app/state"
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import { studentDataSharingConsentMessageValidation } from "$lib/data-validation/student-consent-validation"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
@@ -53,6 +54,15 @@
       }
     }
   }
+
+  const copyLinkToClipboard = async (): Promise<void> => {
+    try {
+      await navigator.clipboard.writeText(page.data.APP_INFO.STUDENT_DATA_SHARING_CONSENT_LINK)
+    } catch (error) {
+      alert("Feilet ved kopiering av lenke til utklippstavle. Prøv igjen eller høyreklikk på lenken og velg kopier kobling")
+      console.error(error)
+    }
+  }
 </script>
 
 <div class="ds-card" data-variant="tinted" data-color="brand1">
@@ -78,7 +88,12 @@
         <br />
 
         <ds-field class="ds-field">
-          <a class="ds-link" href="https://dialog.vestfoldfylke.no/dialogue/VFK-221" target="_blank" rel="noopener noreferrer">Skjema for samtykke til deling av elevinformasjon</a>
+          <div class="schema-link-container">
+            <a class="ds-link schema-link-text" href={page.data.APP_INFO.STUDENT_DATA_SHARING_CONSENT_LINK} target="_blank" rel="noopener noreferrer">{page.data.APP_INFO.STUDENT_DATA_SHARING_CONSENT_LINK}</a>
+            <button class="ds-button" data-variant="tertiary" type="button" onclick={copyLinkToClipboard} data-tooltip="Kopier lenke">
+              <span class="material-symbols-outlined">content_copy</span>
+            </button>
+          </div>
         </ds-field>
         <br />
 
@@ -129,5 +144,16 @@
   .ds-card {
     flex: 1;
     min-width: 25rem;
+  }
+
+  .schema-link-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+  }
+
+  .schema-link-text {
+    font-size: var(--ds-font-size-3);
   }
 </style>
