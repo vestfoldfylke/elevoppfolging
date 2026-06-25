@@ -16,19 +16,15 @@ type AddProgramAreaBody = ApiRouteMap["/api/programareas"]["POST"]["req"]
 const addProgramArea: ApiNextFunction<AddProgramAreaResponse, AddProgramAreaBody> = async ({ principal, body }) => {
   const principalAccess = await resolvePrincipalAccess(principal)
 
-  if (!body.schoolNumber || typeof body.schoolNumber !== "string") {
-    throw new HTTPError(400, "School number is missing or invalid in request body")
-  }
-
-  const authorizationResult = authorizeSchoolLeaderForSchool({ principalAccess, schoolNumber: body.schoolNumber })
-  if (!authorizationResult.authorized) {
-    throw new HTTPError(403, authorizationResult.message)
-  }
-
   const newProgramAreaData: AddProgramAreaBody = body
   const validationResult = validateProgramAreaData(newProgramAreaData)
   if (!validationResult.valid) {
     throw new HTTPError(400, `Invalid program area data: ${validationResult.message}`)
+  }
+
+  const authorizationResult = authorizeSchoolLeaderForSchool({ principalAccess, schoolNumber: newProgramAreaData.schoolNumber })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const dbClient = getDbClient()
