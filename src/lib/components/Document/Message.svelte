@@ -6,7 +6,7 @@
   import { authorizeEditMessageInGroupDocument, authorizeEditMessageInStudentDocument } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { PrincipalAccessForStudent, StudentAccessPerson } from "$lib/types/app-types"
-  import type { DocumentMessage, DocumentMessageInput, GroupDocument, StudentDataSharingConsent, StudentDocument } from "$lib/types/db/shared-types"
+  import type { DocumentMessage, DocumentMessageInput, GroupDocument, StudentClassGroup, StudentDataSharingConsent, StudentDocument } from "$lib/types/db/shared-types"
   import AsyncButton, { type AsyncButtonResult } from "../AsyncButton.svelte"
   import EditorInfo from "../EditorInfo.svelte"
   import EmailAlertSelector from "./EmailAlertSelector.svelte"
@@ -19,10 +19,11 @@
     studentAccessPersons?: StudentAccessPerson[]
     principalAccessForStudent?: PrincipalAccessForStudent[]
     emailAlertAvailable?: boolean
+    principalClasses?: StudentClassGroup[]
     callback?: () => void
   }
 
-  let { document, message, editMode, studentDataSharingConsent, studentAccessPersons, principalAccessForStudent, emailAlertAvailable, callback }: PageProps = $props()
+  let { document, message, editMode, studentDataSharingConsent, studentAccessPersons, principalAccessForStudent, emailAlertAvailable, principalClasses, callback }: PageProps = $props()
 
   let messageSource: DocumentMessageInput = $derived.by(() => {
     return {
@@ -39,13 +40,18 @@
 
   let canEditMessage: boolean = $derived.by(() => {
     if ("group" in document) {
-      return authorizeEditMessageInGroupDocument({ authenticatedPrincipal: page.data.authenticatedPrincipal, document, message }).authorized
+      if (!principalClasses) {
+        throw new Error("principalClasses is required to authorize edit message in group document")
+      }
+
+      return authorizeEditMessageInGroupDocument({ authenticatedPrincipal: page.data.authenticatedPrincipal, document, message, principalClasses }).authorized
     }
 
     if ("student" in document) {
       if (!principalAccessForStudent) {
         throw new Error("principalAccessForStudent is required to authorize edit message in student document")
       }
+
       return authorizeEditMessageInStudentDocument({ authenticatedPrincipal: page.data.authenticatedPrincipal, document, message, accessToStudent: principalAccessForStudent }).authorized
     }
 

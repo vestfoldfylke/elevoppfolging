@@ -1,16 +1,18 @@
 <script lang="ts">
   import { tick } from "svelte"
-  import type { StudentAccessPerson } from "$lib/types/app-types"
-  import type { DocumentMessage, EditorData, GroupDocument, StudentDataSharingConsent, StudentDocument } from "$lib/types/db/shared-types"
+  import type { PrincipalAccessForStudent, StudentAccessPerson } from "$lib/types/app-types"
+  import type { DocumentMessage, EditorData, GroupDocument, StudentClassGroup, StudentDataSharingConsent, StudentDocument } from "$lib/types/db/shared-types"
   import Message from "./Message.svelte"
 
   type PageProps = {
     document: StudentDocument | GroupDocument
     studentDataSharingConsent?: StudentDataSharingConsent | null
     studentAccessPersons?: StudentAccessPerson[]
+    principalClasses?: StudentClassGroup[]
+    principalAccessForStudent?: PrincipalAccessForStudent[]
   }
 
-  let { document, studentDataSharingConsent, studentAccessPersons }: PageProps = $props()
+  let { document, studentDataSharingConsent, studentAccessPersons, principalClasses, principalAccessForStudent }: PageProps = $props()
 
   let messageType: "update" | null = $state(null)
 
@@ -55,7 +57,7 @@
 {:else}
   <div id="new-message-container">
     {#if messageType === "update"}
-      <Message {document} editMode={true} message={newUpdate} callback={onNewMessageCreatedOrCancel} {studentDataSharingConsent} {studentAccessPersons} emailAlertAvailable={true} />
+      <Message {document} editMode={true} message={newUpdate} callback={onNewMessageCreatedOrCancel} {studentDataSharingConsent} {studentAccessPersons} {principalClasses} {principalAccessForStudent} emailAlertAvailable={true} />
     {/if}
   </div>
 {/if}

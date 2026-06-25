@@ -368,7 +368,7 @@
               <div class="timeline-item">
                 <span class="timeline-dot"></span>
                 <div class="message-container">
-                  <Message {message} editMode={false} {document} {principalAccessForStudent} />
+                  <Message {message} editMode={false} {document} {principalAccessForStudent} {principalClasses} />
                 </div>
               </div>
             {/each}
@@ -380,7 +380,7 @@
     <!-- Footer -->
     {#if canAddMessage && !isDocumentContentHidden}
       <div class="ds-dialog__block">
-        <NewMessage {document} {studentDataSharingConsent} {studentAccessPersons} />
+        <NewMessage {document} {studentDataSharingConsent} {studentAccessPersons} {principalClasses} {principalAccessForStudent} />
       </div>
     {/if}
   </dialog>
