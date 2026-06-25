@@ -60,6 +60,10 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
     throw new HTTPError(403, authorizationResult.message)
   }
 
+  if (currentDocument.group.systemId !== systemId) {
+    throw new HTTPError(400, "Klassenotat tilhører ikke den angitte klassen!")
+  }
+
   const newMessageData: DocumentMessageInput = body
   const validationResult = validateDocumentMessage(newMessageData)
   if (!validationResult.valid) {
