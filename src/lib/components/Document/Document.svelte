@@ -4,6 +4,7 @@
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import AsyncButton, { type AsyncButtonResult } from "$lib/components/AsyncButton.svelte"
   import { createEditableDraft, type EditableDraft } from "$lib/runes/create-editable-draft.svelte"
+  import { authorizeAddMessageToGroupDocument, authorizeAddMessageToStudentDocument } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { FrontendStudentDocument, PrincipalAccessForStudent, StudentAccessPerson } from "$lib/types/app-types"
   import type { AuditEntryInput, ClassGroup, DocumentInput, GroupDocument, MetricCount, SchoolInfo, StudentClassGroup, StudentDataSharingConsent } from "$lib/types/db/shared-types"
@@ -12,7 +13,6 @@
   import DocumentEditor from "./DocumentEditor.svelte"
   import Message from "./Message.svelte"
   import NewMessage from "./NewMessage.svelte"
-    import { authorizeAddMessageToGroupDocument, authorizeAddMessageToStudentDocument } from "$lib/shared-authorization/authorization";
 
   type PageProps = {
     document: FrontendStudentDocument | GroupDocument
@@ -28,7 +28,19 @@
     referencedOpen?: boolean
   }
 
-  let { document, accessSchools, canEditDocument, canRemoveDocument, studentName, groupName, studentDataSharingConsent, studentAccessPersons, principalAccessForStudent, principalClasses, referencedOpen = false }: PageProps = $props()
+  let {
+    document,
+    accessSchools,
+    canEditDocument,
+    canRemoveDocument,
+    studentName,
+    groupName,
+    studentDataSharingConsent,
+    studentAccessPersons,
+    principalAccessForStudent,
+    principalClasses,
+    referencedOpen = false
+  }: PageProps = $props()
 
   let documentDialog: HTMLDialogElement | undefined = $state()
 
@@ -58,7 +70,8 @@
         throw new Error("studentDataSharingConsent is required to authorize add message in student document")
       }
 
-      return authorizeAddMessageToStudentDocument({ accessToStudent: principalAccessForStudent, document, authenticatedPrincipal: page.data.authenticatedPrincipal, studentDataSharingConsent }).authorized
+      return authorizeAddMessageToStudentDocument({ accessToStudent: principalAccessForStudent, document, authenticatedPrincipal: page.data.authenticatedPrincipal, studentDataSharingConsent })
+        .authorized
     }
 
     return false

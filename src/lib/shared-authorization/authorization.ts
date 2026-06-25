@@ -468,7 +468,7 @@ export function authorizeDeleteGroupDocument({ principalAccess, document }: Auth
       message: "Ingen tilgang"
     }
   }
-  
+
   if (document.isDocumentLocked) {
     return {
       authorized: false,

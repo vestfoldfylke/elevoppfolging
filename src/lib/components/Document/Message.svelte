@@ -16,8 +16,8 @@
     message: DocumentMessage
     editMode: boolean
     studentDataSharingConsent?: StudentDataSharingConsent | null
-    studentAccessPersons?: StudentAccessPerson[],
-    principalAccessForStudent?: PrincipalAccessForStudent[],
+    studentAccessPersons?: StudentAccessPerson[]
+    principalAccessForStudent?: PrincipalAccessForStudent[]
     emailAlertAvailable?: boolean
     callback?: () => void
   }
