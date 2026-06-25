@@ -37,10 +37,6 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
     throw new HTTPError(404, "Klassenotat ikke funnet")
   }
 
-  if (currentDocument.group.systemId !== systemId) {
-    throw new HTTPError(400, "Klassenotat tilhører ikke den angitte klassen!")
-  }
-
   const { classGroup } = await resolveClassContext(principal, systemId)
 
   const messageToUpdate = currentDocument.messages.find((message) => message.messageId === messageId)
@@ -51,6 +47,10 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
   const authorizationResult = authorizeEditMessageInGroupDocument({ authenticatedPrincipal: principal, message: messageToUpdate, document: currentDocument })
   if (!authorizationResult.authorized) {
     throw new HTTPError(403, authorizationResult.message)
+  }
+
+  if (currentDocument.group.systemId !== systemId) {
+    throw new HTTPError(400, "Klassenotat tilhører ikke den angitte klassen!")
   }
 
   const updateMessageData: DocumentMessageInput = body
