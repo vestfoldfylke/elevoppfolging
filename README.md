@@ -17,6 +17,8 @@ AZURE_TENANT_ID="00000000-0000-0000-0000-000000000000" # Used for client-side en
 WEB_APP_URL="http://localhost:5173" # The URL where your SvelteKit app will be running, used in email alerts to provide deep links back to the app
 DOCUMENT_LOCK_START_MM_DD="07-01" # Optional. The start date (month and day) for the document lock period, decides when the school year starts/ends. If not set, document lock will be disabled.
 STUDENT_OVERVIEW_TOP="100" # Optional. The number of students to show in the student overview page. If not set, it defaults to 100.
+BANNER_INFO_MESSAGE="This will be presented in a banner" # Optional. Banner will not be presented if set to an empty string or removed
+STUDENT_DATA_SHARING_CONSENT_LINK="https://link.to.schema" # Required. Link to the schema a student must fill out to consent to data sharing
 ```
 
 ### Document lock
