@@ -38,7 +38,6 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
     throw new HTTPError(404, "Elevnotat ikke funnet")
   }
 
-  // authorization check if principal has access to the student
   const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
   if (!principalAccess) {
     throw new HTTPError(403, "Ingen tilgang funnet for bruker")
@@ -49,9 +48,25 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
     throw new HTTPError(400, "Elev ikke funnet")
   }
 
+  if (currentDocument.student._id !== studentId) {
+    throw new HTTPError(400, "Elevnotat tilhører ikke den angitte eleven!")
+  }
+
   const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, principalAccess)
   if (principalAccessForStudent.length === 0) {
     throw new HTTPError(403, "Ingen tilgang til å opprette oppdatering på elevnotatet")
+  }
+
+  const studentDataSharingConsent = await dbClient.studentDataSharingConsents.getStudentDataSharingConsent(studentId)
+
+  const authorizationResult = authorizeAddMessageToStudentDocument({
+    authenticatedPrincipal: principal,
+    accessToStudent: principalAccessForStudent,
+    document: currentDocument,
+    studentDataSharingConsent
+  })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const newMessageData: DocumentMessageInput = body
@@ -85,18 +100,6 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
       text: newMessageData.content.text
     },
     emailAlertReceivers: validEmailAlertReceivers
-  }
-
-  const studentDataSharingConsent = await dbClient.studentDataSharingConsents.getStudentDataSharingConsent(studentId)
-
-  const authorizationResult = authorizeAddMessageToStudentDocument({
-    authenticatedPrincipal: principal,
-    accessToStudent: principalAccessForStudent,
-    document: currentDocument,
-    studentDataSharingConsent
-  })
-  if (!authorizationResult.authorized) {
-    throw new HTTPError(403, authorizationResult.message)
   }
 
   const school: School | null = await dbClient.schools.getSchool(currentDocument.school.schoolNumber)
