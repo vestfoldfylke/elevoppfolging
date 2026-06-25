@@ -1,18 +1,15 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
 import { validateDocument } from "$lib/data-validation/document-validation"
-import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
-import { getStudentsFromCache } from "$lib/server/cache/students-cache"
+import { resolveClassContext } from "$lib/server/authorization/principal-context"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { authorizeDeleteGroupDocument, authorizeEditGroupDocument } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { PrincipalAccess, PrincipalAccessStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { EditorData, GroupDocument, GroupDocumentUpdate, StudentClassGroup } from "$lib/types/db/shared-types"
+import type { EditorData, GroupDocument, GroupDocumentUpdate } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
-import { getAccessibleClassesFromStudents } from "$lib/utils/classes-from-students"
 
 type RemoveDocumentResponse = ApiRouteMap[`/api/classes/${NoSlashString}/documents/${NoSlashString}`]["DELETE"]["res"]
 
@@ -37,29 +34,11 @@ const removeDocument: ApiNextFunction<RemoveDocumentResponse> = async ({ princip
     throw new HTTPError(404, "Klassenotat ikke funnet")
   }
 
-  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
-  if (!principalAccess) {
-    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
-  }
+  const { principalAccess, classGroup } = await resolveClassContext(principal, systemId)
 
   const authorizationResult = authorizeDeleteGroupDocument({ principalAccess, document })
   if (!authorizationResult.authorized) {
     throw new HTTPError(403, authorizationResult.message)
-  }
-
-  const students: PrincipalAccessStudent[] = await getStudentsFromCache(principalAccess)
-  if (students.length === 0) {
-    throw new HTTPError(404, "Ingen tilgang til noen elever")
-  }
-
-  const classes: StudentClassGroup[] = getAccessibleClassesFromStudents(principalAccess, students)
-  if (classes.length === 0) {
-    throw new HTTPError(404, "Ingen tilgang til noen klasser")
-  }
-
-  const classEntry: StudentClassGroup | undefined = classes.find((classEntry: StudentClassGroup) => classEntry.systemId === systemId)
-  if (!classEntry) {
-    throw new HTTPError(404, "Ingen tilgang til klassen")
   }
 
   if (document.group.systemId !== systemId) {
@@ -94,7 +73,7 @@ const removeDocument: ApiNextFunction<RemoveDocumentResponse> = async ({ princip
       resourceName: "",
       metaData: {
         data: JSON.stringify({
-          groupName: classEntry.name,
+          groupName: classGroup.name,
           template: document.template
         }),
         parentResource: "Group",
@@ -122,25 +101,7 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
     throw new HTTPError(400, "Document ID is missing in request parameters")
   }
 
-  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
-  if (!principalAccess) {
-    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
-  }
-
-  const students: PrincipalAccessStudent[] = await getStudentsFromCache(principalAccess)
-  if (students.length === 0) {
-    throw new HTTPError(404, "Ingen tilgang til noen elever")
-  }
-
-  const classes: StudentClassGroup[] = getAccessibleClassesFromStudents(principalAccess, students)
-  if (classes.length === 0) {
-    throw new HTTPError(404, "Ingen tilgang til noen klasser")
-  }
-
-  const classEntry: StudentClassGroup | undefined = classes.find((classEntry: StudentClassGroup) => classEntry.systemId === systemId)
-  if (!classEntry) {
-    throw new HTTPError(404, "Ingen tilgang til klassen")
-  }
+  const { classGroup } = await resolveClassContext(principal, systemId)
 
   const dbClient: IDbClient = getDbClient()
 
@@ -203,7 +164,7 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
       resourceName: "",
       metaData: {
         data: JSON.stringify({
-          groupName: classEntry.name
+          groupName: classGroup.name
         }),
         parentResource: "Group",
         parentResourceId: systemId,

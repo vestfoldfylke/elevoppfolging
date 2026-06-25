@@ -1,15 +1,12 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
 import { validateStudentImportantStuffData } from "$lib/data-validation/student-important-stuff-validation"
-import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
-import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
-import { getStudentFromCache } from "$lib/server/cache/students-cache"
+import { resolveStudentContext } from "$lib/server/authorization/principal-context"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { authorizeEditStudentImportantStuff } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent } from "$lib/types/app-types"
 import type { EditorData, NewStudentImportantStuff, StudentImportantStuffInput } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
@@ -22,21 +19,7 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
     throw new HTTPError(400, "Student ID is missing in request parameters")
   }
 
-  // Authorization
-  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
-  if (!principalAccess) {
-    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
-  }
-
-  const currentStudent: CachedFrontendStudent | null = await getStudentFromCache(studentId)
-  if (!currentStudent) {
-    throw new HTTPError(404, "Elev ikke funnet")
-  }
-
-  const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(currentStudent, principalAccess)
-  if (principalAccessForStudent.length === 0) {
-    throw new HTTPError(403, "Ingen tilgang til eleven")
-  }
+  const { student: currentStudent, principalAccessForStudent } = await resolveStudentContext(principal, studentId)
 
   const studentImportantStuffData: StudentImportantStuffInput = body
 

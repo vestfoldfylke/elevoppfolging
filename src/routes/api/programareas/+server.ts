@@ -1,7 +1,7 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
 import { validateProgramAreaData } from "$lib/data-validation/program-area-validation"
-import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
+import { resolvePrincipalAccess } from "$lib/server/authorization/principal-context"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
@@ -14,11 +14,7 @@ type AddProgramAreaResponse = ApiRouteMap["/api/programareas"]["POST"]["res"]
 type AddProgramAreaBody = ApiRouteMap["/api/programareas"]["POST"]["req"]
 
 const addProgramArea: ApiNextFunction<AddProgramAreaResponse, AddProgramAreaBody> = async ({ principal, body }) => {
-  const principalAccess = await getPrincipalAccess(principal.id)
-
-  if (!principalAccess) {
-    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
-  }
+  const principalAccess = await resolvePrincipalAccess(principal)
 
   const authorizationResult = authorizeGrantAndRemoveAccessForSchool({ principalAccess, schoolNumber: body.schoolNumber })
   if (!authorizationResult.authorized) {

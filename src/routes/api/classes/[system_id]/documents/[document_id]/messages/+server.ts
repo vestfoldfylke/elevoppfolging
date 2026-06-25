@@ -1,18 +1,15 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
 import { validateDocumentMessage } from "$lib/data-validation/document-message-validation"
-import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
-import { getStudentsFromCache } from "$lib/server/cache/students-cache"
+import { resolveClassContext } from "$lib/server/authorization/principal-context"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { authorizeAddMessageToGroupDocument } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { PrincipalAccess, PrincipalAccessStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { DocumentMessageInput, EditorData, GroupDocument, NewDocumentMessage, School, StudentClassGroup } from "$lib/types/db/shared-types"
+import type { DocumentMessageInput, EditorData, GroupDocument, NewDocumentMessage, School } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
-import { getAccessibleClassesFromStudents } from "$lib/utils/classes-from-students"
 
 type AddDocumentMessageResponse = ApiRouteMap[`/api/classes/${NoSlashString}/documents/${NoSlashString}/messages`]["POST"]["res"]
 type AddDocumentMessageBody = ApiRouteMap[`/api/classes/${NoSlashString}/documents/${NoSlashString}/messages`]["POST"]["req"]
@@ -35,33 +32,15 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
     throw new HTTPError(404, "Klassenotat ikke funnet")
   }
 
-  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
-  if (!principalAccess) {
-    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
+  if (currentDocument.group.systemId !== systemId) {
+    throw new HTTPError(400, "Klassenotat tilhører ikke den angitte klassen!")
   }
 
-  const students: PrincipalAccessStudent[] = await getStudentsFromCache(principalAccess)
-  if (students.length === 0) {
-    throw new HTTPError(404, "Ingen tilgang til noen elever")
-  }
-
-  const classes: StudentClassGroup[] = getAccessibleClassesFromStudents(principalAccess, students)
-  if (classes.length === 0) {
-    throw new HTTPError(404, "Ingen tilgang til noen klasser")
-  }
-
-  const classEntry: StudentClassGroup | undefined = classes.find((classEntry: StudentClassGroup) => classEntry.systemId === systemId)
-  if (!classEntry) {
-    throw new HTTPError(404, "Ingen tilgang til klassen")
-  }
+  const { classes, classGroup } = await resolveClassContext(principal, systemId)
 
   const authorizationResult = authorizeAddMessageToGroupDocument({ document: currentDocument, principalClasses: classes })
   if (!authorizationResult.authorized) {
     throw new HTTPError(403, authorizationResult.message)
-  }
-
-  if (currentDocument.group.systemId !== systemId) {
-    throw new HTTPError(400, "Klassenotat tilhører ikke den angitte klassen!")
   }
 
   const newMessageData: DocumentMessageInput = body
@@ -111,7 +90,7 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
       resourceName: "",
       metaData: {
         data: JSON.stringify({
-          groupName: classEntry.name
+          groupName: classGroup.name
         }),
         parentResource: "GroupDocument",
         parentResourceId: documentId,

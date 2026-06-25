@@ -1,12 +1,10 @@
-import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
-import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
+import { resolveStudentContext } from "$lib/server/authorization/principal-context"
 import { getStudentAccessPersonsFromCache } from "$lib/server/cache/student-access-cache"
-import { getStudentFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
 import { authorizeStudentDocumentAccess } from "$lib/shared-authorization/authorization"
-import type { CachedFrontendStudent, FrontendStudentDocument, PrincipalAccess, PrincipalAccessForStudent, StudentAccessPerson, StudentUnavailableSchoolDocuments } from "$lib/types/app-types"
+import type { CachedFrontendStudent, FrontendStudentDocument, PrincipalAccessForStudent, StudentAccessPerson, StudentUnavailableSchoolDocuments } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { DocumentContentTemplate, SchoolInfo, StudentDataSharingConsent, StudentDocument, StudentImportantStuff } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
@@ -44,32 +42,12 @@ const hideStudentDocumentContent = (document: StudentDocument): FrontendStudentD
 const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, requestEvent }) => {
   const studentId = requestEvent.params.student_id
   if (!studentId) {
-    throw new Error("Student ID is missing in request parameters")
+    throw new HTTPError(400, "Student ID is missing in request parameters")
   }
 
   const dbClient: IDbClient = getDbClient()
 
-  /*
-	- Først henter vi tilgangene til brukeren
-	- Så henter vi eleven basert på ID
-	- Så har vi en støgg funksjon som sjekker at brukeren har tilgang til denne eleven - og hva slags tilgang, for da kan vi lage litt tester på funksjonen, i stedet for en psyjo query monster
-	*/
-
-  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id) // Vi må hente ut tilgangene til brukeren for å vite om de har tilgang til eleven, og hva slags tilgang de har
-  if (!principalAccess) {
-    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
-  }
-
-  const student: CachedFrontendStudent | null = await getStudentFromCache(studentId)
-  if (!student) {
-    throw new HTTPError(404, "Elev ikke funnet")
-  }
-
-  const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, principalAccess)
-
-  if (principalAccessForStudent.length === 0) {
-    throw new HTTPError(403, "Ingen tilgang til eleven")
-  }
+  const { student, principalAccessForStudent } = await resolveStudentContext(principal, studentId)
 
   const accessSchoolsForStudent: string[] = Array.from(new Set(principalAccessForStudent.map((accessEntry) => accessEntry.schoolNumber)))
 

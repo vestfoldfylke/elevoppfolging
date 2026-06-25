@@ -1,9 +1,7 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
 import { validateStudentDataSharingConsentData } from "$lib/data-validation/student-consent-validation"
-import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
-import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
-import { getStudentFromCache } from "$lib/server/cache/students-cache"
+import { resolveStudentContext } from "$lib/server/authorization/principal-context"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
@@ -21,21 +19,7 @@ const updateStudentDataSharingConsent: ApiNextFunction<PatchConsentResponse, Pat
     throw new HTTPError(400, "Student ID is missing in request parameters")
   }
 
-  // Authorization
-  const principalAccess = await getPrincipalAccess(principal.id)
-  if (!principalAccess) {
-    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
-  }
-
-  const currentStudent = await getStudentFromCache(studentId)
-  if (!currentStudent) {
-    throw new HTTPError(404, "Elev ikke funnet")
-  }
-
-  const principalAccessForStudent = getPrincipalAccessForStudent(currentStudent, principalAccess)
-  if (principalAccessForStudent.length === 0) {
-    throw new HTTPError(403, "Ingen tilgang til å redigere elevsamtykke")
-  }
+  const { student: currentStudent, principalAccessForStudent } = await resolveStudentContext(principal, studentId)
 
   const authorizationResult = authorizeEditStudentDataSharingConsent(principalAccessForStudent)
   if (!authorizationResult.authorized) {

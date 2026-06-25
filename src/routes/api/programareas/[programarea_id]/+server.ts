@@ -1,7 +1,7 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
 import { validateProgramAreaData } from "$lib/data-validation/program-area-validation"
-import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
+import { resolvePrincipalAccess } from "$lib/server/authorization/principal-context"
 import { invalidateProgramAreaCache } from "$lib/server/cache/program-area-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
@@ -14,11 +14,7 @@ import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 type DeleteProgramAreaResponse = ApiRouteMap[`/api/programareas/${NoSlashString}`]["DELETE"]["res"]
 
 const deleteProgramArea: ApiNextFunction<DeleteProgramAreaResponse> = async ({ principal, requestEvent }) => {
-  const principalAccess = await getPrincipalAccess(principal.id)
-
-  if (!principalAccess) {
-    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
-  }
+  const principalAccess = await resolvePrincipalAccess(principal)
 
   const programAreaId = requestEvent.params.programarea_id
   if (!programAreaId) {
@@ -87,11 +83,7 @@ type UpdateProgramAreaResponse = ApiRouteMap[`/api/programareas/${NoSlashString}
 type UpdateProgramAreaBody = ApiRouteMap[`/api/programareas/${NoSlashString}`]["PATCH"]["req"]
 
 const updateProgramArea: ApiNextFunction<UpdateProgramAreaResponse, UpdateProgramAreaBody> = async ({ principal, requestEvent, body }) => {
-  const principalAccess = await getPrincipalAccess(principal.id)
-
-  if (!principalAccess) {
-    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
-  }
+  const principalAccess = await resolvePrincipalAccess(principal)
 
   const programAreaId = requestEvent.params.programarea_id
 

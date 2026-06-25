@@ -3,15 +3,12 @@ import { logger } from "@vestfoldfylke/loglady"
 import { ObjectId } from "mongodb"
 import { validateDocumentMessage } from "$lib/data-validation/document-message-validation"
 import { isValidEmail } from "$lib/data-validation/email-validation"
-import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
-import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
-import { getStudentFromCache } from "$lib/server/cache/students-cache"
+import { resolveStudentContext } from "$lib/server/authorization/principal-context"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { authorizeAddMessageToStudentDocument } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { DocumentMessageInput, EditorData, NewDbEmailAlert, NewDocumentMessage, School } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -38,24 +35,11 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
     throw new HTTPError(404, "Elevnotat ikke funnet")
   }
 
-  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
-  if (!principalAccess) {
-    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
-  }
-
-  const student: CachedFrontendStudent | null = await getStudentFromCache(studentId)
-  if (!student) {
-    throw new HTTPError(404, "Elev ikke funnet")
-  }
-
   if (currentDocument.student._id !== studentId) {
     throw new HTTPError(400, "Elevnotat tilhører ikke den angitte eleven!")
   }
 
-  const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, principalAccess)
-  if (principalAccessForStudent.length === 0) {
-    throw new HTTPError(403, "Ingen tilgang til å opprette oppdatering på elevnotatet")
-  }
+  const { student, principalAccessForStudent } = await resolveStudentContext(principal, studentId)
 
   const studentDataSharingConsent = await dbClient.studentDataSharingConsents.getStudentDataSharingConsent(studentId)
 

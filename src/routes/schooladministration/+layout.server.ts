@@ -1,10 +1,10 @@
-import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
+import { resolvePrincipalAccess } from "$lib/server/authorization/principal-context"
 import { getAppUsersFromCache } from "$lib/server/cache/users-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
 import { authorizeGrantAndRemoveAccessForSchool, authorizeManageManualStudentsOnSchool, authorizeSchoolAdministrationAccess } from "$lib/shared-authorization/authorization"
-import type { AccessControlAppUser, PrincipalAccess } from "$lib/types/app-types"
+import type { AccessControlAppUser } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { AppUser, School } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
@@ -18,10 +18,7 @@ type AdministrationAccessLayoutData = {
 const getAdministrationAccessData: ServerLoadNextFunction<AdministrationAccessLayoutData> = async ({ principal }) => {
   const dbClient: IDbClient = getDbClient()
 
-  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
-  if (!principalAccess) {
-    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
-  }
+  const principalAccess = await resolvePrincipalAccess(principal)
 
   const authorizationResult = authorizeSchoolAdministrationAccess(principalAccess)
   if (!authorizationResult.authorized) {

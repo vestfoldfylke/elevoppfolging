@@ -1,13 +1,13 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
-import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
+import { resolvePrincipalAccess } from "$lib/server/authorization/principal-context"
 import { upsertStudentInCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { authorizeManageManualStudentsOnSchool } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { FrontendStudent, PrincipalAccess } from "$lib/types/app-types"
+import type { FrontendStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { AppStudent, ClassMembership, ContactTeacherGroupMembership, EditorData, StudentEnrollment, TeachingGroupMembership, UpdateAppStudent } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -42,10 +42,7 @@ const removeEnrollment: ApiNextFunction<RemoveEnrollmentResponse> = async ({ pri
     throw new HTTPError(403, "Kan ikke slette elevforhold registrert i kildesystemet")
   }
 
-  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
-  if (!principalAccess) {
-    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
-  }
+  const principalAccess = await resolvePrincipalAccess(principal)
 
   const authorizationResult = authorizeManageManualStudentsOnSchool({ principalAccess, schoolNumber: studentEnrollment.school.schoolNumber })
   if (!authorizationResult.authorized) {

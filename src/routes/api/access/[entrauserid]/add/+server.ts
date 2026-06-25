@@ -2,7 +2,7 @@ import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
 import { validateAccessEntryInput } from "$lib/data-validation/access-entry-validation"
 import { APP_INFO } from "$lib/server/app-info"
-import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
+import { resolvePrincipalAccess } from "$lib/server/authorization/principal-context"
 import { invalidateStudentAccessCache } from "$lib/server/cache/student-access-cache"
 import { getStudentsFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
@@ -10,7 +10,7 @@ import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { authorizeGrantAndRemoveAccessForSchool, authorizeSystemAdmin } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { AccessEntry, PrincipalAccess, PrincipalAccessStudent } from "$lib/types/app-types"
+import type { AccessEntry, PrincipalAccessStudent } from "$lib/types/app-types"
 import type { Access, EditorData, NewAccess, School, StudentClassGroup } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 import { getClassesFromStudents } from "$lib/utils/classes-from-students"
@@ -40,10 +40,7 @@ const grantAccess: ApiNextFunction<GrantAccessResponse, GrantAccessBody> = async
     }
   } else {
     // Get access for principal to check if they have access to grant access on their school
-    const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
-    if (!principalAccess) {
-      throw new HTTPError(403, "Ingen tilgang funnet for bruker")
-    }
+    const principalAccess = await resolvePrincipalAccess(principal)
 
     const authorizationResult = authorizeGrantAndRemoveAccessForSchool({ schoolNumber: accessEntryInput.schoolNumber, principalAccess })
     if (!authorizationResult.authorized) {

@@ -1,18 +1,15 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
 import { validateDocumentMessage } from "$lib/data-validation/document-message-validation"
-import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
-import { getStudentsFromCache } from "$lib/server/cache/students-cache"
+import { resolveClassContext } from "$lib/server/authorization/principal-context"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { authorizeEditMessageInGroupDocument } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { PrincipalAccess, PrincipalAccessStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { DocumentMessageInput, EditorData, GroupDocument, NewDocumentMessage, School, StudentClassGroup } from "$lib/types/db/shared-types"
+import type { DocumentMessageInput, EditorData, GroupDocument, NewDocumentMessage, School } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
-import { getAccessibleClassesFromStudents } from "$lib/utils/classes-from-students"
 
 type UpdateDocumentMessageResponse = ApiRouteMap[`/api/classes/${NoSlashString}/documents/${NoSlashString}/messages/${NoSlashString}`]["PATCH"]["res"]
 type UpdateDocumentMessageBody = ApiRouteMap[`/api/classes/${NoSlashString}/documents/${NoSlashString}/messages/${NoSlashString}`]["PATCH"]["req"]
@@ -33,32 +30,6 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
     throw new HTTPError(400, "Message ID is missing in request parameters")
   }
 
-  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
-  if (!principalAccess) {
-    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
-  }
-
-  const students: PrincipalAccessStudent[] = await getStudentsFromCache(principalAccess)
-  if (students.length === 0) {
-    throw new HTTPError(404, "Ingen tilgang til noen elever")
-  }
-
-  const classes: StudentClassGroup[] = getAccessibleClassesFromStudents(principalAccess, students)
-  if (classes.length === 0) {
-    throw new HTTPError(404, "Ingen tilgang til noen klasser")
-  }
-
-  const classEntry: StudentClassGroup | undefined = classes.find((classEntry: StudentClassGroup) => classEntry.systemId === systemId)
-  if (!classEntry) {
-    throw new HTTPError(404, "Ingen tilgang til klassen")
-  }
-
-  const updateMessageData: DocumentMessageInput = body
-  const validationResult = validateDocumentMessage(updateMessageData)
-  if (!validationResult.valid) {
-    throw new HTTPError(400, `Invalid message data: ${validationResult.message}`)
-  }
-
   const dbClient: IDbClient = getDbClient()
 
   const currentDocument: GroupDocument | null = await dbClient.documents.getGroupDocumentById(documentId)
@@ -70,6 +41,8 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
     throw new HTTPError(400, "Klassenotat tilhører ikke den angitte klassen!")
   }
 
+  const { classGroup } = await resolveClassContext(principal, systemId)
+
   const messageToUpdate = currentDocument.messages.find((message) => message.messageId === messageId)
   if (!messageToUpdate) {
     throw new HTTPError(404, "Oppdatering ikke funnet")
@@ -78,6 +51,12 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
   const authorizationResult = authorizeEditMessageInGroupDocument({ authenticatedPrincipal: principal, message: messageToUpdate, document: currentDocument })
   if (!authorizationResult.authorized) {
     throw new HTTPError(403, authorizationResult.message)
+  }
+
+  const updateMessageData: DocumentMessageInput = body
+  const validationResult = validateDocumentMessage(updateMessageData)
+  if (!validationResult.valid) {
+    throw new HTTPError(400, `Invalid message data: ${validationResult.message}`)
   }
 
   const editorData: EditorData = {
@@ -121,7 +100,7 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
       resourceName: "",
       metaData: {
         data: JSON.stringify({
-          groupName: classEntry.name
+          groupName: classGroup.name
         }),
         parentResource: "GroupDocument",
         parentResourceId: documentId,
