@@ -41,18 +41,12 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
 
   const student: CachedFrontendStudent | null = await getStudentFromCache(studentId)
   if (!student) {
-    throw new HTTPError(400, "Elev ikke funnet")
+    throw new HTTPError(404, "Elev ikke funnet")
   }
 
   const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, principalAccess)
   if (principalAccessForStudent.length === 0) {
     throw new HTTPError(403, "Ingen tilgang til å oppdatere oppdatering på elevnotatet")
-  }
-
-  const updateMessageData: DocumentMessageInput = body
-  const validationResult = validateDocumentMessage(updateMessageData)
-  if (!validationResult.valid) {
-    throw new HTTPError(400, `Invalid message data: ${validationResult.message}`)
   }
 
   const dbClient: IDbClient = getDbClient()
@@ -70,6 +64,16 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
   const authorizationResult = authorizeEditMessageInStudentDocument({ authenticatedPrincipal: principal, document: currentDocument, message: messageToUpdate })
   if (!authorizationResult.authorized) {
     throw new HTTPError(403, authorizationResult.message)
+  }
+
+  if (currentDocument.student._id !== studentId) {
+    throw new HTTPError(400, "Elevnotat tilhører ikke den angitte eleven!")
+  }
+
+  const updateMessageData: DocumentMessageInput = body
+  const validationResult = validateDocumentMessage(updateMessageData)
+  if (!validationResult.valid) {
+    throw new HTTPError(400, `Invalid message data: ${validationResult.message}`)
   }
 
   const editorData: EditorData = {
