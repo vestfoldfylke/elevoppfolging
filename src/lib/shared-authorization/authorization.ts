@@ -414,21 +414,15 @@ export type AuthorizeEditStudentImportantStuffInput = {
 
 export function authorizeEditStudentImportantStuff({ importantStuffSchoolNumber, accessToStudent }: AuthorizeEditStudentImportantStuffInput): AuthorizationResult {
   const accessForImportantStuffSchool = accessToStudent.filter((access) => access.schoolNumber === importantStuffSchoolNumber)
-  if (accessForImportantStuffSchool.length === 0) {
+  if (accessForImportantStuffSchool.length === 0 || isOnlySubjectTeacher(accessForImportantStuffSchool)) {
     return {
       authorized: false,
       message: "Ingen tilgang til å redigere viktig informasjon for eleven på denne skolen"
     }
   }
-  if (!isOnlySubjectTeacher(accessForImportantStuffSchool)) {
-    return {
-      authorized: true
-    }
-  }
 
   return {
-    authorized: false,
-    message: "Ingen tilgang til å redigere viktig informasjon for eleven på denne skolen"
+    authorized: true
   }
 }
 
