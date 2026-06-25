@@ -320,7 +320,7 @@ export function authorizeSchoolLeader(principalAccess: Access | null): Authoriza
     }
   }
 
-  if (principalAccess.leaderForSchools.length === 0) {
+  if (!principalAccess.leaderForSchools.some(access => access.type === "MANUELL-SKOLELEDER-TILGANG")) {
     return {
       authorized: false,
       message: "Ingen tilgang som skoleleder"
@@ -374,7 +374,7 @@ export function authorizeSchoolAdministrationAccess(principalAccess: Access | nu
     }
   }
 
-  if (principalAccess.manageManualStudentsForSchools.length > 0) {
+  if (principalAccess.manageManualStudentsForSchools.some((accessEntry) => accessEntry.type === "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG")) {
     return {
       authorized: true
     }
