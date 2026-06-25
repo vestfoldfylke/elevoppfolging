@@ -47,6 +47,10 @@ const removeDocument: ApiNextFunction<RemoveDocumentResponse> = async ({ princip
     throw new HTTPError(403, authorizationResult.message)
   }
 
+  if (document.student._id !== studentId) {
+    throw new HTTPError(400, "Student ID in the document data does not match the student ID in the request parameters!")
+  }
+
   try {
     await dbClient.documents.deleteStudentDocument(document)
     logger.info("Student document with StudentDocumentId {StudentDocumentId} deleted successfully by PrincipalId {PrincipalId}", document._id, principal.id)
