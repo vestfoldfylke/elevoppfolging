@@ -37,14 +37,14 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
     throw new HTTPError(404, "Klassenotat ikke funnet")
   }
 
-  const { classGroup } = await resolveClassContext(principal, systemId)
+  const { classGroup, classes } = await resolveClassContext(principal, systemId)
 
   const messageToUpdate = currentDocument.messages.find((message) => message.messageId === messageId)
   if (!messageToUpdate) {
     throw new HTTPError(404, "Oppdatering ikke funnet")
   }
 
-  const authorizationResult = authorizeEditMessageInGroupDocument({ authenticatedPrincipal: principal, message: messageToUpdate, document: currentDocument })
+  const authorizationResult = authorizeEditMessageInGroupDocument({ authenticatedPrincipal: principal, message: messageToUpdate, document: currentDocument, principalClasses: classes })
   if (!authorizationResult.authorized) {
     throw new HTTPError(403, authorizationResult.message)
   }
