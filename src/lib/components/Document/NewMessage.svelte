@@ -1,12 +1,12 @@
 <script lang="ts">
   import { tick } from "svelte"
   import type { StudentAccessPerson } from "$lib/types/app-types"
-  import type { DocumentMessage, EditorData, GroupDocument, StudentDocument } from "$lib/types/db/shared-types"
+  import type { DocumentMessage, EditorData, GroupDocument, StudentDataSharingConsent, StudentDocument } from "$lib/types/db/shared-types"
   import Message from "./Message.svelte"
 
   type PageProps = {
     document: StudentDocument | GroupDocument
-    studentDataSharingConsent?: boolean
+    studentDataSharingConsent?: StudentDataSharingConsent | null
     studentAccessPersons?: StudentAccessPerson[]
   }
 

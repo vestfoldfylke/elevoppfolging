@@ -43,6 +43,13 @@ export function authorizeAddMessageToStudentDocument({ authenticatedPrincipal, a
     }
   }
 
+  if (!accessToStudent.some((accessEntry) => accessEntry.schoolNumber === document.school.schoolNumber)) {
+    return {
+      authorized: false,
+      message: CANNOT_ADD_MESSAGE_TO_STUDENT_DOCUMENT_MESSAGE
+    }
+  }
+
   const canViewResult = authorizeStudentDocumentAccess({ authenticatedPrincipal, accessToStudent, document, studentDataSharingConsent })
   if (!canViewResult.canView || canViewResult.mustHideDocumentContent) {
     return {
@@ -57,17 +64,25 @@ export function authorizeAddMessageToStudentDocument({ authenticatedPrincipal, a
 
 export type AuthorizeEditMessageInStudentDocumentInput = {
   authenticatedPrincipal: AuthenticatedPrincipal
+  accessToStudent: PrincipalAccessForStudent[]
   document: StudentDocument
   message: DocumentMessage
 }
 
 export const CANNOT_EDIT_MESSAGE_IN_STUDENT_DOCUMENT_MESSAGE = "Ingen tilgang til å redigere melding på elevnotatet"
 
-export function authorizeEditMessageInStudentDocument({ authenticatedPrincipal, document, message }: AuthorizeEditMessageInStudentDocumentInput): AuthorizationResult {
+export function authorizeEditMessageInStudentDocument({ authenticatedPrincipal, document, message, accessToStudent }: AuthorizeEditMessageInStudentDocumentInput): AuthorizationResult {
   if (document.isDocumentLocked) {
     return {
       authorized: false,
       message: DOCUMENT_IS_LOCKED_MESSAGE
+    }
+  }
+
+  if (!accessToStudent.some((accessEntry) => accessEntry.schoolNumber === document.school.schoolNumber)) {
+    return {
+      authorized: false,
+      message: CANNOT_ADD_MESSAGE_TO_STUDENT_DOCUMENT_MESSAGE
     }
   }
 

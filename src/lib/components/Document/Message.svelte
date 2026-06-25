@@ -5,8 +5,8 @@
   import { createEditableDraft, type EditableDraft } from "$lib/runes/create-editable-draft.svelte"
   import { authorizeEditMessageInGroupDocument, authorizeEditMessageInStudentDocument } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
-  import type { StudentAccessPerson } from "$lib/types/app-types"
-  import type { DocumentMessage, DocumentMessageInput, GroupDocument, StudentDocument } from "$lib/types/db/shared-types"
+  import type { PrincipalAccessForStudent, StudentAccessPerson } from "$lib/types/app-types"
+  import type { DocumentMessage, DocumentMessageInput, GroupDocument, StudentDataSharingConsent, StudentDocument } from "$lib/types/db/shared-types"
   import AsyncButton, { type AsyncButtonResult } from "../AsyncButton.svelte"
   import EditorInfo from "../EditorInfo.svelte"
   import EmailAlertSelector from "./EmailAlertSelector.svelte"
@@ -15,13 +15,14 @@
     document: StudentDocument | GroupDocument
     message: DocumentMessage
     editMode: boolean
-    studentDataSharingConsent?: boolean
-    studentAccessPersons?: StudentAccessPerson[]
+    studentDataSharingConsent?: StudentDataSharingConsent | null
+    studentAccessPersons?: StudentAccessPerson[],
+    principalAccessForStudent?: PrincipalAccessForStudent[],
     emailAlertAvailable?: boolean
     callback?: () => void
   }
 
-  let { document, message, editMode, studentDataSharingConsent, studentAccessPersons, emailAlertAvailable, callback }: PageProps = $props()
+  let { document, message, editMode, studentDataSharingConsent, studentAccessPersons, principalAccessForStudent, emailAlertAvailable, callback }: PageProps = $props()
 
   let messageSource: DocumentMessageInput = $derived.by(() => {
     return {
@@ -42,7 +43,10 @@
     }
 
     if ("student" in document) {
-      return authorizeEditMessageInStudentDocument({ authenticatedPrincipal: page.data.authenticatedPrincipal, document, message }).authorized
+      if (!principalAccessForStudent) {
+        throw new Error("principalAccessForStudent is required to authorize edit message in student document")
+      }
+      return authorizeEditMessageInStudentDocument({ authenticatedPrincipal: page.data.authenticatedPrincipal, document, message, accessToStudent: principalAccessForStudent }).authorized
     }
 
     return false
@@ -179,7 +183,7 @@
           id="email-alert-{message.messageId}-{document._id}"
           legendText="Følgende personer skal varsles på e-post når oppdateringen lagres"
           {studentAccessPersons}
-          {studentDataSharingConsent}
+          studentDataSharingConsent={studentDataSharingConsent?.consent}
           schoolNumber={document.school.schoolNumber}
           documentAccess={document.documentAccess}
           bind:emailAlertReceivers={editableMessage.draft.emailAlertReceivers}

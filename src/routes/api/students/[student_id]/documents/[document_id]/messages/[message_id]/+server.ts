@@ -61,7 +61,7 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
     throw new HTTPError(404, "Oppdatering ikke funnet")
   }
 
-  const authorizationResult = authorizeEditMessageInStudentDocument({ authenticatedPrincipal: principal, document: currentDocument, message: messageToUpdate })
+  const authorizationResult = authorizeEditMessageInStudentDocument({ authenticatedPrincipal: principal, document: currentDocument, message: messageToUpdate, accessToStudent: principalAccessForStudent })
   if (!authorizationResult.authorized) {
     throw new HTTPError(403, authorizationResult.message)
   }

@@ -399,7 +399,7 @@
         {/each}
       </div>
       {#each filteredDocuments as document (document._id)}
-        <DocumentComponent referencedOpen={referencedDocumentId === document._id} {document} {accessSchools} canEditDocument={authorizeEditStudentDocument({ authenticatedPrincipal: data.authenticatedPrincipal, accessToStudent: data.principalAccessForStudent, document }).authorized} canRemoveDocument={authorizeDeleteStudentDocument({ principalAccess: data.principalAccess, document }).authorized} studentName={data.student.name} studentDataSharingConsent={data.studentDataSharingConsent?.consent} studentAccessPersons={data.studentAccessPersons} />
+        <DocumentComponent referencedOpen={referencedDocumentId === document._id} {document} {accessSchools} canEditDocument={authorizeEditStudentDocument({ authenticatedPrincipal: data.authenticatedPrincipal, accessToStudent: data.principalAccessForStudent, document }).authorized} canRemoveDocument={authorizeDeleteStudentDocument({ principalAccess: data.principalAccess, document }).authorized} studentName={data.student.name} studentDataSharingConsent={data.studentDataSharingConsent} studentAccessPersons={data.studentAccessPersons} principalAccessForStudent={data.principalAccessForStudent} />
       {/each}
     {/if}
   </div>
