@@ -15,7 +15,7 @@ export async function resolvePrincipalAccess(principal: AuthenticatedPrincipal):
   return principalAccess
 }
 
-export type StudentContext = {
+type StudentContext = {
   principalAccess: PrincipalAccess
   student: CachedFrontendStudent
   principalAccessForStudent: PrincipalAccessForStudent[]
@@ -37,7 +37,7 @@ export async function resolveStudentContext(principal: AuthenticatedPrincipal, s
   return { principalAccess, student, principalAccessForStudent }
 }
 
-export type ClassContext = {
+type ClassContext = {
   principalAccess: PrincipalAccess
   students: PrincipalAccessStudent[]
   classes: StudentClassGroup[]
