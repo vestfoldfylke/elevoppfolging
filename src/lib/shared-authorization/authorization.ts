@@ -82,7 +82,7 @@ export function authorizeEditMessageInStudentDocument({ authenticatedPrincipal, 
   if (!accessToStudent.some((accessEntry) => accessEntry.schoolNumber === document.school.schoolNumber)) {
     return {
       authorized: false,
-      message: CANNOT_ADD_MESSAGE_TO_STUDENT_DOCUMENT_MESSAGE
+      message: CANNOT_EDIT_MESSAGE_IN_STUDENT_DOCUMENT_MESSAGE
     }
   }
 
