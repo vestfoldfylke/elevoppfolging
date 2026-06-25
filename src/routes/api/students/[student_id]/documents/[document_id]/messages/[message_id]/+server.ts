@@ -56,6 +56,10 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
     throw new HTTPError(404, "Elevnotat ikke funnet")
   }
 
+  if (currentDocument.student._id !== studentId) {
+    throw new HTTPError(400, "Elevnotat tilhører ikke den angitte eleven!")
+  }
+
   const messageToUpdate = currentDocument.messages.find((message) => message.messageId === messageId)
   if (!messageToUpdate) {
     throw new HTTPError(404, "Oppdatering ikke funnet")
@@ -69,10 +73,6 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
   })
   if (!authorizationResult.authorized) {
     throw new HTTPError(403, authorizationResult.message)
-  }
-
-  if (currentDocument.student._id !== studentId) {
-    throw new HTTPError(400, "Elevnotat tilhører ikke den angitte eleven!")
   }
 
   const updateMessageData: DocumentMessageInput = body

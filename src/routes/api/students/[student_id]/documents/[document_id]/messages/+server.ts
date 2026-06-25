@@ -45,7 +45,7 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
 
   const student: CachedFrontendStudent | null = await getStudentFromCache(studentId)
   if (!student) {
-    throw new HTTPError(400, "Elev ikke funnet")
+    throw new HTTPError(404, "Elev ikke funnet")
   }
 
   if (currentDocument.student._id !== studentId) {
