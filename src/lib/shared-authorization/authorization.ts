@@ -129,13 +129,21 @@ export type AuthorizeEditMessageInGroupDocumentInput = {
   authenticatedPrincipal: AuthenticatedPrincipal
   document: GroupDocument
   message: DocumentMessage
+  principalClasses: StudentClassGroup[]
 }
 
-export function authorizeEditMessageInGroupDocument({ authenticatedPrincipal, document, message }: AuthorizeEditMessageInGroupDocumentInput): AuthorizationResult {
+export function authorizeEditMessageInGroupDocument({ authenticatedPrincipal, document, message, principalClasses }: AuthorizeEditMessageInGroupDocumentInput): AuthorizationResult {
   if (document.isDocumentLocked) {
     return {
       authorized: false,
       message: "Gruppedokumentet er låst og kan ikke redigeres"
+    }
+  }
+
+  if (!principalClasses.some((classEntry: StudentClassGroup) => classEntry.systemId === document.group.systemId)) {
+    return {
+      authorized: false,
+      message: "Ingen tilgang til å redigere melding på gruppedokumentet"
     }
   }
 
