@@ -8,7 +8,7 @@
   import PrincipalAccessTags from "$lib/components/PrincipalAccessTags.svelte"
   import DataSharingConsent from "$lib/components/StudentBoxes/DataSharingConsent.svelte"
   import ImportantStuff from "$lib/components/StudentBoxes/ImportantStuff.svelte"
-  import { canEditStudentDataSharingConsent, canEditStudentDocument, canEditStudentImportantStuff, isSchoolLeaderForSchool } from "$lib/shared-authorization/authorization"
+  import { authorizeDeleteStudentDocument, authorizeEditStudentDataSharingConsent, authorizeEditStudentDocument, authorizeEditStudentImportantStuff } from "$lib/shared-authorization/authorization"
   import type { EnrollmentDetails, FrontendStudentDocument, PeriodDetails, TemplateInfo } from "$lib/types/app-types"
   import type { AuditEntryInput, Period, SchoolInfo } from "$lib/types/db/shared-types"
   import { prettifyDate } from "$lib/utils/dates"
@@ -280,11 +280,11 @@
   {#if expandedStudentDetails}
     <div class="student-details" transition:slide>
       {#each accessSchools as accessSchool}
-        <ImportantStuff canEdit={canEditStudentImportantStuff(accessSchool.schoolNumber, data.principalAccessForStudent)} importantStuff={data.importantStuff.find(importantStuff => importantStuff.school.schoolNumber === accessSchool.schoolNumber) || null} school={accessSchool} studentCheckBoxes={data.studentCheckBoxes} student={data.student} />
+        <ImportantStuff canEdit={authorizeEditStudentImportantStuff({ importantStuffSchoolNumber: accessSchool.schoolNumber, accessToStudent: data.principalAccessForStudent }).authorized} importantStuff={data.importantStuff.find(importantStuff => importantStuff.school.schoolNumber === accessSchool.schoolNumber) || null} school={accessSchool} studentCheckBoxes={data.studentCheckBoxes} student={data.student} />
       {/each}
 
       <div class="consent-and-access-container">
-        <DataSharingConsent canEdit={canEditStudentDataSharingConsent(data.principalAccessForStudent)} student={data.student} studentDataSharingConsent={data.studentDataSharingConsent} unavailableSchoolDocuments={data.unavailableSchoolDocuments} />
+        <DataSharingConsent canEdit={authorizeEditStudentDataSharingConsent(data.principalAccessForStudent).authorized} student={data.student} studentDataSharingConsent={data.studentDataSharingConsent} unavailableSchoolDocuments={data.unavailableSchoolDocuments} />
         
         <div class="ds-card access-container" data-variant="tinted" data-color="brand2">
           <div class="card-header">
@@ -399,7 +399,7 @@
         {/each}
       </div>
       {#each filteredDocuments as document (document._id)}
-        <DocumentComponent referencedOpen={referencedDocumentId === document._id} {document} {accessSchools} canEditDocument={canEditStudentDocument(data.authenticatedPrincipal, data.principalAccessForStudent, document)} canRemoveDocument={isSchoolLeaderForSchool(data.principalAccess, document.school.schoolNumber)} studentName={data.student.name} studentDataSharingConsent={data.studentDataSharingConsent?.consent} studentAccessPersons={data.studentAccessPersons} />
+        <DocumentComponent referencedOpen={referencedDocumentId === document._id} {document} {accessSchools} canEditDocument={authorizeEditStudentDocument({ authenticatedPrincipal: data.authenticatedPrincipal, accessToStudent: data.principalAccessForStudent, document }).authorized} canRemoveDocument={authorizeDeleteStudentDocument({ principalAccess: data.principalAccess, document }).authorized} studentName={data.student.name} studentDataSharingConsent={data.studentDataSharingConsent} studentAccessPersons={data.studentAccessPersons} principalAccessForStudent={data.principalAccessForStudent} />
       {/each}
     {/if}
   </div>

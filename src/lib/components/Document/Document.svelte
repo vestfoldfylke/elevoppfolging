@@ -4,9 +4,10 @@
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import AsyncButton, { type AsyncButtonResult } from "$lib/components/AsyncButton.svelte"
   import { createEditableDraft, type EditableDraft } from "$lib/runes/create-editable-draft.svelte"
+  import { authorizeAddMessageToGroupDocument, authorizeAddMessageToStudentDocument } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
-  import type { FrontendStudentDocument, StudentAccessPerson } from "$lib/types/app-types"
-  import type { AuditEntryInput, DocumentInput, GroupDocument, MetricCount, SchoolInfo, StudentDocument } from "$lib/types/db/shared-types"
+  import type { FrontendStudentDocument, PrincipalAccessForStudent, StudentAccessPerson } from "$lib/types/app-types"
+  import type { AuditEntryInput, ClassGroup, DocumentInput, GroupDocument, MetricCount, SchoolInfo, StudentClassGroup, StudentDataSharingConsent } from "$lib/types/db/shared-types"
   import EditorInfo from "../EditorInfo.svelte"
   import DocumentContent from "./DocumentContentItem.svelte"
   import DocumentEditor from "./DocumentEditor.svelte"
@@ -20,12 +21,26 @@
     canRemoveDocument: boolean
     studentName?: string
     groupName?: string
-    studentDataSharingConsent?: boolean
+    studentDataSharingConsent?: StudentDataSharingConsent | null
     studentAccessPersons?: StudentAccessPerson[]
+    principalAccessForStudent?: PrincipalAccessForStudent[]
+    principalClasses?: StudentClassGroup[]
     referencedOpen?: boolean
   }
 
-  let { document, accessSchools, canEditDocument, canRemoveDocument, studentName, groupName, studentDataSharingConsent, studentAccessPersons, referencedOpen = false }: PageProps = $props()
+  let {
+    document,
+    accessSchools,
+    canEditDocument,
+    canRemoveDocument,
+    studentName,
+    groupName,
+    studentDataSharingConsent,
+    studentAccessPersons,
+    principalAccessForStudent,
+    principalClasses,
+    referencedOpen = false
+  }: PageProps = $props()
 
   let documentDialog: HTMLDialogElement | undefined = $state()
 
@@ -37,6 +52,29 @@
     }
 
     return document.isDocumentContentHidden
+  })
+
+  let canAddMessage = $derived.by(() => {
+    if ("group" in document) {
+      if (!principalClasses) {
+        throw new Error("principalClasses is required to authorize add message in group document")
+      }
+      return authorizeAddMessageToGroupDocument({ principalClasses, document }).authorized
+    }
+
+    if ("student" in document) {
+      if (!principalAccessForStudent) {
+        throw new Error("principalAccessForStudent is required to authorize add message in student document")
+      }
+      if (studentDataSharingConsent === undefined) {
+        throw new Error("studentDataSharingConsent is required to authorize add message in student document")
+      }
+
+      return authorizeAddMessageToStudentDocument({ accessToStudent: principalAccessForStudent, document, authenticatedPrincipal: page.data.authenticatedPrincipal, studentDataSharingConsent })
+        .authorized
+    }
+
+    throw new Error("Document is neither student or group document, can't authorize add message")
   })
 
   // Only the "update" messages shown in the timeline (used for heading + count)
@@ -330,7 +368,7 @@
               <div class="timeline-item">
                 <span class="timeline-dot"></span>
                 <div class="message-container">
-                  <Message {message} editMode={false} {document} />
+                  <Message {message} editMode={false} {document} {principalAccessForStudent} {principalClasses} />
                 </div>
               </div>
             {/each}
@@ -340,9 +378,9 @@
     </div>
 
     <!-- Footer -->
-    {#if !document.isDocumentLocked && !isDocumentContentHidden}
+    {#if canAddMessage && !isDocumentContentHidden}
       <div class="ds-dialog__block">
-        <NewMessage {document} {studentDataSharingConsent} {studentAccessPersons} />
+        <NewMessage {document} {studentDataSharingConsent} {studentAccessPersons} {principalClasses} {principalAccessForStudent} />
       </div>
     {/if}
   </dialog>

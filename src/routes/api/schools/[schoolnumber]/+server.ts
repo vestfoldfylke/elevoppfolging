@@ -5,7 +5,7 @@ import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeSystemAdmin } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { EditorData, NewSchool } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -13,8 +13,9 @@ import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 type DeleteSchoolResponse = ApiRouteMap[`/api/schools/${NoSlashString}`]["DELETE"]["res"]
 
 const deleteSchool: ApiNextFunction<DeleteSchoolResponse> = async ({ principal, requestEvent }) => {
-  if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, noAccessMessage("No permission to delete school"))
+  const authorizationResult = authorizeSystemAdmin({ authenticatedPrincipal: principal, APP_INFO })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const schoolNumber = requestEvent.params.schoolnumber
@@ -27,10 +28,10 @@ const deleteSchool: ApiNextFunction<DeleteSchoolResponse> = async ({ principal, 
   const existingSchools = await dbClient.schools.getSchools()
   const schoolToDelete = existingSchools.find((school) => school.schoolNumber === schoolNumber)
   if (!schoolToDelete) {
-    throw new HTTPError(404, "School not found. Cannot delete non-existing school.")
+    throw new HTTPError(404, "Skole ikke funnet")
   }
   if (schoolToDelete.source !== "MANUAL") {
-    throw new HTTPError(400, "Only schools created manually can be deleted.")
+    throw new HTTPError(400, "Kan ikke slette skole som kommer fra kildesystemet. KUN manuelle skoler kan slettes")
   }
 
   try {
@@ -77,8 +78,9 @@ type UpdateSchoolResponse = ApiRouteMap[`/api/schools/${NoSlashString}`]["PUT"][
 type UpdateSchoolBody = ApiRouteMap[`/api/schools/${NoSlashString}`]["PUT"]["req"]
 
 const updateSchool: ApiNextFunction<UpdateSchoolResponse, UpdateSchoolBody> = async ({ principal, requestEvent, body }) => {
-  if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, noAccessMessage("No permission to update school"))
+  const authorizationResult = authorizeSystemAdmin({ authenticatedPrincipal: principal, APP_INFO })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const schoolNumber = requestEvent.params.schoolnumber
@@ -91,10 +93,10 @@ const updateSchool: ApiNextFunction<UpdateSchoolResponse, UpdateSchoolBody> = as
   const existingSchools = await dbClient.schools.getSchools()
   const schoolToUpdate = existingSchools.find((school) => school.schoolNumber === schoolNumber)
   if (!schoolToUpdate) {
-    throw new HTTPError(404, "School not found. Cannot update non-existing school.")
+    throw new HTTPError(404, "Skole ikke funnet")
   }
   if (schoolToUpdate.source !== "MANUAL") {
-    throw new HTTPError(400, "Only schools created manually can be updated.")
+    throw new HTTPError(400, "Kan ikke oppdatere skole som kommer fra kildesystemet. KUN manuelle skoler kan oppdateres")
   }
 
   const updatedSchoolData: UpdateSchoolBody = body
@@ -104,7 +106,7 @@ const updateSchool: ApiNextFunction<UpdateSchoolResponse, UpdateSchoolBody> = as
   }
 
   if (updatedSchoolData.schoolNumber !== schoolNumber || updatedSchoolData.schoolNumber !== schoolToUpdate.schoolNumber) {
-    throw new HTTPError(400, "You cannot change the school number of an existing school.")
+    throw new HTTPError(400, "Skolenummer kan ikke endres på en eksisterende skole")
   }
 
   const editorData: EditorData = {

@@ -1,18 +1,15 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
 import { validateDocumentMessage } from "$lib/data-validation/document-message-validation"
-import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
-import { getStudentsFromCache } from "$lib/server/cache/students-cache"
+import { resolveClassContext } from "$lib/server/authorization/principal-context"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeAddMessageToGroupDocument } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { PrincipalAccess, PrincipalAccessStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { DocumentMessageInput, EditorData, GroupDocument, NewDocumentMessage, School, StudentClassGroup } from "$lib/types/db/shared-types"
+import type { DocumentMessageInput, EditorData, GroupDocument, NewDocumentMessage, School } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
-import { getAccessibleClassesFromStudents } from "$lib/utils/classes-from-students"
 
 type AddDocumentMessageResponse = ApiRouteMap[`/api/classes/${NoSlashString}/documents/${NoSlashString}/messages`]["POST"]["res"]
 type AddDocumentMessageBody = ApiRouteMap[`/api/classes/${NoSlashString}/documents/${NoSlashString}/messages`]["POST"]["req"]
@@ -32,31 +29,18 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
 
   const currentDocument: GroupDocument | null = await dbClient.documents.getGroupDocumentById(documentId)
   if (!currentDocument) {
-    throw new HTTPError(404, "Document not found, cannot add message to non-existing document...")
+    throw new HTTPError(404, "Klassenotat ikke funnet")
   }
 
-  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
-  if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
+  const { classes, classGroup } = await resolveClassContext(principal, systemId)
+
+  const authorizationResult = authorizeAddMessageToGroupDocument({ document: currentDocument, principalClasses: classes })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
-  const students: PrincipalAccessStudent[] = await getStudentsFromCache(principalAccess)
-  if (students.length === 0) {
-    throw new HTTPError(404, noAccessMessage("No access to any students"))
-  }
-
-  const classes: StudentClassGroup[] = getAccessibleClassesFromStudents(principalAccess, students)
-  if (classes.length === 0) {
-    throw new HTTPError(404, noAccessMessage("No access to any class"))
-  }
-
-  const classEntry: StudentClassGroup | undefined = classes.find((classEntry: StudentClassGroup) => classEntry.systemId === systemId)
-  if (!classEntry) {
-    throw new HTTPError(404, noAccessMessage("No access to class"))
-  }
-
-  if (currentDocument.isDocumentLocked) {
-    throw new HTTPError(403, "Document is locked and cannot be edited")
+  if (currentDocument.group.systemId !== systemId) {
+    throw new HTTPError(400, "Klassenotat tilhører ikke den angitte klassen!")
   }
 
   const newMessageData: DocumentMessageInput = body
@@ -86,7 +70,7 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
 
   const school: School | null = await dbClient.schools.getSchool(currentDocument.school.schoolNumber)
   if (!school) {
-    throw new HTTPError(404, noAccessMessage("School not found"))
+    throw new HTTPError(404, "Skole ikke funnet")
   }
 
   let messageId: string
@@ -106,7 +90,7 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
       resourceName: "",
       metaData: {
         data: JSON.stringify({
-          groupName: classEntry.name
+          groupName: classGroup.name
         }),
         parentResource: "GroupDocument",
         parentResourceId: documentId,

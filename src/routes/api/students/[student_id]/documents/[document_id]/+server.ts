@@ -1,15 +1,14 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
 import { validateDocument } from "$lib/data-validation/document-validation"
-import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
-import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
+import { resolvePrincipalAccess, resolveStudentContext } from "$lib/server/authorization/principal-context"
 import { getStudentFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canEditStudentDocument, isSchoolLeaderForSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeDeleteStudentDocument, authorizeEditStudentDocument } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent } from "$lib/types/app-types"
+import type { CachedFrontendStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { EditorData, StudentDocument, StudentDocumentUpdate } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -34,20 +33,18 @@ const removeDocument: ApiNextFunction<RemoveDocumentResponse> = async ({ princip
 
   const document: StudentDocument | null = await dbClient.documents.getStudentDocumentById(documentId)
   if (!document) {
-    throw new HTTPError(404, "Document not found. Cannot delete non-existing document.")
+    throw new HTTPError(404, "Elevnotat ikke funnet")
   }
 
-  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
-  if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
+  const principalAccess = await resolvePrincipalAccess(principal)
+
+  const authorizationResult = authorizeDeleteStudentDocument({ principalAccess, document })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
-  if (!isSchoolLeaderForSchool(principalAccess, document.school.schoolNumber)) {
-    throw new HTTPError(403, noAccessMessage("No permission to delete this document"))
-  }
-
-  if (document.isDocumentLocked) {
-    throw new HTTPError(403, "Document is locked and cannot be removed")
+  if (document.student._id !== studentId) {
+    throw new HTTPError(400, "Student ID in the document data does not match the student ID in the request parameters!")
   }
 
   try {
@@ -109,38 +106,22 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
     throw new HTTPError(400, "Document ID is missing in request parameters")
   }
 
-  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
-  if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
-  }
-
-  const student: CachedFrontendStudent | null = await getStudentFromCache(studentId)
-  if (!student) {
-    throw new HTTPError(400, "Student not found. Cannot edit the document for non-existing student.")
-  }
-
-  const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, principalAccess)
-  if (principalAccessForStudent.length === 0) {
-    throw new HTTPError(403, noAccessMessage("No permission to edit the document"))
-  }
+  const { student, principalAccessForStudent } = await resolveStudentContext(principal, studentId)
 
   const dbClient: IDbClient = getDbClient()
 
   const currentDocument = await dbClient.documents.getStudentDocumentById(documentId)
   if (!currentDocument) {
-    throw new HTTPError(404, "Document not found, cannot update non-existing document")
+    throw new HTTPError(404, "Elevnotat ikke funnet")
   }
 
-  if (!canEditStudentDocument(principal, principalAccessForStudent, currentDocument)) {
-    throw new HTTPError(403, noAccessMessage("No permission to edit the document"))
+  const authorizationResult = authorizeEditStudentDocument({ authenticatedPrincipal: principal, accessToStudent: principalAccessForStudent, document: currentDocument })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   if (currentDocument.student._id !== studentId) {
     throw new HTTPError(400, "Student ID in the document data does not match the student ID in the request parameters - what are you doing!!")
-  }
-
-  if (currentDocument.isDocumentLocked) {
-    throw new HTTPError(403, "Document is locked and cannot be edited")
   }
 
   const updateDocumentData: UpdateDocumentBody = body

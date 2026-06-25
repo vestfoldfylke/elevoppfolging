@@ -7,7 +7,7 @@ import { upsertStudentInCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canManageManualStudentsOnSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeManageManualStudentsOnSchool } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { FrontendStudent } from "$lib/types/app-types"
 import type { ValidationResult } from "$lib/types/data-validation"
@@ -31,21 +31,22 @@ const updateManualStudent: ApiNextFunction<UpdateManualStudentResponse, UpdateMa
 
   const access: Access | null = await dbClient.access.getPrincipalAccess(principal.id)
   if (!access) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
+    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
   }
 
-  if (!canManageManualStudentsOnSchool(access, updateManualStudentData.school.schoolNumber)) {
-    throw new HTTPError(403, noAccessMessage("No permission to update manual student on the specified school"))
+  const authorizationResult = authorizeManageManualStudentsOnSchool({ principalAccess: access, schoolNumber: updateManualStudentData.school.schoolNumber })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   // fetch student
   const student: AppStudent | null = await dbClient.students.getStudentById(updateManualStudentData.studentId)
   if (!student) {
-    throw new HTTPError(404, "Student not found")
+    throw new HTTPError(404, "Elev ikke funnet")
   }
 
   if (student.source !== "MANUAL") {
-    throw new HTTPError(403, noAccessMessage("Cannot update student that is registered in source system"))
+    throw new HTTPError(403, "Kan ikke oppdatere elev registrert i kildesystemet")
   }
 
   if (updateManualStudentData.ssn !== student.ssn) {

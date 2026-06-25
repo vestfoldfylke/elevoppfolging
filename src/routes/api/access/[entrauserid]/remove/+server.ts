@@ -6,7 +6,7 @@ import { invalidateStudentAccessCache } from "$lib/server/cache/student-access-c
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canGrantAndRemoveAccessForSchool, isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeSchoolLeaderForSchool, authorizeSystemAdmin } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { School } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -30,57 +30,59 @@ const removeAccess: ApiNextFunction<RemoveAccessResponse, RemoveAccessBody> = as
   const dbClient = getDbClient()
 
   if (accessEntryToRemove.type === "MANUELL-SKOLELEDER-TILGANG") {
-    if (!isSystemAdmin(principal, APP_INFO)) {
-      throw new HTTPError(403, noAccessMessage("No permission to remove access"))
+    const authorizationResult = authorizeSystemAdmin({ authenticatedPrincipal: principal, APP_INFO })
+    if (!authorizationResult.authorized) {
+      throw new HTTPError(403, authorizationResult.message)
     }
   } else {
     // Get access for principal to check if they have access to grant access on their school
     const principalAccess = await dbClient.access.getPrincipalAccess(principal.id)
     if (!principalAccess) {
-      throw new HTTPError(403, noAccessMessage("No access found for principal"))
+      throw new HTTPError(403, "Ingen tilgang funnet for bruker")
     }
-    const canGrantAccess = canGrantAndRemoveAccessForSchool(accessEntryToRemove.schoolNumber, principalAccess)
-    if (!canGrantAccess) {
-      throw new HTTPError(403, noAccessMessage("No permission to remove access"))
+
+    const authorizationResult = authorizeSchoolLeaderForSchool({ schoolNumber: accessEntryToRemove.schoolNumber, principalAccess })
+    if (!authorizationResult.authorized) {
+      throw new HTTPError(403, authorizationResult.message)
     }
   }
 
   const school: School | null = await dbClient.schools.getSchool(accessEntryToRemove.schoolNumber)
   if (!school) {
-    throw new HTTPError(404, noAccessMessage("School not found"))
+    throw new HTTPError(404, "Skole ikke funnet")
   }
 
   const existingAccess = await dbClient.access.getPrincipalAccess(entraUserId)
 
   if (!existingAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
+    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
   }
 
   // If the same access entry does not exist, we should not remove it
   switch (accessEntryToRemove.type) {
     case "MANUELL-SKOLELEDER-TILGANG":
       if (!existingAccess.leaderForSchools.some((s) => s.schoolNumber === accessEntryToRemove.schoolNumber && s.type === "MANUELL-SKOLELEDER-TILGANG")) {
-        throw new HTTPError(400, "Cannot remove access entry that does not exist")
+        throw new HTTPError(400, "Kan ikke fjerne tilgangsoppføring som ikke finnes")
       }
       break
     case "MANUELL-ALLE-ELEVER-VED-SKOLE-TILGANG":
       if (!existingAccess.allStudentsAtSchools.some((s) => s.schoolNumber === accessEntryToRemove.schoolNumber && s.type === "MANUELL-ALLE-ELEVER-VED-SKOLE-TILGANG")) {
-        throw new HTTPError(400, "Cannot remove access entry that does not exist")
+        throw new HTTPError(400, "Kan ikke fjerne tilgangsoppføring som ikke finnes")
       }
       break
     case "MANUELL-ELEV-TILGANG":
       if (!existingAccess.students.some((s) => s._id === accessEntryToRemove._id && s.schoolNumber === accessEntryToRemove.schoolNumber && s.type === "MANUELL-ELEV-TILGANG")) {
-        throw new HTTPError(400, "Cannot remove access entry that does not exist")
+        throw new HTTPError(400, "Kan ikke fjerne tilgangsoppføring som ikke finnes")
       }
       break
     case "MANUELL-KLASSE-TILGANG":
       if (!existingAccess.classes.some((c) => c.systemId === accessEntryToRemove.systemId && c.schoolNumber === accessEntryToRemove.schoolNumber && c.type === "MANUELL-KLASSE-TILGANG")) {
-        throw new HTTPError(400, "Cannot remove access entry that does not exist")
+        throw new HTTPError(400, "Kan ikke fjerne tilgangsoppføring som ikke finnes")
       }
       break
     case "MANUELL-PROGRAMOMRÅDE-TILGANG":
       if (!existingAccess.programAreas.some((p) => p._id === accessEntryToRemove._id && p.schoolNumber === accessEntryToRemove.schoolNumber && p.type === "MANUELL-PROGRAMOMRÅDE-TILGANG")) {
-        throw new HTTPError(400, "Cannot remove access entry that does not exist")
+        throw new HTTPError(400, "Kan ikke fjerne tilgangsoppføring som ikke finnes")
       }
       break
   }

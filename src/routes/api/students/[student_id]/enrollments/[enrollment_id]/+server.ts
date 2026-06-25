@@ -1,13 +1,13 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
-import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
+import { resolvePrincipalAccess } from "$lib/server/authorization/principal-context"
 import { upsertStudentInCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canManageManualStudentsOnSchool, isSchoolLeaderForSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeManageManualStudentsOnSchool } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { FrontendStudent, PrincipalAccess } from "$lib/types/app-types"
+import type { FrontendStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { AppStudent, ClassMembership, ContactTeacherGroupMembership, EditorData, StudentEnrollment, TeachingGroupMembership, UpdateAppStudent } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -30,25 +30,23 @@ const removeEnrollment: ApiNextFunction<RemoveEnrollmentResponse> = async ({ pri
 
   const student: AppStudent | null = await dbClient.students.getStudentById(studentId)
   if (!student) {
-    throw new HTTPError(404, "Student not found. Cannot delete studentEnrollment for non-existing student.")
+    throw new HTTPError(404, "Elev ikke funnet")
   }
 
   const studentEnrollment: StudentEnrollment | undefined = student.studentEnrollments.find((enrollment: StudentEnrollment) => enrollment.systemId === enrollmentId)
   if (!studentEnrollment) {
-    throw new HTTPError(404, "Enrollment not found. Cannot delete non-existing student enrollment.")
+    throw new HTTPError(404, "Elevforhold ikke funnet")
   }
 
   if (studentEnrollment.source !== "MANUAL") {
-    throw new HTTPError(403, "Cannot delete student enrollment registered in source system")
+    throw new HTTPError(403, "Kan ikke slette elevforhold registrert i kildesystemet")
   }
 
-  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
-  if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
-  }
+  const principalAccess = await resolvePrincipalAccess(principal)
 
-  if (!isSchoolLeaderForSchool(principalAccess, studentEnrollment.school.schoolNumber) || !canManageManualStudentsOnSchool(principalAccess, studentEnrollment.school.schoolNumber)) {
-    throw new HTTPError(403, noAccessMessage("No permission to delete this student enrollment"))
+  const authorizationResult = authorizeManageManualStudentsOnSchool({ principalAccess, schoolNumber: studentEnrollment.school.schoolNumber })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const editorData: EditorData = {

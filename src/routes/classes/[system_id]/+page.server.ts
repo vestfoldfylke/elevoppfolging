@@ -1,18 +1,17 @@
-import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
+import { resolveClassContext } from "$lib/server/authorization/principal-context"
 import { getStudentsFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
-import { noAccessMessage } from "$lib/shared-authorization/authorization"
-import type { PrincipalAccess, PrincipalAccessStudent } from "$lib/types/app-types"
+import type { PrincipalAccessStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { DocumentContentTemplate, GroupDocument, GroupImportantStuff, StudentClassGroup } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
-import { getAccessibleClassesFromStudents } from "$lib/utils/classes-from-students"
 import type { PageServerLoad } from "./$types"
 
 type ClassPageData = {
   classGroup: StudentClassGroup
+  principalClassGroups: StudentClassGroup[]
   classStudents: PrincipalAccessStudent[]
   groupImportantStuff: GroupImportantStuff[]
   documents: GroupDocument[]
@@ -22,27 +21,12 @@ type ClassPageData = {
 const getClassGroup: ServerLoadNextFunction<ClassPageData> = async ({ principal, requestEvent }) => {
   const systemId: string | undefined = requestEvent.params.system_id
   if (!systemId) {
-    throw new Error("System ID is missing in request parameters")
+    throw new HTTPError(400, "System ID is missing in request parameters")
   }
 
-  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
-  if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
-  }
+  const { principalAccess, classes: principalClasses, classGroup } = await resolveClassContext(principal, systemId)
 
   const classStudents = await getStudentsFromCache(principalAccess, { classSystemIds: [systemId] })
-
-  if (classStudents.length === 0) {
-    throw new HTTPError(403, noAccessMessage("Principal does not have access to any students in this class"))
-  }
-
-  const principalClasses: StudentClassGroup[] = getAccessibleClassesFromStudents(principalAccess, classStudents)
-
-  const classGroup = principalClasses.find((classEntry) => classEntry.systemId === systemId)
-
-  if (!classGroup) {
-    throw new HTTPError(403, noAccessMessage("Principal does not have access to this class"))
-  }
 
   const dbClient: IDbClient = getDbClient()
 
@@ -55,6 +39,7 @@ const getClassGroup: ServerLoadNextFunction<ClassPageData> = async ({ principal,
   return {
     classGroup,
     classStudents,
+    principalClassGroups: principalClasses,
     groupImportantStuff,
     documents: groupDocuments,
     documentContentTemplates: documentContentTemplates.sort((a, b) => a.sort - b.sort)

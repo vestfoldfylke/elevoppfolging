@@ -5,7 +5,7 @@ import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeSystemAdmin } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap } from "$lib/types/api/api-route-map"
 import type { EditorData, NewSchool } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -14,8 +14,9 @@ type AddSchoolResponse = ApiRouteMap["/api/schools"]["POST"]["res"]
 type AddSchoolBody = ApiRouteMap["/api/schools"]["POST"]["req"]
 
 const addSchool: ApiNextFunction<AddSchoolResponse, AddSchoolBody> = async ({ principal, body }) => {
-  if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, noAccessMessage("No permission to add school"))
+  const authorizationResult = authorizeSystemAdmin({ authenticatedPrincipal: principal, APP_INFO })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const newSchoolData: AddSchoolBody = body
@@ -28,10 +29,10 @@ const addSchool: ApiNextFunction<AddSchoolResponse, AddSchoolBody> = async ({ pr
   const allSchools = await dbClient.schools.getSchools()
 
   if (allSchools.some((school) => school.schoolNumber === newSchoolData.schoolNumber)) {
-    throw new HTTPError(400, "A school with the same school number already exists.")
+    throw new HTTPError(400, "Skole med samme skolenummer finnes allerede")
   }
   if (allSchools.some((school) => school.name.toLowerCase() === newSchoolData.name.toLowerCase())) {
-    throw new HTTPError(400, "A school with the same name already exists.")
+    throw new HTTPError(400, "Skole med samme navn finnes allerede")
   }
 
   const editorData: EditorData = {

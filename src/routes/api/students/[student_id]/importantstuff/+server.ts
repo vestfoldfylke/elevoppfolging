@@ -1,15 +1,12 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
 import { validateStudentImportantStuffData } from "$lib/data-validation/student-important-stuff-validation"
-import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
-import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
-import { getStudentFromCache } from "$lib/server/cache/students-cache"
+import { resolveStudentContext } from "$lib/server/authorization/principal-context"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canEditStudentImportantStuff, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeEditStudentImportantStuff } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent } from "$lib/types/app-types"
 import type { EditorData, NewStudentImportantStuff, StudentImportantStuffInput } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
@@ -22,21 +19,7 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
     throw new HTTPError(400, "Student ID is missing in request parameters")
   }
 
-  // Authorization
-  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
-  if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
-  }
-
-  const currentStudent: CachedFrontendStudent | null = await getStudentFromCache(studentId)
-  if (!currentStudent) {
-    throw new HTTPError(404, "Student not found, cannot consent to non-existing student")
-  }
-
-  const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(currentStudent, principalAccess)
-  if (principalAccessForStudent.length === 0) {
-    throw new HTTPError(403, noAccessMessage("No permission to student"))
-  }
+  const { student: currentStudent, principalAccessForStudent } = await resolveStudentContext(principal, studentId)
 
   const studentImportantStuffData: StudentImportantStuffInput = body
 
@@ -46,9 +29,9 @@ const updateStudentImportantStuff: ApiNextFunction<PatchImportantStuffResponse, 
     throw new HTTPError(400, `Invalid request body: ${validationResult.message}`)
   }
 
-  const canEditImportantStuff = canEditStudentImportantStuff(studentImportantStuffData.school.schoolNumber, principalAccessForStudent)
-  if (!canEditImportantStuff) {
-    throw new HTTPError(403, noAccessMessage("Insufficient access level to edit student important stuff"))
+  const authorizationResult = authorizeEditStudentImportantStuff({ importantStuffSchoolNumber: studentImportantStuffData.school.schoolNumber, accessToStudent: principalAccessForStudent })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const dbClient = getDbClient()

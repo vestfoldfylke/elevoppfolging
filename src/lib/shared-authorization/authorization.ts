@@ -1,82 +1,215 @@
-import type { AccessEntry, ApplicationInfo, PrincipalAccessForStudent } from "$lib/types/app-types"
+import type { ApplicationInfo, PrincipalAccess, PrincipalAccessForStudent } from "$lib/types/app-types"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
-import type {
-  Access,
-  DocumentInput,
-  DocumentMessage,
-  GroupDocument,
-  ManageManualStudentsManualAccessEntry,
-  SchoolLeaderManualAccessEntry,
-  StudentDataSharingConsent,
-  StudentDocument
-} from "$lib/types/db/shared-types"
+import type { Access, DocumentInput, DocumentMessage, GroupDocument, SchoolLeaderManualAccessEntry, StudentClassGroup, StudentDataSharingConsent, StudentDocument } from "$lib/types/db/shared-types"
 import { SUBJECT_TEACHER_ACCESS_TYPES } from "$lib/utils/access-constants"
 
-export const isSystemAdmin = (authenticatedPrincipal: AuthenticatedPrincipal, APP_INFO: ApplicationInfo): boolean => {
-  return authenticatedPrincipal.roles.includes(APP_INFO.ROLES.ADMIN)
+export type AuthorizationResult = { authorized: true } | { authorized: false; message: string }
+
+export const DOCUMENT_IS_LOCKED_MESSAGE = "Elevnotatet er låst og kan ikke redigeres"
+
+export type AuthorizeSystemAdminInput = {
+  authenticatedPrincipal: AuthenticatedPrincipal
+  APP_INFO: ApplicationInfo
 }
 
-export const canAddMessageToStudentDocument = (
-  authenticatedPrincipal: AuthenticatedPrincipal,
-  accessToStudent: PrincipalAccessForStudent[],
-  document: StudentDocument,
-  studentDataSharingConsent: StudentDataSharingConsent | null
-): boolean => {
-  // Hvis du kan åpne det kan du legge til melding på det
-  const canViewResult = canViewStudentDocument(authenticatedPrincipal, accessToStudent, document, studentDataSharingConsent)
-  if (!canViewResult.canView || canViewResult.mustHideDocumentContent) {
-    return false
+export const NOT_SYSTEM_ADMIN_MESSAGE = "Bruker er ikke systemadministrator"
+
+export function authorizeSystemAdmin({ authenticatedPrincipal, APP_INFO }: AuthorizeSystemAdminInput): AuthorizationResult {
+  if (authenticatedPrincipal.roles.includes(APP_INFO.ROLES.ADMIN)) {
+    return {
+      authorized: true
+    }
   }
-  return accessToStudent.some((access: PrincipalAccessForStudent) => access.schoolNumber === document.school.schoolNumber)
+  return {
+    authorized: false,
+    message: NOT_SYSTEM_ADMIN_MESSAGE
+  }
 }
 
-export const canUpdateMessageInStudentDocument = (
-  authenticatedPrincipal: AuthenticatedPrincipal,
-  accessToStudent: PrincipalAccessForStudent[],
-  document: StudentDocument,
+export type AuthorizeAddMessageToStudentDocumentInput = {
+  authenticatedPrincipal: AuthenticatedPrincipal
+  accessToStudent: PrincipalAccessForStudent[]
+  document: StudentDocument
+  studentDataSharingConsent: StudentDataSharingConsent | null
+}
+
+export const CANNOT_ADD_MESSAGE_TO_STUDENT_DOCUMENT_MESSAGE = "Ingen tilgang til å legge til melding på elevnotatet"
+
+export function authorizeAddMessageToStudentDocument({ authenticatedPrincipal, accessToStudent, document, studentDataSharingConsent }: AuthorizeAddMessageToStudentDocumentInput): AuthorizationResult {
+  if (document.isDocumentLocked) {
+    return {
+      authorized: false,
+      message: DOCUMENT_IS_LOCKED_MESSAGE
+    }
+  }
+
+  if (!accessToStudent.some((accessEntry) => accessEntry.schoolNumber === document.school.schoolNumber)) {
+    return {
+      authorized: false,
+      message: CANNOT_ADD_MESSAGE_TO_STUDENT_DOCUMENT_MESSAGE
+    }
+  }
+
+  const canViewResult = authorizeStudentDocumentAccess({ authenticatedPrincipal, accessToStudent, document, studentDataSharingConsent })
+  if (!canViewResult.canView || canViewResult.mustHideDocumentContent) {
+    return {
+      authorized: false,
+      message: CANNOT_ADD_MESSAGE_TO_STUDENT_DOCUMENT_MESSAGE
+    }
+  }
+  return {
+    authorized: true
+  }
+}
+
+export type AuthorizeEditMessageInStudentDocumentInput = {
+  authenticatedPrincipal: AuthenticatedPrincipal
+  accessToStudent: PrincipalAccessForStudent[]
+  document: StudentDocument
   message: DocumentMessage
-): boolean => {
-  return message.created.by.entraUserId === authenticatedPrincipal.id && accessToStudent.some((access: PrincipalAccessForStudent) => access.schoolNumber === document.school.schoolNumber)
 }
 
-export const canUpdateMessageInGroupDocument = (authenticatedPrincipal: AuthenticatedPrincipal, message: DocumentMessage): boolean => {
-  return message.created.by.entraUserId === authenticatedPrincipal.id
+export const CANNOT_EDIT_MESSAGE_IN_STUDENT_DOCUMENT_MESSAGE = "Ingen tilgang til å redigere melding på elevnotatet"
+
+export function authorizeEditMessageInStudentDocument({ authenticatedPrincipal, document, message, accessToStudent }: AuthorizeEditMessageInStudentDocumentInput): AuthorizationResult {
+  if (document.isDocumentLocked) {
+    return {
+      authorized: false,
+      message: DOCUMENT_IS_LOCKED_MESSAGE
+    }
+  }
+
+  if (!accessToStudent.some((accessEntry) => accessEntry.schoolNumber === document.school.schoolNumber)) {
+    return {
+      authorized: false,
+      message: CANNOT_EDIT_MESSAGE_IN_STUDENT_DOCUMENT_MESSAGE
+    }
+  }
+
+  if (message.created.by.entraUserId !== authenticatedPrincipal.id) {
+    return {
+      authorized: false,
+      message: CANNOT_EDIT_MESSAGE_IN_STUDENT_DOCUMENT_MESSAGE
+    }
+  }
+
+  return {
+    authorized: true
+  }
 }
 
-export const canManageManualStudentsOnSchool = (principalAccess: Access, schoolNumber: string): boolean => {
-  return (
-    principalAccess.leaderForSchools.some((accessEntry: SchoolLeaderManualAccessEntry) => accessEntry.schoolNumber === schoolNumber) ||
-    principalAccess.manageManualStudentsForSchools.some((accessEntry: ManageManualStudentsManualAccessEntry) => accessEntry.schoolNumber === schoolNumber)
-  )
+export type AuthorizeAddMessageToGroupDocumentInput = {
+  document: GroupDocument
+  principalClasses: StudentClassGroup[]
 }
 
-export const isOnlySubjectTeacher = (accessToStudent: PrincipalAccessForStudent[]): boolean => {
+export const CANNOT_ADD_MESSAGE_TO_GROUP_DOCUMENT_MESSAGE = "Ingen tilgang til å legge til melding på gruppedokumentet"
+
+export function authorizeAddMessageToGroupDocument({ document, principalClasses }: AuthorizeAddMessageToGroupDocumentInput): AuthorizationResult {
+  if (document.isDocumentLocked) {
+    return {
+      authorized: false,
+      message: "Gruppedokumentet er låst og kan ikke redigeres"
+    }
+  }
+
+  if (!principalClasses.some((classEntry: StudentClassGroup) => classEntry.systemId === document.group.systemId)) {
+    return {
+      authorized: false,
+      message: CANNOT_ADD_MESSAGE_TO_GROUP_DOCUMENT_MESSAGE
+    }
+  }
+
+  return {
+    authorized: true
+  }
+}
+
+export type AuthorizeEditMessageInGroupDocumentInput = {
+  authenticatedPrincipal: AuthenticatedPrincipal
+  document: GroupDocument
+  message: DocumentMessage
+  principalClasses: StudentClassGroup[]
+}
+
+export function authorizeEditMessageInGroupDocument({ authenticatedPrincipal, document, message, principalClasses }: AuthorizeEditMessageInGroupDocumentInput): AuthorizationResult {
+  if (document.isDocumentLocked) {
+    return {
+      authorized: false,
+      message: "Gruppedokumentet er låst og kan ikke redigeres"
+    }
+  }
+
+  if (!principalClasses.some((classEntry: StudentClassGroup) => classEntry.systemId === document.group.systemId)) {
+    return {
+      authorized: false,
+      message: "Ingen tilgang til å redigere melding på gruppedokumentet"
+    }
+  }
+
+  if (message.created.by.entraUserId !== authenticatedPrincipal.id) {
+    return {
+      authorized: false,
+      message: "Ingen tilgang til å redigere melding på gruppedokumentet"
+    }
+  }
+
+  return {
+    authorized: true
+  }
+}
+
+export type AuthorizeManageManualStudentsOnSchoolInput = {
+  principalAccess: Access
+  schoolNumber: string
+}
+
+export function authorizeManageManualStudentsOnSchool({ principalAccess, schoolNumber }: AuthorizeManageManualStudentsOnSchoolInput): AuthorizationResult {
+  if (authorizeSchoolLeaderForSchool({ principalAccess, schoolNumber }).authorized || principalAccess.manageManualStudentsForSchools.some((accessEntry) => accessEntry.schoolNumber === schoolNumber)) {
+    return {
+      authorized: true
+    }
+  }
+
+  return {
+    authorized: false,
+    message: "Ingen tilgang til å administrere manuelle elever på skolen"
+  }
+}
+
+export function isOnlySubjectTeacher(accessToStudent: PrincipalAccessForStudent[]): boolean {
   return accessToStudent.every((accessEntry) => (SUBJECT_TEACHER_ACCESS_TYPES as readonly string[]).includes(accessEntry.type))
 }
 
-type CanViewStudentDocumentTrueResult = {
+type AuthorizeStudentDocumentAccessTrueResult = {
   canView: true
   mustHideDocumentContent: boolean
 }
 
-type CanViewStudentDocumentFalseResult = {
+type AuthorizeStudentDocumentAccessFalseResult = {
   canView: false
-  mustHideDocumentContent: null
 }
 
-export type CanViewStudentDocumentResult = CanViewStudentDocumentTrueResult | CanViewStudentDocumentFalseResult
+export type AuthorizeStudentDocumentAccessResult = AuthorizeStudentDocumentAccessTrueResult | AuthorizeStudentDocumentAccessFalseResult
 
-export const canViewStudentDocument = (
-  authenticatedPrincipal: AuthenticatedPrincipal,
-  accessToStudent: PrincipalAccessForStudent[],
-  document: StudentDocument,
+export type AuthorizeStudentDocumentAccessInput = {
+  authenticatedPrincipal: AuthenticatedPrincipal
+  accessToStudent: PrincipalAccessForStudent[]
+  document: StudentDocument
   studentDataSharingConsent: StudentDataSharingConsent | null
-): CanViewStudentDocumentResult => {
+}
+
+export function authorizeStudentDocumentAccess({
+  authenticatedPrincipal,
+  accessToStudent,
+  document,
+  studentDataSharingConsent
+}: AuthorizeStudentDocumentAccessInput): AuthorizeStudentDocumentAccessResult {
   if (accessToStudent.length === 0) {
-    return { canView: false, mustHideDocumentContent: null }
+    return { canView: false }
   }
 
-  const hasRequiredDocumentAccess = (accessToStudentList: PrincipalAccessForStudent[]): CanViewStudentDocumentResult => {
+  const checkRequiredDocumentAccess = (accessToStudentList: PrincipalAccessForStudent[]): AuthorizeStudentDocumentAccessResult => {
     if (authenticatedPrincipal.id === document.created.by.entraUserId) {
       return { canView: true, mustHideDocumentContent: false }
     }
@@ -86,88 +219,255 @@ export const canViewStudentDocument = (
         return { canView: true, mustHideDocumentContent: true }
       }
 
-      return { canView: false, mustHideDocumentContent: null }
+      return { canView: false }
     }
 
     if (document.documentAccess === "ALL_WITH_STUDENT_ACCESS") {
       return { canView: true, mustHideDocumentContent: false }
     }
 
-    return !(document.documentAccess === "EXCLUDE_SUBJECT_TEACHERS" && isOnlySubjectTeacher(accessToStudentList))
-      ? { canView: true, mustHideDocumentContent: false }
-      : { canView: false, mustHideDocumentContent: null }
+    return !(document.documentAccess === "EXCLUDE_SUBJECT_TEACHERS" && isOnlySubjectTeacher(accessToStudentList)) ? { canView: true, mustHideDocumentContent: false } : { canView: false }
   }
 
   if (studentDataSharingConsent?.consent) {
-    return hasRequiredDocumentAccess(accessToStudent)
+    return checkRequiredDocumentAccess(accessToStudent)
   }
 
   // no consent - only documents from access schools
   const accessToStudentFromDocumentSchool: PrincipalAccessForStudent[] = accessToStudent.filter((access: PrincipalAccessForStudent) => access.schoolNumber === document.school.schoolNumber)
   if (accessToStudentFromDocumentSchool.length === 0) {
-    return { canView: false, mustHideDocumentContent: null }
+    return { canView: false }
   }
 
-  return hasRequiredDocumentAccess(accessToStudentFromDocumentSchool)
+  return checkRequiredDocumentAccess(accessToStudentFromDocumentSchool)
 }
 
-export const canCreateStudentDocument = (accessToStudent: PrincipalAccessForStudent[], newDocument: DocumentInput): boolean => {
-  return accessToStudent.some((access: PrincipalAccessForStudent) => access.schoolNumber === newDocument.school.schoolNumber)
+export type AuthorizeCreateStudentDocumentInput = {
+  accessToStudent: PrincipalAccessForStudent[]
+  newDocument: DocumentInput
 }
 
-export const canEditGroupDocument = (authenticatedPrincipal: AuthenticatedPrincipal, document: GroupDocument): boolean => {
-  return document.created.by.entraUserId === authenticatedPrincipal.id
+export function authorizeCreateStudentDocument({ accessToStudent, newDocument }: AuthorizeCreateStudentDocumentInput): AuthorizationResult {
+  if (!accessToStudent.some((access: PrincipalAccessForStudent) => access.schoolNumber === newDocument.school.schoolNumber)) {
+    return {
+      authorized: false,
+      message: "Ingen tilgang til å opprette elevnotat for eleven på denne skolen"
+    }
+  }
+
+  return {
+    authorized: true
+  }
 }
 
-export const canEditStudentDocument = (authenticatedPrincipal: AuthenticatedPrincipal, accessToStudent: PrincipalAccessForStudent[], document: StudentDocument): boolean => {
-  return document.created.by.entraUserId === authenticatedPrincipal.id && accessToStudent.some((access: PrincipalAccessForStudent) => access.schoolNumber === document.school.schoolNumber)
+export type AuthorizeEditStudentDocumentInput = {
+  authenticatedPrincipal: AuthenticatedPrincipal
+  accessToStudent: PrincipalAccessForStudent[]
+  document: StudentDocument
 }
 
-export const canEditDocumentMessage = (authenticatedPrincipal: AuthenticatedPrincipal, message: DocumentMessage): boolean => {
-  return message.created.by.entraUserId === authenticatedPrincipal.id
+export const CANNOT_EDIT_STUDENT_DOCUMENT_MESSAGE = "Ingen tilgang til å redigere elevnotatet"
+
+export function authorizeEditStudentDocument({ authenticatedPrincipal, accessToStudent, document }: AuthorizeEditStudentDocumentInput): AuthorizationResult {
+  if (document.isDocumentLocked) {
+    return {
+      authorized: false,
+      message: DOCUMENT_IS_LOCKED_MESSAGE
+    }
+  }
+
+  if (document.created.by.entraUserId !== authenticatedPrincipal.id) {
+    return {
+      authorized: false,
+      message: CANNOT_EDIT_STUDENT_DOCUMENT_MESSAGE
+    }
+  }
+
+  if (!accessToStudent.some((access: PrincipalAccessForStudent) => access.schoolNumber === document.school.schoolNumber)) {
+    return {
+      authorized: false,
+      message: CANNOT_EDIT_STUDENT_DOCUMENT_MESSAGE
+    }
+  }
+
+  return {
+    authorized: true
+  }
 }
 
-export const isSchoolLeader = (principalAccess: Access | null): boolean => {
+export type AuthorizeEditGroupDocumentInput = {
+  authenticatedPrincipal: AuthenticatedPrincipal
+  document: GroupDocument
+}
+
+export function authorizeEditGroupDocument({ authenticatedPrincipal, document }: AuthorizeEditGroupDocumentInput): AuthorizationResult {
+  if (document.isDocumentLocked) {
+    return {
+      authorized: false,
+      message: "Gruppedokumentet er låst og kan ikke redigeres"
+    }
+  }
+
+  if (document.created.by.entraUserId !== authenticatedPrincipal.id) {
+    return {
+      authorized: false,
+      message: "Ingen tilgang til å redigere gruppedokumentet"
+    }
+  }
+
+  return {
+    authorized: true
+  }
+}
+
+export function authorizeSchoolLeader(principalAccess: Access | null): AuthorizationResult {
   if (!principalAccess) {
-    return false
+    return {
+      authorized: false,
+      message: "Ingen tilgang som skoleleder"
+    }
   }
 
-  // TODO - check that the school leader access is for a school that is active
-  return principalAccess.leaderForSchools.some((schoolAccess) => schoolAccess.type === "MANUELL-SKOLELEDER-TILGANG")
+  if (!principalAccess.leaderForSchools.some((access) => access.type === "MANUELL-SKOLELEDER-TILGANG")) {
+    return {
+      authorized: false,
+      message: "Ingen tilgang som skoleleder"
+    }
+  }
+
+  return {
+    authorized: true
+  }
 }
 
-export const isSchoolLeaderForSchool = (principalAccess: Access | null, schoolNumber: string): boolean => {
+export type AuthorizeSchoolLeaderForSchoolInput = {
+  principalAccess: Access | null
+  schoolNumber: string
+}
+
+export function authorizeSchoolLeaderForSchool({ principalAccess, schoolNumber }: AuthorizeSchoolLeaderForSchoolInput): AuthorizationResult {
   if (!principalAccess) {
-    return false
+    return {
+      authorized: false,
+      message: "Ingen tilgang som skoleleder"
+    }
   }
 
-  return principalAccess.leaderForSchools.some((schoolAccess: SchoolLeaderManualAccessEntry) => schoolAccess.type === "MANUELL-SKOLELEDER-TILGANG" && schoolAccess.schoolNumber === schoolNumber)
+  const hasAccess = principalAccess.leaderForSchools.some(
+    (schoolAccess: SchoolLeaderManualAccessEntry) => schoolAccess.type === "MANUELL-SKOLELEDER-TILGANG" && schoolAccess.schoolNumber === schoolNumber
+  )
+  if (!hasAccess) {
+    return {
+      authorized: false,
+      message: "Ingen tilgang som skoleleder for denne skolen"
+    }
+  }
+
+  return {
+    authorized: true
+  }
 }
 
-export const canAccessSchoolAdministration = (principalAccess: Access | null): boolean => {
-  return isSchoolLeader(principalAccess) || principalAccess?.manageManualStudentsForSchools.some((accessEntry: AccessEntry) => accessEntry.type === "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG") || false
+export function authorizeSchoolAdministrationAccess(principalAccess: Access | null): AuthorizationResult {
+  if (!principalAccess) {
+    return {
+      authorized: false,
+      message: "Ingen tilgang som skoleleder eller administrasjon"
+    }
+  }
+
+  if (authorizeSchoolLeader(principalAccess).authorized) {
+    return {
+      authorized: true
+    }
+  }
+
+  if (principalAccess.manageManualStudentsForSchools.some((accessEntry) => accessEntry.type === "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG")) {
+    return {
+      authorized: true
+    }
+  }
+
+  return {
+    authorized: false,
+    message: "Ingen tilgang til skoleadministrasjon"
+  }
 }
 
-export const canGrantAndRemoveAccessForSchool = (schoolNumber: string, principalAccess: Access): boolean => {
-  return principalAccess.leaderForSchools.some((accessEntry: SchoolLeaderManualAccessEntry) => accessEntry.type === "MANUELL-SKOLELEDER-TILGANG" && accessEntry.schoolNumber === schoolNumber)
+export function authorizeEditStudentDataSharingConsent(accessToStudent: PrincipalAccessForStudent[]): AuthorizationResult {
+  if (!isOnlySubjectTeacher(accessToStudent)) {
+    return {
+      authorized: true
+    }
+  }
+
+  return {
+    authorized: false,
+    message: "Ingen tilgang til å redigere samtykke for deling av elevdata"
+  }
 }
 
-export const canEditStudentDataSharingConsent = (accessToStudent: PrincipalAccessForStudent[]): boolean => {
-  return !isOnlySubjectTeacher(accessToStudent)
+export type AuthorizeEditStudentImportantStuffInput = {
+  importantStuffSchoolNumber: string
+  accessToStudent: PrincipalAccessForStudent[]
 }
 
-export const canEditStudentImportantStuff = (importantStuffSchoolNumber: string, accessToStudent: PrincipalAccessForStudent[]): boolean => {
+export function authorizeEditStudentImportantStuff({ importantStuffSchoolNumber, accessToStudent }: AuthorizeEditStudentImportantStuffInput): AuthorizationResult {
   const accessForImportantStuffSchool = accessToStudent.filter((access) => access.schoolNumber === importantStuffSchoolNumber)
-  if (accessForImportantStuffSchool.length === 0) {
-    return false
+  if (accessForImportantStuffSchool.length === 0 || isOnlySubjectTeacher(accessForImportantStuffSchool)) {
+    return {
+      authorized: false,
+      message: "Ingen tilgang til å redigere viktig informasjon for eleven på denne skolen"
+    }
   }
-  return !isOnlySubjectTeacher(accessForImportantStuffSchool)
+
+  return {
+    authorized: true
+  }
 }
 
-export const noAccessMessage = (message?: string): string => {
-  if (!message) {
-    return "Access denied."
+export type AuthorizeDeleteStudentDocumentInput = {
+  principalAccess: PrincipalAccess | null
+  document: StudentDocument
+}
+
+export function authorizeDeleteStudentDocument({ principalAccess, document }: AuthorizeDeleteStudentDocumentInput): AuthorizationResult {
+  if (!principalAccess) {
+    return {
+      authorized: false,
+      message: "Ingen tilgang"
+    }
   }
 
-  return `Access denied: ${message}`
+  if (document.isDocumentLocked) {
+    return {
+      authorized: false,
+      message: "Elevnotatet er låst og kan ikke slettes"
+    }
+  }
+
+  return authorizeSchoolLeaderForSchool({ principalAccess, schoolNumber: document.school.schoolNumber })
+}
+
+export type AuthorizeDeleteGroupDocumentInput = {
+  principalAccess: PrincipalAccess | null
+  document: GroupDocument
+}
+
+export function authorizeDeleteGroupDocument({ principalAccess, document }: AuthorizeDeleteGroupDocumentInput): AuthorizationResult {
+  if (!principalAccess) {
+    return {
+      authorized: false,
+      message: "Ingen tilgang"
+    }
+  }
+
+  if (document.isDocumentLocked) {
+    return {
+      authorized: false,
+      message: "Gruppedokumentet er låst og kan ikke slettes"
+    }
+  }
+
+  return authorizeSchoolLeaderForSchool({ principalAccess, schoolNumber: document.school.schoolNumber })
 }

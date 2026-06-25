@@ -3,10 +3,10 @@
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import { createEditableDraft, type EditableDraft } from "$lib/runes/create-editable-draft.svelte"
-  import { canEditDocumentMessage } from "$lib/shared-authorization/authorization"
+  import { authorizeEditMessageInGroupDocument, authorizeEditMessageInStudentDocument } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
-  import type { StudentAccessPerson } from "$lib/types/app-types"
-  import type { DocumentMessage, DocumentMessageInput, GroupDocument, StudentDocument } from "$lib/types/db/shared-types"
+  import type { PrincipalAccessForStudent, StudentAccessPerson } from "$lib/types/app-types"
+  import type { DocumentMessage, DocumentMessageInput, GroupDocument, StudentClassGroup, StudentDataSharingConsent, StudentDocument } from "$lib/types/db/shared-types"
   import AsyncButton, { type AsyncButtonResult } from "../AsyncButton.svelte"
   import EditorInfo from "../EditorInfo.svelte"
   import EmailAlertSelector from "./EmailAlertSelector.svelte"
@@ -15,13 +15,15 @@
     document: StudentDocument | GroupDocument
     message: DocumentMessage
     editMode: boolean
-    studentDataSharingConsent?: boolean
+    studentDataSharingConsent?: StudentDataSharingConsent | null
     studentAccessPersons?: StudentAccessPerson[]
+    principalAccessForStudent?: PrincipalAccessForStudent[]
     emailAlertAvailable?: boolean
+    principalClasses?: StudentClassGroup[]
     callback?: () => void
   }
 
-  let { document, message, editMode, studentDataSharingConsent, studentAccessPersons, emailAlertAvailable, callback }: PageProps = $props()
+  let { document, message, editMode, studentDataSharingConsent, studentAccessPersons, principalAccessForStudent, emailAlertAvailable, principalClasses, callback }: PageProps = $props()
 
   let messageSource: DocumentMessageInput = $derived.by(() => {
     return {
@@ -36,7 +38,25 @@
 
   let editableMessage: EditableDraft<DocumentMessageInput> = createEditableDraft(() => messageSource)
 
-  let canEditMessage: boolean = $derived.by(() => canEditDocumentMessage(page.data.authenticatedPrincipal, message))
+  let canEditMessage: boolean = $derived.by(() => {
+    if ("group" in document) {
+      if (!principalClasses) {
+        throw new Error("principalClasses is required to authorize edit message in group document")
+      }
+
+      return authorizeEditMessageInGroupDocument({ authenticatedPrincipal: page.data.authenticatedPrincipal, document, message, principalClasses }).authorized
+    }
+
+    if ("student" in document) {
+      if (!principalAccessForStudent) {
+        throw new Error("principalAccessForStudent is required to authorize edit message in student document")
+      }
+
+      return authorizeEditMessageInStudentDocument({ authenticatedPrincipal: page.data.authenticatedPrincipal, document, message, accessToStudent: principalAccessForStudent }).authorized
+    }
+
+    throw new Error("Document is neither student or group document, can't authorize edit message")
+  })
 
   let messageForm: HTMLFormElement | undefined = $state()
 
@@ -169,7 +189,7 @@
           id="email-alert-{message.messageId}-{document._id}"
           legendText="Følgende personer skal varsles på e-post når oppdateringen lagres"
           {studentAccessPersons}
-          {studentDataSharingConsent}
+          studentDataSharingConsent={studentDataSharingConsent?.consent}
           schoolNumber={document.school.schoolNumber}
           documentAccess={document.documentAccess}
           bind:emailAlertReceivers={editableMessage.draft.emailAlertReceivers}

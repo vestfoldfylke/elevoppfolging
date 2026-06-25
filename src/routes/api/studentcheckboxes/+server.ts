@@ -5,7 +5,7 @@ import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeSystemAdmin } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap } from "$lib/types/api/api-route-map"
 import type { EditorData, NewStudentCheckBox } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -15,21 +15,22 @@ type AddStudentCheckBoxResponse = ApiRouteMap["/api/studentcheckboxes"]["POST"][
 type AddStudentCheckBoxBody = ApiRouteMap["/api/studentcheckboxes"]["POST"]["req"]
 
 const addStudentCheckBox: ApiNextFunction<AddStudentCheckBoxResponse, AddStudentCheckBoxBody> = async ({ principal, body }) => {
-  if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, noAccessMessage("No permission to add student checkbox"))
+  const authorizationResult = authorizeSystemAdmin({ authenticatedPrincipal: principal, APP_INFO })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const newStudentCheckBoxData: AddStudentCheckBoxBody = body
   const validationResult = validateStudentCheckBox(newStudentCheckBoxData)
   if (!validationResult.valid) {
-    throw new HTTPError(400, `Invalid student-check-box data: ${validationResult.message}`)
+    throw new HTTPError(400, `Invalid checkbox data: ${validationResult.message}`)
   }
 
   const dbClient = getDbClient()
   const currentStudentCheckBoxes = await dbClient.studentCheckBoxes.getStudentCheckBoxes()
 
   if (currentStudentCheckBoxes.some((checkBox) => checkBox.value === newStudentCheckBoxData.value)) {
-    throw new HTTPError(400, "A student check box with the same value already exists.")
+    throw new HTTPError(400, "Checkbox med samme navn finnes allerede.")
   }
 
   const editorData: EditorData = {
@@ -56,7 +57,7 @@ const addStudentCheckBox: ApiNextFunction<AddStudentCheckBoxResponse, AddStudent
   } catch (error) {
     throw new HTTPError(
       500,
-      `Feilet ved opprettelse av ${STUDENT_CHECKBOX_DISPLAY_NAMES[newStudentCheckBox.type].single?.toLowerCase() || STUDENT_CHECKBOX_DISPLAY_NAMES[newStudentCheckBox.type].plural.toLowerCase()} sjekkboks`,
+      `Feilet ved opprettelse av ${STUDENT_CHECKBOX_DISPLAY_NAMES[newStudentCheckBox.type].single?.toLowerCase() || STUDENT_CHECKBOX_DISPLAY_NAMES[newStudentCheckBox.type].plural.toLowerCase()} checkbox`,
       error
     )
   }

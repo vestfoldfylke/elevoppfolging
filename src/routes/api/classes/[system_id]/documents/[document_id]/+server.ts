@@ -1,18 +1,15 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
 import { validateDocument } from "$lib/data-validation/document-validation"
-import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
-import { getStudentsFromCache } from "$lib/server/cache/students-cache"
+import { resolveClassContext } from "$lib/server/authorization/principal-context"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canEditGroupDocument, isSchoolLeaderForSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeDeleteGroupDocument, authorizeEditGroupDocument } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { PrincipalAccess, PrincipalAccessStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { EditorData, GroupDocument, GroupDocumentUpdate, StudentClassGroup } from "$lib/types/db/shared-types"
+import type { EditorData, GroupDocument, GroupDocumentUpdate } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
-import { getAccessibleClassesFromStudents } from "$lib/utils/classes-from-students"
 
 type RemoveDocumentResponse = ApiRouteMap[`/api/classes/${NoSlashString}/documents/${NoSlashString}`]["DELETE"]["res"]
 
@@ -34,35 +31,18 @@ const removeDocument: ApiNextFunction<RemoveDocumentResponse> = async ({ princip
 
   const document: GroupDocument | null = await dbClient.documents.getGroupDocumentById(documentId)
   if (!document) {
-    throw new HTTPError(404, "Document not found. Cannot delete non-existing document.")
+    throw new HTTPError(404, "Klassenotat ikke funnet")
   }
 
-  if (document.isDocumentLocked) {
-    throw new HTTPError(403, "Document is locked and cannot be removed")
+  const { principalAccess, classGroup } = await resolveClassContext(principal, systemId)
+
+  const authorizationResult = authorizeDeleteGroupDocument({ principalAccess, document })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
-  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
-  if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
-  }
-
-  if (!isSchoolLeaderForSchool(principalAccess, document.school.schoolNumber)) {
-    throw new HTTPError(403, noAccessMessage("No permission to delete this document"))
-  }
-
-  const students: PrincipalAccessStudent[] = await getStudentsFromCache(principalAccess)
-  if (students.length === 0) {
-    throw new HTTPError(404, noAccessMessage("No access to any students"))
-  }
-
-  const classes: StudentClassGroup[] = getAccessibleClassesFromStudents(principalAccess, students)
-  if (classes.length === 0) {
-    throw new HTTPError(404, noAccessMessage("No access to any class"))
-  }
-
-  const classEntry: StudentClassGroup | undefined = classes.find((classEntry: StudentClassGroup) => classEntry.systemId === systemId)
-  if (!classEntry) {
-    throw new HTTPError(404, noAccessMessage("No access to class"))
+  if (document.group.systemId !== systemId) {
+    throw new HTTPError(400, "System ID in the document data does not match the System ID in the request parameters!")
   }
 
   try {
@@ -93,7 +73,7 @@ const removeDocument: ApiNextFunction<RemoveDocumentResponse> = async ({ princip
       resourceName: "",
       metaData: {
         data: JSON.stringify({
-          groupName: classEntry.name,
+          groupName: classGroup.name,
           template: document.template
         }),
         parentResource: "Group",
@@ -121,43 +101,22 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
     throw new HTTPError(400, "Document ID is missing in request parameters")
   }
 
-  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
-  if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
-  }
-
-  const students: PrincipalAccessStudent[] = await getStudentsFromCache(principalAccess)
-  if (students.length === 0) {
-    throw new HTTPError(404, noAccessMessage("No access to any students"))
-  }
-
-  const classes: StudentClassGroup[] = getAccessibleClassesFromStudents(principalAccess, students)
-  if (classes.length === 0) {
-    throw new HTTPError(404, noAccessMessage("No access to any class"))
-  }
-
-  const classEntry: StudentClassGroup | undefined = classes.find((classEntry: StudentClassGroup) => classEntry.systemId === systemId)
-  if (!classEntry) {
-    throw new HTTPError(404, noAccessMessage("No access to class"))
-  }
+  const { classGroup } = await resolveClassContext(principal, systemId)
 
   const dbClient: IDbClient = getDbClient()
 
   const currentDocument: GroupDocument | null = await dbClient.documents.getGroupDocumentById(documentId)
   if (!currentDocument) {
-    throw new HTTPError(404, "Document not found, cannot update non-existing document")
+    throw new HTTPError(404, "Klassenotat ikke funnet")
   }
 
-  if (!canEditGroupDocument(principal, currentDocument)) {
-    throw new HTTPError(403, noAccessMessage("No permission to edit the document"))
+  const authorizationResult = authorizeEditGroupDocument({ authenticatedPrincipal: principal, document: currentDocument })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   if (currentDocument.group.systemId !== systemId) {
     throw new HTTPError(400, "System ID in the document data does not match the System ID in the request parameters - what are you doing!!")
-  }
-
-  if (currentDocument.isDocumentLocked) {
-    throw new HTTPError(403, "Document is locked and cannot be edited")
   }
 
   const updateDocumentData: UpdateDocumentBody = body
@@ -205,7 +164,7 @@ const updateDocument: ApiNextFunction<UpdateDocumentResponse, UpdateDocumentBody
       resourceName: "",
       metaData: {
         data: JSON.stringify({
-          groupName: classEntry.name
+          groupName: classGroup.name
         }),
         parentResource: "Group",
         parentResourceId: systemId,

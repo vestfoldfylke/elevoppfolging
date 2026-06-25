@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from "$app/state"
   import favicon32 from "$lib/assets/favicon-32x32.png"
-  import { canAccessSchoolAdministration, isSystemAdmin } from "$lib/shared-authorization/authorization"
+  import { authorizeSchoolAdministrationAccess, authorizeSystemAdmin } from "$lib/shared-authorization/authorization"
 
   let mobileMenuOpen = $state(false)
 
@@ -16,11 +16,11 @@
     { name: "Klasser", href: "/classes", hrefStartsWith: "/classes" }
   ]
 
-  if (canAccessSchoolAdministration(page.data.principalAccess)) {
+  if (authorizeSchoolAdministrationAccess(page.data.principalAccess).authorized) {
     menuItems.push({ name: "Skoleadministrasjon", href: "/schooladministration", hrefStartsWith: "/schooladministration" })
   }
 
-  if (isSystemAdmin(page.data.authenticatedPrincipal, page.data.APP_INFO)) {
+  if (authorizeSystemAdmin({ authenticatedPrincipal: page.data.authenticatedPrincipal, APP_INFO: page.data.APP_INFO }).authorized) {
     menuItems.push({ name: "Systemadministrasjon", href: "/system", hrefStartsWith: "/system" })
   }
 </script>

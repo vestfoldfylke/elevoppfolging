@@ -1,12 +1,12 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
 import { validateProgramAreaData } from "$lib/data-validation/program-area-validation"
-import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
+import { resolvePrincipalAccess } from "$lib/server/authorization/principal-context"
 import { invalidateProgramAreaCache } from "$lib/server/cache/program-area-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canAccessSchoolAdministration, canGrantAndRemoveAccessForSchool, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeSchoolLeaderForSchool } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { EditorData, NewProgramArea, School } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -14,15 +14,7 @@ import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 type DeleteProgramAreaResponse = ApiRouteMap[`/api/programareas/${NoSlashString}`]["DELETE"]["res"]
 
 const deleteProgramArea: ApiNextFunction<DeleteProgramAreaResponse> = async ({ principal, requestEvent }) => {
-  const principalAccess = await getPrincipalAccess(principal.id)
-
-  if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
-  }
-
-  if (!canAccessSchoolAdministration(principalAccess)) {
-    throw new HTTPError(403, noAccessMessage("No access to school administration"))
-  }
+  const principalAccess = await resolvePrincipalAccess(principal)
 
   const programAreaId = requestEvent.params.programarea_id
   if (!programAreaId) {
@@ -33,16 +25,17 @@ const deleteProgramArea: ApiNextFunction<DeleteProgramAreaResponse> = async ({ p
 
   const programAreaToDelete = await dbClient.programAreas.getProgramArea(programAreaId)
   if (!programAreaToDelete) {
-    throw new HTTPError(404, "Program area not found. Cannot delete non-existing program area.")
+    throw new HTTPError(404, "Gruppering av klasser ikke funnet")
   }
 
-  if (!canGrantAndRemoveAccessForSchool(programAreaToDelete.schoolNumber, principalAccess)) {
-    throw new HTTPError(403, noAccessMessage("No access to school administration for this school"))
+  const authorizationResult = authorizeSchoolLeaderForSchool({ principalAccess, schoolNumber: programAreaToDelete.schoolNumber })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const school: School | null = await dbClient.schools.getSchool(programAreaToDelete.schoolNumber)
   if (!school) {
-    throw new HTTPError(404, noAccessMessage("School not found"))
+    throw new HTTPError(404, "Skole ikke funnet")
   }
 
   try {
@@ -90,15 +83,7 @@ type UpdateProgramAreaResponse = ApiRouteMap[`/api/programareas/${NoSlashString}
 type UpdateProgramAreaBody = ApiRouteMap[`/api/programareas/${NoSlashString}`]["PATCH"]["req"]
 
 const updateProgramArea: ApiNextFunction<UpdateProgramAreaResponse, UpdateProgramAreaBody> = async ({ principal, requestEvent, body }) => {
-  const principalAccess = await getPrincipalAccess(principal.id)
-
-  if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
-  }
-
-  if (!canAccessSchoolAdministration(principalAccess)) {
-    throw new HTTPError(403, noAccessMessage("No access to school administration"))
-  }
+  const principalAccess = await resolvePrincipalAccess(principal)
 
   const programAreaId = requestEvent.params.programarea_id
 
@@ -116,20 +101,21 @@ const updateProgramArea: ApiNextFunction<UpdateProgramAreaResponse, UpdateProgra
 
   const programAreaToUpdate = await dbClient.programAreas.getProgramArea(programAreaId)
   if (!programAreaToUpdate) {
-    throw new HTTPError(404, "Program area not found. Cannot update non-existing program area.")
+    throw new HTTPError(404, "Gruppering av klasser ikke funnet")
   }
 
-  if (!canGrantAndRemoveAccessForSchool(programAreaToUpdate.schoolNumber, principalAccess)) {
-    throw new HTTPError(403, noAccessMessage("No access to school administration for this school"))
+  const authorizationResult = authorizeSchoolLeaderForSchool({ principalAccess, schoolNumber: programAreaToUpdate.schoolNumber })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   if (programAreaToUpdate.schoolNumber !== updatedProgramAreaData.schoolNumber) {
-    throw new HTTPError(403, noAccessMessage("Not allowed to change school of program area"))
+    throw new HTTPError(403, "Ikke tillatt å endre skole for grupperingen av klasser")
   }
 
   const school: School | null = await dbClient.schools.getSchool(updatedProgramAreaData.schoolNumber)
   if (!school) {
-    throw new HTTPError(404, noAccessMessage("School not found"))
+    throw new HTTPError(404, "Skole ikke funnet")
   }
 
   const editorData: EditorData = {

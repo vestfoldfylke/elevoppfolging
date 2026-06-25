@@ -1,10 +1,10 @@
-import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
+import { resolvePrincipalAccess } from "$lib/server/authorization/principal-context"
 import { getStudentsFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canAccessSchoolAdministration, noAccessMessage } from "$lib/shared-authorization/authorization"
-import type { AccessControlClass, AccessControlStudent, EnrollmentWithinViewAccessWindow, PrincipalAccess, PrincipalAccessStudent, SchoolAdministrationManualStudent } from "$lib/types/app-types"
+import { authorizeSchoolAdministrationAccess } from "$lib/shared-authorization/authorization"
+import type { AccessControlClass, AccessControlStudent, EnrollmentWithinViewAccessWindow, PrincipalAccessStudent, SchoolAdministrationManualStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { Access, ProgramArea } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
@@ -22,18 +22,16 @@ type SchoolAccessAdministrationPageData = {
 const getSchoolAccessAdministrationData: ServerLoadNextFunction<SchoolAccessAdministrationPageData> = async ({ principal, requestEvent }) => {
   const schoolNumber = requestEvent.params.schoolnumber
   if (!schoolNumber) {
-    throw new Error("School number is missing in request parameters")
+    throw new HTTPError(400, "School number is missing in request parameters")
   }
 
   const dbClient: IDbClient = getDbClient()
 
-  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
-  if (!principalAccess) {
-    throw new HTTPError(404, noAccessMessage("No access found for principal"))
-  }
+  const principalAccess = await resolvePrincipalAccess(principal)
 
-  if (!canAccessSchoolAdministration(principalAccess)) {
-    throw new HTTPError(403, noAccessMessage("No permission to access school administration"))
+  const authorizationResult = authorizeSchoolAdministrationAccess(principalAccess)
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const manualAccessForSchool: Access[] = await dbClient.access.getManualAccess(schoolNumber)

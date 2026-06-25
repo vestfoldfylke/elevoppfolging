@@ -1,15 +1,12 @@
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
 import { validateDocumentMessage } from "$lib/data-validation/document-message-validation"
-import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
-import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
-import { getStudentFromCache } from "$lib/server/cache/students-cache"
+import { resolveStudentContext } from "$lib/server/authorization/principal-context"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canUpdateMessageInStudentDocument, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeEditMessageInStudentDocument } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { DocumentMessageInput, EditorData, NewDocumentMessage, School } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -33,46 +30,38 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
     throw new HTTPError(400, "Message ID is missing in request parameters")
   }
 
-  // authorization check if principal has access to the student
-  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
-  if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
+  const { student, principalAccessForStudent } = await resolveStudentContext(principal, studentId)
+
+  const dbClient: IDbClient = getDbClient()
+
+  const currentDocument = await dbClient.documents.getStudentDocumentById(documentId)
+  if (!currentDocument) {
+    throw new HTTPError(404, "Elevnotat ikke funnet")
   }
 
-  const student: CachedFrontendStudent | null = await getStudentFromCache(studentId)
-  if (!student) {
-    throw new HTTPError(400, "Student not found. Cannot update document message for non-existing student.")
+  if (currentDocument.student._id !== studentId) {
+    throw new HTTPError(400, "Elevnotat tilhører ikke den angitte eleven!")
   }
 
-  const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, principalAccess)
-  if (principalAccessForStudent.length === 0) {
-    throw new HTTPError(403, noAccessMessage("No permission to update message in document"))
+  const messageToUpdate = currentDocument.messages.find((message) => message.messageId === messageId)
+  if (!messageToUpdate) {
+    throw new HTTPError(404, "Oppdatering ikke funnet")
+  }
+
+  const authorizationResult = authorizeEditMessageInStudentDocument({
+    authenticatedPrincipal: principal,
+    document: currentDocument,
+    message: messageToUpdate,
+    accessToStudent: principalAccessForStudent
+  })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const updateMessageData: DocumentMessageInput = body
   const validationResult = validateDocumentMessage(updateMessageData)
   if (!validationResult.valid) {
     throw new HTTPError(400, `Invalid message data: ${validationResult.message}`)
-  }
-
-  const dbClient: IDbClient = getDbClient()
-
-  const currentDocument = await dbClient.documents.getStudentDocumentById(documentId)
-  if (!currentDocument) {
-    throw new HTTPError(404, "Document not found, cannot update message to non-existing document...")
-  }
-
-  const messageToUpdate = currentDocument.messages.find((message) => message.messageId === messageId)
-  if (!messageToUpdate) {
-    throw new HTTPError(404, "Message not found, cannot update non-existing message...")
-  }
-
-  if (!canUpdateMessageInStudentDocument(principal, principalAccessForStudent, currentDocument, messageToUpdate)) {
-    throw new HTTPError(403, noAccessMessage("No permission to update message on document"))
-  }
-
-  if (currentDocument.isDocumentLocked) {
-    throw new HTTPError(403, "Document is locked and cannot be edited")
   }
 
   const editorData: EditorData = {
@@ -96,7 +85,7 @@ const updateDocumentMessage: ApiNextFunction<UpdateDocumentMessageResponse, Upda
 
   const school: School | null = await dbClient.schools.getSchool(currentDocument.school.schoolNumber)
   if (!school) {
-    throw new HTTPError(404, noAccessMessage("School not found"))
+    throw new HTTPError(404, "Skole ikke funnet")
   }
 
   let updatedMessageId: string

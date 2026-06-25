@@ -3,15 +3,12 @@ import { logger } from "@vestfoldfylke/loglady"
 import { ObjectId } from "mongodb"
 import { validateDocument } from "$lib/data-validation/document-validation"
 import { isValidEmail } from "$lib/data-validation/email-validation"
-import { getPrincipalAccess } from "$lib/server/authorization/principal-access"
-import { getPrincipalAccessForStudent } from "$lib/server/authorization/student-access"
-import { getStudentFromCache } from "$lib/server/cache/students-cache"
+import { resolveStudentContext } from "$lib/server/authorization/principal-context"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { canCreateStudentDocument, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeCreateStudentDocument } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { EditorData, NewDbEmailAlert, NewStudentDocument, School } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -26,21 +23,7 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
     throw new HTTPError(400, "Student ID is missing in request parameters")
   }
 
-  // authorization check if principal has access to the student
-  const principalAccess: PrincipalAccess | null = await getPrincipalAccess(principal.id)
-  if (!principalAccess) {
-    throw new HTTPError(403, noAccessMessage("No access found for principal"))
-  }
-
-  const student: CachedFrontendStudent | null = await getStudentFromCache(studentId)
-  if (!student) {
-    throw new HTTPError(400, "Student not found. Cannot add document for non-existing student.")
-  }
-
-  const principalAccessForStudent: PrincipalAccessForStudent[] = getPrincipalAccessForStudent(student, principalAccess)
-  if (principalAccessForStudent.length === 0) {
-    throw new HTTPError(403, noAccessMessage("No permission to add document"))
-  }
+  const { student, principalAccessForStudent } = await resolveStudentContext(principal, studentId)
 
   const newDocumentData: AddDocumentBody = body
 
@@ -49,8 +32,9 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
     throw new HTTPError(400, `Invalid document data: ${validationResult.message}`)
   }
 
-  if (!canCreateStudentDocument(principalAccessForStudent, newDocumentData)) {
-    throw new HTTPError(403, noAccessMessage("No permission to add document for the specified school"))
+  const authorizationResult = authorizeCreateStudentDocument({ accessToStudent: principalAccessForStudent, newDocument: newDocumentData })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   // create document
@@ -141,7 +125,7 @@ const addDocument: ApiNextFunction<AddDocumentResponse, AddDocumentBody> = async
 
   const school: School | null = await dbClient.schools.getSchool(newDocumentData.school.schoolNumber)
   if (!school) {
-    throw new HTTPError(404, noAccessMessage("School not found"))
+    throw new HTTPError(404, "Skole ikke funnet")
   }
 
   const emailAlert: NewDbEmailAlert = {

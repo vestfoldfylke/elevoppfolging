@@ -5,7 +5,7 @@ import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeSystemAdmin } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { EditorData, NewDocumentContentTemplate } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -17,11 +17,12 @@ const updateDocumentContentTemplate: ApiNextFunction<UpdateDocumentContentTempla
   const templateId = requestEvent.params.template_id
 
   if (!templateId) {
-    throw new HTTPError(400, "template id from url params is missing?")
+    throw new HTTPError(400, "Template id from url params is missing?")
   }
 
-  if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, noAccessMessage("No permission to update template"))
+  const authorizationResult = authorizeSystemAdmin({ authenticatedPrincipal: principal, APP_INFO })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const updateTemplateData: UpdateDocumentContentTemplateBody = body
@@ -34,7 +35,7 @@ const updateDocumentContentTemplate: ApiNextFunction<UpdateDocumentContentTempla
   const currentTemplate = await dbClient.documentContentTemplates.getDocumentContentTemplateById(templateId)
 
   if (!currentTemplate) {
-    throw new HTTPError(404, "Document content template not found, cannot update non-existing template...")
+    throw new HTTPError(404, "Mal ikke funnet")
   }
 
   const editorData: EditorData = {
@@ -96,15 +97,16 @@ const deleteDocumentContentTemplate: ApiNextFunction<DeleteDocumentContentTempla
     throw new HTTPError(400, "template id from url params is missing?")
   }
 
-  if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, noAccessMessage("No permission to delete template"))
+  const authorizationResult = authorizeSystemAdmin({ authenticatedPrincipal: principal, APP_INFO })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const dbClient = getDbClient()
   const currentTemplate = await dbClient.documentContentTemplates.getDocumentContentTemplateById(templateId)
 
   if (!currentTemplate) {
-    throw new HTTPError(404, "Document content template not found, cannot delete non-existing template...")
+    throw new HTTPError(404, "Mal ikke funnet")
   }
 
   try {

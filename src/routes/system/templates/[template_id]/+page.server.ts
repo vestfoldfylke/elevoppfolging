@@ -2,7 +2,7 @@ import { APP_INFO } from "$lib/server/app-info"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
-import { isSystemAdmin, noAccessMessage } from "$lib/shared-authorization/authorization"
+import { authorizeSystemAdmin } from "$lib/shared-authorization/authorization"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { DocumentContentTemplate } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
@@ -13,8 +13,9 @@ type TemplatePageData = {
 }
 
 const getTemplate: ServerLoadNextFunction<TemplatePageData> = async ({ principal, requestEvent }) => {
-  if (!isSystemAdmin(principal, APP_INFO)) {
-    throw new HTTPError(403, noAccessMessage("No permission to handle this template"))
+  const authorizationResult = authorizeSystemAdmin({ authenticatedPrincipal: principal, APP_INFO })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
   }
 
   const templateId = requestEvent.params.template_id
@@ -58,7 +59,7 @@ const getTemplate: ServerLoadNextFunction<TemplatePageData> = async ({ principal
   const template = await dbClient.documentContentTemplates.getDocumentContentTemplateById(templateId)
 
   if (!template) {
-    throw new HTTPError(404, "Template not found")
+    throw new HTTPError(404, "Mal ikke funnet")
   }
 
   return {
