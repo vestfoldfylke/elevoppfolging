@@ -213,7 +213,7 @@
         {/each}
       </div>
       {#each filteredDocuments as document (document._id)}
-        <DocumentComponent {document} accessSchools={[data.classGroup.school]} canEditDocument={authorizeEditGroupDocument({ authenticatedPrincipal: data.authenticatedPrincipal, document }).authorized} canRemoveDocument={authorizeDeleteGroupDocument({ principalAccess: data.principalAccess, document }).authorized} groupName={data.classGroup.name} />
+        <DocumentComponent {document} accessSchools={[data.classGroup.school]} canEditDocument={authorizeEditGroupDocument({ authenticatedPrincipal: data.authenticatedPrincipal, document }).authorized} canRemoveDocument={authorizeDeleteGroupDocument({ principalAccess: data.principalAccess, document }).authorized} groupName={data.classGroup.name} principalClasses={data.principalClassGroups} />
       {/each}
     {/if}
   </div>

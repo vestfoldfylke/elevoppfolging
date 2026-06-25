@@ -12,6 +12,7 @@ import type { PageServerLoad } from "./$types"
 
 type ClassPageData = {
   classGroup: StudentClassGroup
+  principalClassGroups: StudentClassGroup[]
   classStudents: PrincipalAccessStudent[]
   groupImportantStuff: GroupImportantStuff[]
   documents: GroupDocument[]
@@ -54,6 +55,7 @@ const getClassGroup: ServerLoadNextFunction<ClassPageData> = async ({ principal,
   return {
     classGroup,
     classStudents,
+    principalClassGroups: principalClasses,
     groupImportantStuff,
     documents: groupDocuments,
     documentContentTemplates: documentContentTemplates.sort((a, b) => a.sort - b.sort)
