@@ -35,10 +35,6 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
     throw new HTTPError(404, "Elevnotat ikke funnet")
   }
 
-  if (currentDocument.student._id !== studentId) {
-    throw new HTTPError(400, "Elevnotat tilhører ikke den angitte eleven!")
-  }
-
   const { student, principalAccessForStudent } = await resolveStudentContext(principal, studentId)
 
   const studentDataSharingConsent = await dbClient.studentDataSharingConsents.getStudentDataSharingConsent(studentId)
@@ -51,6 +47,10 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
   })
   if (!authorizationResult.authorized) {
     throw new HTTPError(403, authorizationResult.message)
+  }
+
+  if (currentDocument.student._id !== studentId) {
+    throw new HTTPError(400, "Elevnotat tilhører ikke den angitte eleven!")
   }
 
   const newMessageData: DocumentMessageInput = body
