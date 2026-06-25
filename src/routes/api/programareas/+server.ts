@@ -16,6 +16,10 @@ type AddProgramAreaBody = ApiRouteMap["/api/programareas"]["POST"]["req"]
 const addProgramArea: ApiNextFunction<AddProgramAreaResponse, AddProgramAreaBody> = async ({ principal, body }) => {
   const principalAccess = await resolvePrincipalAccess(principal)
 
+  if (!body.schoolNumber || typeof body.schoolNumber !== "string") {
+    throw new HTTPError(400, "School number is missing or invalid in request body")
+  }
+
   const authorizationResult = authorizeGrantAndRemoveAccessForSchool({ principalAccess, schoolNumber: body.schoolNumber })
   if (!authorizationResult.authorized) {
     throw new HTTPError(403, authorizationResult.message)
