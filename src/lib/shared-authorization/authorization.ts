@@ -320,7 +320,7 @@ export function authorizeSchoolLeader(principalAccess: Access | null): Authoriza
     }
   }
 
-  if (!principalAccess.leaderForSchools.some(access => access.type === "MANUELL-SKOLELEDER-TILGANG")) {
+  if (!principalAccess.leaderForSchools.some((access) => access.type === "MANUELL-SKOLELEDER-TILGANG")) {
     return {
       authorized: false,
       message: "Ingen tilgang som skoleleder"
