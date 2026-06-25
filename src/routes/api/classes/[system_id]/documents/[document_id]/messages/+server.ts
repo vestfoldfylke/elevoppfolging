@@ -32,15 +32,15 @@ const addDocumentMessage: ApiNextFunction<AddDocumentMessageResponse, AddDocumen
     throw new HTTPError(404, "Klassenotat ikke funnet")
   }
 
-  if (currentDocument.group.systemId !== systemId) {
-    throw new HTTPError(400, "Klassenotat tilhører ikke den angitte klassen!")
-  }
-
   const { classes, classGroup } = await resolveClassContext(principal, systemId)
 
   const authorizationResult = authorizeAddMessageToGroupDocument({ document: currentDocument, principalClasses: classes })
   if (!authorizationResult.authorized) {
     throw new HTTPError(403, authorizationResult.message)
+  }
+
+  if (currentDocument.group.systemId !== systemId) {
+    throw new HTTPError(400, "Klassenotat tilhører ikke den angitte klassen!")
   }
 
   const newMessageData: DocumentMessageInput = body
