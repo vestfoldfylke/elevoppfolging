@@ -7,7 +7,7 @@
   import SuggestionSelect from "$lib/components/SchoolAdministration/SuggestionSelect.svelte"
   import { nameValidation, ssnValidation } from "$lib/data-validation/manual-student-validation"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
-  import { authorizeGrantAndRemoveAccessForSchool, authorizeManageManualStudentsOnSchool } from "$lib/shared-authorization/authorization"
+  import { authorizeManageManualStudentsOnSchool, authorizeSchoolLeaderForSchool } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { EnrollmentWithinViewAccessWindow, NewManualAccessControl, SchoolAdministrationManualStudent } from "$lib/types/app-types"
   import type {
@@ -48,7 +48,7 @@
     if (!data.principalAccess) {
       return false
     }
-    return authorizeGrantAndRemoveAccessForSchool({ schoolNumber: currentSchool.schoolNumber, principalAccess: data.principalAccess }).authorized
+    return authorizeSchoolLeaderForSchool({ schoolNumber: currentSchool.schoolNumber, principalAccess: data.principalAccess }).authorized
   })
 
   type SortDirection = "ascending" | "descending"

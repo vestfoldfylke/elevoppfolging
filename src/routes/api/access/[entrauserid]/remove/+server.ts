@@ -6,7 +6,7 @@ import { invalidateStudentAccessCache } from "$lib/server/cache/student-access-c
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { authorizeGrantAndRemoveAccessForSchool, authorizeSystemAdmin } from "$lib/shared-authorization/authorization"
+import { authorizeSchoolLeaderForSchool, authorizeSystemAdmin } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { School } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -41,7 +41,7 @@ const removeAccess: ApiNextFunction<RemoveAccessResponse, RemoveAccessBody> = as
       throw new HTTPError(403, "Ingen tilgang funnet for bruker")
     }
 
-    const authorizationResult = authorizeGrantAndRemoveAccessForSchool({ schoolNumber: accessEntryToRemove.schoolNumber, principalAccess })
+    const authorizationResult = authorizeSchoolLeaderForSchool({ schoolNumber: accessEntryToRemove.schoolNumber, principalAccess })
     if (!authorizationResult.authorized) {
       throw new HTTPError(403, authorizationResult.message)
     }

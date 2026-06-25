@@ -6,7 +6,7 @@ import { invalidateProgramAreaCache } from "$lib/server/cache/program-area-cache
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { authorizeGrantAndRemoveAccessForSchool } from "$lib/shared-authorization/authorization"
+import { authorizeSchoolLeaderForSchool } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { EditorData, NewProgramArea, School } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -28,7 +28,7 @@ const deleteProgramArea: ApiNextFunction<DeleteProgramAreaResponse> = async ({ p
     throw new HTTPError(404, "Gruppering av klasser ikke funnet")
   }
 
-  const authorizationResult = authorizeGrantAndRemoveAccessForSchool({ principalAccess, schoolNumber: programAreaToDelete.schoolNumber })
+  const authorizationResult = authorizeSchoolLeaderForSchool({ principalAccess, schoolNumber: programAreaToDelete.schoolNumber })
   if (!authorizationResult.authorized) {
     throw new HTTPError(403, authorizationResult.message)
   }
@@ -104,7 +104,7 @@ const updateProgramArea: ApiNextFunction<UpdateProgramAreaResponse, UpdateProgra
     throw new HTTPError(404, "Gruppering av klasser ikke funnet")
   }
 
-  const authorizationResult = authorizeGrantAndRemoveAccessForSchool({ principalAccess, schoolNumber: programAreaToUpdate.schoolNumber })
+  const authorizationResult = authorizeSchoolLeaderForSchool({ principalAccess, schoolNumber: programAreaToUpdate.schoolNumber })
   if (!authorizationResult.authorized) {
     throw new HTTPError(403, authorizationResult.message)
   }

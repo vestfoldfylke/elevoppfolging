@@ -5,7 +5,7 @@ import { resolvePrincipalAccess } from "$lib/server/authorization/principal-cont
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { authorizeGrantAndRemoveAccessForSchool } from "$lib/shared-authorization/authorization"
+import { authorizeSchoolLeaderForSchool } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap } from "$lib/types/api/api-route-map"
 import type { EditorData, NewProgramArea, School } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
@@ -20,7 +20,7 @@ const addProgramArea: ApiNextFunction<AddProgramAreaResponse, AddProgramAreaBody
     throw new HTTPError(400, "School number is missing or invalid in request body")
   }
 
-  const authorizationResult = authorizeGrantAndRemoveAccessForSchool({ principalAccess, schoolNumber: body.schoolNumber })
+  const authorizationResult = authorizeSchoolLeaderForSchool({ principalAccess, schoolNumber: body.schoolNumber })
   if (!authorizationResult.authorized) {
     throw new HTTPError(403, authorizationResult.message)
   }

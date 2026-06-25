@@ -394,15 +394,6 @@ export function authorizeSchoolAdministrationAccess(principalAccess: Access | nu
   }
 }
 
-export type AuthorizeGrantAndRemoveAccessForSchoolInput = {
-  principalAccess: Access
-  schoolNumber: string
-}
-
-export function authorizeGrantAndRemoveAccessForSchool({ principalAccess, schoolNumber }: AuthorizeGrantAndRemoveAccessForSchoolInput): AuthorizationResult {
-  return authorizeSchoolLeaderForSchool({ principalAccess, schoolNumber })
-}
-
 export function authorizeEditStudentDataSharingConsent(accessToStudent: PrincipalAccessForStudent[]): AuthorizationResult {
   if (!isOnlySubjectTeacher(accessToStudent)) {
     return {

@@ -3,7 +3,7 @@ import { getAppUsersFromCache } from "$lib/server/cache/users-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
-import { authorizeGrantAndRemoveAccessForSchool, authorizeManageManualStudentsOnSchool, authorizeSchoolAdministrationAccess } from "$lib/shared-authorization/authorization"
+import { authorizeManageManualStudentsOnSchool, authorizeSchoolAdministrationAccess, authorizeSchoolLeaderForSchool } from "$lib/shared-authorization/authorization"
 import type { AccessControlAppUser } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { AppUser, School } from "$lib/types/db/shared-types"
@@ -28,7 +28,7 @@ const getAdministrationAccessData: ServerLoadNextFunction<AdministrationAccessLa
   const schools = await dbClient.schools.getSchools()
   const allowedToAdministrateSchools = schools.filter(
     (school) =>
-      authorizeGrantAndRemoveAccessForSchool({ schoolNumber: school.schoolNumber, principalAccess }).authorized ||
+      authorizeSchoolLeaderForSchool({ principalAccess, schoolNumber: school.schoolNumber }).authorized ||
       authorizeManageManualStudentsOnSchool({ principalAccess, schoolNumber: school.schoolNumber }).authorized
   )
 
