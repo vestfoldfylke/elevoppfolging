@@ -49,7 +49,7 @@
       return authorizeEditMessageInStudentDocument({ authenticatedPrincipal: page.data.authenticatedPrincipal, document, message, accessToStudent: principalAccessForStudent }).authorized
     }
 
-    return false
+    throw new Error("Document is neither student or group document, can't authorize edit message")
   })
 
   let messageForm: HTMLFormElement | undefined = $state()
