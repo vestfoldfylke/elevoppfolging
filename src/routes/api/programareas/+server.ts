@@ -17,7 +17,7 @@ const addProgramArea: ApiNextFunction<AddProgramAreaResponse, AddProgramAreaBody
   const principalAccess = await getPrincipalAccess(principal.id)
 
   if (!principalAccess) {
-    throw new HTTPError(403, "Ingen tillatelse til å fjerne tilgang")
+    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
   }
 
   const authorizationResult = authorizeGrantAndRemoveAccessForSchool({ principalAccess, schoolNumber: body.schoolNumber })
