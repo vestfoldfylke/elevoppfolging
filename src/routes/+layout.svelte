@@ -19,6 +19,9 @@
 
   let { data, children }: LayoutProps = $props()
 
+  let studentFilterDialog: HTMLDialogElement | undefined = $state()
+  let templateFilterDialog: HTMLDialogElement | undefined = $state()
+
   let showStudentOverview = $derived(page.route.id === "/")
 
   let studentsQuickViewAvailable = $derived(page.route.id === "/students/[student_id]")
@@ -58,10 +61,8 @@
     if (!hasTheSameItems(selectedTemplateIds, appliedTemplateIds)) {
       return true
     }
-    if (hasNoDocuments !== appliedHasNoDocuments) {
-      return true
-    }
-    return false
+
+    return hasNoDocuments !== appliedHasNoDocuments
   })
 
   let studentOverviewFilter: FrontendOverviewStudentFilter = $state({
@@ -96,7 +97,30 @@
     appliedFacilitationStudentCheckBoxes = [...selectedFacilitationStudentCheckBoxes]
     appliedTemplateIds = [...selectedTemplateIds]
     appliedHasNoDocuments = hasNoDocuments
+
     updateOverviewStudents()
+    studentFilterDialog?.close()
+    templateFilterDialog?.close()
+  }
+
+  function clearStudentCheckboxFilters(): void {
+    selectedFollowUpStudentCheckBoxes = []
+    selectedFacilitationStudentCheckBoxes = []
+    appliedFollowUpStudentCheckBoxes = []
+    appliedFacilitationStudentCheckBoxes = []
+
+    updateOverviewStudents()
+    studentFilterDialog?.close()
+  }
+
+  function clearTemplateFilters(): void {
+    selectedTemplateIds = []
+    hasNoDocuments = false
+    appliedTemplateIds = []
+    appliedHasNoDocuments = false
+
+    updateOverviewStudents()
+    templateFilterDialog?.close()
   }
 
   type OverviewStudentsState = {
@@ -202,7 +226,6 @@
   </style>
 </svelte:head>
 
-
 <div id="svelte-body">
   <header>
     <AppHeader />
@@ -237,7 +260,8 @@
                 class="ds-button"
                 data-variant="secondary"
                 type="button"
-                popovertarget="student-filters-action-container"
+                command="show-modal"
+                commandfor="student-filters-dialog"
                 aria-label="Elevfilter"
                 data-tooltip="Elevfilter"
                 data-placement="top"
@@ -245,56 +269,88 @@
               >
                 <span class="material-symbols-outlined">filter_list</span>
               </button>
-              <div id="student-filters-action-container" class="ds-popover ds-dropdown" popover="auto" data-placement="bottom-end" data-variant="default">
-                <div class="student-filters">
-                  {#if followUpStudentCheckBoxes.length > 0}
-                    <div class="student-filters-followup">
-                      <h2 class="ds-heading">{STUDENT_CHECKBOX_DISPLAY_NAMES.FOLLOW_UP.single}</h2>
-                      <hr class="ds-divider" />
-                      <ul class="ds-list">
-                        {#each followUpStudentCheckBoxes as followUpStudentCheckBox}
-                          <li>
-                            <ds-field class="ds-field">
-                              <input id="student-filters-{followUpStudentCheckBox._id}" bind:group={selectedFollowUpStudentCheckBoxes} class="ds-input" type="checkbox" value={followUpStudentCheckBox._id} />
-                              <label for="student-filters-{followUpStudentCheckBox._id}" class="ds-label" data-weight="regular">{followUpStudentCheckBox.value}</label>
-                            </ds-field>
-                          </li>
-                        {/each}
-                      </ul>
-                    </div>
-                  {/if}
-                  {#if facilitationStudentCheckBoxes.length > 0}
-                    <div class="student-filters-facilitation">
-                      <h2 class="ds-heading">{STUDENT_CHECKBOX_DISPLAY_NAMES.FACILITATION.plural}</h2>
-                      <hr class="ds-divider" />
-                      <ul class="ds-list">
-                        {#each facilitationStudentCheckBoxes as facilitationStudentCheckBox}
-                          <li>
-                            <ds-field class="ds-field">
-                              <input id="student-filters-{facilitationStudentCheckBox._id}" bind:group={selectedFacilitationStudentCheckBoxes} class="ds-input" type="checkbox" value={facilitationStudentCheckBox._id} />
-                              <label for="student-filters-{facilitationStudentCheckBox._id}" class="ds-label" data-weight="regular">{facilitationStudentCheckBox.value}</label>
-                            </ds-field>
-                          </li>
-                        {/each}
-                      </ul>
-                    </div>
-                  {/if}
+
+              <dialog bind:this={studentFilterDialog} class="ds-dialog filters-dialog" data-placement="center" data-modal="true" id="student-filters-dialog">
+                <button
+                  class="ds-button"
+                  data-icon="true"
+                  commandfor="student-filters-dialog"
+                  data-variant="tertiary"
+                  type="button"
+                  aria-label="Lukk dialogvindu"
+                  data-color="neutral"
+                  command="close"
+                ></button>
+                <div class="ds-dialog__block filters-dialog-content">
+                  <div class="student-filters">
+                    {#if followUpStudentCheckBoxes.length > 0}
+                      <div class="student-filters-followup">
+                        <h2 class="ds-heading">{STUDENT_CHECKBOX_DISPLAY_NAMES.FOLLOW_UP.single}</h2>
+                        <hr class="ds-divider" />
+                        <ul class="ds-list">
+                          {#each followUpStudentCheckBoxes as followUpStudentCheckBox}
+                            <li>
+                              <ds-field class="ds-field">
+                                <input id="student-filters-{followUpStudentCheckBox._id}" bind:group={selectedFollowUpStudentCheckBoxes} class="ds-input" type="checkbox" value={followUpStudentCheckBox._id} />
+                                <label for="student-filters-{followUpStudentCheckBox._id}" class="ds-label" data-weight="regular">{followUpStudentCheckBox.value}</label>
+                              </ds-field>
+                            </li>
+                          {/each}
+                        </ul>
+                      </div>
+                    {/if}
+                    {#if facilitationStudentCheckBoxes.length > 0}
+                      <div class="student-filters-facilitation">
+                        <h2 class="ds-heading">{STUDENT_CHECKBOX_DISPLAY_NAMES.FACILITATION.plural}</h2>
+                        <hr class="ds-divider" />
+                        <ul class="ds-list">
+                          {#each facilitationStudentCheckBoxes as facilitationStudentCheckBox}
+                            <li>
+                              <ds-field class="ds-field">
+                                <input id="student-filters-{facilitationStudentCheckBox._id}" bind:group={selectedFacilitationStudentCheckBoxes} class="ds-input" type="checkbox" value={facilitationStudentCheckBox._id} />
+                                <label for="student-filters-{facilitationStudentCheckBox._id}" class="ds-label" data-weight="regular">{facilitationStudentCheckBox.value}</label>
+                              </ds-field>
+                            </li>
+                          {/each}
+                        </ul>
+                      </div>
+                    {/if}
+                  </div>
                 </div>
-                <hr class="ds-divider" />
-                <div class="filters-footer">
-                  <button class="ds-button" data-variant="tertiary" data-size="sm" type="button" onclick={() => { selectedFollowUpStudentCheckBoxes = []; selectedFacilitationStudentCheckBoxes = [] }} disabled={selectedFollowUpStudentCheckBoxes.length === 0 && selectedFacilitationStudentCheckBoxes.length === 0}>Fjern alle filter</button>
-                  <button class="ds-button" data-variant="primary" data-size="sm" type="button" onclick={applyFilters} disabled={!hasCheckboxFilterChanges}>
-                    <span class="material-symbols-outlined">check</span>
-                    Bruk filter
-                  </button>            
+                <div class="ds-dialog__block filters-dialog-footer-block">
+                  <div class="filters-footer">
+                    <button
+                      class="ds-button"
+                      commandfor="student-filters-dialog"
+                      data-variant="tertiary"
+                      type="button"
+                      command="close"
+                      data-size="sm"
+                      onclick={clearStudentCheckboxFilters}
+                      disabled={selectedFollowUpStudentCheckBoxes.length === 0 && selectedFacilitationStudentCheckBoxes.length === 0}
+                    >Fjern alle filter</button>
+                    <button
+                      class="ds-button"
+                      commandfor="student-filters-dialog"
+                      data-variant="primary"
+                      type="button"
+                      data-size="sm"
+                      onclick={applyFilters}
+                      disabled={!hasCheckboxFilterChanges}
+                    >
+                      <span class="material-symbols-outlined">check</span>
+                      Bruk filter
+                    </button>
+                  </div>
                 </div>
-              </div>
+              </dialog>
 
               <button
                 class="ds-button"
                 data-variant="secondary"
                 type="button"
-                popovertarget="document-filters-action-container"
+                command="show-modal"
+                commandfor="document-filters-action-dialog"
                 aria-label="Notatfilter"
                 data-tooltip="Notatfilter"
                 data-placement="top"
@@ -303,53 +359,97 @@
                 <span class="material-symbols-outlined">description</span>
               </button>
 
-              <div id="document-filters-action-container" class="ds-popover ds-dropdown" popover="auto" data-placement="bottom-end" data-variant="default">
-                <div class="document-filters-templates">
-                  <h2 class="ds-heading">Notat-typer</h2>
-                  <hr class="ds-divider" />
-                  <ul class="ds-list">
-                    <li>
-                      <ds-field class="ds-field">
-                        <input id="document-filters-no-documents" bind:checked={hasNoDocuments} onclick={() => { selectedTemplateIds = [] }} class="ds-input" type="checkbox" />
-                        <label for="document-filters-no-documents" class="ds-label" data-weight="regular">Har ingen notater</label>
-                      </ds-field>
-                    </li>
+              <dialog bind:this={templateFilterDialog} class="ds-dialog filters-dialog" data-placement="center" data-modal="true" id="document-filters-action-dialog">
+                <button
+                  class="ds-button"
+                  data-icon="true"
+                  commandfor="document-filters-action-dialog"
+                  data-variant="tertiary"
+                  type="button"
+                  aria-label="Lukk dialogvindu"
+                  data-color="neutral"
+                  command="close"
+                ></button>
+                <div class="ds-dialog__block filters-dialog-content">
+                  <div class="document-filters-templates">
+                    <h2 class="ds-heading">Notat-typer</h2>
                     <hr class="ds-divider" />
-                    {#each studentDocumentTemplates as template}
+                    <ul class="ds-list">
                       <li>
                         <ds-field class="ds-field">
-                          <input id="document-filters-{template._id}" bind:group={selectedTemplateIds} onclick={() => { hasNoDocuments = false }} class="ds-input" type="checkbox" value={template._id} />
-                          <label for="document-filters-{template._id}" class="ds-label" data-weight="regular">{template.name}</label>
+                          <input id="document-filters-no-documents" bind:checked={hasNoDocuments} onclick={() => { selectedTemplateIds = [] }} class="ds-input" type="checkbox" />
+                          <label for="document-filters-no-documents" class="ds-label" data-weight="regular">Har ingen notater</label>
                         </ds-field>
                       </li>
-                    {/each}
-                  </ul>
-                  <hr class="ds-divider" />
+                    </ul>
+                    <hr class="ds-divider" />
+                    <ul class="ds-list">
+                      {#each studentDocumentTemplates as template}
+                        <li>
+                          <ds-field class="ds-field">
+                            <input id="document-filters-{template._id}" bind:group={selectedTemplateIds} onclick={() => { hasNoDocuments = false }} class="ds-input" type="checkbox" value={template._id} />
+                            <label for="document-filters-{template._id}" class="ds-label" data-weight="regular">{template.name}</label>
+                          </ds-field>
+                        </li>
+                      {/each}
+                    </ul>
+                  </div>
+                </div>
+                <div class="ds-dialog__block filters-dialog-footer-block">
                   <div class="filters-footer">
-                    <button class="ds-button" data-variant="tertiary" data-size="sm" type="button" onclick={() => { selectedTemplateIds = []; hasNoDocuments = false; }} disabled={selectedTemplateIds.length === 0 && !hasNoDocuments}>Fjern alle filter</button>
-                    <button class="ds-button" data-variant="primary" data-size="sm" type="button" onclick={applyFilters} disabled={!hasDocumentFilterChanges}>
+                    <button
+                      class="ds-button"
+                      commandfor="document-filters-action-dialog"
+                      data-variant="tertiary"
+                      type="button"
+                      command="close"
+                      data-size="sm"
+                      onclick={clearTemplateFilters}
+                      disabled={selectedTemplateIds.length === 0 && !hasNoDocuments}
+                    >Fjern alle filter</button>
+                    <button
+                      class="ds-button"
+                      commandfor="document-filters-action-dialog"
+                      data-variant="primary"
+                      type="button"
+                      data-size="sm"
+                      onclick={applyFilters}
+                      disabled={!hasDocumentFilterChanges}
+                    >
                       <span class="material-symbols-outlined">check</span>
                       Bruk filter
                     </button>
                   </div>
                 </div>
-              </div>
+              </dialog>
             </div>
           </div>
         </div>
 
         <div class="student-filters-selected">
           {#each appliedFollowUpStudentCheckBoxes.map(getStudentCheckBox) as selectedFollowUpStudentCheckBox}
-            <span class="ds-tag" data-variant="outline" data-color="brand1">{selectedFollowUpStudentCheckBox.value}</span>
+            <span class="ds-tag filter-tag" data-variant="outline" data-color="brand1">
+              <span class="material-symbols-outlined">filter_list</span>
+              {selectedFollowUpStudentCheckBox.value}
+            </span>
           {/each}
           {#each appliedFacilitationStudentCheckBoxes.map(getStudentCheckBox) as selectedFacilitationStudentCheckBox}
-            <span class="ds-tag" data-variant="outline" data-color="brand2">{selectedFacilitationStudentCheckBox.value}</span>
+            <span class="ds-tag filter-tag" data-variant="outline" data-color="brand2">
+              <span class="material-symbols-outlined">filter_list</span>
+              {selectedFacilitationStudentCheckBox.value}
+            </span>
           {/each}
           {#each appliedTemplateIds.map(getTemplate) as template}
-            <span class="ds-tag" data-variant="outline" data-color="brand3">{template.name}</span>
+            <span class="ds-tag filter-tag" data-variant="outline" data-color="brand3">
+              <span class="material-symbols-outlined">description</span>
+              {template.name}
+            </span>
           {/each}
           {#if appliedHasNoDocuments}
-            <span class="ds-tag" data-variant="outline" data-color="neutral">Har ingen notater</span>
+            <span class="ds-tag filter-tag" data-variant="outline" data-color="neutral">
+              <span class="material-symbols-outlined">description</span>
+              Har ingen notater
+            </span>
           {/if}
         </div>
 
@@ -479,36 +579,36 @@
     }
 
     #svelte-body > header {
-        grid-area: header;
-        width: 100%;
-        display: flex;
-        align-items: center;
-        position: sticky;
-        top: 0;
-        z-index: 5;
-        border-bottom: 1px solid var(--ds-color-neutral-border-subtle);
-        background-color: var(--ds-color-neutral-background-default);
+      grid-area: header;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      border-bottom: 1px solid var(--ds-color-neutral-border-subtle);
+      background-color: var(--ds-color-neutral-background-default);
     }
 
     #svelte-body > main {
-        grid-area: main;
-        box-sizing: border-box;
-        display: flex;
-        width: 100%;
-        max-width: var(--max-page-width);
-        margin: 0 auto;
-        padding: 0 var(--ds-size-4);
+      grid-area: main;
+      box-sizing: border-box;
+      display: flex;
+      width: 100%;
+      max-width: var(--max-page-width);
+      margin: 0 auto;
+      padding: 0 var(--ds-size-4);
     }
 
     #svelte-body > footer {
-        grid-area: footer;
+      grid-area: footer;
     }
 
     footer {
-        max-width: var(--max-page-width);
-        padding: var(--ds-size-4);
-        margin: 0 auto;
-        display: flex;
+      max-width: var(--max-page-width);
+      padding: var(--ds-size-4);
+      margin: 0 auto;
+      display: flex;
     }
 
     .student-search-and-filter-container {
@@ -519,45 +619,63 @@
     }
 
     .student-search-container {
-        display: flex;
-        gap: var(--ds-size-4);
-        margin-bottom: var(--ds-size-8);
-        flex-wrap: wrap;
+      display: flex;
+      gap: var(--ds-size-4);
+      margin-bottom: var(--ds-size-8);
+      flex-wrap: wrap;
+    }
+
+    .filters-dialog {
+      max-width: 40%;
+      max-height: 70%;
+    }
+
+    .filters-dialog > button[command="close"]:first-child {
+      position: sticky;
+      top: var(--dsc-dialog-icon-spacing);
+      z-index: 2;
+    }
+
+    .filters-dialog-content {
+      border-top: none;
+    }
+
+    .filters-dialog-footer-block {
+      position: sticky;
+      bottom: 0;
+      z-index: 1;
+      background-color: var(--ds-color-neutral-background-default);
     }
 
     .student-filters-container {
-        margin-bottom: var(--ds-size-4);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+      margin-bottom: var(--ds-size-4);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     .student-filters-content {
-        display: flex;
-        gap: var(--ds-size-2);
-    }
-
-    #student-filters-action-container {
-        --dsc-popover-max-width: 100%;
+      display: flex;
+      gap: var(--ds-size-2);
     }
 
     @media (max-width: 64rem) {
-        .student-filters-container {
-            display: none;
-        }
+      .student-filters-container {
+        display: none;
+      }
     }
 
     .student-filters-followup > ul > li, .student-filters-facilitation > ul > li {
-        list-style: none;
+      list-style: none;
     }
 
     .student-filters-followup > ul, .student-filters-facilitation > ul {
-        padding-left: var(--ds-size-2);
+      padding-left: var(--ds-size-2);
     }
 
     .student-filters {
-        display: flex;
-        gap: var(--ds-size-4);
+      display: flex;
+      gap: var(--ds-size-15);
     }
 
     .filters-footer {
@@ -567,122 +685,120 @@
     }
 
     .student-filters-selected {
-        display: flex;
-        gap: var(--ds-size-1) var(--ds-size-2);
-        flex-wrap: wrap;
-        margin-bottom: var(--ds-size-4);
+      display: flex;
+      gap: var(--ds-size-1) var(--ds-size-2);
+      flex-wrap: wrap;
+      margin-bottom: var(--ds-size-4);
     }
 
-    #document-filters-action-container {
-        --dsc-popover-max-width: 100%;
-    }
-
-    #document-filters-action-container:popover-open {
-        display: flex;
+    .filter-tag {
+      display: flex;
+      gap: var(--ds-size-1);
+      align-items: center;
     }
 
     .document-filters-templates > ul > li {
-        list-style: none;
+      list-style: none;
     }
 
     .document-filters-templates > ul {
-        padding-left: var(--ds-size-2);
+      padding-left: var(--ds-size-2);
     }
 
     .quick-view-student-open-overlay {
-        position: fixed;
-        top: var(--header-height);
-        left: 0;
-        width: 100%;
-        height: calc(100vh - var(--header-height));
-        z-index: 3;
-        background-color: rgba(0, 0, 0, 0.3);
+      position: fixed;
+      top: var(--header-height);
+      left: 0;
+      width: 100%;
+      height: calc(100vh - var(--header-height));
+      z-index: 3;
+      background-color: rgba(0, 0, 0, 0.3);
     }
 
     .students-side-menu {
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-        position: fixed;
-        z-index: 4;
-        background-color: var(--ds-color-neutral-background-default);
-        border-top: 1px solid var(--ds-color-neutral-border-subtle);
-        border-right: 1px solid var(--ds-color-neutral-border-subtle);
-        top: var(--header-height);
-        overflow-y: auto;
-        height: calc(100vh - var(--header-height));
-        padding-top: var(--ds-size-7);
-        padding-left: var(--ds-size-4);
-        padding-right: var(--ds-size-4);
-        scrollbar-color: var(--ds-color-neutral-border-subtle) transparent;
-        margin-left: calc(var(--ds-size-4) * -1);
-        margin-right: var(--ds-size-10);
-        overscroll-behavior: contain;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      z-index: 4;
+      background-color: var(--ds-color-neutral-background-default);
+      border-top: 1px solid var(--ds-color-neutral-border-subtle);
+      border-right: 1px solid var(--ds-color-neutral-border-subtle);
+      top: var(--header-height);
+      overflow-y: auto;
+      height: calc(100vh - var(--header-height));
+      padding-top: var(--ds-size-7);
+      padding-left: var(--ds-size-4);
+      padding-right: var(--ds-size-4);
+      scrollbar-color: var(--ds-color-neutral-border-subtle) transparent;
+      margin-left: calc(var(--ds-size-4) * -1);
+      margin-right: var(--ds-size-10);
+      overscroll-behavior: contain;
     }
 
     .students-side-menu-list {
-        display: flex;
-        flex-direction: column;
-        gap: var(--ds-size-2);
-        padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--ds-size-2);
+      padding: 0;
     }
 
     .students-side-menu-list > li {
-        list-style: none;
-        padding: 0;
+      list-style: none;
+      padding: 0;
     }
 
     .students-side-menu-heading {
-        margin-top: var(--ds-size-4);
+      margin-top: var(--ds-size-4);
     }
 
     .students-side-menu-heading, .students-side-menu-list-item-link {
-        padding: var(--ds-size-1) var(--ds-size-4);
+      padding: var(--ds-size-1) var(--ds-size-4);
     }
 
     .students-side-menu-list-item-link {
-        --dsc-link-background--active: var(--ds-color-neutral-surface-tinted);
-        color: inherit;
-        text-decoration: none;
-        display: block;
-        line-height: 1.3em;
-        position: relative;
-        border-radius: var(--ds-border-radius-md);
-        text-wrap: balance;
+      --dsc-link-background--active: var(--ds-color-neutral-surface-tinted);
+      color: inherit;
+      text-decoration: none;
+      display: block;
+      line-height: 1.3em;
+      position: relative;
+      border-radius: var(--ds-border-radius-md);
+      text-wrap: balance;
     }
 
     .students-side-menu-list-item-link:hover {
-        background-color: var(--ds-color-neutral-surface-tinted);
+      background-color: var(--ds-color-neutral-surface-tinted);
     }
 
     .students-side-menu-list-item-link.active {
-        color: inherit;
-        font-weight: 500;
-        background-color: var(--ds-color-neutral-background-tinted);
-        border-left: 4px solid var(--ds-color-border-default);
+      color: inherit;
+      font-weight: 500;
+      background-color: var(--ds-color-neutral-background-tinted);
+      border-left: 4px solid var(--ds-color-border-default);
     }
 
     .desktop-only {
-        display: none;
+      display: none;
     }
 
     .school-name {
-        font-size: 0.875rem;
+      font-size: 0.875rem;
     }
 
     @media (min-width: 64rem) {
-        th.desktop-only, td.desktop-only {
-            display: table-cell;
-        }
+      th.desktop-only, td.desktop-only {
+        display: table-cell;
+      }
     }
     @media (min-width: 64rem) {
-        .students-side-menu {
-          position: sticky;
-          z-index: 0;
-          border-top: none;
-        }
-        .quick-view-student-open-overlay {
-          display: none;
-        }
+      .students-side-menu {
+        position: sticky;
+        z-index: 0;
+        border-top: none;
+      }
+      .quick-view-student-open-overlay {
+        display: none;
+      }
     }
 </style>
