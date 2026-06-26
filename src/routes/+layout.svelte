@@ -237,7 +237,8 @@
                 class="ds-button"
                 data-variant="secondary"
                 type="button"
-                popovertarget="student-filters-action-container"
+                command="show-modal"
+                commandfor="student-filters-dialog"
                 aria-label="Elevfilter"
                 data-tooltip="Elevfilter"
                 data-placement="top"
@@ -245,6 +246,59 @@
               >
                 <span class="material-symbols-outlined">filter_list</span>
               </button>
+
+              <dialog
+                class="ds-dialog"
+                data-placement="center"
+                data-modal="true"
+                id="student-filters-dialog"
+              >
+                <button
+                  class="ds-button"
+                  data-icon="true"
+                  commandfor="student-filters-dialog"
+                  data-variant="tertiary"
+                  type="button"
+                  aria-label="Lukk dialogvindu"
+                  data-color="neutral"
+                  command="close"
+                ></button>
+                <div class="ds-dialog__block">
+                  <p class="ds-paragraph" data-size="sm">Confirm change</p>
+                  <h2 class="ds-heading">Are you sure you want to change the application?</h2>
+                </div>
+                <div class="ds-dialog__block">
+                  <p class="ds-paragraph">
+                    Note: You should not change the application after the deadline has
+                    passed. If you change the application now, you will no longer be
+                    included in the upcoming admission round. Please contact the service
+                    centre on +00 00 00 00 if you need guidance.
+                  </p>
+                </div>
+                <div class="ds-dialog__block">
+                  <div
+                    style="display:flex;gap:var(--ds-size-4);margin-top:var(--ds-size-4)"
+                  >
+                    <button
+                      class="ds-button"
+                      commandfor="student-filters-dialog"
+                      data-variant="primary"
+                      type="button"
+                      data-color="danger"
+                      command="close"
+                    >Yes, change</button>
+                    <button
+                      class="ds-button"
+                      commandfor="student-filters-dialog"
+                      data-variant="secondary"
+                      type="button"
+                      command="close"
+                    >Cancel</button>
+                  </div>
+                </div>
+              </dialog>
+
+              <!--
               <div id="student-filters-action-container" class="ds-popover ds-dropdown" popover="auto" data-placement="bottom-end" data-variant="default">
                 <div class="student-filters">
                   {#if followUpStudentCheckBoxes.length > 0}
@@ -289,6 +343,7 @@
                   </button>            
                 </div>
               </div>
+            -->
 
               <button
                 class="ds-button"
