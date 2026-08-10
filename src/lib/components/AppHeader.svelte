@@ -81,6 +81,14 @@
     </nav>
   </div>
 
+  {#if page.data.APP_INFO.BANNER_ENVIRONMENT_MESSAGE}
+    <div class="environment-banner-container">
+      <div class="environment-banner">
+        <span class="environment-banner-text">{page.data.APP_INFO.BANNER_ENVIRONMENT_MESSAGE}</span>
+      </div>
+    </div>
+  {/if}
+
   {#if page.data.APP_INFO.BANNER_INFO_MESSAGE}
     <div class="info-banner-container">
       <div class="info-banner">
@@ -178,6 +186,40 @@
     margin: 0 auto;
     display: flex;
     gap: var(--ds-size-2);
+  }
+
+  .environment-banner-container {
+    background-color: var(--ds-color-danger-base-default);
+    color: var(--ds-color-danger-base-contrast-default);
+    width: 100%;
+  }
+
+  .environment-banner {
+    max-width: var(--max-page-width);
+    padding: calc(var(--ds-size-3) * 2) var(--ds-size-4);
+    margin: 0 auto;
+    overflow: hidden;
+    container-type: inline-size;
+  }
+
+  .environment-banner-text {
+    display: inline-block;
+    white-space: nowrap;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    animation: environment-banner-bounce 10s ease-in-out infinite alternate;
+  }
+
+  @keyframes environment-banner-bounce {
+    from { transform: translateX(0); }
+    to { transform: translateX(calc(100cqi - 100%)); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .environment-banner-text {
+      animation: none;
+    }
   }
 
 </style>

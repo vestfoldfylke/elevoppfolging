@@ -1,6 +1,6 @@
 {
   "name": "elevoppfolging",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
     "dev": "npm run check && vite dev",
