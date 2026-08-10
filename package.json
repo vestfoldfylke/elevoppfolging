@@ -1,6 +1,6 @@
 {
   "name": "elevoppfolging",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "type": "module",
   "scripts": {
     "dev": "npm run check && vite dev",
@@ -16,28 +16,28 @@
     "lint:fix": "npx @biomejs/biome check --write"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.16",
+    "@biomejs/biome": "2.5.6",
     "@digdir/designsystemet-types": "^1.15.0",
-    "@sveltejs/kit": "^2.64.0",
-    "@sveltejs/vite-plugin-svelte": "^7.1.2",
-    "@types/luxon": "^3.7.1",
-    "@types/node": "^25.9.2",
-    "happy-dom": "^20.10.2",
-    "svelte": "^5.56.3",
-    "svelte-check": "^4.6.0",
+    "@sveltejs/kit": "^2.70.2",
+    "@sveltejs/vite-plugin-svelte": "^7.2.0",
+    "@types/luxon": "^3.7.3",
+    "@types/node": "^26.1.2",
+    "happy-dom": "^20.11.1",
+    "svelte": "^5.56.8",
+    "svelte-check": "^4.7.4",
     "typescript": "^6.0.3",
-    "vite": "^8.0.16",
-    "vitest": "^4.1.8"
+    "vite": "^8.2.0",
+    "vitest": "^4.1.10"
   },
   "dependencies": {
-    "@digdir/designsystemet-css": "^1.15.0",
-    "@digdir/designsystemet-web": "^1.15.0",
+    "@digdir/designsystemet-css": "^1.18.0",
+    "@digdir/designsystemet-web": "^1.18.0",
     "@navikt/fnrvalidator": "^2.2.1",
-    "@sveltejs/adapter-node": "^5.5.4",
+    "@sveltejs/adapter-node": "^5.5.7",
     "@vestfoldfylke/loglady": "^2.1.0",
     "@vestfoldfylke/vestfold-metrics": "^1.0.1",
     "luxon": "^3.7.2",
-    "mongodb": "^7.2.0",
-    "mongodb-client-encryption": "^7.0.0"
+    "mongodb": "^7.5.0",
+    "mongodb-client-encryption": "^7.2.1"
   }
 }
