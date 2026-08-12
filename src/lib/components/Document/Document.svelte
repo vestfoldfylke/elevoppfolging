@@ -298,7 +298,7 @@
               <DocumentContent {contentItem} editMode={false} {index} />
             {/each}
           {:else}
-            <h2 class="ds-heading" style="font-weight: bold; margin-bottom: var(--ds-size-4);">[Du har ikke tilgang til se innholdet]</h2>
+            <h2 class="ds-heading" style="font-weight: bold; margin-bottom: var(--ds-size-4);">[Du har ikke tilgang til å se innholdet]</h2>
           {/if}
         {:else}
           <DocumentEditor documentId={document._id} studentId={"student" in document ? document.student._id : undefined} groupSystemId={"group" in document ? document.group.systemId : undefined} bind:currentDocument={editableDocument.draft} {accessSchools} documentEdited={editableDocument.isDirty} closeEditor={() => { editMode = false; editableDocument.cancel() }} />
