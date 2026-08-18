@@ -126,6 +126,9 @@
     })
   })
 
+  // svelte-ignore state_referenced_locally - This is wanted behavior
+  let programAreaAccessEntriesOpen: boolean = $state(programAreaAccessEntries.length < 11)
+
   let classAccessEntriesSort: { column: "klasse" | "bruker"; direction: SortDirection } = $state({
     column: "klasse",
     direction: "ascending"
@@ -181,6 +184,9 @@
       }
     })
   })
+
+  // svelte-ignore state_referenced_locally - This is wanted behavior
+  let classAccessEntriesOpen: boolean = $state(classAccessEntries.length < 11)
 
   let studentAccessEntriesSort: { column: "elev" | "bruker"; direction: SortDirection } = $state({
     column: "elev",
@@ -241,6 +247,9 @@
     })
   })
 
+  // svelte-ignore state_referenced_locally - This is wanted behavior
+  let studentAccessEntriesOpen: boolean = $state(studentAccessEntries.length < 11)
+
   let allStudentsAtSchoolsAccessEntriesSort: { column: "bruker"; direction: SortDirection } = $state({
     column: "bruker",
     direction: "ascending"
@@ -277,6 +286,9 @@
     })
   })
 
+  // svelte-ignore state_referenced_locally - This is wanted behavior
+  let allStudentsAtSchoolsAccessEntriesOpen: boolean = $state(allStudentsAtSchoolsAccessEntries.length < 11)
+
   let manageManualStudentsAccessEntriesSort: { column: "bruker"; direction: SortDirection } = $state({
     column: "bruker",
     direction: "ascending"
@@ -312,6 +324,9 @@
       return manageManualStudentsAccessEntriesSort.direction === "ascending" ? compareResult : -compareResult
     })
   })
+
+  // svelte-ignore state_referenced_locally - This is wanted behavior
+  let manageManualStudentsAccessEntriesOpen: boolean = $state(manageManualStudentsAccessEntries.length < 11)
 
   // new access
   let newProgramAreaAccessControl: NewManualAccessControl = $state({
@@ -606,10 +621,13 @@
         <div class="ds-alert" data-color="info">Tilganger for lærere styres i InSchool, her skal det kun administreres tilganger for rådgivere, elevtjeneste, osv. Tilganger som gis her, gir samme tilgang som en kontaktlærer, og kan gis på gruppering av klasser, klassenivå, eller direkte til elever.</div>
 
         <div class="access-group">
-          <h2 class="ds-heading">Tilgang til gruppering av klasser</h2>
-          {#if programAreaAccessEntries.length > 0}
-            <table class="ds-table" style="table-layout:fixed">
-              <thead>
+          <details class="ds-details" bind:open={programAreaAccessEntriesOpen}>
+            <summary>
+              Tilgang til gruppering av klasser ({programAreaAccessEntries.length} tilgang{programAreaAccessEntries.length === 0 || programAreaAccessEntries.length > 1 ? "er" : ""})
+            </summary>
+            {#if programAreaAccessEntries.length > 0}
+              <table class="ds-table" style="table-layout:fixed">
+                <thead>
                 <tr>
                   <th aria-sort={programAreaEntriesSort.column === "programArea" ? programAreaEntriesSort.direction : "none"}>
                     <button type="button" onclick={() => toggleSort(programAreaEntriesSort, "programArea")}>Gruppering av klasser</button>
@@ -619,8 +637,8 @@
                   </th>
                   <th>Handling</th>
                 </tr>
-              </thead>
-              <tbody>
+                </thead>
+                <tbody>
                 {#each programAreaAccessEntries as programAreaAccess}
                   <tr>
                     <td>{programAreaAccess.programAreaName}</td>
@@ -630,19 +648,24 @@
                     </td>
                   </tr>
                 {/each}
-              </tbody>
-            </table>
-          {:else}
-            <p class="ds-paragraph">Ingen gruppering av klasser tilganger</p>
-          {/if}
-          {@render newAccess(newProgramAreaAccessControl)}
+                </tbody>
+              </table>
+            {:else}
+              <p class="ds-paragraph">Ingen gruppering av klasser tilganger</p>
+            {/if}
+
+            {@render newAccess(newProgramAreaAccessControl)}
+          </details>
         </div>
 
         <div class="access-group">
-          <h2 class="ds-heading">Tilgang til klasser</h2>
-          {#if classAccessEntries.length > 0}
-            <table class="ds-table" style="table-layout:fixed">
-              <thead>
+          <details class="ds-details" bind:open={classAccessEntriesOpen}>
+            <summary>
+              Tilgang til klasser ({classAccessEntries.length} tilgang{classAccessEntries.length === 0 || classAccessEntries.length > 1 ? "er" : ""})
+            </summary>
+            {#if classAccessEntries.length > 0}
+              <table class="ds-table" style="table-layout:fixed">
+                <thead>
                 <tr>
                   <th aria-sort={classAccessEntriesSort.column === "klasse" ? classAccessEntriesSort.direction : "none"}>
                     <button type="button" onclick={() => toggleSort(classAccessEntriesSort, "klasse")}>Klasse</button>
@@ -652,8 +675,8 @@
                   </th>
                   <th>Handling</th>
                 </tr>
-              </thead>
-              <tbody>
+                </thead>
+                <tbody>
                 {#each classAccessEntries as classAccess}
                   <tr>
                     <td>{classAccess.className}</td>
@@ -663,20 +686,24 @@
                     </td>
                   </tr>
                 {/each}
-              </tbody>
-            </table>
-          {:else}
-            <p class="ds-paragraph">Ingen klassetilganger</p>
-          {/if}
+                </tbody>
+              </table>
+            {:else}
+              <p class="ds-paragraph">Ingen klassetilganger</p>
+            {/if}
 
-          {@render newAccess(newClassAccessControl)}
+            {@render newAccess(newClassAccessControl)}
+          </details>
         </div>
 
         <div class="access-group">
-          <h2 class="ds-heading">Tilgang til enkeltelever</h2>
-          {#if studentAccessEntries.length > 0}
-            <table class="ds-table" style="table-layout:fixed">
-              <thead>
+          <details class="ds-details" bind:open={studentAccessEntriesOpen}>
+            <summary>
+              Tilgang til enkeltelever ({studentAccessEntries.length} tilgang{studentAccessEntries.length === 0 || studentAccessEntries.length > 1 ? "er" : ""})
+            </summary>
+            {#if studentAccessEntries.length > 0}
+              <table class="ds-table" style="table-layout:fixed">
+                <thead>
                 <tr>
                   <th aria-sort={studentAccessEntriesSort.column === "elev" ? studentAccessEntriesSort.direction : "none"}>
                     <button type="button" onclick={() => toggleSort(studentAccessEntriesSort, "elev")}>Elev</button>
@@ -686,10 +713,10 @@
                   </th>
                   <th>Handling</th>
                 </tr>
-              </thead>
-              <tbody>
+                </thead>
+                <tbody>
                 {#each studentAccessEntries as studentAccess}
-                    <tr>
+                  <tr>
                     <td>{`${studentAccess.student.name}${studentAccess.student.feideName ? ` (${studentAccess.student.feideName})` : ""}`}</td>
                     <td>{studentAccess.entraUser.name} ({studentAccess.entraUser.companyName})</td>
                     <td>
@@ -697,28 +724,32 @@
                     </td>
                   </tr>
                 {/each}
-              </tbody>
-            </table>
-          {:else}
-            <p class="ds-paragraph">Ingen elevtilganger</p>
-          {/if}
+                </tbody>
+              </table>
+            {:else}
+              <p class="ds-paragraph">Ingen elevtilganger</p>
+            {/if}
 
-          {@render newAccess(newStudentAccessControl)}
+            {@render newAccess(newStudentAccessControl)}
+          </details>
         </div>
 
         <div class="access-group">
-          <h2 class="ds-heading">Tilgang til alle elever ved skolen</h2>
-          {#if allStudentsAtSchoolsAccessEntries.length > 0}
-            <table class="ds-table" style="table-layout:fixed">
-              <thead>
+          <details class="ds-details" bind:open={allStudentsAtSchoolsAccessEntriesOpen}>
+            <summary>
+              Tilgang til alle elever ved skolen ({allStudentsAtSchoolsAccessEntries.length} tilgang{allStudentsAtSchoolsAccessEntries.length === 0 || allStudentsAtSchoolsAccessEntries.length > 1 ? "er" : ""})
+            </summary>
+            {#if allStudentsAtSchoolsAccessEntries.length > 0}
+              <table class="ds-table" style="table-layout:fixed">
+                <thead>
                 <tr>
                   <th aria-sort={allStudentsAtSchoolsAccessEntriesSort.column === "bruker" ? allStudentsAtSchoolsAccessEntriesSort.direction : "none"}>
                     <button type="button" onclick={() => toggleSort(allStudentsAtSchoolsAccessEntriesSort, "bruker")}>Bruker</button>
                   </th>
                   <th>Handling</th>
                 </tr>
-              </thead>
-              <tbody>
+                </thead>
+                <tbody>
                 {#each allStudentsAtSchoolsAccessEntries as allStudentsAccess}
                   <tr>
                     <td>{allStudentsAccess.entraUser.name} ({allStudentsAccess.entraUser.companyName})</td>
@@ -727,30 +758,34 @@
                     </td>
                   </tr>
                 {/each}
-              </tbody>
-            </table>
-          {:else}
-            <p class="ds-paragraph">Ingen tilganger til alle elever ved skolen</p>
-          {/if}
+                </tbody>
+              </table>
+            {:else}
+              <p class="ds-paragraph">Ingen tilganger til alle elever ved skolen</p>
+            {/if}
 
-          {@render newAccess(newAllStudentsAtSchoolsAccessControl)}
+            {@render newAccess(newAllStudentsAtSchoolsAccessControl)}
+          </details>
         </div>
 
         <div class="access-group">
-          <h2 class="ds-heading">Tilgang til å administrere manuelle elever</h2>
-          {#if manageManualStudentsAccessEntries.length > 0}
-            <table class="ds-table" style="table-layout:fixed">
-              <thead>
+          <details class="ds-details" bind:open={manageManualStudentsAccessEntriesOpen}>
+            <summary>
+              Tilgang til å administrere manuelle elever ({manageManualStudentsAccessEntries.length} tilgang{manageManualStudentsAccessEntries.length === 0 || manageManualStudentsAccessEntries.length > 1 ? "er" : ""})
+            </summary>
+            {#if manageManualStudentsAccessEntries.length > 0}
+              <table class="ds-table" style="table-layout:fixed">
+                <thead>
                 <tr>
                   <th aria-sort={manageManualStudentsAccessEntriesSort.column === "bruker" ? manageManualStudentsAccessEntriesSort.direction : "none"}>
                     <button type="button" onclick={() => toggleSort(manageManualStudentsAccessEntriesSort, "bruker")}>Bruker</button>
                   </th>
                   <th>Handling</th>
                 </tr>
-              </thead>
-              <tbody>
+                </thead>
+                <tbody>
                 {#each manageManualStudentsAccessEntries as manualStudentsAccess}
-                    <tr>
+                  <tr>
                     <td>
                       {manualStudentsAccess.entraUser.name} ({manualStudentsAccess.entraUser.companyName})
                     </td>
@@ -759,13 +794,14 @@
                     </td>
                   </tr>
                 {/each}
-              </tbody>
-            </table>
-          {:else}
-            <p class="ds-paragraph">Ingen tilganger til å administrere manuelle elever</p>
-          {/if}
+                </tbody>
+              </table>
+            {:else}
+              <p class="ds-paragraph">Ingen tilganger til å administrere manuelle elever</p>
+            {/if}
 
-          {@render newAccess(newManageManualStudentsAccessControl)}
+            {@render newAccess(newManageManualStudentsAccessControl)}
+          </details>
         </div>
       </ds-tabpanel>
 
@@ -887,14 +923,9 @@
   </ds-tabs>
 </div>
 
-
 <style>
   .access-group {
     margin: var(--ds-size-8) 0;
-  }
-
-  .access-group h2 {
-    margin-bottom: var(--ds-size-2);
   }
 
   .new-manual-access-actions {
