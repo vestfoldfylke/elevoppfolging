@@ -325,10 +325,10 @@
                 <li>{classGroup.name}</li>
               {/each}
             </ul>
-            <p class="ds-paragraph" data-size="sm">Kontaktlærere</p>
+            <p class="ds-paragraph" data-size="sm">Elevens kontaktlærer</p>
             <ul class="ds-list">
               {#if !enrollment.contactTeacherGroup || enrollment.contactTeacherGroup?.teachers.length === 0}
-                <li>Ingen kontaktlærere</li>
+                <li>Ingen kontaktlærer</li>
               {/if}
               {#each enrollment.contactTeacherGroup?.teachers || [] as contactTeacher}
                 <li>{contactTeacher.name}</li>
