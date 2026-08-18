@@ -42,6 +42,7 @@
     })
   })
 
+  /* Disabled for now
   const allSelected = $derived(alertableAccessPersons.length > 0 && alertableAccessPersons.every((p) => emailAlertReceivers.includes(p.entra.userPrincipalName)))
 
   const toggleSelectAll = (target: HTMLInputElement) => {
@@ -50,6 +51,7 @@
     }
     emailAlertReceivers = target.checked ? alertableAccessPersons.map((p) => p.entra.userPrincipalName) : []
   }
+  */
 </script>
 
 {#if alertableAccessPersons.length > 0}
@@ -58,10 +60,12 @@
       {legendText}
     </legend>
 
+    <!-- Disabled for now
     <ds-field class="ds-field">
       <input id="{id}-choose-all" class="ds-input" type="checkbox" name="{id}-choose-all" checked={allSelected} onchange={(e) => toggleSelectAll(e.target as HTMLInputElement)} />
       <label for="{id}-choose-all" class="ds-label" data-weight="regular">Velg alle</label>
     </ds-field>
+    -->
 
     {#each alertableAccessPersons as person}
       <ds-field class="ds-field">
