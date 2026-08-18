@@ -103,24 +103,35 @@
     templateFilterDialog?.close()
   }
 
-  function clearStudentCheckboxFilters(): void {
+  function clearStudentCheckboxFilters(skipUpdate: boolean = false): void {
     selectedFollowUpStudentCheckBoxes = []
     selectedFacilitationStudentCheckBoxes = []
     appliedFollowUpStudentCheckBoxes = []
     appliedFacilitationStudentCheckBoxes = []
 
-    updateOverviewStudents()
-    studentFilterDialog?.close()
+    if (!skipUpdate) {
+      updateOverviewStudents()
+      studentFilterDialog?.close()
+    }
   }
 
-  function clearTemplateFilters(): void {
+  function clearTemplateFilters(skipUpdate: boolean = false): void {
     selectedTemplateIds = []
     hasNoDocuments = false
     appliedTemplateIds = []
     appliedHasNoDocuments = false
 
+    if (!skipUpdate) {
+      updateOverviewStudents()
+      templateFilterDialog?.close()
+    }
+  }
+
+  function clearAllFilters(): void {
+    clearStudentCheckboxFilters(true)
+    clearTemplateFilters(true)
+
     updateOverviewStudents()
-    templateFilterDialog?.close()
   }
 
   type OverviewStudentsState = {
@@ -326,7 +337,7 @@
                       type="button"
                       command="close"
                       data-size="sm"
-                      onclick={clearStudentCheckboxFilters}
+                      onclick={() => clearStudentCheckboxFilters()}
                       disabled={selectedFollowUpStudentCheckBoxes.length === 0 && selectedFacilitationStudentCheckBoxes.length === 0}
                     >Fjern alle filter</button>
                     <button
@@ -404,7 +415,7 @@
                       type="button"
                       command="close"
                       data-size="sm"
-                      onclick={clearTemplateFilters}
+                      onclick={() => clearTemplateFilters()}
                       disabled={selectedTemplateIds.length === 0 && !hasNoDocuments}
                     >Fjern alle filter</button>
                     <button
@@ -423,6 +434,9 @@
                 </div>
               </dialog>
             </div>
+
+            <!-- HERE -->
+
           </div>
         </div>
 
@@ -450,6 +464,17 @@
               <span class="material-symbols-outlined">description</span>
               Har ingen notater
             </span>
+          {/if}
+          {#if appliedFollowUpStudentCheckBoxes.length > 0 || appliedFacilitationStudentCheckBoxes.length > 0 || appliedTemplateIds.length > 0 || appliedHasNoDocuments}
+            <button
+              class="ds-button"
+              commandfor="student-filters-dialog"
+              data-variant="tertiary"
+              type="button"
+              command="close"
+              data-size="sm"
+              onclick={clearAllFilters}
+            >Fjern alle filter</button>
           {/if}
         </div>
 
