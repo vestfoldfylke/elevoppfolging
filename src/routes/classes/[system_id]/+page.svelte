@@ -50,7 +50,7 @@
     }
   })
 
-  let filteredStudents = $derived.by(() => {
+  let sortedStudents = $derived.by(() => {
     return data.classStudents.sort((a: PrincipalAccessStudent, b: PrincipalAccessStudent) => {
       switch (sortBy) {
         case "name":
@@ -150,12 +150,32 @@
     <ImportantGroupStuff groupImportantStuff={classSummaryDetails?.groupImportantInfo || null} school={data.classGroup.school} group={data.classGroup} />
   </div>
 
+  <div class="ds-card teacher-details" data-variant="tinted" data-color="brand3">
+    <div class="card-header">
+      <div class="card-title">
+        <span class="material-symbols-outlined">info</span>
+        {#if data.classGroup.teachers.length === 0}
+          <h2 class="ds-heading" data-size="sm">Ingen kontaktlærere</h2>
+        {:else}
+          <h2 class="ds-heading" data-size="sm">Kontaktlærer{data.classGroup.teachers.length > 1 ? "e" : ""}</h2>
+        {/if}
+      </div>
+    </div>
+    <div>
+      <ul class="ds-list">
+        {#each data.classGroup.teachers as teacher}
+          <li>{teacher.name}</li>
+        {/each}
+      </ul>
+    </div>
+  </div>
+
   <div class="ds-card class-students-container" data-variant="tinted" data-color="brand1">
     <details class="ds-details">
       <summary>Elever</summary>
       <div>
         <ul>
-          {#each filteredStudents as classStudent}
+          {#each sortedStudents as classStudent}
             <li>
               <a class="ds-link" href={`/students/${classStudent._id}`}>{classStudent.name}</a>
             </li>
@@ -231,7 +251,7 @@
     padding-bottom: var(--ds-size-4);
   }
 
-  .class-details {
+  .class-details, .teacher-details {
     margin: var(--ds-size-4) 0;
   }
 
