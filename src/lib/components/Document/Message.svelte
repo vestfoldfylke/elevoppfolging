@@ -187,7 +187,7 @@
 
         <EmailAlertSelector
           id="email-alert-{message.messageId}-{document._id}"
-          legendText="Følgende personer skal varsles på e-post når oppdateringen lagres"
+          legendText="Følgende personer KAN varsles på e-post når oppdateringen lagres"
           {studentAccessPersons}
           studentDataSharingConsent={studentDataSharingConsent?.consent}
           schoolNumber={document.school.schoolNumber}

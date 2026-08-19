@@ -211,7 +211,7 @@
       
       <EmailAlertSelector
         id="email-alert-{documentId}"
-        legendText="Følgende personer skal varsles på e-post når notatet lagres"
+        legendText="Følgende personer KAN varsles på e-post når notatet lagres"
         {studentAccessPersons}
         {studentDataSharingConsent}
         schoolNumber={currentDocument.school.schoolNumber}
