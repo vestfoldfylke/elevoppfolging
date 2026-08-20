@@ -125,6 +125,7 @@
           <h3 class="ds-heading" data-size="xs">{STUDENT_CHECKBOX_DISPLAY_NAMES.FACILITATION.plural}</h3>
           {#if editMode}
             <fieldset class="ds-fieldset">
+              <div class="ds-alert" data-color="warning">Fylles KUN ut av leder eller saksbehandler ETTER vedtak</div>
               {#each studentCheckBoxes.filter(checkbox => checkbox.enabled && checkbox.type === "FACILITATION") as facilitationCheckbox}
                 <ds-field class="ds-field">
                   <input id={facilitationCheckbox._id} class="ds-input" type="checkbox" bind:group={editableImportantStuff.draft.facilitation} value={facilitationCheckbox._id} />
