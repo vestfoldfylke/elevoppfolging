@@ -9,7 +9,7 @@
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
   import { authorizeManageManualStudentsOnSchool, authorizeSchoolLeaderForSchool } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
-  import type { EnrollmentWithinViewAccessWindow, NewManualAccessControl, SchoolAdministrationManualStudent } from "$lib/types/app-types"
+  import type { EnrollmentWithinViewAccessWindow, ManualStudentCreateOrReactivate, NewManualAccessControl, SchoolAdministrationManualStudent } from "$lib/types/app-types"
   import type {
     AllStudentsAtSchoolsManualAccessEntry,
     ClassManualAccessEntry,
@@ -482,6 +482,47 @@
       return { status: "error", message: "Navn må være fylt ut" }
     }
 
+    const canCreateOrReactivateManualStudent: ManualStudentCreateOrReactivate = await apiFetch(
+      `/api/manualstudents/${`${newManualStudentFnr}?schoolNumber=${currentSchool.schoolNumber}` as NoSlashString}`,
+      {
+        method: "GET"
+      }
+    )
+
+    if (!canCreateOrReactivateManualStudent.allowed) {
+      return {
+        status: "error",
+        message: `${canCreateOrReactivateManualStudent.message ?? ""} Ta kontakt med en voksen`
+      }
+    }
+
+    if (canCreateOrReactivateManualStudent.type === "REACTIVATE" || canCreateOrReactivateManualStudent.type === "ADD_MANUAL_ENROLLMENT") {
+      if (!canCreateOrReactivateManualStudent.student?._id) {
+        return {
+          status: "error",
+          message: "Hmm... Eleven mangler til tross for at vi fant den tidligere 🤔🤷‍♂️"
+        }
+      }
+
+      const confirmAction =
+        canCreateOrReactivateManualStudent.type === "REACTIVATE"
+          ? confirm(`${canCreateOrReactivateManualStudent.message} Er du helt sikker på at du vil reaktivere denne eleven ved å legge til et manuelt elevforhold for denne skolen?`)
+          : confirm(`${canCreateOrReactivateManualStudent.message} Er du helt sikker på at du vil du legge til et manuelt elevforhold for denne skolen?`)
+      if (!confirmAction) {
+        return { status: "cancelled" }
+      }
+
+      await apiFetch(`/api/manualstudents/${canCreateOrReactivateManualStudent.student._id as NoSlashString}/enrollments`, {
+        method: "POST",
+        body: { schoolNumber: currentSchool.schoolNumber },
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+
+      return { status: "success", reloadPageData: true, callBack: closeNewManualStudentForm }
+    }
+
     const newManualStudentInput: NewManualStudentInput = {
       ssn: newManualStudentFnr,
       name: newManualStudentName,
@@ -489,7 +530,7 @@
       school: currentSchool
     }
 
-    await apiFetch(`/api/students`, {
+    await apiFetch(`/api/manualstudents`, {
       method: "POST",
       body: newManualStudentInput,
       headers: {
@@ -532,7 +573,7 @@
       return { status: "error", message: "Elevforhold for denne skolen ikke funnet" }
     }
 
-    await apiFetch(`/api/students/${manualStudent._id as NoSlashString}/enrollments/${enrollmentForCurrentSchool.systemId as NoSlashString}`, {
+    await apiFetch(`/api/manualstudents/${manualStudent._id as NoSlashString}/enrollments/${enrollmentForCurrentSchool.systemId as NoSlashString}`, {
       method: "DELETE"
     })
 

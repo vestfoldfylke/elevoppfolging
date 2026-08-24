@@ -2,21 +2,86 @@ import { idnr } from "@navikt/fnrvalidator"
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
 import { env } from "$env/dynamic/private"
-import { validateManualStudentData } from "$lib/data-validation/manual-student-validation"
-import { upsertStudentInCache } from "$lib/server/cache/students-cache"
+import { validateManualStudentData } from "$lib/data-validation/manual-student-validation.js"
+import { upsertStudentInCache } from "$lib/server/cache/students-cache.js"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { authorizeManageManualStudentsOnSchool } from "$lib/shared-authorization/authorization"
+import { type AuthorizationResult, authorizeManageManualStudentsOnSchool } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { FrontendStudent } from "$lib/types/app-types"
-import type { ValidationResult } from "$lib/types/data-validation"
+import type { ValidationResult } from "$lib/types/data-validation.js"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { Access, AppStudent, EditorData, StudentEnrollment, UpdateAppStudent } from "$lib/types/db/shared-types"
+import type { Access, AppStudent, EditorData, School, StudentEnrollment, UpdateAppStudent } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
+import { isActive } from "$lib/utils/period.js"
 
-type UpdateManualStudentResponse = ApiRouteMap[`/api/students/${NoSlashString}`]["POST"]["res"]
-type UpdateManualStudentBody = ApiRouteMap[`/api/students/${NoSlashString}`]["POST"]["req"]
+type GetCanCreateOrReactivateManualStudentResponse = ApiRouteMap[`/api/manualstudents/${NoSlashString}`]["GET"]["res"]
+
+const getCanCreateOrReactivateManualStudent: ApiNextFunction<GetCanCreateOrReactivateManualStudentResponse, void> = async ({ principal, requestEvent }) => {
+  const manualStudentSsn: string | undefined = requestEvent.params.student_id
+  if (!manualStudentSsn) {
+    throw new HTTPError(400, "Student ID is missing in request parameters")
+  }
+
+  const schoolNumber: string | null = requestEvent.url.searchParams.get("schoolNumber")
+  if (!schoolNumber) {
+    throw new HTTPError(400, "schoolNumber is missing in search parameters")
+  }
+
+  // authorization check if principal has access to the student or group
+  const dbClient: IDbClient = getDbClient()
+
+  const access: Access | null = await dbClient.access.getPrincipalAccess(principal.id)
+  if (!access) {
+    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
+  }
+
+  const authorizationResult: AuthorizationResult = authorizeManageManualStudentsOnSchool({ principalAccess: access, schoolNumber })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
+  }
+
+  const schools: School[] = await dbClient.schools.getSchools()
+  const schoolRecord: School | undefined = schools.find((school: School) => school.schoolNumber === schoolNumber)
+  if (!schoolRecord) {
+    throw new HTTPError(400, "Den angitte skolen eksisterer ikke")
+  }
+
+  const student: FrontendStudent | null = await dbClient.students.getStudentBySsn(manualStudentSsn)
+  if (!student) {
+    return {
+      student,
+      type: "CREATE",
+      allowed: true
+    }
+  }
+
+  const activeEnrollments: StudentEnrollment[] = student.studentEnrollments.filter((enrollment: StudentEnrollment) => isActive(enrollment.period)) ?? []
+  let enrollmentMessage: string = `Elev med navn '${student.name}'`
+
+  if (activeEnrollments.length === 0) {
+    enrollmentMessage += " har ingen aktive elevforhold."
+  } else if (activeEnrollments.length === 1) {
+    enrollmentMessage += ` har ett aktivt elevforhold ved ${activeEnrollments[0].school.name}.`
+  } else {
+    enrollmentMessage += ` har aktivt elevforhold ved ${activeEnrollments.length} skoler: ${activeEnrollments.map((enrollment: StudentEnrollment) => enrollment.school.name).join(", ")}.`
+  }
+
+  return {
+    student,
+    type: activeEnrollments.length === 0 ? "REACTIVATE" : "ADD_MANUAL_ENROLLMENT",
+    allowed: schoolRecord.source === "MANUAL" ? true : activeEnrollments.length === 0,
+    message: enrollmentMessage
+  }
+}
+
+export const GET: RequestHandler = async (requestEvent) => {
+  return apiRequestMiddleware<GetCanCreateOrReactivateManualStudentResponse, void>(requestEvent, getCanCreateOrReactivateManualStudent)
+}
+
+type UpdateManualStudentResponse = ApiRouteMap[`/api/manualstudents/${NoSlashString}`]["POST"]["res"]
+type UpdateManualStudentBody = ApiRouteMap[`/api/manualstudents/${NoSlashString}`]["POST"]["req"]
 
 const updateManualStudent: ApiNextFunction<UpdateManualStudentResponse, UpdateManualStudentBody> = async ({ principal, body }) => {
   const updateManualStudentData: UpdateManualStudentBody = body
