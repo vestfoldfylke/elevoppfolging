@@ -1,4 +1,3 @@
-import { generateManualStudentEnrollment } from "$lib/utils/manual-students.js";
 import { idnr } from "@navikt/fnrvalidator"
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
@@ -16,6 +15,7 @@ import type { ValidationResult } from "$lib/types/data-validation.js"
 import type { IDbClient } from "$lib/types/db/db-client.js"
 import type { Access, EditorData, NewAppStudent, School, StudentEnrollment, UpdateAppStudent } from "$lib/types/db/shared-types.js"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request.js"
+import { generateManualStudentEnrollment } from "$lib/utils/manual-students.js"
 import { isActive } from "$lib/utils/period.js"
 import { generateUUID } from "$lib/utils/uuid.js"
 

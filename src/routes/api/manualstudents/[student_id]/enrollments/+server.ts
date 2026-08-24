@@ -1,5 +1,3 @@
-import { generateManualStudentEnrollment } from "$lib/utils/manual-students.js";
-import { isActive } from "$lib/utils/period.js";
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
 import { upsertStudentInCache } from "$lib/server/cache/students-cache.js"
@@ -12,6 +10,8 @@ import type { FrontendStudent } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { Access, AppStudent, EditorData, School, StudentEnrollment, UpdateAppStudent } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
+import { generateManualStudentEnrollment } from "$lib/utils/manual-students.js"
+import { isActive } from "$lib/utils/period.js"
 
 type AddManualStudentEnrollmentResponse = ApiRouteMap[`/api/manualstudents/${NoSlashString}/enrollments`]["POST"]["res"]
 type AddManualStudentEnrollmentBody = ApiRouteMap[`/api/manualstudents/${NoSlashString}/enrollments`]["POST"]["req"]

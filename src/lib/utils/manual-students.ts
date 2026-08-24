@@ -1,5 +1,5 @@
-import type { Period, School, StudentEnrollment } from "$lib/types/db/shared-types.js";
-import { generateUUID } from "$lib/utils/uuid.js";
+import type { Period, School, StudentEnrollment } from "$lib/types/db/shared-types.js"
+import { generateUUID } from "$lib/utils/uuid.js"
 
 export const generateManualStudentEnrollment = (school: School, mainSchool: boolean): StudentEnrollment => {
   const period: Period = {

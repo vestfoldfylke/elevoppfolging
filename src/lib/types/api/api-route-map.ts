@@ -107,7 +107,7 @@ export interface ApiRouteMap {
   }
 
   [key: `/api/manualstudents/${NoSlashString}/enrollments`]: {
-    POST: { req: { schoolNumber: string }, res: { studentId: string } }
+    POST: { req: { schoolNumber: string }; res: { studentId: string } }
   }
 
   [key: `/api/manualstudents/${NoSlashString}/enrollments/${NoSlashString}`]: {
