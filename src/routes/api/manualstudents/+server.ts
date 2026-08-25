@@ -7,8 +7,8 @@ import { upsertStudentInCache } from "$lib/server/cache/students-cache.js"
 import { getDbClient } from "$lib/server/db/get-db-client.js"
 import { HTTPError } from "$lib/server/middleware/http-error.js"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request.js"
-import { authorizeManageManualStudentsOnSchool } from "$lib/shared-authorization/authorization.js"
-import type { ApiRouteMap } from "$lib/types/api/api-route-map.js"
+import { type AuthorizationResult, authorizeManageManualStudentsOnSchool } from "$lib/shared-authorization/authorization.js"
+import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map.js"
 import type { FrontendStudent } from "$lib/types/app-types.js"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication.js"
 import type { ValidationResult } from "$lib/types/data-validation.js"
@@ -19,8 +19,72 @@ import { generateManualStudentEnrollment } from "$lib/utils/manual-students.js"
 import { isActive } from "$lib/utils/period.js"
 import { generateUUID } from "$lib/utils/uuid.js"
 
-type AddManualStudentResponse = ApiRouteMap["/api/manualstudents"]["POST"]["res"]
-type AddManualStudentBody = ApiRouteMap["/api/manualstudents"]["POST"]["req"]
+type GetCanCreateOrReactivateManualStudentResponse = ApiRouteMap[`/api/manualstudents${NoSlashString}`]["GET"]["res"]
+
+const getCanCreateOrReactivateManualStudent: ApiNextFunction<GetCanCreateOrReactivateManualStudentResponse, void> = async ({ principal, requestEvent }) => {
+  const manualStudentSsn: string | null = requestEvent.url.searchParams.get("ssn")
+  if (!manualStudentSsn) {
+    throw new HTTPError(400, "Student SSN is missing in search parameters")
+  }
+
+  const schoolNumber: string | null = requestEvent.url.searchParams.get("schoolNumber")
+  if (!schoolNumber) {
+    throw new HTTPError(400, "schoolNumber is missing in search parameters")
+  }
+
+  // authorization check if principal has access to the student or group
+  const dbClient: IDbClient = getDbClient()
+
+  const access: Access | null = await dbClient.access.getPrincipalAccess(principal.id)
+  if (!access) {
+    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
+  }
+
+  const authorizationResult: AuthorizationResult = authorizeManageManualStudentsOnSchool({ principalAccess: access, schoolNumber })
+  if (!authorizationResult.authorized) {
+    throw new HTTPError(403, authorizationResult.message)
+  }
+
+  const schools: School[] = await dbClient.schools.getSchools()
+  const schoolRecord: School | undefined = schools.find((school: School) => school.schoolNumber === schoolNumber)
+  if (!schoolRecord) {
+    throw new HTTPError(400, "Den angitte skolen eksisterer ikke")
+  }
+
+  const student: FrontendStudent | null = await dbClient.students.getStudentBySsn(manualStudentSsn)
+  if (!student) {
+    return {
+      student,
+      type: "CREATE",
+      allowed: true
+    }
+  }
+
+  const activeEnrollments: StudentEnrollment[] = student.studentEnrollments.filter((enrollment: StudentEnrollment) => isActive(enrollment.period)) ?? []
+  let enrollmentMessage: string = `Elev med navn '${student.name}'`
+
+  if (activeEnrollments.length === 0) {
+    enrollmentMessage += " har ingen aktive elevforhold."
+  } else if (activeEnrollments.length === 1) {
+    enrollmentMessage += ` har ett aktivt elevforhold ved ${activeEnrollments[0].school.name}.`
+  } else {
+    enrollmentMessage += ` har aktivt elevforhold ved ${activeEnrollments.length} skoler: ${activeEnrollments.map((enrollment: StudentEnrollment) => enrollment.school.name).join(", ")}.`
+  }
+
+  return {
+    student,
+    type: activeEnrollments.length === 0 ? "REACTIVATE" : "ADD_MANUAL_ENROLLMENT",
+    allowed: schoolRecord.source === "MANUAL" ? true : activeEnrollments.length === 0,
+    message: enrollmentMessage
+  }
+}
+
+export const GET: RequestHandler = async (requestEvent) => {
+  return apiRequestMiddleware<GetCanCreateOrReactivateManualStudentResponse, void>(requestEvent, getCanCreateOrReactivateManualStudent)
+}
+
+type AddManualStudentResponse = ApiRouteMap[`/api/manualstudents${NoSlashString}`]["POST"]["res"]
+type AddManualStudentBody = ApiRouteMap[`/api/manualstudents${NoSlashString}`]["POST"]["req"]
 
 const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStudentBody> = async ({ principal, body }) => {
   const newManualStudentData: AddManualStudentBody = body

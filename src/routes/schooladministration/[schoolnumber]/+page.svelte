@@ -483,7 +483,7 @@
     }
 
     const canCreateOrReactivateManualStudent: ManualStudentCreateOrReactivate = await apiFetch(
-      `/api/manualstudents/${`${newManualStudentFnr}?schoolNumber=${currentSchool.schoolNumber}` as NoSlashString}`,
+      `/api/manualstudents${`?ssn=${newManualStudentFnr}&schoolNumber=${currentSchool.schoolNumber}` as NoSlashString}`,
       {
         method: "GET"
       }
@@ -530,7 +530,7 @@
       school: currentSchool
     }
 
-    await apiFetch(`/api/manualstudents`, {
+    await apiFetch(`/api/manualstudents${"" as NoSlashString}`, {
       method: "POST",
       body: newManualStudentInput,
       headers: {

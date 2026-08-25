@@ -45,10 +45,6 @@ type ApiStudentsIdConsent = {
   PATCH: { req: StudentDataSharingConsentInput; res: { consentId: string } }
 }
 
-type ApiStudentAddManualStudent = {
-  POST: { req: NewManualStudentInput; res: { studentId: string } }
-}
-
 export type NoSlashString = string & { __noSlash?: true }
 
 /**
@@ -59,10 +55,12 @@ export interface ApiRouteMap {
   "/api/templates": {
     POST: { req: DocumentContentTemplate; res: { templateId: string } }
   }
+
   [key: `/api/templates/${NoSlashString}`]: ApiTemplatesId
 
   // SCHOOLS
   [key: `/api/schools/${NoSlashString}`]: ApiSchoolsId
+
   "/api/schools": {
     POST: { req: NewSchool; res: { schoolId: string } }
   }
@@ -99,10 +97,12 @@ export interface ApiRouteMap {
   }
 
   // MANUAL STUDENTS
-  "/api/manualstudents": ApiStudentAddManualStudent
+  [key: `/api/manualstudents${NoSlashString}`]: {
+    GET: { res: ManualStudentCreateOrReactivate }
+    POST: { req: NewManualStudentInput; res: { studentId: string } }
+  }
 
   [key: `/api/manualstudents/${NoSlashString}`]: {
-    GET: { res: ManualStudentCreateOrReactivate }
     POST: { req: UpdateManualStudentInput; res: { studentId: string } }
   }
 
