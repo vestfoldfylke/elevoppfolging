@@ -7,6 +7,7 @@
   import SuggestionSelect from "$lib/components/SchoolAdministration/SuggestionSelect.svelte"
   import { nameValidation, ssnValidation } from "$lib/data-validation/manual-student-validation"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
+  import type { HTTPError } from "$lib/server/middleware/http-error.js"
   import { authorizeManageManualStudentsOnSchool, authorizeSchoolLeaderForSchool } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { EnrollmentWithinViewAccessWindow, ManualStudentCreateOrReactivate, NewManualAccessControl, SchoolAdministrationManualStudent } from "$lib/types/app-types"
@@ -513,15 +514,19 @@
         return { status: "cancelled" }
       }
 
-      await apiFetch(`/api/manualstudents/${canCreateOrReactivateManualStudent.student._id as NoSlashString}/enrollments`, {
-        method: "POST",
-        body: { schoolNumber: currentSchool.schoolNumber },
-        headers: {
-          "Content-Type": "application/json"
-        }
-      })
+      try {
+        await apiFetch(`/api/manualstudents/${canCreateOrReactivateManualStudent.student._id as NoSlashString}/enrollments`, {
+          method: "POST",
+          body: { schoolNumber: currentSchool.schoolNumber },
+          headers: {
+            "Content-Type": "application/json"
+          }
+        })
 
-      return { status: "success", reloadPageData: true, callBack: closeNewManualStudentForm }
+        return { status: "success", reloadPageData: true, callBack: closeNewManualStudentForm }
+      } catch (error) {
+        return { status: "error", message: (error as HTTPError).message }
+      }
     }
 
     const newManualStudentInput: NewManualStudentInput = {
@@ -531,15 +536,19 @@
       school: currentSchool
     }
 
-    await apiFetch(`/api/manualstudents${"" as NoSlashString}`, {
-      method: "POST",
-      body: newManualStudentInput,
-      headers: {
-        "Content-Type": "application/json"
-      }
-    })
+    try {
+      await apiFetch(`/api/manualstudents${"" as NoSlashString}`, {
+        method: "POST",
+        body: newManualStudentInput,
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
 
-    return { status: "success", reloadPageData: true, callBack: closeNewManualStudentForm }
+      return { status: "success", reloadPageData: true, callBack: closeNewManualStudentForm }
+    } catch (error) {
+      return { status: "error", message: (error as HTTPError).message }
+    }
   }
 
   let canManageManualStudents = $derived.by(() => {

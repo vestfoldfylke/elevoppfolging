@@ -4,13 +4,12 @@ import { upsertStudentInCache } from "$lib/server/cache/students-cache.js"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
-import { authorizeManageManualStudentsOnSchool } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
-import type { FrontendStudent } from "$lib/types/app-types"
+import type { FrontendStudent, ManualStudentCreateOrReactivate } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { Access, AppStudent, EditorData, School, StudentEnrollment, UpdateAppStudent } from "$lib/types/db/shared-types"
+import type { AppStudent, EditorData, School, StudentEnrollment, UpdateAppStudent } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
-import { generateManualStudentEnrollment } from "$lib/utils/manual-students.js"
+import { canCreateOrReactivateManualStudent, generateManualStudentEnrollment } from "$lib/utils/manual-students.js"
 import { isActive } from "$lib/utils/period.js"
 
 type AddManualStudentEnrollmentResponse = ApiRouteMap[`/api/manualstudents/${NoSlashString}/enrollments`]["POST"]["res"]
@@ -28,18 +27,7 @@ const addManualStudentEnrollment: ApiNextFunction<AddManualStudentEnrollmentResp
     throw new HTTPError(400, "schoolNumber missing in body")
   }
 
-  // authorization check if principal has access to the student
   const dbClient: IDbClient = getDbClient()
-
-  const access: Access | null = await dbClient.access.getPrincipalAccess(principal.id)
-  if (!access) {
-    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
-  }
-
-  const authorizationResult = authorizeManageManualStudentsOnSchool({ principalAccess: access, schoolNumber: manualStudentEnrollmentData.schoolNumber })
-  if (!authorizationResult.authorized) {
-    throw new HTTPError(403, authorizationResult.message)
-  }
 
   const student: AppStudent | null = await dbClient.students.getStudentById(manualStudentId)
   if (!student) {
@@ -49,6 +37,21 @@ const addManualStudentEnrollment: ApiNextFunction<AddManualStudentEnrollmentResp
   const school: School | null = await dbClient.schools.getSchool(manualStudentEnrollmentData.schoolNumber)
   if (!school) {
     throw new HTTPError(404, "Skole ikke funnet")
+  }
+
+  // authorization check is done here amongst other stuff
+  const canCreate: ManualStudentCreateOrReactivate = await canCreateOrReactivateManualStudent(student.ssn, manualStudentEnrollmentData.schoolNumber, principal)
+  if (!canCreate.allowed) {
+    throw new HTTPError(403, canCreate.message as string, canCreate)
+  }
+
+  if (canCreate.type !== "ADD_MANUAL_ENROLLMENT" && canCreate.type !== "REACTIVATE") {
+    logger.error(
+      "addManualStudentEnrollment POST action received type {Type}, and is not allowed here! CanCreateOrReactivateManualStudentData: {@CanCreateOrReactivateManualStudentData}",
+      canCreate.type,
+      canCreate
+    )
+    throw new HTTPError(403, `${canCreate.type} is not allowed for addManualStudentEnrollment`)
   }
 
   const hasActiveMainSchool: boolean = student.studentEnrollments.some((enrollment: StudentEnrollment) => enrollment.mainSchool && isActive(enrollment.period))

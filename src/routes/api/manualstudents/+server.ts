@@ -7,15 +7,14 @@ import { upsertStudentInCache } from "$lib/server/cache/students-cache.js"
 import { getDbClient } from "$lib/server/db/get-db-client.js"
 import { HTTPError } from "$lib/server/middleware/http-error.js"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request.js"
-import { type AuthorizationResult, authorizeManageManualStudentsOnSchool } from "$lib/shared-authorization/authorization.js"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map.js"
-import type { FrontendStudent } from "$lib/types/app-types.js"
+import type { FrontendStudent, ManualStudentCreateOrReactivate } from "$lib/types/app-types.js"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication.js"
 import type { ValidationResult } from "$lib/types/data-validation.js"
 import type { IDbClient } from "$lib/types/db/db-client.js"
-import type { Access, EditorData, NewAppStudent, School, StudentEnrollment, UpdateAppStudent } from "$lib/types/db/shared-types.js"
+import type { EditorData, NewAppStudent, StudentEnrollment, UpdateAppStudent } from "$lib/types/db/shared-types.js"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request.js"
-import { generateManualStudentEnrollment } from "$lib/utils/manual-students.js"
+import { canCreateOrReactivateManualStudent, generateManualStudentEnrollment } from "$lib/utils/manual-students.js"
 import { isActive } from "$lib/utils/period.js"
 import { generateUUID } from "$lib/utils/uuid.js"
 
@@ -32,60 +31,7 @@ const getCanCreateOrReactivateManualStudent: ApiNextFunction<GetCanCreateOrReact
     throw new HTTPError(400, "schoolNumber is missing in search parameters")
   }
 
-  // authorization check if principal has access to the student or group
-  const dbClient: IDbClient = getDbClient()
-
-  const access: Access | null = await dbClient.access.getPrincipalAccess(principal.id)
-  if (!access) {
-    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
-  }
-
-  const authorizationResult: AuthorizationResult = authorizeManageManualStudentsOnSchool({ principalAccess: access, schoolNumber })
-  if (!authorizationResult.authorized) {
-    throw new HTTPError(403, authorizationResult.message)
-  }
-
-  const schools: School[] = await dbClient.schools.getSchools()
-  const schoolRecord: School | undefined = schools.find((school: School) => school.schoolNumber === schoolNumber)
-  if (!schoolRecord) {
-    throw new HTTPError(400, "Den angitte skolen eksisterer ikke")
-  }
-
-  const student: FrontendStudent | null = await dbClient.students.getStudentBySsn(manualStudentSsn)
-  if (!student) {
-    return {
-      student,
-      type: "CREATE",
-      allowed: true
-    }
-  }
-
-  const activeEnrollments: StudentEnrollment[] = student.studentEnrollments.filter((enrollment: StudentEnrollment) => isActive(enrollment.period)) ?? []
-  let enrollmentMessage: string = `Elev med navn '${student.name}'`
-
-  if (activeEnrollments.length === 0) {
-    enrollmentMessage += " har ingen aktive elevforhold."
-  } else if (activeEnrollments.length === 1) {
-    enrollmentMessage += ` har ett aktivt elevforhold ved ${activeEnrollments[0].school.name}.`
-  } else {
-    enrollmentMessage += ` har aktivt elevforhold ved ${activeEnrollments.length} skoler: ${activeEnrollments.map((enrollment: StudentEnrollment) => enrollment.school.name).join(", ")}.`
-  }
-
-  if (schoolRecord.source === "MANUAL") {
-    return {
-      student,
-      type: activeEnrollments.length === 0 ? "REACTIVATE" : "ADD_MANUAL_ENROLLMENT",
-      allowed: activeEnrollments.filter((enrollment: StudentEnrollment) => enrollment.school.schoolNumber === schoolNumber).length === 0,
-      message: enrollmentMessage
-    }
-  }
-
-  return {
-    student,
-    type: activeEnrollments.length === 0 ? "REACTIVATE" : "ADD_MANUAL_ENROLLMENT",
-    allowed: activeEnrollments.length === 0,
-    message: enrollmentMessage
-  }
+  return canCreateOrReactivateManualStudent(manualStudentSsn, schoolNumber, principal)
 }
 
 export const GET: RequestHandler = async (requestEvent) => {
@@ -103,18 +49,7 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
     throw new HTTPError(400, newManualStudentDataValid.message)
   }
 
-  // authorization check if principal has access to the student or group
   const dbClient: IDbClient = getDbClient()
-
-  const access: Access | null = await dbClient.access.getPrincipalAccess(principal.id)
-  if (!access) {
-    throw new HTTPError(403, "Ingen tilgang funnet for bruker")
-  }
-
-  const authorizationResult = authorizeManageManualStudentsOnSchool({ principalAccess: access, schoolNumber: newManualStudentData.school.schoolNumber })
-  if (!authorizationResult.authorized) {
-    throw new HTTPError(403, authorizationResult.message)
-  }
 
   if (!(env.MOCK_SSN_CHECK?.trim().toLowerCase() === "true")) {
     const valid = idnr(newManualStudentData.ssn)
@@ -124,23 +59,22 @@ const addManualStudent: ApiNextFunction<AddManualStudentResponse, AddManualStude
     }
   }
 
-  const schools: School[] = await dbClient.schools.getSchools()
-  const schoolRecord: School | undefined = schools.find((school) => school.schoolNumber === newManualStudentData.school.schoolNumber)
-  if (!schoolRecord) {
-    throw new HTTPError(400, "Den angitte skolen eksisterer ikke")
+  // authorization check is done here amongst other stuff
+  const canCreate: ManualStudentCreateOrReactivate = await canCreateOrReactivateManualStudent(newManualStudentData.ssn, newManualStudentData.school.schoolNumber, principal)
+  if (!canCreate.allowed) {
+    throw new HTTPError(403, canCreate.message as string, canCreate)
+  }
+
+  if (canCreate.type !== "CREATE") {
+    logger.error(
+      "addManualStudent POST action received type {Type}, and is not allowed here! CanCreateOrReactivateManualStudentData: {@CanCreateOrReactivateManualStudentData}",
+      canCreate.type,
+      canCreate
+    )
+    throw new HTTPError(403, `${canCreate.type} is not allowed for addManualStudent`)
   }
 
   const student: FrontendStudent | null = await dbClient.students.getStudentBySsn(newManualStudentData.ssn)
-  if (student) {
-    if (schoolRecord.source === "AUTO") {
-      if (student.studentEnrollments.length === 0) {
-        throw new HTTPError(500, "Fødselsnummer er allerede i bruk. Eleven har ingen elevforhold. Ta kontakt med en voksen")
-      }
-
-      const schoolName: string = student.studentEnrollments.find((enrollment: StudentEnrollment) => enrollment.mainSchool)?.school.name || student.studentEnrollments[0].school.name
-      throw new HTTPError(400, `Fødselsnummer er allerede i bruk på ${schoolName}. Ta kontakt med en voksen`)
-    }
-  }
 
   const studentId: string = !student ? await handleNewManualStudent(principal, newManualStudentData) : await handleExistingManualStudent(principal, newManualStudentData, student)
 
