@@ -71,10 +71,19 @@ const getCanCreateOrReactivateManualStudent: ApiNextFunction<GetCanCreateOrReact
     enrollmentMessage += ` har aktivt elevforhold ved ${activeEnrollments.length} skoler: ${activeEnrollments.map((enrollment: StudentEnrollment) => enrollment.school.name).join(", ")}.`
   }
 
+  if (schoolRecord.source === "MANUAL") {
+    return {
+      student,
+      type: activeEnrollments.length === 0 ? "REACTIVATE" : "ADD_MANUAL_ENROLLMENT",
+      allowed: activeEnrollments.filter((enrollment: StudentEnrollment) => enrollment.school.schoolNumber === schoolNumber).length === 0,
+      message: enrollmentMessage
+    }
+  }
+
   return {
     student,
     type: activeEnrollments.length === 0 ? "REACTIVATE" : "ADD_MANUAL_ENROLLMENT",
-    allowed: schoolRecord.source === "MANUAL" ? true : activeEnrollments.length === 0,
+    allowed: activeEnrollments.length === 0,
     message: enrollmentMessage
   }
 }
