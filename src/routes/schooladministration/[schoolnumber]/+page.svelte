@@ -561,14 +561,14 @@
     newManualStudentHasBlockedAddress = false
   }
 
-  const removeManualStudentEnrollment = async (manualStudent: SchoolAdministrationManualStudent): Promise<AsyncButtonResult> => {
+  const deactivateManualStudentEnrollment = async (manualStudent: SchoolAdministrationManualStudent): Promise<AsyncButtonResult> => {
     const dialog: boolean = window.confirm("Dette vil deaktivere elevforholdet til denne skolen fra eleven. Er du helt sikker?")
     if (!dialog) {
       return { status: "cancelled" }
     }
 
     const enrollmentForCurrentSchool: EnrollmentWithinViewAccessWindow | undefined = manualStudent.manualEnrollments.find(
-      (enrollment: EnrollmentWithinViewAccessWindow) => enrollment.source === "MANUAL" && enrollment.school.schoolNumber === currentSchool.schoolNumber
+      (enrollment: EnrollmentWithinViewAccessWindow) => enrollment.source === "MANUAL" && enrollment.school.schoolNumber === currentSchool.schoolNumber && enrollment.period.active
     )
     if (!enrollmentForCurrentSchool) {
       return { status: "error", message: "Elevforhold for denne skolen ikke funnet" }
@@ -951,7 +951,7 @@
                     {#if manualStudentEnrollmentForSchool?.period.active}
                       <div class="manual-student-cell-actions">
                         <a href={`${page.url.pathname}/manualstudents/${manualStudent._id}`} class="ds-button" data-variant="secondary" data-size="sm" rel="noopener noreferrer"><span class="material-symbols-outlined">edit</span>Rediger</a>
-                        <AsyncButton onClick={() => removeManualStudentEnrollment(manualStudent)} buttonText="Deaktiver manuelt elevforhold" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
+                        <AsyncButton onClick={() => deactivateManualStudentEnrollment(manualStudent)} buttonText="Deaktiver manuelt elevforhold" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
                       </div>
                     {:else}
                       <span>Manuelt elevforhold er satt til å deaktiveres. Det skjer ikke umiddelbart – deaktiveringen trer i kraft den {prettifyDate(getDateDaysAhead(page.data.APP_INFO.STUDENT_ACCESS_AFTER_EXPIRE_DAYS, manualStudentEnrollmentForSchool?.period.end ?? undefined))}.</span>
