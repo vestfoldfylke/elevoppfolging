@@ -63,7 +63,7 @@ const getSchoolAccessAdministrationData: ServerLoadNextFunction<SchoolAccessAdmi
   const schoolManualStudents: SchoolAdministrationManualStudent[] = students
     .filter(
       (student) =>
-        student.enrollmentsWithinViewAccessWindow.some((enrollment: EnrollmentWithinViewAccessWindow) => enrollment.source === "MANUAL") &&
+        student.enrollmentsWithinViewAccessWindow.some((enrollment: EnrollmentWithinViewAccessWindow) => enrollment.source === "MANUAL" && enrollment.school.schoolNumber === schoolNumber) &&
         (student.principalAccessForStudent.some((access) => access.type === "MANUELL-SKOLELEDER-TILGANG" && access.schoolNumber === schoolNumber) ||
           student.principalAccessForStudent.some((access) => access.type === "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG" && access.schoolNumber === schoolNumber))
     )
@@ -73,7 +73,9 @@ const getSchoolAccessAdministrationData: ServerLoadNextFunction<SchoolAccessAdmi
       feideName: student.feideName,
       hasBlockedAddress: student.hasBlockedAddress,
       source: student.source,
-      manualEnrollments: student.enrollmentsWithinViewAccessWindow.filter((enrollment: EnrollmentWithinViewAccessWindow) => enrollment.source === "MANUAL")
+      manualEnrollments: student.enrollmentsWithinViewAccessWindow.filter(
+        (enrollment: EnrollmentWithinViewAccessWindow) => enrollment.source === "MANUAL" && enrollment.school.schoolNumber === schoolNumber
+      )
     }))
     .sort((a, b) => a.name.localeCompare(b.name))
 
