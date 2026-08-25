@@ -1,5 +1,5 @@
-import type { PrincipalAccessStudent } from "$lib/types/app-types"
-import type { Access, SchoolLeaderManualAccessEntry, StudentClassGroup } from "$lib/types/db/shared-types"
+import type { PrincipalAccess, PrincipalAccessStudent } from "$lib/types/app-types"
+import type { SchoolLeaderManualAccessEntry, StudentClassGroup } from "$lib/types/db/shared-types"
 
 export const getClassesFromStudents = (students: PrincipalAccessStudent[]): StudentClassGroup[] => {
   const classes = new Map<string, StudentClassGroup>()
@@ -20,7 +20,7 @@ export const getClassesFromStudents = (students: PrincipalAccessStudent[]): Stud
   return Array.from(classes.values())
 }
 
-export const getAccessibleClassesFromStudents = (principalAccess: Access, students: PrincipalAccessStudent[]): StudentClassGroup[] => {
+export const getAccessibleClassesFromStudents = (principalAccess: PrincipalAccess, students: PrincipalAccessStudent[]): StudentClassGroup[] => {
   const classes = new Map<string, StudentClassGroup>()
 
   for (const student of students) {
@@ -46,7 +46,11 @@ export const getAccessibleClassesFromStudents = (principalAccess: Access, studen
         continue
       }
 
-      const regularAccess = studentEnrollment.classMemberships.filter((classMembership) => principalAccess.classes.find((classEntry) => classEntry.systemId === classMembership.classGroup.systemId))
+      const regularAccess = studentEnrollment.classMemberships.filter(
+        (classMembership) =>
+          principalAccess.classes.find((classEntry) => classEntry.systemId === classMembership.classGroup.systemId) ||
+          principalAccess.programAreas.find((programArea) => programArea.classSystemIds.includes(classMembership.classGroup.systemId))
+      )
       if (regularAccess.length === 0) {
         continue
       }
