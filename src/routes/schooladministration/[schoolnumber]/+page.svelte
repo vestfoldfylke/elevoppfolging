@@ -935,7 +935,7 @@
               </thead>
               <tbody>
               {#each data.manualSchoolStudents as manualStudent}
-                {@const manualStudentEnrollmentForSchool = manualStudent.manualEnrollments.find((enrollment: EnrollmentWithinViewAccessWindow) => enrollment.source === "MANUAL" && enrollment.school.schoolNumber === currentSchool.schoolNumber)}
+                {@const manualStudentEnrollmentForSchool = manualStudent.manualEnrollments.find((enrollment: EnrollmentWithinViewAccessWindow) => enrollment.source === "MANUAL" && enrollment.school.schoolNumber === currentSchool.schoolNumber && enrollment.period.active) ?? manualStudent.manualEnrollments.find((enrollment: EnrollmentWithinViewAccessWindow) => enrollment.source === "MANUAL" && enrollment.school.schoolNumber === currentSchool.schoolNumber)}
                 <tr>
                   <td>
                     <a href={`/students/${manualStudent._id}`} class="ds-link" rel="noopener noreferrer">{manualStudent.name}</a>
