@@ -267,10 +267,10 @@
       {#if !period.active}
         {#if period.withinViewAccessWindow}
           {#if period.daysUntilActive && period.daysUntilActive > 0}
-            (Starter om {period.daysUntilActive} dager)
+            (Starter om {period.daysUntilActive} {period.daysUntilActive > 1 ? "dager" : "dag"})
           {/if}
           {#if period.daysAfterExpired && period.daysAfterExpired > 0}
-            (Inaktiv i {period.daysAfterExpired} dager)
+            (Inaktiv i {period.daysAfterExpired} {period.daysAfterExpired > 1 ? "dager" : "dag"})
           {/if}
         {/if}
       {/if}

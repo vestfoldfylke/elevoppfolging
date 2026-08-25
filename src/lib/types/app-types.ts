@@ -234,3 +234,10 @@ export type SuggestionSelectItem = {
 export type FrontendStudentDocument = StudentDocument & {
   isDocumentContentHidden: boolean
 }
+
+export type ManualStudentCreateOrReactivate = {
+  student: FrontendStudent | null
+  type: "CREATE" | "REACTIVATE" | "ADD_MANUAL_ENROLLMENT"
+  allowed: boolean
+  message?: string
+}

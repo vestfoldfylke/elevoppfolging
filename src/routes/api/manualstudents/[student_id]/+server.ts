@@ -2,21 +2,21 @@ import { idnr } from "@navikt/fnrvalidator"
 import type { RequestHandler } from "@sveltejs/kit"
 import { logger } from "@vestfoldfylke/loglady"
 import { env } from "$env/dynamic/private"
-import { validateManualStudentData } from "$lib/data-validation/manual-student-validation"
-import { upsertStudentInCache } from "$lib/server/cache/students-cache"
+import { validateManualStudentData } from "$lib/data-validation/manual-student-validation.js"
+import { upsertStudentInCache } from "$lib/server/cache/students-cache.js"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { apiRequestMiddleware } from "$lib/server/middleware/http-request"
 import { authorizeManageManualStudentsOnSchool } from "$lib/shared-authorization/authorization"
 import type { ApiRouteMap, NoSlashString } from "$lib/types/api/api-route-map"
 import type { FrontendStudent } from "$lib/types/app-types"
-import type { ValidationResult } from "$lib/types/data-validation"
+import type { ValidationResult } from "$lib/types/data-validation.js"
 import type { IDbClient } from "$lib/types/db/db-client"
 import type { Access, AppStudent, EditorData, StudentEnrollment, UpdateAppStudent } from "$lib/types/db/shared-types"
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 
-type UpdateManualStudentResponse = ApiRouteMap[`/api/students/${NoSlashString}`]["POST"]["res"]
-type UpdateManualStudentBody = ApiRouteMap[`/api/students/${NoSlashString}`]["POST"]["req"]
+type UpdateManualStudentResponse = ApiRouteMap[`/api/manualstudents/${NoSlashString}`]["POST"]["res"]
+type UpdateManualStudentBody = ApiRouteMap[`/api/manualstudents/${NoSlashString}`]["POST"]["req"]
 
 const updateManualStudent: ApiNextFunction<UpdateManualStudentResponse, UpdateManualStudentBody> = async ({ principal, body }) => {
   const updateManualStudentData: UpdateManualStudentBody = body

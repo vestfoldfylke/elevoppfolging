@@ -7,9 +7,10 @@
   import SuggestionSelect from "$lib/components/SchoolAdministration/SuggestionSelect.svelte"
   import { nameValidation, ssnValidation } from "$lib/data-validation/manual-student-validation"
   import { INVALID_FORM_MESSAGE } from "$lib/data-validation/validation-constants"
+  import type { HTTPError } from "$lib/server/middleware/http-error.js"
   import { authorizeManageManualStudentsOnSchool, authorizeSchoolLeaderForSchool } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
-  import type { EnrollmentWithinViewAccessWindow, NewManualAccessControl, SchoolAdministrationManualStudent } from "$lib/types/app-types"
+  import type { EnrollmentWithinViewAccessWindow, ManualStudentCreateOrReactivate, NewManualAccessControl, SchoolAdministrationManualStudent } from "$lib/types/app-types"
   import type {
     AllStudentsAtSchoolsManualAccessEntry,
     ClassManualAccessEntry,
@@ -19,6 +20,7 @@
     ProgramAreaManualAccessEntryInput,
     StudentManualAccessEntry
   } from "$lib/types/db/shared-types"
+  import { getDateDaysAhead, prettifyDate } from "$lib/utils/dates.js"
   import type { PageProps } from "./$types"
 
   let { data }: PageProps = $props()
@@ -482,6 +484,51 @@
       return { status: "error", message: "Navn må være fylt ut" }
     }
 
+    const canCreateOrReactivateManualStudent: ManualStudentCreateOrReactivate = await apiFetch(
+      `/api/manualstudents${`?ssn=${newManualStudentFnr}&schoolNumber=${currentSchool.schoolNumber}` as NoSlashString}`,
+      {
+        method: "GET"
+      }
+    )
+
+    if (!canCreateOrReactivateManualStudent.allowed) {
+      return {
+        status: "error",
+        message: `${canCreateOrReactivateManualStudent.message ?? ""} Ta kontakt med en voksen`
+      }
+    }
+
+    if (canCreateOrReactivateManualStudent.type === "REACTIVATE" || canCreateOrReactivateManualStudent.type === "ADD_MANUAL_ENROLLMENT") {
+      if (!canCreateOrReactivateManualStudent.student?._id) {
+        return {
+          status: "error",
+          message: "Hmm... Eleven mangler til tross for at vi fant den tidligere 🤔🤷‍♂️"
+        }
+      }
+
+      const confirmAction =
+        canCreateOrReactivateManualStudent.type === "REACTIVATE"
+          ? confirm(`${canCreateOrReactivateManualStudent.message} Er du helt sikker på at du vil reaktivere denne eleven ved å legge til et manuelt elevforhold for denne skolen?`)
+          : confirm(`${canCreateOrReactivateManualStudent.message} Er du helt sikker på at du vil du legge til et manuelt elevforhold for denne skolen?`)
+      if (!confirmAction) {
+        return { status: "cancelled" }
+      }
+
+      try {
+        await apiFetch(`/api/manualstudents/${canCreateOrReactivateManualStudent.student._id as NoSlashString}/enrollments`, {
+          method: "POST",
+          body: { schoolNumber: currentSchool.schoolNumber },
+          headers: {
+            "Content-Type": "application/json"
+          }
+        })
+
+        return { status: "success", reloadPageData: true, callBack: closeNewManualStudentForm }
+      } catch (error) {
+        return { status: "error", message: (error as HTTPError).message }
+      }
+    }
+
     const newManualStudentInput: NewManualStudentInput = {
       ssn: newManualStudentFnr,
       name: newManualStudentName,
@@ -489,15 +536,19 @@
       school: currentSchool
     }
 
-    await apiFetch(`/api/students`, {
-      method: "POST",
-      body: newManualStudentInput,
-      headers: {
-        "Content-Type": "application/json"
-      }
-    })
+    try {
+      await apiFetch(`/api/manualstudents${"" as NoSlashString}`, {
+        method: "POST",
+        body: newManualStudentInput,
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
 
-    return { status: "success", reloadPageData: true, callBack: closeNewManualStudentForm }
+      return { status: "success", reloadPageData: true, callBack: closeNewManualStudentForm }
+    } catch (error) {
+      return { status: "error", message: (error as HTTPError).message }
+    }
   }
 
   let canManageManualStudents = $derived.by(() => {
@@ -519,20 +570,20 @@
     newManualStudentHasBlockedAddress = false
   }
 
-  const removeManualStudentEnrollment = async (manualStudent: SchoolAdministrationManualStudent): Promise<AsyncButtonResult> => {
-    const dialog: boolean = window.confirm("Dette vil fjerne elevforholdet til denne skolen fra eleven. Er du helt sikker?")
+  const deactivateManualStudentEnrollment = async (manualStudent: SchoolAdministrationManualStudent): Promise<AsyncButtonResult> => {
+    const dialog: boolean = window.confirm("Dette vil deaktivere elevforholdet til denne skolen fra eleven. Er du helt sikker?")
     if (!dialog) {
       return { status: "cancelled" }
     }
 
     const enrollmentForCurrentSchool: EnrollmentWithinViewAccessWindow | undefined = manualStudent.manualEnrollments.find(
-      (enrollment: EnrollmentWithinViewAccessWindow) => enrollment.source === "MANUAL" && enrollment.school.schoolNumber === currentSchool.schoolNumber
+      (enrollment: EnrollmentWithinViewAccessWindow) => enrollment.source === "MANUAL" && enrollment.school.schoolNumber === currentSchool.schoolNumber && enrollment.period.active
     )
     if (!enrollmentForCurrentSchool) {
       return { status: "error", message: "Elevforhold for denne skolen ikke funnet" }
     }
 
-    await apiFetch(`/api/students/${manualStudent._id as NoSlashString}/enrollments/${enrollmentForCurrentSchool.systemId as NoSlashString}`, {
+    await apiFetch(`/api/manualstudents/${manualStudent._id as NoSlashString}/enrollments/${enrollmentForCurrentSchool.systemId as NoSlashString}`, {
       method: "DELETE"
     })
 
@@ -893,6 +944,7 @@
               </thead>
               <tbody>
               {#each data.manualSchoolStudents as manualStudent}
+                {@const manualStudentEnrollmentForSchool = manualStudent.manualEnrollments.find((enrollment: EnrollmentWithinViewAccessWindow) => enrollment.source === "MANUAL" && enrollment.school.schoolNumber === currentSchool.schoolNumber && enrollment.period.active) ?? manualStudent.manualEnrollments.find((enrollment: EnrollmentWithinViewAccessWindow) => enrollment.source === "MANUAL" && enrollment.school.schoolNumber === currentSchool.schoolNumber)}
                 <tr>
                   <td>
                     <a href={`/students/${manualStudent._id}`} class="ds-link" rel="noopener noreferrer">{manualStudent.name}</a>
@@ -905,10 +957,14 @@
                     {/if}
                   </td>
                   <td>
-                    <div class="manual-student-cell-actions">
-                      <a href={`${page.url.pathname}/manualstudents/${manualStudent._id}`} class="ds-button" data-variant="secondary" data-size="sm" rel="noopener noreferrer"><span class="material-symbols-outlined">edit</span>Rediger</a>
-                      <AsyncButton onClick={() => removeManualStudentEnrollment(manualStudent)} buttonText="Fjern manuelt elevforhold" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
-                    </div>
+                    {#if manualStudentEnrollmentForSchool?.period.active}
+                      <div class="manual-student-cell-actions">
+                        <a href={`${page.url.pathname}/manualstudents/${manualStudent._id}`} class="ds-button" data-variant="secondary" data-size="sm" rel="noopener noreferrer"><span class="material-symbols-outlined">edit</span>Rediger</a>
+                        <AsyncButton onClick={() => deactivateManualStudentEnrollment(manualStudent)} buttonText="Deaktiver manuelt elevforhold" iconName="cancel" variant="secondary" color="danger" dataSize="sm" />
+                      </div>
+                    {:else}
+                      <span>Manuelt elevforhold er satt til å deaktiveres. Det skjer ikke umiddelbart – deaktiveringen trer i kraft den {prettifyDate(getDateDaysAhead(page.data.APP_INFO.STUDENT_ACCESS_AFTER_EXPIRE_DAYS, manualStudentEnrollmentForSchool?.period.end ?? undefined))}.</span>
+                    {/if}
                   </td>
                 </tr>
               {/each}

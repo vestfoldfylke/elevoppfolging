@@ -13,7 +13,7 @@ import type { AppStudent, ClassMembership, ContactTeacherGroupMembership, Editor
 import type { ApiNextFunction } from "$lib/types/middleware/http-request"
 import { isActive } from "$lib/utils/period"
 
-type RemoveEnrollmentResponse = ApiRouteMap[`/api/students/${NoSlashString}/enrollments/${NoSlashString}`]["DELETE"]["res"]
+type RemoveEnrollmentResponse = ApiRouteMap[`/api/manualstudents/${NoSlashString}/enrollments/${NoSlashString}`]["DELETE"]["res"]
 
 const removeEnrollment: ApiNextFunction<RemoveEnrollmentResponse> = async ({ principal, requestEvent }) => {
   const studentId: string | undefined = requestEvent.params.student_id

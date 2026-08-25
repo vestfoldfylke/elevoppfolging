@@ -1,4 +1,4 @@
-import type { FrontendOverviewStudentResponse } from "../app-types"
+import type { FrontendOverviewStudentResponse, ManualStudentCreateOrReactivate } from "../app-types"
 import type {
   AuditEntryInput,
   AuditSearchQueryResult,
@@ -45,36 +45,34 @@ type ApiStudentsIdConsent = {
   PATCH: { req: StudentDataSharingConsentInput; res: { consentId: string } }
 }
 
-type ApiStudentAddManualStudent = {
-  POST: { req: NewManualStudentInput; res: { studentId: string } }
-}
-
 export type NoSlashString = string & { __noSlash?: true }
 
 /**
  * Define a mapping of API routes to their expected request and response types. This will be used to provide type safety for api routes and the apiFetch function, ensuring that the correct request body is provided for each route and that the response is correctly typed.
  */
 export interface ApiRouteMap {
+  // TEMPLATES
   "/api/templates": {
     POST: { req: DocumentContentTemplate; res: { templateId: string } }
   }
+
   [key: `/api/templates/${NoSlashString}`]: ApiTemplatesId
 
+  // SCHOOLS
   [key: `/api/schools/${NoSlashString}`]: ApiSchoolsId
+
   "/api/schools": {
     POST: { req: NewSchool; res: { schoolId: string } }
   }
 
+  // ACCESS
   [key: `/api/access/${NoSlashString}/add`]: ApiAccessEntraUserIdAdd
 
   [key: `/api/access/${NoSlashString}/remove`]: ApiAccessEntraUserIdRemove
 
+  // STUDENTS
   [key: `/api/students${NoSlashString}`]: {
     GET: { res: FrontendOverviewStudentResponse }
-  }
-
-  [key: `/api/students/${NoSlashString}`]: {
-    POST: { req: UpdateManualStudentInput; res: { studentId: string } }
   }
 
   [key: `/api/students/${NoSlashString}/consent`]: ApiStudentsIdConsent
@@ -98,12 +96,25 @@ export interface ApiRouteMap {
     PATCH: { req: DocumentMessageInput; res: { updatedMessageId: string } }
   }
 
-  [key: `/api/students/${NoSlashString}/enrollments/${NoSlashString}`]: {
+  // MANUAL STUDENTS
+  [key: `/api/manualstudents${NoSlashString}`]: {
+    GET: { res: ManualStudentCreateOrReactivate }
+    POST: { req: NewManualStudentInput; res: { studentId: string } }
+  }
+
+  [key: `/api/manualstudents/${NoSlashString}`]: {
+    POST: { req: UpdateManualStudentInput; res: { studentId: string } }
+  }
+
+  [key: `/api/manualstudents/${NoSlashString}/enrollments`]: {
+    POST: { req: { schoolNumber: string }; res: { studentId: string } }
+  }
+
+  [key: `/api/manualstudents/${NoSlashString}/enrollments/${NoSlashString}`]: {
     DELETE: { res: { enrollmentId: string } }
   }
 
-  "/api/students": ApiStudentAddManualStudent
-
+  // STUDENT CHECKBOXES
   "/api/studentcheckboxes": {
     POST: { req: StudentCheckBoxInput; res: { checkBoxId: string } }
   }
@@ -113,6 +124,7 @@ export interface ApiRouteMap {
     PATCH: { req: StudentCheckBoxInput; res: { updatedCheckBoxId: string } }
   }
 
+  // PROGRAM AREAS
   "/api/programareas": {
     POST: { req: ProgramAreaInput; res: { programAreaId: string } }
   }
@@ -122,10 +134,12 @@ export interface ApiRouteMap {
     PATCH: { req: ProgramAreaInput; res: { updatedProgramAreaId: string } }
   }
 
+  // METRICS
   "/api/metrics": {
     POST: { req: MetricCount; res: { incremented: boolean } }
   }
 
+  // AUDIT
   "/api/audit/insert": {
     POST: { req: { auditEntry: AuditEntryInput; errorMessage: string; errorMessageObject: string }; res: { inserted: boolean } }
   }
@@ -134,6 +148,7 @@ export interface ApiRouteMap {
     POST: { req: AuditSearchTerms; res: AuditSearchQueryResult }
   }
 
+  // CLASSES
   [key: `/api/classes/${NoSlashString}/documents`]: {
     POST: { req: DocumentInput; res: { documentId: string } }
   }

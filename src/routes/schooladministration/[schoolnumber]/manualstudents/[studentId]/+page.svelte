@@ -57,7 +57,7 @@
       studentId: data.manualStudent._id
     }
 
-    await apiFetch(`/api/students/${data.manualStudent._id as NoSlashString}`, {
+    await apiFetch(`/api/manualstudents/${data.manualStudent._id as NoSlashString}`, {
       method: "POST",
       body: updateManualStudentInput,
       headers: {
