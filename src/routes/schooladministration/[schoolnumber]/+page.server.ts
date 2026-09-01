@@ -39,6 +39,8 @@ const getSchoolAccessAdministrationData: ServerLoadNextFunction<SchoolAccessAdmi
 
   const students: PrincipalAccessStudent[] = await getStudentsFromCache(principalAccess, { schoolNumbers: [schoolNumber] })
 
+  const hasManageManualStudentsForSchool = principalAccess.manageManualStudentsForSchools.some((accessEntry) => accessEntry.schoolNumber === schoolNumber)
+
   const schoolStudentsAvailableForAccessControl: PrincipalAccessStudent[] = students.filter((student) =>
     student.principalAccessForStudent.some((access) => access.type === "MANUELL-SKOLELEDER-TILGANG" && access.schoolNumber === schoolNumber)
   )
@@ -64,8 +66,7 @@ const getSchoolAccessAdministrationData: ServerLoadNextFunction<SchoolAccessAdmi
     .filter(
       (student) =>
         student.enrollmentsWithinViewAccessWindow.some((enrollment: EnrollmentWithinViewAccessWindow) => enrollment.source === "MANUAL" && enrollment.school.schoolNumber === schoolNumber) &&
-        (student.principalAccessForStudent.some((access) => access.type === "MANUELL-SKOLELEDER-TILGANG" && access.schoolNumber === schoolNumber) ||
-          student.principalAccessForStudent.some((access) => access.type === "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG" && access.schoolNumber === schoolNumber))
+        (hasManageManualStudentsForSchool || student.principalAccessForStudent.some((access) => access.type === "MANUELL-SKOLELEDER-TILGANG" && access.schoolNumber === schoolNumber))
     )
     .map((student) => ({
       _id: student._id,

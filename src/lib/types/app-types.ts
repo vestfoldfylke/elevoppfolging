@@ -85,8 +85,18 @@ export type PrincipalAccess = Omit<Access, "programAreas"> & {
   programAreas: ProgramAreaPrincipalAccess[]
 }
 
+export type StudentAccessType =
+  | SchoolLeaderManualAccessEntry["type"]
+  | StudentManualAccessEntry["type"]
+  | AllStudentsAtSchoolsManualAccessEntry["type"]
+  | ProgramAreaManualAccessEntry["type"]
+  | ClassManualAccessEntry["type"]
+  | ClassAutoAccessEntry["type"]
+  | ContactTeacherGroupAutoAccessEntry["type"]
+  | TeachingGroupAutoAccessEntry["type"]
+
 export type PrincipalAccessForStudent = {
-  type: AccessEntry["type"]
+  type: StudentAccessType
   schoolNumber: string
   accessThroughResource: {
     id: string

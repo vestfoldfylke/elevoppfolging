@@ -6,7 +6,7 @@ export const getClassesFromStudents = (students: PrincipalAccessStudent[]): Stud
 
   for (const student of students) {
     const enrollmentsToCheck = student.enrollmentsWithinViewAccessWindow.filter((enrollment) =>
-      student.principalAccessForStudent.some((access) => access.schoolNumber === enrollment.school.schoolNumber && access.type !== "MANUELL-OPPRETT-MANUELL-ELEV-TILGANG")
+      student.principalAccessForStudent.some((access) => access.schoolNumber === enrollment.school.schoolNumber)
     )
 
     for (const enrollment of enrollmentsToCheck) {
