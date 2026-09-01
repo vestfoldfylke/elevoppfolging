@@ -3,52 +3,18 @@
   import NewDocument from "$lib/components/Document/NewDocument.svelte"
   import ImportantGroupStuff from "$lib/components/ImportantGroupStuff.svelte"
   import PrincipalAccessTag from "$lib/components/PrincipalAccessTag.svelte"
-  import { authorizeDeleteGroupDocument, authorizeEditGroupDocument } from "$lib/shared-authorization/authorization"
-  import type { PrincipalAccess, PrincipalAccessStudent, ProgramAreaPrincipalAccess, TemplateInfo } from "$lib/types/app-types"
-  import type { ClassAutoAccessEntry, ClassManualAccessEntry, GroupDocument, GroupImportantStuff, SchoolLeaderManualAccessEntry } from "$lib/types/db/shared-types"
+  import { authorizeDeleteGroupDocument, authorizeEditGroupDocument, authorizeEditGroupImportantStuff } from "$lib/shared-authorization/authorization"
+  import type { PrincipalAccessStudent, TemplateInfo } from "$lib/types/app-types"
+  import type { GroupDocument, GroupImportantStuff } from "$lib/types/db/shared-types"
   import { ACCESS_TYPE_DISPLAY_NAMES } from "$lib/utils/access-constants"
   import type { PageProps } from "./$types"
 
   type ClassSummaryDetails = { groupImportantInfo: GroupImportantStuff | null } | undefined
 
-  type ClassAccess = {
-    classEntries: (ClassAutoAccessEntry | ClassManualAccessEntry)[]
-    programAreas: ProgramAreaPrincipalAccess[]
-    schools: SchoolLeaderManualAccessEntry[]
-  }
-
   let { data }: PageProps = $props()
 
   let sortBy = $state<"name">("name")
   let sortDirection = $state<"ascending" | "descending">("ascending")
-
-  let principalAccess: PrincipalAccess = $derived.by(() => {
-    if (!data.principalAccess) {
-      throw new Error("No access found for principal")
-    }
-
-    if (data.principalAccess.programAreas.length === 0 && data.principalAccess.classes.length === 0 && data.principalAccess.leaderForSchools.length === 0) {
-      throw new Error("No program areas, classes or leaderships found on this principal access")
-    }
-
-    return data.principalAccess
-  })
-
-  let classAccess: ClassAccess = $derived.by(() => {
-    const programAreas = principalAccess.programAreas.filter((programArea) => programArea.classSystemIds.includes(data.classGroup.systemId))
-    const classEntries = principalAccess.classes.filter((classEntry) => classEntry.systemId === data.classGroup.systemId)
-    const schools = principalAccess.leaderForSchools.filter((leaderForSchool) => leaderForSchool.schoolNumber === data.classGroup.school.schoolNumber)
-
-    if (programAreas.length === 0 && classEntries.length === 0 && schools.length === 0) {
-      throw new Error("No access to this class found for principal")
-    }
-
-    return {
-      classEntries,
-      programAreas,
-      schools
-    }
-  })
 
   let sortedStudents = $derived.by(() => {
     return data.classStudents.sort((a: PrincipalAccessStudent, b: PrincipalAccessStudent) => {
@@ -127,27 +93,37 @@
 
   <p class="ds-paragraph" data-size="sm" style="margin-top: var(--ds-size-2);">Din tilgang til klassen</p>
   <div class="access-info">
-    {#if classAccess.classEntries.length > 0}
-      {#each classAccess.classEntries as classEntry}
+    {#if data.classGroup.principalAccessForStudentClassGroup.classEntries.length > 0}
+      {#each data.classGroup.principalAccessForStudentClassGroup.classEntries as classEntry}
         <PrincipalAccessTag source={classEntry.source} name={ACCESS_TYPE_DISPLAY_NAMES[classEntry.type]} />
       {/each}
     {/if}
 
-    {#if classAccess.programAreas.length > 0}
-      {#each classAccess.programAreas as programArea}
+    {#if data.classGroup.principalAccessForStudentClassGroup.programAreas.length > 0}
+      {#each data.classGroup.principalAccessForStudentClassGroup.programAreas as programArea}
         <PrincipalAccessTag source={programArea.source} name={`${ACCESS_TYPE_DISPLAY_NAMES[programArea.type]} via ${programArea.name}`} />
       {/each}
     {/if}
 
-    {#if classAccess.schools.length > 0}
-      {#each classAccess.schools as school}
-        <PrincipalAccessTag source={school.source} name={`${ACCESS_TYPE_DISPLAY_NAMES[school.type]} for ${data.classGroup.school.name}`} />
+    {#if data.classGroup.principalAccessForStudentClassGroup.schools.length > 0}
+      {#each data.classGroup.principalAccessForStudentClassGroup.schools as school}
+        <PrincipalAccessTag source={school.source} name={`${ACCESS_TYPE_DISPLAY_NAMES[school.type]} ved ${data.classGroup.school.name}`} />
       {/each}
+    {/if}
+
+    {#if data.classGroup.principalAccessForStudentClassGroup.allStudentsAtSchoolEntries.length > 0}
+      {#each data.classGroup.principalAccessForStudentClassGroup.allStudentsAtSchoolEntries as allStudentsAtSchool}
+        <PrincipalAccessTag source={allStudentsAtSchool.source} name={`${ACCESS_TYPE_DISPLAY_NAMES[allStudentsAtSchool.type]} ved ${data.classGroup.school.name}`} />
+      {/each}
+    {/if}
+
+    {#if data.classGroup.principalAccessForStudentClassGroup.onlyAccessViaStudentAccess}
+      <PrincipalAccessTag source={"AUTO"} name={`Tilgang til en eller flere elever i klassen ved ${data.classGroup.school.name}`} />
     {/if}
   </div>
 
   <div class="class-details">
-    <ImportantGroupStuff groupImportantStuff={classSummaryDetails?.groupImportantInfo || null} school={data.classGroup.school} group={data.classGroup} />
+    <ImportantGroupStuff canEdit={authorizeEditGroupImportantStuff({ studentClassGroupAccess: data.classGroup.principalAccessForStudentClassGroup }).authorized} groupImportantStuff={classSummaryDetails?.groupImportantInfo || null} school={data.classGroup.school} group={data.classGroup} />
   </div>
 
   <div class="ds-card teacher-details" data-variant="tinted" data-color="brand3">
@@ -172,7 +148,9 @@
 
   <div class="ds-card class-students-container" data-variant="tinted" data-color="brand1">
     <details class="ds-details">
-      <summary>Elever</summary>
+      <summary>
+        <p>{data.classGroup.principalAccessForStudentClassGroup.onlyAccessViaStudentAccess ? "Elever du har tilgang til i denne klassen" : "Elever"}</p>
+      </summary>
       <div>
         <ul>
           {#each sortedStudents as classStudent}
@@ -233,7 +211,7 @@
         {/each}
       </div>
       {#each filteredDocuments as document (document._id)}
-        <DocumentComponent {document} accessSchools={[data.classGroup.school]} canEditDocument={authorizeEditGroupDocument({ authenticatedPrincipal: data.authenticatedPrincipal, document }).authorized} canRemoveDocument={authorizeDeleteGroupDocument({ principalAccess: data.principalAccess, document }).authorized} groupName={data.classGroup.name} principalClasses={data.principalClassGroups} />
+        <DocumentComponent {document} accessSchools={[data.classGroup.school]} canEditDocument={authorizeEditGroupDocument({ authenticatedPrincipal: data.authenticatedPrincipal, document }).authorized} canRemoveDocument={authorizeDeleteGroupDocument({ principalAccess: data.principalAccess, document }).authorized} groupName={data.classGroup.name} principalClasses={data.principalAccessStudentClassGroups} />
       {/each}
     {/if}
   </div>

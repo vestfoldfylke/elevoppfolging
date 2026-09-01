@@ -3,15 +3,15 @@ import { getStudentsFromCache } from "$lib/server/cache/students-cache"
 import { getDbClient } from "$lib/server/db/get-db-client"
 import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
-import type { PrincipalAccessStudent } from "$lib/types/app-types"
+import type { PrincipalAccessStudent, PrincipalAccessStudentClassGroup } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { DocumentContentTemplate, GroupDocument, GroupImportantStuff, StudentClassGroup } from "$lib/types/db/shared-types"
+import type { DocumentContentTemplate, GroupDocument, GroupImportantStuff } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
 import type { PageServerLoad } from "./$types"
 
 type ClassPageData = {
-  classGroup: StudentClassGroup
-  principalClassGroups: StudentClassGroup[]
+  classGroup: PrincipalAccessStudentClassGroup
+  principalAccessStudentClassGroups: PrincipalAccessStudentClassGroup[]
   classStudents: PrincipalAccessStudent[]
   groupImportantStuff: GroupImportantStuff[]
   documents: GroupDocument[]
@@ -24,7 +24,7 @@ const getClassGroup: ServerLoadNextFunction<ClassPageData> = async ({ principal,
     throw new HTTPError(400, "System ID is missing in request parameters")
   }
 
-  const { principalAccess, classes: principalClasses, classGroup } = await resolveClassContext(principal, systemId)
+  const { principalAccess, classes: principalAccessStudentClassGroups, classGroup } = await resolveClassContext(principal, systemId)
 
   const classStudents = await getStudentsFromCache(principalAccess, { classSystemIds: [systemId] })
 
@@ -39,7 +39,7 @@ const getClassGroup: ServerLoadNextFunction<ClassPageData> = async ({ principal,
   return {
     classGroup,
     classStudents,
-    principalClassGroups: principalClasses,
+    principalAccessStudentClassGroups,
     groupImportantStuff,
     documents: groupDocuments,
     documentContentTemplates: documentContentTemplates.sort((a, b) => a.sort - b.sort)

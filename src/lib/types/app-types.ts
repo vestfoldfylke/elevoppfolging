@@ -19,6 +19,7 @@ import type {
   SchoolLeaderManualAccessEntry,
   Source,
   StudentCheckBox,
+  StudentClassGroup,
   StudentDocument,
   StudentImportantStuff,
   StudentManualAccessEntry,
@@ -240,4 +241,16 @@ export type ManualStudentCreateOrReactivate = {
   type: "CREATE" | "REACTIVATE" | "ADD_MANUAL_ENROLLMENT"
   allowed: boolean
   message?: string
+}
+
+export type StudentClassGroupAccess = {
+  classEntries: (ClassAutoAccessEntry | ClassManualAccessEntry)[]
+  programAreas: ProgramAreaPrincipalAccess[]
+  schools: SchoolLeaderManualAccessEntry[]
+  allStudentsAtSchoolEntries: AllStudentsAtSchoolsManualAccessEntry[]
+  onlyAccessViaStudentAccess: boolean
+}
+
+export type PrincipalAccessStudentClassGroup = StudentClassGroup & {
+  principalAccessForStudentClassGroup: StudentClassGroupAccess
 }

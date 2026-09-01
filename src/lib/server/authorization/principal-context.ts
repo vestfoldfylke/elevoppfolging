@@ -1,9 +1,8 @@
 import { getStudentFromCache, getStudentsFromCache } from "$lib/server/cache/students-cache"
 import { HTTPError } from "$lib/server/middleware/http-error"
-import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent, PrincipalAccessStudent } from "$lib/types/app-types"
+import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent, PrincipalAccessStudent, PrincipalAccessStudentClassGroup } from "$lib/types/app-types"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
-import type { StudentClassGroup } from "$lib/types/db/shared-types"
-import { getAccessibleClassesFromStudents } from "$lib/utils/classes-from-students"
+import { getPrincipalAccessClassesFromStudents } from "$lib/utils/classes-from-students"
 import { getPrincipalAccess } from "./principal-access"
 import { getPrincipalAccessForStudent } from "./student-access"
 
@@ -40,8 +39,8 @@ export async function resolveStudentContext(principal: AuthenticatedPrincipal, s
 type ClassContext = {
   principalAccess: PrincipalAccess
   students: PrincipalAccessStudent[]
-  classes: StudentClassGroup[]
-  classGroup: StudentClassGroup
+  classes: PrincipalAccessStudentClassGroup[]
+  classGroup: PrincipalAccessStudentClassGroup
 }
 
 export async function resolveClassContext(principal: AuthenticatedPrincipal, systemId: string): Promise<ClassContext> {
@@ -52,7 +51,7 @@ export async function resolveClassContext(principal: AuthenticatedPrincipal, sys
     throw new HTTPError(404, "Ingen tilgang til klassen")
   }
 
-  const classes = getAccessibleClassesFromStudents(principalAccess, students)
+  const classes = getPrincipalAccessClassesFromStudents(principalAccess, students)
   if (classes.length === 0) {
     throw new HTTPError(404, "Ingen tilgang til klassen")
   }

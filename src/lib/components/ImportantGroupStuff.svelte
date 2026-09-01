@@ -8,12 +8,13 @@
   import EditorInfo from "./EditorInfo.svelte"
 
   type GroupImportantStuffProps = {
+    canEdit: boolean
     group: ClassGroup
     groupImportantStuff: GroupImportantStuff | null
     school: SchoolInfo
   }
 
-  let { group, groupImportantStuff, school }: GroupImportantStuffProps = $props()
+  let { canEdit, group, groupImportantStuff, school }: GroupImportantStuffProps = $props()
 
   let editMode = $state(false)
   let groupImportantStuffForm: HTMLFormElement | undefined = $state()
@@ -60,7 +61,7 @@
       <h2 class="ds-heading">Viktig informasjon</h2>
     </div>
     <div class="card-header-actions">
-      {#if !editMode}
+      {#if canEdit && !editMode}
         <button class="ds-button" data-variant="secondary" data-size="sm" type="button" onclick={() => editMode = true}><span class="material-symbols-outlined">edit</span>Rediger</button>
       {/if}
     </div>
