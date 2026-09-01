@@ -5,13 +5,13 @@ import { HTTPError } from "$lib/server/middleware/http-error"
 import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request"
 import type { PrincipalAccessStudent, PrincipalAccessStudentClassGroup } from "$lib/types/app-types"
 import type { IDbClient } from "$lib/types/db/db-client"
-import type { DocumentContentTemplate, GroupDocument, GroupImportantStuff } from "$lib/types/db/shared-types"
+import type { DocumentContentTemplate, GroupDocument, GroupImportantStuff, StudentClassGroup } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
 import type { PageServerLoad } from "./$types"
 
 type ClassPageData = {
   classGroup: PrincipalAccessStudentClassGroup
-  principalAccessStudentClassGroups: PrincipalAccessStudentClassGroup[]
+  principalAccessStudentClassGroups: StudentClassGroup[]
   classStudents: PrincipalAccessStudent[]
   groupImportantStuff: GroupImportantStuff[]
   documents: GroupDocument[]

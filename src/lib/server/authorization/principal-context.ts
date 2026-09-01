@@ -2,7 +2,8 @@ import { getStudentFromCache, getStudentsFromCache } from "$lib/server/cache/stu
 import { HTTPError } from "$lib/server/middleware/http-error"
 import type { CachedFrontendStudent, PrincipalAccess, PrincipalAccessForStudent, PrincipalAccessStudent, PrincipalAccessStudentClassGroup } from "$lib/types/app-types"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
-import { getPrincipalAccessClassesFromStudents } from "$lib/utils/classes-from-students"
+import type { StudentClassGroup } from "$lib/types/db/shared-types"
+import { getClassesFromStudents, getPrincipalAccessForClass } from "$lib/utils/classes-from-students"
 import { getPrincipalAccess } from "./principal-access"
 import { getPrincipalAccessForStudent } from "./student-access"
 
@@ -39,7 +40,7 @@ export async function resolveStudentContext(principal: AuthenticatedPrincipal, s
 type ClassContext = {
   principalAccess: PrincipalAccess
   students: PrincipalAccessStudent[]
-  classes: PrincipalAccessStudentClassGroup[]
+  classes: StudentClassGroup[]
   classGroup: PrincipalAccessStudentClassGroup
 }
 
@@ -51,14 +52,15 @@ export async function resolveClassContext(principal: AuthenticatedPrincipal, sys
     throw new HTTPError(404, "Ingen tilgang til klassen")
   }
 
-  const classes = getPrincipalAccessClassesFromStudents(principalAccess, students)
-  if (classes.length === 0) {
+  const classes = getClassesFromStudents(students)
+  const resolvedClass = classes.find((classEntry) => classEntry.systemId === systemId)
+  if (!resolvedClass) {
     throw new HTTPError(404, "Ingen tilgang til klassen")
   }
 
-  const classGroup = classes.find((classEntry) => classEntry.systemId === systemId)
-  if (!classGroup) {
-    throw new HTTPError(404, "Ingen tilgang til klassen")
+  const classGroup: PrincipalAccessStudentClassGroup = {
+    ...resolvedClass,
+    principalAccessForStudentClassGroup: getPrincipalAccessForClass(principalAccess, resolvedClass)
   }
 
   return { principalAccess, students, classes, classGroup }
