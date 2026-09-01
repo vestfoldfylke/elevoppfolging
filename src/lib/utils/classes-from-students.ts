@@ -70,17 +70,9 @@ export const getPrincipalAccessClassesFromStudents = (principalAccess: Principal
         currentClassGroup.principalAccessForStudentClassGroup.classEntries = principalAccess.classes.filter(classGroup => classGroup.systemId === currentClassGroup.systemId)
 
         currentClassGroup.principalAccessForStudentClassGroup.programAreas = principalAccess.programAreas.filter(programArea => programArea.classSystemIds.includes(currentClassGroup.systemId))
-        
-        // Check if any of the arrays has items, if so - there exists a "full class" access through one of the types above
-        Object.values(currentClassGroup.principalAccessForStudentClassGroup).forEach((value) => {
-          if (!Array.isArray(value)) {
-            return
-          }
 
-          if (value.length > 0) {
-            currentClassGroup.principalAccessForStudentClassGroup.onlyAccessViaStudentAccess = false
-          }
-        })
+        const { schools, allStudentsAtSchoolEntries, classEntries, programAreas } = currentClassGroup.principalAccessForStudentClassGroup
+        currentClassGroup.principalAccessForStudentClassGroup.onlyAccessViaStudentAccess = schools.length === 0 && allStudentsAtSchoolEntries.length === 0 && classEntries.length === 0 && programAreas.length === 0
       })
     }
   }
