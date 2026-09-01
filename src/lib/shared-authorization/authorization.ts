@@ -1,4 +1,4 @@
-import type { ApplicationInfo, StudentClassGroupAccess, PrincipalAccess, PrincipalAccessForStudent } from "$lib/types/app-types"
+import type { ApplicationInfo, PrincipalAccess, PrincipalAccessForStudent, StudentClassGroupAccess } from "$lib/types/app-types"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
 import type { Access, DocumentInput, DocumentMessage, GroupDocument, SchoolLeaderManualAccessEntry, StudentClassGroup, StudentDataSharingConsent, StudentDocument } from "$lib/types/db/shared-types"
 import { SUBJECT_TEACHER_ACCESS_TYPES } from "$lib/utils/access-constants"
