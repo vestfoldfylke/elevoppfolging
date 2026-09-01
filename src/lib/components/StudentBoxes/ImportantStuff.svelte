@@ -85,7 +85,7 @@
         {#if editMode}
           <ds-field class="ds-field">
             <div data-field="description">
-              Skriv inn informasjon som eleven har godtatt at deles
+              Skriv inn informasjon som eleven har godtatt at deles. Teksten skrives inn av kontaktlærer, rådgiver eller leder.
             </div>
             <textarea rows="5" bind:value={editableImportantStuff.draft.importantInfo} class="ds-input"></textarea>
           </ds-field>
