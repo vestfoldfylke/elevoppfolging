@@ -4,7 +4,7 @@ import { serverLoadRequestMiddleware } from "$lib/server/middleware/http-request
 import type { PrincipalAccess, PrincipalAccessStudent } from "$lib/types/app-types"
 import type { StudentClassGroup } from "$lib/types/db/shared-types"
 import type { ServerLoadNextFunction } from "$lib/types/middleware/http-request"
-import { getAccessibleClassesFromStudents } from "$lib/utils/classes-from-students"
+import { getClassesFromStudents } from "$lib/utils/classes-from-students"
 import type { PageServerLoad } from "./$types"
 
 type ClassesPageData = {
@@ -21,7 +21,7 @@ const getClassGroups: ServerLoadNextFunction<ClassesPageData> = async ({ princip
 
   const principalStudents: PrincipalAccessStudent[] = await getStudentsFromCache(principalAccess)
 
-  const principalClasses: StudentClassGroup[] = getAccessibleClassesFromStudents(principalAccess, principalStudents)
+  const principalClasses: StudentClassGroup[] = getClassesFromStudents(principalStudents)
 
   return {
     principalClasses

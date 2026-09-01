@@ -1,4 +1,4 @@
-import type { ApplicationInfo, PrincipalAccess, PrincipalAccessForStudent } from "$lib/types/app-types"
+import type { ApplicationInfo, PrincipalAccess, PrincipalAccessForStudent, StudentClassGroupAccess } from "$lib/types/app-types"
 import type { AuthenticatedPrincipal } from "$lib/types/authentication"
 import type { Access, DocumentInput, DocumentMessage, GroupDocument, SchoolLeaderManualAccessEntry, StudentClassGroup, StudentDataSharingConsent, StudentDocument } from "$lib/types/db/shared-types"
 import { SUBJECT_TEACHER_ACCESS_TYPES } from "$lib/utils/access-constants"
@@ -418,6 +418,23 @@ export function authorizeEditStudentImportantStuff({ importantStuffSchoolNumber,
     return {
       authorized: false,
       message: "Ingen tilgang til å redigere viktig informasjon for eleven på denne skolen"
+    }
+  }
+
+  return {
+    authorized: true
+  }
+}
+
+export type AuthorizeEditGroupImportantStuffInput = {
+  studentClassGroupAccess: StudentClassGroupAccess
+}
+
+export function authorizeEditGroupImportantStuff({ studentClassGroupAccess }: AuthorizeEditGroupImportantStuffInput): AuthorizationResult {
+  if (studentClassGroupAccess.onlyAccessViaStudentAccess) {
+    return {
+      authorized: false,
+      message: "Ingen tilgang til å redigere viktig informasjon for denne klassen"
     }
   }
 

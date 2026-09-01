@@ -19,6 +19,7 @@ import type {
   SchoolLeaderManualAccessEntry,
   Source,
   StudentCheckBox,
+  StudentClassGroup,
   StudentDocument,
   StudentImportantStuff,
   StudentManualAccessEntry,
@@ -84,8 +85,18 @@ export type PrincipalAccess = Omit<Access, "programAreas"> & {
   programAreas: ProgramAreaPrincipalAccess[]
 }
 
+export type StudentAccessType =
+  | SchoolLeaderManualAccessEntry["type"]
+  | StudentManualAccessEntry["type"]
+  | AllStudentsAtSchoolsManualAccessEntry["type"]
+  | ProgramAreaManualAccessEntry["type"]
+  | ClassManualAccessEntry["type"]
+  | ClassAutoAccessEntry["type"]
+  | ContactTeacherGroupAutoAccessEntry["type"]
+  | TeachingGroupAutoAccessEntry["type"]
+
 export type PrincipalAccessForStudent = {
-  type: AccessEntry["type"]
+  type: StudentAccessType
   schoolNumber: string
   accessThroughResource: {
     id: string
@@ -240,4 +251,16 @@ export type ManualStudentCreateOrReactivate = {
   type: "CREATE" | "REACTIVATE" | "ADD_MANUAL_ENROLLMENT"
   allowed: boolean
   message?: string
+}
+
+export type StudentClassGroupAccess = {
+  classEntries: (ClassAutoAccessEntry | ClassManualAccessEntry)[]
+  programAreas: ProgramAreaPrincipalAccess[]
+  schools: SchoolLeaderManualAccessEntry[]
+  allStudentsAtSchoolEntries: AllStudentsAtSchoolsManualAccessEntry[]
+  onlyAccessViaStudentAccess: boolean
+}
+
+export type PrincipalAccessStudentClassGroup = StudentClassGroup & {
+  principalAccessForStudentClassGroup: StudentClassGroupAccess
 }
