@@ -135,9 +135,13 @@
     return uniqueAccessSchools
   })
 
+  let viewableDocuments: FrontendStudentDocument[] = $derived.by(() => {
+    return data.documents.filter((doc) => !doc.isDocumentHidden)
+  })
+
   let documentTypes: TemplateInfo[] = $derived.by(() => {
     const templates: Map<string, string> = new Map()
-    data.documents.forEach((document: FrontendStudentDocument) => {
+    viewableDocuments.forEach((document: FrontendStudentDocument) => {
       if (templates.has(document.template._id)) {
         return
       }
@@ -152,12 +156,16 @@
 
   let selectedDocumentTypes: string[] = $state([])
 
+  let hiddenDocumentsCount: number = $derived.by(() => {
+    return data.documents.filter((doc) => doc.isDocumentHidden).length
+  })
+
   let filteredDocuments: FrontendStudentDocument[] = $derived.by(() => {
     if (selectedDocumentTypes.length === 0) {
-      return data.documents
+      return viewableDocuments
     }
 
-    return data.documents.filter((document: FrontendStudentDocument) => selectedDocumentTypes.includes(document.template._id))
+    return viewableDocuments.filter((document: FrontendStudentDocument) => selectedDocumentTypes.includes(document.template._id))
   })
 
   const removeDocumentsFilter = (templateId: string): void => {
@@ -390,7 +398,25 @@
       </div>
     </div>
 
-    {#if data.documents.length === 0}
+    {#if hiddenDocumentsCount > 0}
+      <p class="ds-paragraph">
+        <button data-popover="inline" popoverTarget="stupid-bvd-message">{hiddenDocumentsCount} notat{hiddenDocumentsCount === 1 ? "" : "er"}</button>
+        er ikke tilgjengelig for deg.
+      </p>
+      <div
+        class="ds-popover"
+        id="stupid-bvd-message"
+        popover="auto"
+        data-placement="top"
+        data-color="neutral"
+      >
+        <p class="ds-paragraph">
+          Disse notatene er tilgangsbegrenset og vises derfor ikke her. Dette kan gjøre at «Siste aktivitet» ikke gjenspeiler all aktivitet.
+        </p>
+      </div>
+    {/if}
+
+    {#if viewableDocuments.length === 0}
       <p>Ingen notater her</p>
     {:else}
       <div class="documents-filter">
