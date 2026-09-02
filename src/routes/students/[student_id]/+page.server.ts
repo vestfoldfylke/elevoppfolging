@@ -86,8 +86,8 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 
   const viewableStudentDocuments: FrontendStudentDocument[] = allStudentDocuments
     .sort((a, b) => {
-      const aDate = a.messages.length > 0 ? Math.max(...a.messages.map((m) => m.modified.at.getTime())) : a.modified.at.getTime()
-      const bDate = b.messages.length > 0 ? Math.max(...b.messages.map((m) => m.modified.at.getTime())) : b.modified.at.getTime()
+      const aDate = a.messages.length > 0 ? Math.max(...a.messages.map((m) => m.created.at.getTime())) : a.created.at.getTime()
+      const bDate = b.messages.length > 0 ? Math.max(...b.messages.map((m) => m.created.at.getTime())) : b.created.at.getTime()
       return bDate - aDate
     })
     .map((document) => {
