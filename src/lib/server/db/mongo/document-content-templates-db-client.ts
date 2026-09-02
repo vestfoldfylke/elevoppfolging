@@ -1,8 +1,16 @@
 import { type Collection, type Db, ObjectId, type WithId } from "mongodb"
 import type { IDocumentContentTemplatesDbClient } from "$lib/types/db/db-client"
 import type { AvailableForDocumentType, DocumentContentTemplate, MetricCount, MetricLabel, NewDocumentContentTemplate } from "$lib/types/db/shared-types"
-import { metricsDocumentTemplateIdLabelName, metricsDocumentTemplateInfoDescription, metricsDocumentTemplateInfoName, metricsDocumentTemplateNameLabelName } from "$lib/utils/metric-constants.js"
-import { createInfoGauges, incrementCount, metricResultFailure, metricResultName, metricResultSuccessful, removeInfoGauge } from "../../metrics/handle-metrics"
+import {
+  metricsDocumentTemplateIdLabelName,
+  metricsDocumentTemplateInfoDescription,
+  metricsDocumentTemplateInfoName,
+  metricsDocumentTemplateNameLabelName,
+  metricsResultFailure,
+  metricsResultName,
+  metricsResultSuccessful
+} from "$lib/utils/metric-constants.js"
+import { createInfoGauges, incrementCount, removeInfoGauge } from "../../metrics/handle-metrics"
 
 export class DocumentContentTemplatesDbClient implements IDocumentContentTemplatesDbClient {
   private documentContentTemplatesCollection: Collection<NewDocumentContentTemplate>
@@ -63,7 +71,7 @@ export class DocumentContentTemplatesDbClient implements IDocumentContentTemplat
     if (!result.insertedId) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error("Failed to create document template")
@@ -83,7 +91,7 @@ export class DocumentContentTemplatesDbClient implements IDocumentContentTemplat
 
     incrementCount({
       ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricsResultName, metricsResultSuccessful]]
     })
 
     return result.insertedId.toString()
@@ -114,7 +122,7 @@ export class DocumentContentTemplatesDbClient implements IDocumentContentTemplat
     if (result.modifiedCount === 0) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error("Failed to update document content template")
@@ -139,7 +147,7 @@ export class DocumentContentTemplatesDbClient implements IDocumentContentTemplat
 
     incrementCount({
       ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricsResultName, metricsResultSuccessful]]
     })
 
     return templateId
@@ -161,7 +169,7 @@ export class DocumentContentTemplatesDbClient implements IDocumentContentTemplat
     if (result.deletedCount === 0) {
       incrementCount({
         ...metricBody,
-        labels: [[metricResultName, metricResultFailure]]
+        labels: [[metricsResultName, metricsResultFailure]]
       })
 
       throw new Error("Failed to delete document content template")
@@ -174,7 +182,7 @@ export class DocumentContentTemplatesDbClient implements IDocumentContentTemplat
 
     incrementCount({
       ...metricBody,
-      labels: [[metricResultName, metricResultSuccessful]]
+      labels: [[metricsResultName, metricsResultSuccessful]]
     })
   }
 }

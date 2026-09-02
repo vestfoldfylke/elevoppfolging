@@ -1,7 +1,8 @@
 import { type Collection, type Db, ObjectId } from "mongodb"
 import type { IProgramAreasDbClient } from "$lib/types/db/db-client"
 import type { MetricCount, MetricLabel, NewProgramArea, ProgramArea } from "$lib/types/db/shared-types"
-import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
+import { metricsResultFailure, metricsResultName, metricsResultSuccessful } from "$lib/utils/metric-constants.js"
+import { incrementCount } from "../../metrics/handle-metrics"
 
 export class ProgramAreasDbClient implements IProgramAreasDbClient {
   private programAreasCollection: Collection<NewProgramArea>
@@ -56,7 +57,7 @@ export class ProgramAreasDbClient implements IProgramAreasDbClient {
     if (!result.insertedId) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error("Failed to create program area")
@@ -64,7 +65,7 @@ export class ProgramAreasDbClient implements IProgramAreasDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricsResultName, metricsResultSuccessful]]
     })
 
     return result.insertedId.toString()
@@ -85,7 +86,7 @@ export class ProgramAreasDbClient implements IProgramAreasDbClient {
     if (updateResult.matchedCount === 0) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error(`Program area with id: ${programAreaId} not found, cannot update when it does not exist...`)
@@ -93,7 +94,7 @@ export class ProgramAreasDbClient implements IProgramAreasDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricsResultName, metricsResultSuccessful]]
     })
 
     return programAreaId
@@ -114,7 +115,7 @@ export class ProgramAreasDbClient implements IProgramAreasDbClient {
     if (deleteResult.deletedCount === 0) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error(`Failed to delete program area with id: ${programArea._id}`)
@@ -122,7 +123,7 @@ export class ProgramAreasDbClient implements IProgramAreasDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricsResultName, metricsResultSuccessful]]
     })
   }
 }

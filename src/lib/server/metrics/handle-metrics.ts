@@ -3,10 +3,6 @@ import type { MetricCount, MetricGauge, MetricLabel } from "$lib/types/db/shared
 
 const metricNamePrefix = "Elevoppfolging_"
 
-export const metricResultName: string = "result"
-export const metricResultSuccessful: string = "successful"
-export const metricResultFailure: string = "failure"
-
 export const updateGauge = (metricGauge: MetricGauge, metricName?: string): void => {
   const _metricName: string = metricName ?? `${metricNamePrefix}${metricGauge.name}`
   if (!_metricName.startsWith(metricNamePrefix)) {

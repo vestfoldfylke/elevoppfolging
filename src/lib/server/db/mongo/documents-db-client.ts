@@ -22,8 +22,8 @@ import type {
   StudentDocument,
   StudentDocumentUpdate
 } from "$lib/types/db/shared-types"
-import { metricsDocumentTemplateIdLabelName } from "$lib/utils/metric-constants.js"
-import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
+import { metricsDocumentTemplateIdLabelName, metricsResultFailure, metricsResultName, metricsResultSuccessful } from "$lib/utils/metric-constants.js"
+import { incrementCount } from "../../metrics/handle-metrics"
 
 const documentLockStart: string | undefined = env.DOCUMENT_LOCK_START_MM_DD
 if (!documentLockStart) {
@@ -259,7 +259,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     if (!result.insertedId) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error("Failed to create student document")
@@ -267,7 +267,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricsResultName, metricsResultSuccessful]]
     })
 
     return result.insertedId.toString()
@@ -302,7 +302,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     if (!updatedDocument?._id) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error("Failed to update student document")
@@ -310,7 +310,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricsResultName, metricsResultSuccessful]]
     })
 
     return updatedDocument._id.toString()
@@ -332,7 +332,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     if (deleteResult.deletedCount === 0) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error(`Failed to delete student document with id: ${document._id}`)
@@ -340,7 +340,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricsResultName, metricsResultSuccessful]]
     })
   }
 
@@ -367,7 +367,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     if (!document?._id) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error("Failed to add message to student document")
@@ -375,7 +375,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricsResultName, metricsResultSuccessful]]
     })
 
     return encryptedMessageWithId.messageId
@@ -407,7 +407,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     if (!document?._id) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error("Failed to update message in student document")
@@ -415,7 +415,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricsResultName, metricsResultSuccessful]]
     })
 
     return messageId
@@ -553,7 +553,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     if (!result.insertedId) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error("Failed to create group document")
@@ -561,7 +561,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricsResultName, metricsResultSuccessful]]
     })
 
     return result.insertedId.toString()
@@ -596,7 +596,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     if (!updatedDocument?._id) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error("Failed to update group document")
@@ -604,7 +604,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricsResultName, metricsResultSuccessful]]
     })
 
     return updatedDocument._id.toString()
@@ -626,7 +626,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     if (deleteResult.deletedCount === 0) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error(`Failed to delete group document with id: ${document._id}`)
@@ -634,7 +634,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricsResultName, metricsResultSuccessful]]
     })
   }
 
@@ -661,7 +661,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     if (!document?._id) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error("Failed to add message to group document")
@@ -669,7 +669,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricsResultName, metricsResultSuccessful]]
     })
 
     return encryptedMessageWithId.messageId
@@ -701,7 +701,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     if (!document?._id) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error("Failed to update message in group document")
@@ -709,7 +709,7 @@ export class DocumentsDbClient implements IDocumentsDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricsResultName, metricsResultSuccessful]]
     })
 
     return messageId

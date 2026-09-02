@@ -2,7 +2,8 @@ import { type Collection, type Db, type Filter, ObjectId } from "mongodb"
 import type { AccessEntry, StudentMemberships } from "$lib/types/app-types"
 import type { IAccessDbClient } from "$lib/types/db/db-client"
 import type { Access, DbAccess, ManualAccessEntryInput, MetricCount, MetricLabel, NewAccess, NewDbAccess } from "$lib/types/db/shared-types"
-import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
+import { metricsResultFailure, metricsResultName, metricsResultSuccessful } from "$lib/utils/metric-constants.js"
+import { incrementCount } from "../../metrics/handle-metrics"
 
 export class AccessDbClient implements IAccessDbClient {
   private accessCollection: Collection<NewDbAccess>
@@ -141,7 +142,7 @@ export class AccessDbClient implements IAccessDbClient {
     if (!updateResult?._id) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error("Failed to add access entry")
@@ -149,7 +150,7 @@ export class AccessDbClient implements IAccessDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricsResultName, metricsResultSuccessful]]
     })
 
     return updateResult._id.toString()
@@ -191,7 +192,7 @@ export class AccessDbClient implements IAccessDbClient {
     if (!updatedAccess?._id) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error("Failed to remove access entry")
@@ -199,7 +200,7 @@ export class AccessDbClient implements IAccessDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricsResultName, metricsResultSuccessful]]
     })
 
     return updatedAccess._id.toString()
