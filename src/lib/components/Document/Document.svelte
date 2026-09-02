@@ -7,7 +7,7 @@
   import { authorizeAddMessageToGroupDocument, authorizeAddMessageToStudentDocument } from "$lib/shared-authorization/authorization"
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { FrontendStudentDocument, PrincipalAccessForStudent, StudentAccessPerson } from "$lib/types/app-types"
-  import type { AuditEntryInput, ClassGroup, DocumentInput, GroupDocument, MetricCount, SchoolInfo, StudentClassGroup, StudentDataSharingConsent } from "$lib/types/db/shared-types"
+  import type { AuditEntryInput, DocumentInput, GroupDocument, MetricCount, SchoolInfo, StudentClassGroup, StudentDataSharingConsent } from "$lib/types/db/shared-types"
   import EditorInfo from "../EditorInfo.svelte"
   import DocumentContent from "./DocumentContentItem.svelte"
   import DocumentEditor from "./DocumentEditor.svelte"
@@ -52,6 +52,14 @@
     }
 
     return document.isDocumentContentHidden
+  })
+
+  let isDocumentHidden = $derived.by(() => {
+    if (!("student" in document)) {
+      return false
+    }
+
+    return document.isDocumentHidden
   })
 
   let canAddMessage = $derived.by(() => {
@@ -226,34 +234,36 @@
 </script>
 
 <div>
-  <div class="ds-card document-card" data-variant="tinted" data-color="accent" data-clickdelegatefor="document-modal-{document._id}-open">
-    <div class="ds-card__block">
-      <div class="ds-paragraph document-card-title" data-size="xs" style="margin-bottom: var(--ds-size-2);">
-        <div>{document.school.name}</div>
-        <div class="document-card-title-icons">
-          {#if isDocumentContentHidden}
-            <span class="material-symbols-outlined" data-tooltip="Du har ikke tilgang til innholdet i dette notatet">visibility_off</span>
-          {/if}
-          {#if document.isDocumentLocked}
-            <span class="material-symbols-outlined" data-tooltip="Dette notatet er skrivebeskyttet fordi det tilhører et tidligere skoleår">lock</span>
-          {/if}
-        </div>
-      </div>
-      <button id="document-modal-{document._id}-open" class="ds-button card-button" onclick={() => handleDocumentOpen(document)} data-size="lg" data-variant="tertiary" aria-label="{document.template.name}: {document.title || "Tittelen er skjult"}">{document.template.name}</button>
-      {#if !isDocumentContentHidden}
-        <p class="ds-paragraph" style="margin: 0;">{document.title}</p>
-      {/if}
-      <EditorInfo editorInfo={document.created} isEdited={document.modified.at.getTime() > document.created.at.getTime()} timestamp={false} modifiedIndicator={true} style="margin-top: var(--ds-size-2);" />
-    </div>
-
-    {#if document.messages.length > 0 && !isDocumentContentHidden}
+  {#if !isDocumentHidden}
+    <div class="ds-card document-card" data-variant="tinted" data-color="accent" data-clickdelegatefor="document-modal-{document._id}-open">
       <div class="ds-card__block">
-        <div class="ds-label" data-weight="medium" data-size="xs">
-          <EditorInfo editorInfo={document.messages[document.messages.length - 1].created} isEdited={document.messages[document.messages.length - 1].modified.at.getTime() > document.messages[document.messages.length - 1].created.at.getTime()} timestamp={false} modifiedIndicator={false} style="margin: 0;" prefix="{document.messages.length} oppdatering{document.messages.length > 1 ? 'er' : ''}. Siste oppdatering fra " />
+        <div class="ds-paragraph document-card-title" data-size="xs" style="margin-bottom: var(--ds-size-2);">
+          <div>{document.school.name}</div>
+          <div class="document-card-title-icons">
+            {#if isDocumentContentHidden}
+              <span class="material-symbols-outlined" data-tooltip="Du har ikke tilgang til innholdet i dette notatet">visibility_off</span>
+            {/if}
+            {#if document.isDocumentLocked}
+              <span class="material-symbols-outlined" data-tooltip="Dette notatet er skrivebeskyttet fordi det tilhører et tidligere skoleår">lock</span>
+            {/if}
+          </div>
         </div>
+        <button id="document-modal-{document._id}-open" class="ds-button card-button" onclick={() => handleDocumentOpen(document)} data-size="lg" data-variant="tertiary" aria-label="{document.template.name}: {document.title || "Tittelen er skjult"}">{document.title}</button>
+        {#if !isDocumentContentHidden}
+          <p class="ds-paragraph" style="margin: 0;">{document.template.name}</p>
+        {/if}
+        <EditorInfo editorInfo={document.created} isEdited={document.modified.at.getTime() > document.created.at.getTime()} timestamp={true} modifiedIndicator={true} style="margin-top: var(--ds-size-2);" />
       </div>
-    {/if}
-  </div>
+
+      {#if document.messages.length > 0 && !isDocumentContentHidden}
+        <div class="ds-card__block">
+          <div class="ds-label" data-weight="medium" data-size="xs">
+            <EditorInfo editorInfo={document.messages[document.messages.length - 1].created} isEdited={document.messages[document.messages.length - 1].modified.at.getTime() > document.messages[document.messages.length - 1].created.at.getTime()} timestamp={false} modifiedIndicator={false} style="margin: 0;" prefix="{document.messages.length} oppdatering{document.messages.length > 1 ? 'er' : ''}. Siste oppdatering fra " />
+          </div>
+        </div>
+      {/if}
+    </div>
+  {/if}
 
   <dialog bind:this={documentDialog} class="ds-dialog document-dialog" data-placement="center" id="document-modal-{document._id}">
     <!-- Titlebar -->

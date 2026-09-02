@@ -21,6 +21,32 @@ type StudentPageData = {
   documentContentTemplates: DocumentContentTemplate[]
 }
 
+const hideStudentDocument = (document: StudentDocument): FrontendStudentDocument => {
+  return {
+    _id: document._id,
+    created: document.created,
+    modified: document.modified,
+    school: {
+      name: "",
+      schoolNumber: ""
+    },
+    title: "", // hide title
+    content: [], // hide content
+    template: {
+      _id: "",
+      name: "",
+      version: 0
+    },
+    documentAccess: document.documentAccess,
+    emailAlertReceivers: [], // hide email alert receivers
+    messages: [], // hide messages
+    student: document.student,
+    isDocumentLocked: document.isDocumentLocked,
+    isDocumentContentHidden: true,
+    isDocumentHidden: true
+  }
+}
+
 const hideStudentDocumentContent = (document: StudentDocument): FrontendStudentDocument => {
   return {
     _id: document._id,
@@ -35,7 +61,8 @@ const hideStudentDocumentContent = (document: StudentDocument): FrontendStudentD
     messages: [], // hide messages
     student: document.student,
     isDocumentLocked: document.isDocumentLocked,
-    isDocumentContentHidden: true
+    isDocumentContentHidden: true,
+    isDocumentHidden: false
   }
 }
 
@@ -65,10 +92,24 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
     })
     .map((document) => {
       const authorizationResult = authorizeStudentDocumentAccess({ authenticatedPrincipal: principal, accessToStudent: principalAccessForStudent, document, studentDataSharingConsent })
-      if (authorizationResult.canView) {
-        return authorizationResult.mustHideDocumentContent ? hideStudentDocumentContent(document) : { ...document, isDocumentContentHidden: false }
+
+      if (!authorizationResult.canView) {
+        return null
       }
-      return null
+
+      if (authorizationResult.mustHideDocument) {
+        return hideStudentDocument(document)
+      }
+
+      if (authorizationResult.mustHideDocumentContent) {
+        return hideStudentDocumentContent(document)
+      }
+
+      return {
+        ...document,
+        isDocumentContentHidden: false,
+        isDocumentHidden: false
+      }
     })
     .filter((document) => document !== null)
 
