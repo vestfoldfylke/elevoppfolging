@@ -1,7 +1,8 @@
-import { type Collection, type Db, ObjectId } from "mongodb"
+import { type Collection, type Db, ObjectId, type WithId } from "mongodb"
 import type { IDocumentContentTemplatesDbClient } from "$lib/types/db/db-client"
 import type { AvailableForDocumentType, DocumentContentTemplate, MetricCount, MetricLabel, NewDocumentContentTemplate } from "$lib/types/db/shared-types"
-import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
+import { metricsDocumentTemplateIdLabelName, metricsDocumentTemplateInfoDescription, metricsDocumentTemplateInfoName, metricsDocumentTemplateNameLabelName } from "$lib/utils/metric-constants.js"
+import { createInfoGauges, incrementCount, metricResultFailure, metricResultName, metricResultSuccessful, removeInfoGauge } from "../../metrics/handle-metrics"
 
 export class DocumentContentTemplatesDbClient implements IDocumentContentTemplatesDbClient {
   private documentContentTemplatesCollection: Collection<NewDocumentContentTemplate>
@@ -68,6 +69,18 @@ export class DocumentContentTemplatesDbClient implements IDocumentContentTemplat
       throw new Error("Failed to create document template")
     }
 
+    createInfoGauges(metricsDocumentTemplateInfoName, [
+      {
+        name: template.name, // NOTE: This isn't actually used, but required in type
+        description: metricsDocumentTemplateInfoDescription,
+        value: 1,
+        labels: [
+          [metricsDocumentTemplateIdLabelName, result.insertedId.toString()],
+          [metricsDocumentTemplateNameLabelName, template.name]
+        ]
+      }
+    ])
+
     incrementCount({
       ...metricBody,
       labels: [...labels, [metricResultName, metricResultSuccessful]]
@@ -77,6 +90,11 @@ export class DocumentContentTemplatesDbClient implements IDocumentContentTemplat
   }
 
   async updateDocumentContentTemplate(templateId: string, template: NewDocumentContentTemplate): Promise<string> {
+    const currentTemplate: WithId<NewDocumentContentTemplate> | null = await this.documentContentTemplatesCollection.findOne({ _id: new ObjectId(templateId) })
+    if (!currentTemplate) {
+      throw new Error("Current document template not found")
+    }
+
     const result = await this.documentContentTemplatesCollection.updateOne({ _id: new ObjectId(templateId) }, { $set: { ...template } })
 
     const metricBody: MetricCount = {
@@ -102,6 +120,23 @@ export class DocumentContentTemplatesDbClient implements IDocumentContentTemplat
       throw new Error("Failed to update document content template")
     }
 
+    removeInfoGauge(metricsDocumentTemplateInfoName, [
+      [metricsDocumentTemplateIdLabelName, templateId],
+      [metricsDocumentTemplateNameLabelName, currentTemplate.name]
+    ])
+
+    createInfoGauges(metricsDocumentTemplateInfoName, [
+      {
+        name: template.name, // NOTE: This isn't actually used, but required in type
+        description: metricsDocumentTemplateInfoDescription,
+        value: 1,
+        labels: [
+          [metricsDocumentTemplateIdLabelName, templateId],
+          [metricsDocumentTemplateNameLabelName, template.name]
+        ]
+      }
+    ])
+
     incrementCount({
       ...metricBody,
       labels: [...labels, [metricResultName, metricResultSuccessful]]
@@ -111,6 +146,11 @@ export class DocumentContentTemplatesDbClient implements IDocumentContentTemplat
   }
 
   async deleteDocumentContentTemplate(templateId: string): Promise<void> {
+    const currentTemplate: WithId<NewDocumentContentTemplate> | null = await this.documentContentTemplatesCollection.findOne({ _id: new ObjectId(templateId) })
+    if (!currentTemplate) {
+      throw new Error("Document template not found")
+    }
+
     const result = await this.documentContentTemplatesCollection.deleteOne({ _id: new ObjectId(templateId) })
 
     const metricBody: MetricCount = {
@@ -126,6 +166,11 @@ export class DocumentContentTemplatesDbClient implements IDocumentContentTemplat
 
       throw new Error("Failed to delete document content template")
     }
+
+    removeInfoGauge(metricsDocumentTemplateInfoName, [
+      [metricsDocumentTemplateIdLabelName, templateId],
+      [metricsDocumentTemplateNameLabelName, currentTemplate.name]
+    ])
 
     incrementCount({
       ...metricBody,
