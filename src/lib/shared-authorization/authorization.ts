@@ -184,6 +184,7 @@ export function isOnlySubjectTeacher(accessToStudent: PrincipalAccessForStudent[
 type AuthorizeStudentDocumentAccessTrueResult = {
   canView: true
   mustHideDocumentContent: boolean
+  mustHideDocument: boolean
 }
 
 type AuthorizeStudentDocumentAccessFalseResult = {
@@ -211,22 +212,30 @@ export function authorizeStudentDocumentAccess({
 
   const checkRequiredDocumentAccess = (accessToStudentList: PrincipalAccessForStudent[]): AuthorizeStudentDocumentAccessResult => {
     if (authenticatedPrincipal.id === document.created.by.entraUserId) {
-      return { canView: true, mustHideDocumentContent: false }
+      return { canView: true, mustHideDocumentContent: false, mustHideDocument: false }
     }
 
-    if (document.documentAccess === "ONLY_CREATOR") {
-      if (accessToStudentList.some((access) => access.type === "MANUELL-SKOLELEDER-TILGANG" && access.schoolNumber === document.school.schoolNumber)) {
-        return { canView: true, mustHideDocumentContent: true }
+    switch (document.documentAccess) {
+      case "ONLY_CREATOR": {
+        if (accessToStudentList.some((access) => access.type === "MANUELL-SKOLELEDER-TILGANG" && access.schoolNumber === document.school.schoolNumber)) {
+          return { canView: true, mustHideDocumentContent: true, mustHideDocument: false }
+        }
+
+        return { canView: true, mustHideDocumentContent: true, mustHideDocument: true }
       }
 
-      return { canView: false }
-    }
+      case "ALL_WITH_STUDENT_ACCESS": {
+        return { canView: true, mustHideDocumentContent: false, mustHideDocument: false }
+      }
 
-    if (document.documentAccess === "ALL_WITH_STUDENT_ACCESS") {
-      return { canView: true, mustHideDocumentContent: false }
-    }
+      case "EXCLUDE_SUBJECT_TEACHERS": {
+        if (isOnlySubjectTeacher(accessToStudentList)) {
+          return { canView: true, mustHideDocumentContent: true, mustHideDocument: true }
+        }
 
-    return !(document.documentAccess === "EXCLUDE_SUBJECT_TEACHERS" && isOnlySubjectTeacher(accessToStudentList)) ? { canView: true, mustHideDocumentContent: false } : { canView: false }
+        return { canView: true, mustHideDocumentContent: false, mustHideDocument: false }
+      }
+    }
   }
 
   if (studentDataSharingConsent?.consent) {

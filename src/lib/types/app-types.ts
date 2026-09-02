@@ -244,6 +244,7 @@ export type SuggestionSelectItem = {
 
 export type FrontendStudentDocument = StudentDocument & {
   isDocumentContentHidden: boolean
+  isDocumentHidden: boolean
 }
 
 export type ManualStudentCreateOrReactivate = {

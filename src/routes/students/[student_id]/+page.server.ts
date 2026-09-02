@@ -21,6 +21,32 @@ type StudentPageData = {
   documentContentTemplates: DocumentContentTemplate[]
 }
 
+const hideStudentDocument = (document: StudentDocument): FrontendStudentDocument => {
+  return {
+    _id: document._id,
+    created: document.created,
+    modified: document.modified,
+    school: {
+      name: "",
+      schoolNumber: ""
+    },
+    title: "", // hide title
+    content: [], // hide content
+    template: {
+      _id: "",
+      name: "",
+      version: 0
+    },
+    documentAccess: document.documentAccess,
+    emailAlertReceivers: [], // hide email alert receivers
+    messages: [], // hide messages
+    student: document.student,
+    isDocumentLocked: document.isDocumentLocked,
+    isDocumentContentHidden: true,
+    isDocumentHidden: true
+  }
+}
+
 const hideStudentDocumentContent = (document: StudentDocument): FrontendStudentDocument => {
   return {
     _id: document._id,
@@ -35,7 +61,8 @@ const hideStudentDocumentContent = (document: StudentDocument): FrontendStudentD
     messages: [], // hide messages
     student: document.student,
     isDocumentLocked: document.isDocumentLocked,
-    isDocumentContentHidden: true
+    isDocumentContentHidden: true,
+    isDocumentHidden: false
   }
 }
 
@@ -59,16 +86,30 @@ const getStudent: ServerLoadNextFunction<StudentPageData> = async ({ principal, 
 
   const viewableStudentDocuments: FrontendStudentDocument[] = allStudentDocuments
     .sort((a, b) => {
-      const aDate = a.messages.length > 0 ? Math.max(...a.messages.map((m) => m.created.at.getTime())) : a.created.at.getTime()
-      const bDate = b.messages.length > 0 ? Math.max(...b.messages.map((m) => m.created.at.getTime())) : b.created.at.getTime()
+      const aDate = a.messages.length > 0 ? Math.max(...a.messages.map((m) => m.modified.at.getTime())) : a.modified.at.getTime()
+      const bDate = b.messages.length > 0 ? Math.max(...b.messages.map((m) => m.modified.at.getTime())) : b.modified.at.getTime()
       return bDate - aDate
     })
     .map((document) => {
       const authorizationResult = authorizeStudentDocumentAccess({ authenticatedPrincipal: principal, accessToStudent: principalAccessForStudent, document, studentDataSharingConsent })
-      if (authorizationResult.canView) {
-        return authorizationResult.mustHideDocumentContent ? hideStudentDocumentContent(document) : { ...document, isDocumentContentHidden: false }
+
+      if (!authorizationResult.canView) {
+        return null
       }
-      return null
+
+      if (authorizationResult.mustHideDocument) {
+        return hideStudentDocument(document)
+      }
+
+      if (authorizationResult.mustHideDocumentContent) {
+        return hideStudentDocumentContent(document)
+      }
+
+      return {
+        ...document,
+        isDocumentContentHidden: false,
+        isDocumentHidden: false
+      }
     })
     .filter((document) => document !== null)
 
