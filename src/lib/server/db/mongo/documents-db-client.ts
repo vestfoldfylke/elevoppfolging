@@ -22,6 +22,7 @@ import type {
   StudentDocument,
   StudentDocumentUpdate
 } from "$lib/types/db/shared-types"
+import { metricsDocumentTemplateIdLabelName } from "$lib/utils/metric-constants.js"
 import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
 
 const documentLockStart: string | undefined = env.DOCUMENT_LOCK_START_MM_DD
@@ -251,7 +252,8 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     }
     const labels: MetricLabel[] = [
       ["schoolNumber", document.school.schoolNumber],
-      ["schoolName", document.school.name]
+      ["schoolName", document.school.name],
+      [metricsDocumentTemplateIdLabelName, document.template._id]
     ]
 
     if (!result.insertedId) {
@@ -293,7 +295,8 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     }
     const labels: MetricLabel[] = [
       ["schoolNumber", documentUpdate.school.schoolNumber],
-      ["schoolName", documentUpdate.school.name]
+      ["schoolName", documentUpdate.school.name],
+      [metricsDocumentTemplateIdLabelName, documentUpdate.template._id]
     ]
 
     if (!updatedDocument?._id) {
@@ -322,7 +325,8 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     }
     const labels: MetricLabel[] = [
       ["schoolNumber", document.school.schoolNumber],
-      ["schoolName", document.school.name]
+      ["schoolName", document.school.name],
+      [metricsDocumentTemplateIdLabelName, document.template._id]
     ]
 
     if (deleteResult.deletedCount === 0) {
@@ -542,7 +546,8 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     }
     const labels: MetricLabel[] = [
       ["schoolNumber", document.school.schoolNumber],
-      ["schoolName", document.school.name]
+      ["schoolName", document.school.name],
+      [metricsDocumentTemplateIdLabelName, document.template._id]
     ]
 
     if (!result.insertedId) {
@@ -584,7 +589,8 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     }
     const labels: MetricLabel[] = [
       ["schoolNumber", documentUpdate.school.schoolNumber],
-      ["schoolName", documentUpdate.school.name]
+      ["schoolName", documentUpdate.school.name],
+      [metricsDocumentTemplateIdLabelName, documentUpdate.template._id]
     ]
 
     if (!updatedDocument?._id) {
@@ -613,7 +619,8 @@ export class DocumentsDbClient implements IDocumentsDbClient {
     }
     const labels: MetricLabel[] = [
       ["schoolNumber", document.school.schoolNumber],
-      ["schoolName", document.school.name]
+      ["schoolName", document.school.name],
+      [metricsDocumentTemplateIdLabelName, document.template._id]
     ]
 
     if (deleteResult.deletedCount === 0) {
