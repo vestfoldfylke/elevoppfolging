@@ -16,7 +16,7 @@ import type {
   SchoolInfo,
   StudentImportantStuff
 } from "$lib/types/db/shared-types"
-import { metricsResultFailure, metricsResultName, metricsResultSuccessful } from "$lib/utils/metric-constants.js"
+import { metricsResultFailure, metricsResultName, metricsResultSuccessful, metricsSchoolNameLabelName, metricsSchoolNumberLabelName } from "$lib/utils/metric-constants.js"
 import { incrementCount } from "../../metrics/handle-metrics"
 
 export class ImportantStuffDbClient implements IImportantStuffDbClient {
@@ -92,8 +92,8 @@ export class ImportantStuffDbClient implements IImportantStuffDbClient {
       description: "Number of student important stuff upserted"
     }
     const labels: MetricLabel[] = [
-      ["schoolNumber", importantStuff.school.schoolNumber],
-      ["schoolName", importantStuff.school.name]
+      [metricsSchoolNumberLabelName, importantStuff.school.schoolNumber],
+      [metricsSchoolNameLabelName, importantStuff.school.name]
     ]
 
     if (!result?._id) {
@@ -206,8 +206,8 @@ export class ImportantStuffDbClient implements IImportantStuffDbClient {
       description: "Number of group important stuff upserted"
     }
     const labels: MetricLabel[] = [
-      ["schoolNumber", importantStuff.school.schoolNumber],
-      ["schoolName", importantStuff.school.name]
+      [metricsSchoolNumberLabelName, importantStuff.school.schoolNumber],
+      [metricsSchoolNameLabelName, importantStuff.school.name]
     ]
 
     if (!result?._id) {
