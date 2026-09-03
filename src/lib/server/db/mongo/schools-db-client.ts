@@ -1,7 +1,8 @@
 import type { Collection, Db, WithId } from "mongodb"
 import type { ISchoolsDbClient } from "$lib/types/db/db-client"
 import type { MetricCount, NewSchool, School } from "$lib/types/db/shared-types"
-import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
+import { metricsResultFailure, metricsResultName, metricsResultSuccessful } from "$lib/utils/metric-constants.js"
+import { incrementCount } from "../../metrics/handle-metrics"
 
 export class SchoolsDbClient implements ISchoolsDbClient {
   private schoolsCollection: Collection<NewSchool>
@@ -48,7 +49,7 @@ export class SchoolsDbClient implements ISchoolsDbClient {
     if (!result.insertedId) {
       incrementCount({
         ...metricBody,
-        labels: [[metricResultName, metricResultFailure]]
+        labels: [[metricsResultName, metricsResultFailure]]
       })
 
       throw new Error("Failed to create school")
@@ -56,7 +57,7 @@ export class SchoolsDbClient implements ISchoolsDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [[metricResultName, metricResultSuccessful]]
+      labels: [[metricsResultName, metricsResultSuccessful]]
     })
 
     return result.insertedId.toString()
@@ -73,7 +74,7 @@ export class SchoolsDbClient implements ISchoolsDbClient {
     if (result.matchedCount === 0) {
       incrementCount({
         ...metricBody,
-        labels: [[metricResultName, metricResultFailure]]
+        labels: [[metricsResultName, metricsResultFailure]]
       })
 
       throw new Error(`School with schoolNumber: ${schoolNumber} not found`)
@@ -82,7 +83,7 @@ export class SchoolsDbClient implements ISchoolsDbClient {
     if (result.modifiedCount === 0) {
       incrementCount({
         ...metricBody,
-        labels: [[metricResultName, metricResultFailure]]
+        labels: [[metricsResultName, metricsResultFailure]]
       })
 
       throw new Error(`Failed to update school with schoolNumber: ${schoolNumber}`)
@@ -90,7 +91,7 @@ export class SchoolsDbClient implements ISchoolsDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [[metricResultName, metricResultSuccessful]]
+      labels: [[metricsResultName, metricsResultSuccessful]]
     })
 
     return schoolNumber
@@ -107,7 +108,7 @@ export class SchoolsDbClient implements ISchoolsDbClient {
     if (result.deletedCount === 0) {
       incrementCount({
         ...metricBody,
-        labels: [[metricResultName, metricResultFailure]]
+        labels: [[metricsResultName, metricsResultFailure]]
       })
 
       throw new Error(`Failed to delete school with schoolNumber: ${schoolNumber}`)
@@ -115,7 +116,7 @@ export class SchoolsDbClient implements ISchoolsDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [[metricResultName, metricResultSuccessful]]
+      labels: [[metricsResultName, metricsResultSuccessful]]
     })
   }
 }

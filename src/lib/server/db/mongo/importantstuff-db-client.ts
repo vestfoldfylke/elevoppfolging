@@ -16,7 +16,8 @@ import type {
   SchoolInfo,
   StudentImportantStuff
 } from "$lib/types/db/shared-types"
-import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
+import { metricsResultFailure, metricsResultName, metricsResultSuccessful } from "$lib/utils/metric-constants.js"
+import { incrementCount } from "../../metrics/handle-metrics"
 
 export class ImportantStuffDbClient implements IImportantStuffDbClient {
   private encryptionDb: Db
@@ -98,7 +99,7 @@ export class ImportantStuffDbClient implements IImportantStuffDbClient {
     if (!result?._id) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error("Failed to upsert student important stuff")
@@ -106,7 +107,7 @@ export class ImportantStuffDbClient implements IImportantStuffDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricsResultName, metricsResultSuccessful]]
     })
 
     return result._id.toString()
@@ -212,7 +213,7 @@ export class ImportantStuffDbClient implements IImportantStuffDbClient {
     if (!result?._id) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error("Failed to upsert group important stuff")
@@ -220,7 +221,7 @@ export class ImportantStuffDbClient implements IImportantStuffDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricsResultName, metricsResultSuccessful]]
     })
 
     return result._id.toString()

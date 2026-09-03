@@ -2,7 +2,8 @@ import { logger } from "@vestfoldfylke/loglady"
 import { type Collection, type Db, type DeleteResult, ObjectId } from "mongodb"
 import type { IEmailAlertsDbClient } from "$lib/types/db/db-client"
 import type { MetricCount, MetricLabel, NewDbEmailAlert } from "$lib/types/db/shared-types"
-import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
+import { metricsResultFailure, metricsResultName, metricsResultSuccessful } from "$lib/utils/metric-constants.js"
+import { incrementCount } from "../../metrics/handle-metrics"
 
 export class EmailAlertsDbClient implements IEmailAlertsDbClient {
   private emailAlertsCollection: Collection<NewDbEmailAlert>
@@ -27,7 +28,7 @@ export class EmailAlertsDbClient implements IEmailAlertsDbClient {
     if (!result.insertedId) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error("Failed to create email alert")
@@ -35,7 +36,7 @@ export class EmailAlertsDbClient implements IEmailAlertsDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricsResultName, metricsResultSuccessful]]
     })
 
     return result.insertedId.toString()

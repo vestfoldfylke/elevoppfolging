@@ -4,8 +4,9 @@ import type { FrontendStudent } from "$lib/types/app-types"
 import type { IStudentsDbClient } from "$lib/types/db/db-client"
 import type { KeysToNumber } from "$lib/types/db/db-helpers"
 import type { AppStudent, DbAppStudent, DbEncryptedAppStudent, MetricCount, MetricLabel, NewAppStudent, SchoolInfo, StudentEnrollment, UpdateAppStudent } from "$lib/types/db/shared-types"
+import { metricsResultFailure, metricsResultName, metricsResultSuccessful } from "$lib/utils/metric-constants.js"
 import { APP_INFO } from "../../app-info"
-import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
+import { incrementCount } from "../../metrics/handle-metrics"
 
 export class StudentsDbClient implements IStudentsDbClient {
   private encryptionDb: Db
@@ -148,7 +149,7 @@ export class StudentsDbClient implements IStudentsDbClient {
     if (!result.acknowledged) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error("Failed to insert manual student")
@@ -156,7 +157,7 @@ export class StudentsDbClient implements IStudentsDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricsResultName, metricsResultSuccessful]]
     })
 
     return result.insertedId.toString()
@@ -192,7 +193,7 @@ export class StudentsDbClient implements IStudentsDbClient {
     if (!result.acknowledged) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error("Failed to update student")
@@ -201,7 +202,7 @@ export class StudentsDbClient implements IStudentsDbClient {
     if (result.modifiedCount !== 1) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error("Failed to update student")
@@ -209,7 +210,7 @@ export class StudentsDbClient implements IStudentsDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricsResultName, metricsResultSuccessful]]
     })
 
     logger.info("Student with Id {Id} updated", student._id)

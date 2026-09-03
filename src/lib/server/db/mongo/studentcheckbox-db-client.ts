@@ -1,7 +1,8 @@
 import { type Binary, type Db, ObjectId } from "mongodb"
 import type { IStudentCheckBoxDbClient } from "$lib/types/db/db-client"
 import type { DbEncryptedStudentCheckBox, DbStudentCheckBox, MetricCount, MetricLabel, NewDbEncryptedStudentCheckBox, NewStudentCheckBox, StudentCheckBox } from "$lib/types/db/shared-types"
-import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
+import { metricsResultFailure, metricsResultName, metricsResultSuccessful } from "$lib/utils/metric-constants.js"
+import { incrementCount } from "../../metrics/handle-metrics"
 
 export class StudentCheckBoxDbClient implements IStudentCheckBoxDbClient {
   private encryptionDb: Db
@@ -38,7 +39,7 @@ export class StudentCheckBoxDbClient implements IStudentCheckBoxDbClient {
     if (!result.acknowledged) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error("Failed to create student check box")
@@ -46,7 +47,7 @@ export class StudentCheckBoxDbClient implements IStudentCheckBoxDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricsResultName, metricsResultSuccessful]]
     })
 
     return result.insertedId.toString()
@@ -66,7 +67,7 @@ export class StudentCheckBoxDbClient implements IStudentCheckBoxDbClient {
     if (result.matchedCount === 0) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error("Failed to update student check box")
@@ -74,7 +75,7 @@ export class StudentCheckBoxDbClient implements IStudentCheckBoxDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricsResultName, metricsResultSuccessful]]
     })
 
     return studentCheckBoxId
@@ -93,7 +94,7 @@ export class StudentCheckBoxDbClient implements IStudentCheckBoxDbClient {
     if (result.deletedCount === 0) {
       incrementCount({
         ...metricBody,
-        labels: [...labels, [metricResultName, metricResultFailure]]
+        labels: [...labels, [metricsResultName, metricsResultFailure]]
       })
 
       throw new Error("Failed to delete student check box")
@@ -101,7 +102,7 @@ export class StudentCheckBoxDbClient implements IStudentCheckBoxDbClient {
 
     incrementCount({
       ...metricBody,
-      labels: [...labels, [metricResultName, metricResultSuccessful]]
+      labels: [...labels, [metricsResultName, metricsResultSuccessful]]
     })
   }
 }

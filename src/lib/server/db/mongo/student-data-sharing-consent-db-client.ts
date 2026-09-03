@@ -1,7 +1,8 @@
 import { type Collection, type Db, ObjectId } from "mongodb"
 import type { IStudentDataSharingConsentsDbClient } from "$lib/types/db/db-client"
 import type { DbStudentDataSharingConsent, MetricCount, NewDbStudentDataSharingConsent, NewStudentDataSharingConsent, StudentDataSharingConsent } from "$lib/types/db/shared-types"
-import { incrementCount, metricResultFailure, metricResultName, metricResultSuccessful } from "../../metrics/handle-metrics"
+import { metricsResultFailure, metricsResultName, metricsResultSuccessful } from "$lib/utils/metric-constants.js"
+import { incrementCount } from "../../metrics/handle-metrics"
 
 export class StudentDataSharingConsentsDbClient implements IStudentDataSharingConsentsDbClient {
   private studentDataSharingConsentsCollection: Collection<DbStudentDataSharingConsent>
@@ -60,7 +61,7 @@ export class StudentDataSharingConsentsDbClient implements IStudentDataSharingCo
     if (!result?._id) {
       incrementCount({
         ...metricBody,
-        labels: [[metricResultName, metricResultFailure]]
+        labels: [[metricsResultName, metricsResultFailure]]
       })
 
       throw new Error("Failed to upsert student data sharing consent")
@@ -68,7 +69,7 @@ export class StudentDataSharingConsentsDbClient implements IStudentDataSharingCo
 
     incrementCount({
       ...metricBody,
-      labels: [[metricResultName, metricResultSuccessful]]
+      labels: [[metricsResultName, metricsResultSuccessful]]
     })
 
     return result._id.toString()
