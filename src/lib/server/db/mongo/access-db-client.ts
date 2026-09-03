@@ -2,7 +2,7 @@ import { type Collection, type Db, type Filter, ObjectId } from "mongodb"
 import type { AccessEntry, StudentMemberships } from "$lib/types/app-types"
 import type { IAccessDbClient } from "$lib/types/db/db-client"
 import type { Access, DbAccess, ManualAccessEntryInput, MetricCount, MetricLabel, NewAccess, NewDbAccess } from "$lib/types/db/shared-types"
-import { metricsResultFailure, metricsResultName, metricsResultSuccessful } from "$lib/utils/metric-constants.js"
+import { metricsResultFailure, metricsResultName, metricsResultSuccessful, metricsSchoolNameLabelName, metricsSchoolNumberLabelName, metricsTypeLabelName } from "$lib/utils/metric-constants.js"
 import { incrementCount } from "../../metrics/handle-metrics"
 
 export class AccessDbClient implements IAccessDbClient {
@@ -134,9 +134,9 @@ export class AccessDbClient implements IAccessDbClient {
       description: "Number of access entries created"
     }
     const labels: MetricLabel[] = [
-      ["schoolNumber", accessEntry.schoolNumber],
-      ["schoolName", schoolName],
-      ["type", accessEntry.type]
+      [metricsSchoolNumberLabelName, accessEntry.schoolNumber],
+      [metricsSchoolNameLabelName, schoolName],
+      [metricsTypeLabelName, accessEntry.type]
     ]
 
     if (!updateResult?._id) {
@@ -184,9 +184,9 @@ export class AccessDbClient implements IAccessDbClient {
       description: "Number of access entries removed"
     }
     const labels: MetricLabel[] = [
-      ["schoolNumber", accessEntry.schoolNumber],
-      ["schoolName", schoolName],
-      ["type", accessEntry.type]
+      [metricsSchoolNumberLabelName, accessEntry.schoolNumber],
+      [metricsSchoolNameLabelName, schoolName],
+      [metricsTypeLabelName, accessEntry.type]
     ]
 
     if (!updatedAccess?._id) {

@@ -1,7 +1,7 @@
 import { type Collection, type Db, ObjectId } from "mongodb"
 import type { IProgramAreasDbClient } from "$lib/types/db/db-client"
 import type { MetricCount, MetricLabel, NewProgramArea, ProgramArea } from "$lib/types/db/shared-types"
-import { metricsResultFailure, metricsResultName, metricsResultSuccessful } from "$lib/utils/metric-constants.js"
+import { metricsResultFailure, metricsResultName, metricsResultSuccessful, metricsSchoolNameLabelName, metricsSchoolNumberLabelName } from "$lib/utils/metric-constants.js"
 import { incrementCount } from "../../metrics/handle-metrics"
 
 export class ProgramAreasDbClient implements IProgramAreasDbClient {
@@ -50,8 +50,8 @@ export class ProgramAreasDbClient implements IProgramAreasDbClient {
       description: "Number of program areas created"
     }
     const labels: MetricLabel[] = [
-      ["schoolNumber", programArea.schoolNumber],
-      ["schoolName", schoolName]
+      [metricsSchoolNumberLabelName, programArea.schoolNumber],
+      [metricsSchoolNameLabelName, schoolName]
     ]
 
     if (!result.insertedId) {
@@ -79,8 +79,8 @@ export class ProgramAreasDbClient implements IProgramAreasDbClient {
       description: "Number of program areas updated"
     }
     const labels: MetricLabel[] = [
-      ["schoolNumber", programArea.schoolNumber],
-      ["schoolName", schoolName]
+      [metricsSchoolNumberLabelName, programArea.schoolNumber],
+      [metricsSchoolNameLabelName, schoolName]
     ]
 
     if (updateResult.matchedCount === 0) {
@@ -108,8 +108,8 @@ export class ProgramAreasDbClient implements IProgramAreasDbClient {
       description: "Number of program areas removed"
     }
     const labels: MetricLabel[] = [
-      ["schoolNumber", programArea.schoolNumber],
-      ["schoolName", schoolName]
+      [metricsSchoolNumberLabelName, programArea.schoolNumber],
+      [metricsSchoolNameLabelName, schoolName]
     ]
 
     if (deleteResult.deletedCount === 0) {

@@ -4,7 +4,7 @@ import type { FrontendStudent } from "$lib/types/app-types"
 import type { IStudentsDbClient } from "$lib/types/db/db-client"
 import type { KeysToNumber } from "$lib/types/db/db-helpers"
 import type { AppStudent, DbAppStudent, DbEncryptedAppStudent, MetricCount, MetricLabel, NewAppStudent, SchoolInfo, StudentEnrollment, UpdateAppStudent } from "$lib/types/db/shared-types"
-import { metricsResultFailure, metricsResultName, metricsResultSuccessful } from "$lib/utils/metric-constants.js"
+import { metricsResultFailure, metricsResultName, metricsResultSuccessful, metricsSchoolNameLabelName, metricsSchoolNumberLabelName } from "$lib/utils/metric-constants.js"
 import { APP_INFO } from "../../app-info"
 import { incrementCount } from "../../metrics/handle-metrics"
 
@@ -142,8 +142,8 @@ export class StudentsDbClient implements IStudentsDbClient {
     const labels: MetricLabel[] = []
 
     if (mainSchool) {
-      labels.push(["schoolNumber", mainSchool.schoolNumber])
-      labels.push(["schoolName", mainSchool.name])
+      labels.push([metricsSchoolNumberLabelName, mainSchool.schoolNumber])
+      labels.push([metricsSchoolNameLabelName, mainSchool.name])
     }
 
     if (!result.acknowledged) {
@@ -186,8 +186,8 @@ export class StudentsDbClient implements IStudentsDbClient {
     const labels: MetricLabel[] = []
 
     if (mainSchool) {
-      labels.push(["schoolNumber", mainSchool.schoolNumber])
-      labels.push(["schoolName", mainSchool.name])
+      labels.push([metricsSchoolNumberLabelName, mainSchool.schoolNumber])
+      labels.push([metricsSchoolNameLabelName, mainSchool.name])
     }
 
     if (!result.acknowledged) {

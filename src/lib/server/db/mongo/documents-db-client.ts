@@ -22,7 +22,14 @@ import type {
   StudentDocument,
   StudentDocumentUpdate
 } from "$lib/types/db/shared-types"
-import { metricsDocumentTemplateIdLabelName, metricsResultFailure, metricsResultName, metricsResultSuccessful } from "$lib/utils/metric-constants.js"
+import {
+  metricsDocumentTemplateIdLabelName,
+  metricsResultFailure,
+  metricsResultName,
+  metricsResultSuccessful,
+  metricsSchoolNameLabelName,
+  metricsSchoolNumberLabelName
+} from "$lib/utils/metric-constants.js"
 import { incrementCount } from "../../metrics/handle-metrics"
 
 const documentLockStart: string | undefined = env.DOCUMENT_LOCK_START_MM_DD
@@ -251,8 +258,8 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       description: "Number of student documents created"
     }
     const labels: MetricLabel[] = [
-      ["schoolNumber", document.school.schoolNumber],
-      ["schoolName", document.school.name],
+      [metricsSchoolNumberLabelName, document.school.schoolNumber],
+      [metricsSchoolNameLabelName, document.school.name],
       [metricsDocumentTemplateIdLabelName, document.template._id]
     ]
 
@@ -294,8 +301,8 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       description: "Number of student documents updated"
     }
     const labels: MetricLabel[] = [
-      ["schoolNumber", documentUpdate.school.schoolNumber],
-      ["schoolName", documentUpdate.school.name],
+      [metricsSchoolNumberLabelName, documentUpdate.school.schoolNumber],
+      [metricsSchoolNameLabelName, documentUpdate.school.name],
       [metricsDocumentTemplateIdLabelName, documentUpdate.template._id]
     ]
 
@@ -324,8 +331,8 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       description: "Number of student documents removed"
     }
     const labels: MetricLabel[] = [
-      ["schoolNumber", document.school.schoolNumber],
-      ["schoolName", document.school.name],
+      [metricsSchoolNumberLabelName, document.school.schoolNumber],
+      [metricsSchoolNameLabelName, document.school.name],
       [metricsDocumentTemplateIdLabelName, document.template._id]
     ]
 
@@ -360,8 +367,8 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       description: "Number of student document messages created"
     }
     const labels: MetricLabel[] = [
-      ["schoolNumber", schoolNumber],
-      ["schoolName", schoolName]
+      [metricsSchoolNumberLabelName, schoolNumber],
+      [metricsSchoolNameLabelName, schoolName]
     ]
 
     if (!document?._id) {
@@ -400,8 +407,8 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       description: "Number of student document messages updated"
     }
     const labels: MetricLabel[] = [
-      ["schoolNumber", schoolNumber],
-      ["schoolName", schoolName]
+      [metricsSchoolNumberLabelName, schoolNumber],
+      [metricsSchoolNameLabelName, schoolName]
     ]
 
     if (!document?._id) {
@@ -545,8 +552,8 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       description: "Number of group documents created"
     }
     const labels: MetricLabel[] = [
-      ["schoolNumber", document.school.schoolNumber],
-      ["schoolName", document.school.name],
+      [metricsSchoolNumberLabelName, document.school.schoolNumber],
+      [metricsSchoolNameLabelName, document.school.name],
       [metricsDocumentTemplateIdLabelName, document.template._id]
     ]
 
@@ -588,8 +595,8 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       description: "Number of group documents updated"
     }
     const labels: MetricLabel[] = [
-      ["schoolNumber", documentUpdate.school.schoolNumber],
-      ["schoolName", documentUpdate.school.name],
+      [metricsSchoolNumberLabelName, documentUpdate.school.schoolNumber],
+      [metricsSchoolNameLabelName, documentUpdate.school.name],
       [metricsDocumentTemplateIdLabelName, documentUpdate.template._id]
     ]
 
@@ -618,8 +625,8 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       description: "Number of group documents removed"
     }
     const labels: MetricLabel[] = [
-      ["schoolNumber", document.school.schoolNumber],
-      ["schoolName", document.school.name],
+      [metricsSchoolNumberLabelName, document.school.schoolNumber],
+      [metricsSchoolNameLabelName, document.school.name],
       [metricsDocumentTemplateIdLabelName, document.template._id]
     ]
 
@@ -654,8 +661,8 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       description: "Number of group document messages created"
     }
     const labels: MetricLabel[] = [
-      ["schoolNumber", schoolNumber],
-      ["schoolName", schoolName]
+      [metricsSchoolNumberLabelName, schoolNumber],
+      [metricsSchoolNameLabelName, schoolName]
     ]
 
     if (!document?._id) {
@@ -694,8 +701,8 @@ export class DocumentsDbClient implements IDocumentsDbClient {
       description: "Number of group document messages updated"
     }
     const labels: MetricLabel[] = [
-      ["schoolNumber", schoolNumber],
-      ["schoolName", schoolName]
+      [metricsSchoolNumberLabelName, schoolNumber],
+      [metricsSchoolNameLabelName, schoolName]
     ]
 
     if (!document?._id) {

@@ -2,7 +2,7 @@ import { logger } from "@vestfoldfylke/loglady"
 import { type Collection, type Db, type DeleteResult, ObjectId } from "mongodb"
 import type { IEmailAlertsDbClient } from "$lib/types/db/db-client"
 import type { MetricCount, MetricLabel, NewDbEmailAlert } from "$lib/types/db/shared-types"
-import { metricsResultFailure, metricsResultName, metricsResultSuccessful } from "$lib/utils/metric-constants.js"
+import { metricsResultFailure, metricsResultName, metricsResultSuccessful, metricsSchoolNameLabelName, metricsSchoolNumberLabelName, metricsTypeLabelName } from "$lib/utils/metric-constants.js"
 import { incrementCount } from "../../metrics/handle-metrics"
 
 export class EmailAlertsDbClient implements IEmailAlertsDbClient {
@@ -20,9 +20,9 @@ export class EmailAlertsDbClient implements IEmailAlertsDbClient {
       description: "Number of email alerts created"
     }
     const labels: MetricLabel[] = [
-      ["schoolNumber", schoolNumber],
-      ["schoolName", schoolName],
-      ["type", emailAlert.type]
+      [metricsSchoolNumberLabelName, schoolNumber],
+      [metricsSchoolNameLabelName, schoolName],
+      [metricsTypeLabelName, emailAlert.type]
     ]
 
     if (!result.insertedId) {

@@ -8,7 +8,7 @@
   import type { NoSlashString } from "$lib/types/api/api-route-map"
   import type { FrontendStudentDocument, PrincipalAccessForStudent, StudentAccessPerson } from "$lib/types/app-types"
   import type { AuditEntryInput, DocumentInput, GroupDocument, MetricCount, SchoolInfo, StudentClassGroup, StudentDataSharingConsent } from "$lib/types/db/shared-types"
-  import { metricsDocumentTemplateIdLabelName } from "$lib/utils/metric-constants.js"
+  import { metricsDocumentTemplateIdLabelName, metricsSchoolNameLabelName, metricsSchoolNumberLabelName } from "$lib/utils/metric-constants.js"
   import EditorInfo from "../EditorInfo.svelte"
   import DocumentContent from "./DocumentContentItem.svelte"
   import DocumentEditor from "./DocumentEditor.svelte"
@@ -138,8 +138,8 @@
       name: studentName ? "StudentDocument_Open" : "GroupDocument_Open",
       description: `Number of times ${studentName ? "student" : "group"} documents has been opened`,
       labels: [
-        ["schoolNumber", document.school.schoolNumber],
-        ["schoolName", document.school.name],
+        [metricsSchoolNumberLabelName, document.school.schoolNumber],
+        [metricsSchoolNameLabelName, document.school.name],
         [metricsDocumentTemplateIdLabelName, document.template._id]
       ]
     }

@@ -2,6 +2,8 @@ import { type Collection, type Db, ObjectId, type WithId } from "mongodb"
 import type { IDocumentContentTemplatesDbClient } from "$lib/types/db/db-client"
 import type { AvailableForDocumentType, DocumentContentTemplate, MetricCount, MetricLabel, NewDocumentContentTemplate } from "$lib/types/db/shared-types"
 import {
+  metricsDocumentTemplateAvailableForClassesLabelName,
+  metricsDocumentTemplateAvailableForStudentsLabelName,
   metricsDocumentTemplateIdLabelName,
   metricsDocumentTemplateInfoDescription,
   metricsDocumentTemplateInfoName,
@@ -61,11 +63,11 @@ export class DocumentContentTemplatesDbClient implements IDocumentContentTemplat
     const labels: MetricLabel[] = []
 
     if (template.availableForDocumentType.group) {
-      labels.push(["availableForClasses", template.availableForDocumentType.group.toString()])
+      labels.push([metricsDocumentTemplateAvailableForClassesLabelName, template.availableForDocumentType.group.toString()])
     }
 
     if (template.availableForDocumentType.student) {
-      labels.push(["availableForStudents", template.availableForDocumentType.student.toString()])
+      labels.push([metricsDocumentTemplateAvailableForStudentsLabelName, template.availableForDocumentType.student.toString()])
     }
 
     if (!result.insertedId) {
@@ -112,11 +114,11 @@ export class DocumentContentTemplatesDbClient implements IDocumentContentTemplat
     const labels: MetricLabel[] = []
 
     if (template.availableForDocumentType.group) {
-      labels.push(["availableForClasses", template.availableForDocumentType.group.toString()])
+      labels.push([metricsDocumentTemplateAvailableForClassesLabelName, template.availableForDocumentType.group.toString()])
     }
 
     if (template.availableForDocumentType.student) {
-      labels.push(["availableForStudents", template.availableForDocumentType.student.toString()])
+      labels.push([metricsDocumentTemplateAvailableForStudentsLabelName, template.availableForDocumentType.student.toString()])
     }
 
     if (result.modifiedCount === 0) {

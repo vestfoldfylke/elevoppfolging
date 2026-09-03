@@ -1,7 +1,7 @@
 import { type Binary, type Db, ObjectId } from "mongodb"
 import type { IStudentCheckBoxDbClient } from "$lib/types/db/db-client"
 import type { DbEncryptedStudentCheckBox, DbStudentCheckBox, MetricCount, MetricLabel, NewDbEncryptedStudentCheckBox, NewStudentCheckBox, StudentCheckBox } from "$lib/types/db/shared-types"
-import { metricsResultFailure, metricsResultName, metricsResultSuccessful } from "$lib/utils/metric-constants.js"
+import { metricsResultFailure, metricsResultName, metricsResultSuccessful, metricsTypeLabelName } from "$lib/utils/metric-constants.js"
 import { incrementCount } from "../../metrics/handle-metrics"
 
 export class StudentCheckBoxDbClient implements IStudentCheckBoxDbClient {
@@ -34,7 +34,7 @@ export class StudentCheckBoxDbClient implements IStudentCheckBoxDbClient {
       name: "StudentCheckBox_Create",
       description: "Number of student checkboxes created"
     }
-    const labels: MetricLabel[] = [["type", studentCheckBox.type]]
+    const labels: MetricLabel[] = [[metricsTypeLabelName, studentCheckBox.type]]
 
     if (!result.acknowledged) {
       incrementCount({
@@ -62,7 +62,7 @@ export class StudentCheckBoxDbClient implements IStudentCheckBoxDbClient {
       name: "StudentCheckBox_Update",
       description: "Number of student checkboxes updated"
     }
-    const labels: MetricLabel[] = [["type", studentCheckBox.type]]
+    const labels: MetricLabel[] = [[metricsTypeLabelName, studentCheckBox.type]]
 
     if (result.matchedCount === 0) {
       incrementCount({
@@ -89,7 +89,7 @@ export class StudentCheckBoxDbClient implements IStudentCheckBoxDbClient {
       name: "StudentCheckBox_Remove",
       description: "Number of student checkboxes removed"
     }
-    const labels: MetricLabel[] = [["type", studentCheckBox.type]]
+    const labels: MetricLabel[] = [[metricsTypeLabelName, studentCheckBox.type]]
 
     if (result.deletedCount === 0) {
       incrementCount({
