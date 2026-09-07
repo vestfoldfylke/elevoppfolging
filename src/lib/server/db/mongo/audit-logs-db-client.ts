@@ -2,6 +2,7 @@ import { logger } from "@vestfoldfylke/loglady"
 import type { Collection, Db, Filter, InsertOneResult, WithId } from "mongodb"
 import type { IAuditLogsDbClient } from "$lib/types/db/db-client"
 import type { AuditEntry, AuditEntryInput, AuditSearchTerms } from "$lib/types/db/shared-types"
+import { AUDIT_DEFAULT_DAYS } from "$lib/utils/audit-constants.js"
 import { getDateDaysAhead, getDateDaysBack, getDateValue, getEndOfDate, getStartOfDate } from "$lib/utils/dates"
 
 export class AuditLogsDbClient implements IAuditLogsDbClient {
@@ -40,7 +41,7 @@ export class AuditLogsDbClient implements IAuditLogsDbClient {
     const isEmptyOrDefault: boolean =
       !searchTerms ||
       (searchTerms.timeFrame.from === getDateValue(new Date()) &&
-        searchTerms.timeFrame.to === getDateValue(getDateDaysAhead(7)) &&
+        searchTerms.timeFrame.to === getDateValue(getDateDaysAhead(AUDIT_DEFAULT_DAYS)) &&
         searchTerms.action === "" &&
         searchTerms.resource === "" &&
         searchTerms.user === "" &&
@@ -50,7 +51,7 @@ export class AuditLogsDbClient implements IAuditLogsDbClient {
     if (!searchTerms || isEmptyOrDefault) {
       return {
         "created.at": {
-          $gte: getStartOfDate(getDateDaysBack(7)) // default to last 7 days
+          $gte: getStartOfDate(getDateDaysBack(AUDIT_DEFAULT_DAYS))
         }
       }
     }

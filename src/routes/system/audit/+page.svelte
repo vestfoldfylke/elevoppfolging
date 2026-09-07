@@ -2,7 +2,7 @@
   import { apiFetch } from "$lib/api-fetch/api-fetch"
   import AsyncButton, { type AsyncButtonResult } from "$lib/components/AsyncButton.svelte"
   import type { AuditEntry, AuditSearchQueryResult, AuditSearchTerms, ConstantDisplayNameEntry } from "$lib/types/db/shared-types"
-  import { AUDIT_ENTRY_ACTION_DISPLAY_NAMES, AUDIT_ENTRY_RESOURCE_DISPLAY_NAMES } from "$lib/utils/audit-constants"
+  import { AUDIT_DEFAULT_DAYS, AUDIT_ENTRY_ACTION_DISPLAY_NAMES, AUDIT_ENTRY_RESOURCE_DISPLAY_NAMES } from "$lib/utils/audit-constants"
   import { getDateDaysBack, getDateValue, prettifyDateTime } from "$lib/utils/dates"
   import { STUDENT_CHECKBOX_DISPLAY_NAMES } from "$lib/utils/student-checkbox-constants"
   import type { PageProps } from "./$types"
@@ -22,7 +22,7 @@
   let auditEntries: AuditEntry[] = $derived(data.audits)
   let auditSearchError: string | undefined = $state(undefined)
 
-  const timeFrameFromInitial: string = getDateValue(getDateDaysBack(7))
+  const timeFrameFromInitial: string = getDateValue(getDateDaysBack(AUDIT_DEFAULT_DAYS))
   const timeFrameToInitial: string = getDateValue(new Date())
 
   let searchTerms: AuditSearchTerms = $state({
@@ -107,7 +107,7 @@
 
   <div class="ds-card audit-search-container" data-variant="tinted" data-color="brand3">
     <details class="ds-details" data-variant="default">
-      <summary>Som standard vises de siste 7 dagers aktivitet. Her kan du søke etter spesifikke handlinger, ressurser og/eller brukere, og avgrense tidsrommets søk</summary>
+      <summary>Som standard vises dagens aktivitet. Her kan du søke etter spesifikke handlinger, ressurser og/eller brukere, og avgrense tidsrommets søk</summary>
       <div>
         <div class="audit-search-wrapper">
           <ds-field class="ds-field">

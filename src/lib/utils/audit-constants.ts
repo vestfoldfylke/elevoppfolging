@@ -4,6 +4,8 @@ import { STUDENT_CHECKBOX_DISPLAY_NAMES } from "$lib/utils/student-checkbox-cons
 const followUpDisplayName: string = STUDENT_CHECKBOX_DISPLAY_NAMES.FOLLOW_UP.single?.toLowerCase() || STUDENT_CHECKBOX_DISPLAY_NAMES.FOLLOW_UP.plural.toLowerCase()
 const facilitationDisplayName: string = STUDENT_CHECKBOX_DISPLAY_NAMES.FACILITATION.plural.toLowerCase()
 
+export const AUDIT_DEFAULT_DAYS: number = 0
+
 export const AUDIT_ENTRY_ACTION_DISPLAY_NAMES: Record<AuditEntry["action"], string> = {
   OPEN: "Åpnet / Vist / Lest",
   CREATE: "Opprettet",
