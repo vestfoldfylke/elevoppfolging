@@ -160,6 +160,10 @@
   </div>
 
   {#if auditEntries.length > 0}
+    <div class="audit-search-count">
+      <strong>Antall:</strong> {auditEntries.length}
+    </div>
+
     <table class="ds-table">
       <thead>
         <tr>
@@ -227,5 +231,9 @@
   
   .ds-popover {
       max-width: inherit;
+  }
+
+  .audit-search-count {
+    text-align: right;
   }
 </style>
