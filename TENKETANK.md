@@ -2,61 +2,61 @@ Hvis vi lager egen database over elever
 
 collections:
 elever
-  elev
-    _id
-    personinfo
-    elevforhold[]
-      skole
-      basisgruppe[]
-        lærere og kontaktlærere (sleng på bruker _id på lærerne)
-      undervisningsgruppe[]
-        lærere
+elev
+_id
+personinfo
+elevforhold[]
+skole
+basisgruppe[]
+lærere og kontaktlærere (sleng på bruker _id på lærerne)
+undervisningsgruppe[]
+lærere
 
 brukere
-  _id
-  entraId-id
-  feidenavn (hvis de har)
-  company
-  department
+_id
+entraId-id
+feidenavn (hvis de har)
+company
+department
 
 tilganger
-    id: hvem har tilgang
-    navn: haha
-    skolelederfor[skolenummer]
-    avdelingslederfor[{skolenummer, undervisningsområder}]
-    basisgrupper[{skolenummer, system_id}]
-    elev_id[{skoleummer, db_elev_id}]
+id: hvem har tilgang
+navn: haha
+skolelederfor[skolenummer]
+avdelingslederfor[{skolenummer, undervisningsområder}]
+basisgrupper[{skolenummer, system_id}]
+elev_id[{skoleummer, db_elev_id}]
 
 undervisningsområder
-  _id
-  basisgrupper[]
+_id
+basisgrupper[]
 
 viktiginfo
-  id
-  info
+id
+info
 
 checkboxene
-  id
-  fhduifhduf
-  jfdsjfd
-  sdfklj
+id
+fhduifhduf
+jfdsjfd
+sdfklj
 
 notater
-  elev_id (intern db id)
-  skolenummer
-  type: notat
-  synligFor: noen
-  title: ***
-  data: ***
+elev_id (intern db id)
+skolenummer
+type: notat
+synligFor: noen
+title: ***
+data: ***
 
 
 Entra-roller
-  - Bruker
-  - Systemadmin
-    
-    
+- Bruker
+- Systemadmin
 
-Skoleleder må sitte og si at denne er avedlingsleder blbalabala. 
+
+
+Skoleleder må sitte og si at denne er avedlingsleder blbalabala.
 Sysadmin må sitte og si at disse er skoleleder ved denne skolen balbalab
 
 
@@ -83,7 +83,7 @@ Enten gi hver eneste avdelingsleder tilgang til spesfikke basisgrupper, eller f�
 
 Syvertsen avdelingsleder hun logger på og skal ha alle elevene sine
 - Ser at det er rollen avdelingsleder
-elever.find(elev => skole && some undervisningsområde.basisgruppe => inn elevens basisgrupper)
+  elever.find(elev => skole && some undervisningsområde.basisgruppe => inn elevens basisgrupper)
 
 elev
 _id
@@ -93,50 +93,50 @@ Hvis noen har byttet elevnummer - så kan vi kjøre et api-kall som bytter elevn
 
 
 /*
- * students/ (GET)
- *   - Hente pålogget bruker (objectId)
- *   - Hente access for pålogget bruker (objectId === userId)
- *   - Hente alle elever basert på access for pålogget bruker
- *       { elevforhold.basisgruppe.systemId.identifikatorverdi IN access.classes.resourceId OR elevforhold.teachingRelation.systemId IN access.teachingGroup.resourceId OR elevforhold._id IN access.students.resourceId }
- *  - Returnere elever
- *
- * getStudents/id/ (GET)
- *  - Hente pålogget bruker
- *  - Hente access for pålogget bruker
- *  - Sjekke om pålogget bruker har tilgang til elev enten via klasse, undervisningsgruppe eller direkte
- *  - Hvis ja, returnere elev med hvem som kan oppfølge denne
- *  - Hvis nei, returnere 403
- *
- * getStudents/id/note (GET)
- *  - Hente pålogget bruker
- *  - Hente access for pålogget bruker
- *  - Sjekke om pålogget bruker har tilgang til elev enten via klasse, undervisningsgruppe eller direkte
- *  - Hente notater som lærer har tilgang til (author eller en annen rolle enn lærer)
- *  - Returnere notater (kun tittel)
- *
- * getStudents/id/note/id (GET / POST / DELETE)
- *   - GET
- *     - Hente pålogget bruker
- *     - Hente access for pålogget bruker
- *     - Sjekke om pålogget bruker har tilgang til elev enten via klasse, undervisningsgruppe eller direkte
- *     - Hente notat basert på id (sjekke at pålogget bruker er author eller har en annen rolle enn lærer)
- *     - Returnere notat (tittel og innhold)
- *   - POST
- *     - Hente pålogget bruker
- *     - Hente access for pålogget bruker
- *     - Sjekke om pålogget bruker har tilgang til elev enten via klasse, undervisningsgruppe eller direkte
- *     - Opprette notat
- *       - Sette pålogget bruker som author
- *       - Eventuelt om det er låst for innsyn av andre lærere
- *   - DELETE
- *     - Hente pålogget bruker
- *     - Hente access for pålogget bruker
- *     - Sjekke om pålogget bruker har tilgang til elev enten via klasse, undervisningsgruppe eller direkte
- *     - Sjekke at pålogget brukers rolle har tilgang til å slette notatet
- *     - Slette notat
- *
- * - Skal vi ha en slett alle notater for en elev? for en skole?
- * */
+- students/ (GET)
+-   - Hente pålogget bruker (objectId)
+    *   - Hente access for pålogget bruker (objectId === userId)
+        *   - Hente alle elever basert på access for pålogget bruker
+            *       { elevforhold.basisgruppe.systemId.identifikatorverdi IN access.classes.resourceId OR elevforhold.teachingRelation.systemId IN access.teachingGroup.resourceId OR elevforhold._id IN access.students.resourceId }
+            *  - Returnere elever
+               *
+               * getStudents/id/ (GET)
+               *  - Hente pålogget bruker
+                  *  - Hente access for pålogget bruker
+                     *  - Sjekke om pålogget bruker har tilgang til elev enten via klasse, undervisningsgruppe eller direkte
+                        *  - Hvis ja, returnere elev med hvem som kan oppfølge denne
+                           *  - Hvis nei, returnere 403
+                              *
+                              * getStudents/id/note (GET)
+                              *  - Hente pålogget bruker
+                                 *  - Hente access for pålogget bruker
+                                    *  - Sjekke om pålogget bruker har tilgang til elev enten via klasse, undervisningsgruppe eller direkte
+                                       *  - Hente notater som lærer har tilgang til (author eller en annen rolle enn lærer)
+                                          *  - Returnere notater (kun tittel)
+                                             *
+                                             * getStudents/id/note/id (GET / POST / DELETE)
+                                             *   - GET
+                                                   -- Hente pålogget bruker
+                                                   -- Hente access for pålogget bruker
+                                                   -- Sjekke om pålogget bruker har tilgang til elev enten via klasse, undervisningsgruppe eller direkte
+                                                   -- Hente notat basert på id (sjekke at pålogget bruker er author eller har en annen rolle enn lærer)
+                                                   -- Returnere notat (tittel og innhold)
+                                                 *   - POST
+                                                       -- Hente pålogget bruker
+                                                       -- Hente access for pålogget bruker
+                                                       -- Sjekke om pålogget bruker har tilgang til elev enten via klasse, undervisningsgruppe eller direkte
+                                                       -- Opprette notat
+                                                       -- Sette pålogget bruker som author
+                                                       -- Eventuelt om det er låst for innsyn av andre lærere
+                                                     *   - DELETE
+                                                           -- Hente pålogget bruker
+                                                           -- Hente access for pålogget bruker
+                                                           -- Sjekke om pålogget bruker har tilgang til elev enten via klasse, undervisningsgruppe eller direkte
+                                                           -- Sjekke at pålogget brukers rolle har tilgang til å slette notatet
+                                                           -- Slette notat
+                                                         *
+                                                         * - Skal vi ha en slett alle notater for en elev? for en skole?
+                                                           * */
 
 
 ## Når man oppretter manuell elev på en gitt skole
@@ -148,9 +148,9 @@ ny elev- havner i klassen manuelle elever - og legger til accessentry direkte p�
 FORM:
 - Skriv inn fnr + navn og etternavn
 - Gyldig FNR (for å hjelpe de å skrive riktig)
-Hjelpetekst - VÆR HEEEELT SIKKER PÅ AT FNR ER KORREKT (skriver du feil kan dette kobles mot feil elev og du får personvern på nakken)
-Merk at dette ikke sjekkes mot freg, og skriv riktig navn og sånn sjæl!
-(må kanskje ha checkbox for adressesperre)
+  Hjelpetekst - VÆR HEEEELT SIKKER PÅ AT FNR ER KORREKT (skriver du feil kan dette kobles mot feil elev og du får personvern på nakken)
+  Merk at dette ikke sjekkes mot freg, og skriv riktig navn og sånn sjæl!
+  (må kanskje ha checkbox for adressesperre)
 - send til backend
 
 BACKEND - vi begynner med dette

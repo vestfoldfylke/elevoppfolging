@@ -12,7 +12,7 @@ jobs:
     if: github.event.release.target_commitish == 'main' # Only run this workflow if the release is created from the main branch
     uses: vestfoldfylke/shared/.github/workflows/deploy-az-app-service-node.yml@main
     with:
-      azure_appname: 'vfkplzmineleveloprod'
-      azure_functionapp_package_path: '.'
+      azure_appname: "vfkplzmineleveloprod"
+      azure_functionapp_package_path: "."
     secrets:
       azure_publishprofile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_PROD }}
