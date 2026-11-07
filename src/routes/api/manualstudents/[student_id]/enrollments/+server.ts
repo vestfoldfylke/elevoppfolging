@@ -64,6 +64,19 @@ const addManualStudentEnrollment: ApiNextFunction<AddManualStudentEnrollmentResp
     at: new Date()
   }
 
+  // NOTE: Loop through all inactive enrollments and set mainSchool to false, so the new enrollment can be set as mainSchool (if no other active enrollments are active)
+  student.studentEnrollments = student.studentEnrollments.map((enrollment: StudentEnrollment) => {
+    if (isActive(enrollment.period)) {
+      return enrollment
+    }
+
+    if (enrollment.mainSchool) {
+      enrollment.mainSchool = false
+    }
+
+    return enrollment
+  })
+
   student.studentEnrollments.push(generateManualStudentEnrollment(school, !hasActiveMainSchool))
 
   const updateAppStudent: UpdateAppStudent = {
