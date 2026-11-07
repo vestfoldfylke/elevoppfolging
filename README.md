@@ -58,7 +58,9 @@ You can preview the production build with `npm run preview`.
 
 
 # Møte
+
 ## Tilgangsstyring
+
 - Kontaktlærer
 - Faglærer
 - Avdelingsleder / rådgiver har samme tilgang over hele røkla
@@ -68,9 +70,9 @@ You can preview the production build with `npm run preview`.
 - Elevtjenesten / mulighetssenter
   - Alle elever på skolen
 - Rådgiver
-- 
 
 ### Tilgang på elever (hva kan man se)
+
 - Auto (klasser, undervisningsgrupper, kontaktlærergrupper)
 - Enkeltelev
 - Undervisningsgruppe
@@ -80,6 +82,7 @@ You can preview the production build with `npm run preview`.
 - Skole
 
 ### Tilgang på se og gjøre inne på en elev
+
 - Faglærer (fra undervisningsgruppe)
   - Lese og lage vanlige notater
 - Kontaktlærer
@@ -87,6 +90,4 @@ You can preview the production build with `npm run preview`.
 
 ### Klassenotat
 
-
 ### Tror ikke det trengs et og et notat - trengs heller en tråd - som kan følges opp med kommentarer
-
