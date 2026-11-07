@@ -64,6 +64,21 @@ const addManualStudentEnrollment: ApiNextFunction<AddManualStudentEnrollmentResp
     at: new Date()
   }
 
+  // NOTE: A student should only have one mainSchool, and the new enrollment gets mainSchool true if no other enrollments are active,
+  // so we also set mainSchool to false for all inactive enrollments.
+  // This way, mainSchool can never be picked from an inactive enrollment for manual students (e.g. when inactive enrollment is still within accessViewWindow)
+  student.studentEnrollments = student.studentEnrollments.map((enrollment: StudentEnrollment) => {
+    if (isActive(enrollment.period)) {
+      return enrollment
+    }
+
+    if (enrollment.mainSchool) {
+      enrollment.mainSchool = false
+    }
+
+    return enrollment
+  })
+
   student.studentEnrollments.push(generateManualStudentEnrollment(school, !hasActiveMainSchool))
 
   const updateAppStudent: UpdateAppStudent = {
