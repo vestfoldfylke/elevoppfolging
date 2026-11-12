@@ -1,6 +1,6 @@
 {
   "name": "elevoppfolging",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "type": "module",
   "scripts": {
     "dev": "npm run check && vite dev",
@@ -16,7 +16,7 @@
     "lint:fix": "npx @biomejs/biome check --write"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.4",
+    "@biomejs/biome": "2.6.5",
     "@digdir/designsystemet-types": "^1.15.0",
     "@sveltejs/kit": "^2.70.2",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
@@ -24,9 +24,9 @@
     "@types/node": "^26.6.6",
     "happy-dom": "^21.0.4",
     "svelte": "^5.57.3",
-    "svelte-check": "^4.7.7",
+    "svelte-check": "^4.7.8",
     "typescript": "^6.0.3",
-    "vite": "^8.3.5",
+    "vite": "^8.3.6",
     "vitest": "^5.0.5"
   },
   "dependencies": {
@@ -38,6 +38,6 @@
     "@vestfoldfylke/vestfold-metrics": "^1.1.0",
     "luxon": "^3.7.2",
     "mongodb": "^7.8.0",
-    "mongodb-client-encryption": "^7.2.1"
+    "mongodb-client-encryption": "^7.2.2"
   }
 }

@@ -28,6 +28,7 @@ Document lock is a feature that prevents editing / commenting on / deleting a do
 If `DOCUMENT_LOCK_START_MM_DD` is set to `07-01`, the school year starts on July 1st and ends on June 30th of the following year.
 
 Examples:
+
 - if a document is created on 30th June 2024, it will be locked for editing/commenting/deletion starting from 1st July 2024.
 - if a document is created on 5th August 2024, it will be locked for editing/commenting/deletion starting from 1st July 2025.
 
@@ -55,7 +56,6 @@ npm run build
 You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
-
 
 # Møte
 
