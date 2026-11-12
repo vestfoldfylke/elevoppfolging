@@ -49,32 +49,27 @@ synligFor: noen
 title: ***
 data: ***
 
-
 Entra-roller
+
 - Bruker
 - Systemadmin
-
-
 
 Skoleleder må sitte og si at denne er avedlingsleder blbalabala.
 Sysadmin må sitte og si at disse er skoleleder ved denne skolen balbalab
 
-
 Per Lærer logger på med Entra - da får vi upn og id - det må hentes evt en kobling mot fint som jeg mener kan være feidenavnet basert på samaccounten, muuuuligens ansattnr som ligger i extatt
+
 - slå opp i db på entra-objekt-iden til innlogget bruker også er det good
 
 elever.find(elev => elev.basisgrupper or undervisninsgrupper.some(teacher => teacher.id === ==== currentTeacher.id))
-
 
 Trynefjert Rådgiver - logger på, vi får en entra-id-id, skal hente alle elever hen har tilgang på. Rollestyrt og noen har da gitt tilgang til basisklasser eller direkte på elev.
 
 find(elev: basisgruppe in elev.basisgrupper)
 
-
 Frrank skoleleder skal gi tilganger. Hent alle basisgrupper som tilhører skolen
 
 elever.find(elev => elev.skole) => hent unike basisgrupper
-
 
 Frank skoleleder skal gi tilgang til en avdelingsleder
 Må frank først opprette en "gruppe" i vår db som inneholder flere basisgrupper da?
@@ -82,6 +77,7 @@ Må frank først opprette en "gruppe" i vår db som inneholder flere basisgruppe
 Enten gi hver eneste avdelingsleder tilgang til spesfikke basisgrupper, eller først "lage" en avdeling og deretter gi tilgang
 
 Syvertsen avdelingsleder hun logger på og skal ha alle elevene sine
+
 - Ser at det er rollen avdelingsleder
   elever.find(elev => skole && some undervisningsområde.basisgruppe => inn elevens basisgrupper)
 
@@ -91,8 +87,8 @@ når vi skal oppdatere eleven matcher vi på elevnummer
 
 Hvis noen har byttet elevnummer - så kan vi kjøre et api-kall som bytter elevnummer, og setter korrekt id på alle oppføringer i db.@
 
-
 /*
+
 - students/ (GET)
 -   - Hente pålogget bruker (objectId)
     *   - Hente access for pålogget bruker (objectId === userId)
@@ -138,7 +134,6 @@ Hvis noen har byttet elevnummer - så kan vi kjøre et api-kall som bytter elevn
                                                          * - Skal vi ha en slett alle notater for en elev? for en skole?
                                                            * */
 
-
 ## Når man oppretter manuell elev på en gitt skole
 
 For å opprette en manuell elev må du enten være skoleleder eller ha "opprett manuell elev" tilgangen
@@ -146,6 +141,7 @@ For å opprette en manuell elev må du enten være skoleleder eller ha "opprett 
 ny elev- havner i klassen manuelle elever - og legger til accessentry direkte på den eleven for den som opprettet (MANUELL-ELEVTILGANG)
 
 FORM:
+
 - Skriv inn fnr + navn og etternavn
 - Gyldig FNR (for å hjelpe de å skrive riktig)
   Hjelpetekst - VÆR HEEEELT SIKKER PÅ AT FNR ER KORREKT (skriver du feil kan dette kobles mot feil elev og du får personvern på nakken)
@@ -154,13 +150,13 @@ FORM:
 - send til backend
 
 BACKEND - vi begynner med dette
+
 - Finnes eleven med et elevforhold som er aktivt?
   - Feilmld, eleven finnes allerede ved {skole}
 - Finnes eleven med inaktive elevforhold?
   - PT, så feilmelder vi. Kanskje gjøre noe annet senere?
 - Eleven finnes ikke
   - OK
-
 
 I frontend kan skoleleder få lov til å se elever med inaktive elevforhold ved sin skole?
 Kanskje reaktivere manuelle elevforhold hvis det trengs?
