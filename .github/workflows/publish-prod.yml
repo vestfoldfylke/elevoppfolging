@@ -9,7 +9,9 @@ on:
 
 jobs:
   build-and-deploy:
-    if: github.event.release.target_commitish == 'main' # Only run this workflow if the release is created from the main branch
+    if: |
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || 
+      (github.event_name == 'release' && github.event.release.target_commitish == 'main')
     uses: vestfoldfylke/shared/.github/workflows/deploy-az-app-service-node.yml@main
     with:
       azure_appname: "vfkplzmineleveloprod"
